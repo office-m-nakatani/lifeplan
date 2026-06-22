@@ -361,6 +361,13 @@
     table.cf .col-age{ width:4.2%; }
     table.cf .col-num{ width:8.8%; }
     /* col-evt と col-kid は指定なし＝残りを分け合う */
+    /* 運用商品セル内に併記する「投じた元本」（小さく薄い文字） */
+    .pr-sub{ font-size:.72em; color:#9aa7b3; }
+    table.cf td.at-iv-cell{ white-space:normal; line-height:1.35; }
+    /* 運用サマリー表：列を内容に合わせ、見出しを折り返して1画面に全列を収める */
+    table.cf-summary{ table-layout:auto; }
+    table.cf-summary th, table.cf-summary td{ width:auto !important; white-space:normal; overflow:visible; text-overflow:clip; padding:6px 6px; }
+    table.cf-summary th{ font-size:.72rem; line-height:1.25; }
     .at-note{ font-size:.8rem; color:var(--ink-soft); margin:0 0 10px; line-height:1.6; }
 
     /* ============================================================ モーダル */
@@ -383,6 +390,11 @@
     .save-item .si-name{ font-weight:700; flex:1; }
     .save-item .si-date{ font-size:.74rem; color:var(--ink-soft); }
     .save-empty{ color:var(--ink-soft); font-size:.85rem; text-align:center; padding:14px; }
+    .save-userbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:9px 13px; background:var(--blue-pale); border-radius:10px; margin-bottom:14px; font-size:.88rem; color:var(--blue-deep); }
+    .save-userbar strong{ font-weight:800; }
+    .save-current{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:11px 14px; background:var(--yellow-pale); border:1.5px solid var(--yellow); border-radius:12px; margin-bottom:14px; font-size:.9rem; color:#5a4a12; }
+    .save-current strong{ font-weight:800; }
+    .link-btn{ color:var(--blue-deep); text-decoration:underline; cursor:pointer; font-weight:700; }
     .lock-msg{ font-size:.85rem; color:var(--ink-soft); margin-bottom:10px; line-height:1.6; }
     .lock-err{ color:var(--bad); font-size:.82rem; margin-top:6px; min-height:1.2em; }
     .req{ color:var(--bad); }
@@ -491,24 +503,39 @@
     }
 
     /* ============================================================ 印刷／PDF保存用 */
+    /* pdf-mode：PC・スマホ問わず1カラムで全項目を開いて見やすく出力する共通モード（印刷・PDF送信の両方で使用） */
+    .pdf-mode .no-print, .pdf-mode .jump-result, .pdf-mode .hero-actions-top,
+    .pdf-mode .btn-add, .pdf-mode .btn-del, .pdf-mode .acc-chev,
+    .pdf-mode #chat-card, .pdf-mode #open-asset-modal{ display:none !important; }
+    .pdf-mode .wrap{ width:960px; max-width:960px; margin:0 auto; padding:0 8px; }
+    .pdf-mode .layout{ display:block !important; }            /* 2カラム→1カラム（重なり防止） */
+    .pdf-mode .results{ position:static !important; margin-top:18px; }
+    .pdf-mode .acc-body{ display:block !important; }          /* たたんだ入力欄もすべて開く */
+    .pdf-mode .acc{ break-inside:avoid; }
+    .pdf-mode .acc, .pdf-mode .card, .pdf-mode .kpi, .pdf-mode .verdict,
+    .pdf-mode .row-item, .pdf-mode .table-section{ box-shadow:none !important; }
+    .pdf-mode .table-scroll{ overflow:visible !important; }   /* 横スクロールを展開し全列を表示 */
+    .pdf-mode .table-section{ margin-top:18px; }
+    #pdf-asset-extra{ margin-top:18px; }
+
     @media print{
-      /* パソコン画面に近い「横向き（ランドスケープ）」で、2カラムのまま出力 */
-      @page{ size:A4 landscape; margin:8mm; }
+      @page{ size:A4 portrait; margin:10mm; }
       html, body{ background:#fff !important; }
-      .no-print, .jump-result, .hero-actions-top, .btn-add, .btn-del, .acc-chev{ display:none !important; }
+      .no-print, .jump-result, .hero-actions-top, .btn-add, .btn-del,
+      .acc-chev, #chat-card, #open-asset-modal{ display:none !important; }
       .wrap{ max-width:none; padding:0; }
-      /* PC表示と同じ2カラム（入力＝左／結果＝右）で出力 */
-      .layout{ display:grid !important; grid-template-columns:1.05fr .95fr !important; gap:14px !important; align-items:start; }
-      .results{ position:static !important; }
+      .layout{ display:block !important; }                    /* 1カラムで出力 */
+      .results{ position:static !important; margin-top:14px; }
+      .acc-body{ display:block !important; }                  /* たたんだ入力欄もPDFに含める */
       .acc, .card, .kpi, .verdict, .row-item{ break-inside:avoid; box-shadow:none !important; }
       .table-section{ box-shadow:none !important; }
-      .acc-body{ display:block !important; }            /* たたんだ入力欄もPDFに含める */
-      table.cf thead{ display:table-header-group; }      /* 各ページにヘッダーを繰り返す */
+      .table-scroll{ overflow:visible !important; }
+      table.cf thead{ display:table-header-group; }           /* 各ページにヘッダーを繰り返す */
       table.cf thead th{ position:static !important; box-shadow:none !important; }
-      table.cf tr{ break-inside:avoid; }                 /* 行が途中で切れないように */
-      table.cf{ font-size:8.5pt; }
+      table.cf tr{ break-inside:avoid; }                      /* 行が途中で切れないように */
+      table.cf{ font-size:8pt; }
       .hero{ padding:0 0 8px; }
-      a[href]:after{ content:""; }                       /* URLの余分な表示を抑制 */
+      a[href]:after{ content:""; }                            /* URLの余分な表示を抑制 */
     }
   </style>
 </head>
@@ -901,7 +928,7 @@
         <button class="modal-close" id="asset-modal-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="scroll-hint">入力した運用（NISA・iDeCo・保険など）が項目ごとにどう増えるかを数字で表示します（単位：万円）</p>
+        <p class="scroll-hint">入力した運用（NISA・iDeCo・保険など）が項目ごとにどう増えるかを数字で表示します（単位：万円）。下の年次表では各商品の数字の隣の（　）内が「投じた元本」です。</p>
         <div id="asset-summary"></div>
         <div class="table-scroll">
           <table class="cf">
@@ -921,29 +948,60 @@
         <button class="modal-close" id="save-modal-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
-        <!-- パスワード解除 -->
-        <div id="save-lock">
-          <p class="lock-msg">保存・読込にはパスワードが必要です。パスワードを入力してください。</p>
-          <div class="save-row">
-            <div class="field" style="flex:1 1 220px;">
-              <label>パスワード</label>
-              <input type="password" id="save-pass" placeholder="パスワード" autocomplete="off">
-            </div>
-            <button class="btn btn-primary btn-sm" id="save-unlock"><i class="fa-solid fa-unlock"></i> 解除</button>
+        <!-- ログイン -->
+        <div id="save-login">
+          <p class="lock-msg">保存・読込にはログインが必要です。営業担当者ごとにアカウントを作成できます。</p>
+          <div class="field" style="margin-bottom:10px;">
+            <label>お名前（ログインID）</label>
+            <input type="text" id="login-user" placeholder="例：nakatani" autocomplete="username">
           </div>
-          <div class="lock-err" id="save-err"></div>
+          <div class="field" style="margin-bottom:12px;">
+            <label>パスワード</label>
+            <input type="password" id="login-pass" placeholder="パスワード" autocomplete="current-password">
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="login-do"><i class="fa-solid fa-right-to-bracket"></i> ログイン</button>
+          <div class="lock-err" id="login-err"></div>
+          <p class="at-note" style="margin-top:14px;">アカウントをお持ちでない方は <span class="link-btn" id="to-signup">新規アカウント作成</span></p>
         </div>
 
-        <!-- 解除後 -->
+        <!-- 新規アカウント作成 -->
+        <div id="save-signup" hidden>
+          <p class="lock-msg">新しいアカウントを作成します。お名前とパスワードを決めてください。</p>
+          <div class="field" style="margin-bottom:10px;">
+            <label>お名前（ログインID）</label>
+            <input type="text" id="signup-user" placeholder="例：nakatani" autocomplete="off">
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <label>パスワード（4文字以上）</label>
+            <input type="password" id="signup-pass" placeholder="パスワード" autocomplete="new-password">
+          </div>
+          <div class="field" style="margin-bottom:12px;">
+            <label>パスワード（確認）</label>
+            <input type="password" id="signup-pass2" placeholder="もう一度入力" autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="signup-do"><i class="fa-solid fa-user-plus"></i> アカウントを作成</button>
+          <div class="lock-err" id="signup-err"></div>
+          <p class="at-note" style="margin-top:14px;">すでにアカウントをお持ちの方は <span class="link-btn" id="to-login">ログインに戻る</span></p>
+        </div>
+
+        <!-- ログイン後 -->
         <div id="save-panel" hidden>
+          <div class="save-userbar">
+            <span><i class="fa-solid fa-user"></i> <strong id="current-user"></strong> さんでログイン中</span>
+            <button class="btn btn-ghost btn-sm" id="logout-do"><i class="fa-solid fa-right-from-bracket"></i> ログアウト</button>
+          </div>
           <div class="save-row">
             <div class="field">
               <label>保存名（お客様名など）</label>
               <input type="text" id="save-name" placeholder="例：山田様">
             </div>
-            <button class="btn btn-primary btn-sm" id="save-do"><i class="fa-solid fa-floppy-disk"></i> 現在の内容を保存</button>
+            <button class="btn btn-primary btn-sm" id="save-do"><i class="fa-solid fa-floppy-disk"></i> 新規保存</button>
           </div>
-          <p class="at-note">保存したデータはこのパソコン（ブラウザ）に記録されます。下の一覧から読み込んで続きを作成できます。</p>
+          <div class="save-current" id="save-current-bar" hidden>
+            <span>編集中の資料：<strong id="current-save-name"></strong></span>
+            <button class="btn btn-primary btn-sm" id="save-overwrite"><i class="fa-solid fa-pen-to-square"></i> 上書き保存</button>
+          </div>
+          <p class="at-note">保存したデータは<strong>ログイン中のアカウントごと</strong>に、このパソコン（ブラウザ）へ記録されます（他のアカウントからは見えません）。下の一覧から読み込んで続きを作成できます。</p>
           <div class="save-list" id="save-list"></div>
         </div>
       </div>
@@ -1097,10 +1155,15 @@
           </div>
         </div>
         <p class="cr-quote"></p>`;
-      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
+      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); renumberChildPlaceholders(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', ()=>{ updateChildQuote(div); recompute(); }));
       childrenList.appendChild(div);
+      renumberChildPlaceholders();
       updateChildQuote(div);
+    }
+    // お子さまのお名前欄プレースホルダを「子1・子2…」と薄色で自動採番（夫・妻と同じ薄さ）
+    function renumberChildPlaceholders(){
+      [...childrenList.querySelectorAll('.ch-name')].forEach((el,i)=> el.placeholder = '子'+(i+1));
     }
     // 進路を選ぶと相場の目安を表示
     function updateChildQuote(div){
@@ -1439,6 +1502,7 @@
       let cash = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
       const invs = readInvestments();
       const balances = invs.map(v=> (v.start<=hAge0 ? v.lump : 0));   // 開始済みは初期＝まとまった資金、将来開始は0から
+      const principalByItem = invs.map(v=> (v.start<=hAge0 ? v.lump : 0));   // 投じた元本（累計・運用益は含めない）
       const pensionAge = num('pension-age',65);
       const pensionAnnual = num('pension-monthly',0)*12;
 
@@ -1547,15 +1611,15 @@
           // 終了後「運用を止める」：終了年齢以降は利回り0（成長しない）
           if(inv.after==='stop' && hAge>=inv.endAge) ret = 0;
           // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上）
-          if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; }
+          if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; principalByItem[i] += inv.lump; }
           balances[i] = balances[i]*(1+ret);
           // 積立は「開始年齢〜終了年齢」の間だけ加算
-          if(hAge>=inv.start && hAge<inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; }
+          if(hAge>=inv.start && hAge<inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
           // 終了後「使う」：終了年齢で残高を預貯金へ移す（運用資産→0、生活費等に使える）
           if(inv.after==='use' && hAge===inv.endAge && balances[i]>0){
             cash += balances[i];
             eventList.push({label: inv.name+'を使う', type:'family'});
-            balances[i] = 0;
+            balances[i] = 0; principalByItem[i] = 0;
           }
         }
 
@@ -1569,7 +1633,7 @@
         if(cash < 0 && investTotal > 0){
           draw = Math.min(investTotal, -cash);
           const ratio = draw/investTotal;
-          for(let i=0; i<balances.length; i++) balances[i] -= balances[i]*ratio;
+          for(let i=0; i<balances.length; i++){ balances[i] -= balances[i]*ratio; principalByItem[i] -= principalByItem[i]*ratio; }
           cash += draw; investTotal -= draw;
         }
         const invest = investTotal;
@@ -1585,6 +1649,7 @@
           income, expense: expense+downThisYear, cashflow: annual,
           cash, invest, net, inflF, draw,
           investByItem: balances.slice(),   // 運用商品ごとの残高（項目別テーブル用）
+          principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
           milestone: (hAge===hRetire || hAge===pensionAge || (houseType==='buy'&&hAge===buyAge))
         });
       }
@@ -1997,10 +2062,10 @@
         summary.innerHTML = `
           <p class="at-note">各運用商品の「積立をやめる年齢（満期）」時点での、元本（積み立てた合計）と運用後の残高です。</p>
           <div class="table-scroll" style="margin-bottom:20px;">
-            <table class="cf">
+            <table class="cf cf-summary">
               <thead><tr>
-                <th class="col-evt">運用商品</th><th class="col-num">まとまった資金</th><th class="col-num">毎月積立</th>
-                <th class="col-age">利回り</th><th class="col-num">元本(累計)</th><th class="col-num">満期残高</th><th class="col-num">運用益</th>
+                <th>運用商品</th><th>まとまった資金</th><th>毎月積立</th>
+                <th>利回り</th><th>元本(累計)</th><th>満期残高</th><th>運用益</th>
               </tr></thead>
               <tbody>${body}</tbody>
             </table>
@@ -2025,7 +2090,7 @@
         let kidCells='';
         for(let k=0; k<nKids; k++){ const a=r.childAges[k]; const c=childColor(k); kidCells += `<td class="kids" style="color:${(a!=null&&a>=0)?c.text:'#c2ccd6'}">${(a!=null&&a>=0)?a:'—'}</td>`; }
         let cells = `<td>${r.year}</td><td>${r.hAge}</td>${single?'':`<td>${r.wAge}</td>`}${kidCells}<td>${fmt(r.cash)}</td>`;
-        items.forEach((it,i)=>{ cells += `<td>${fmt(r.investByItem[i]||0)}</td>`; });
+        items.forEach((it,i)=>{ cells += `<td class="at-iv-cell">${fmt(r.investByItem[i]||0)} <span class="pr-sub">(${fmt(r.principalByItem[i]||0)})</span></td>`; });
         cells += `<td class="networth">${fmt(r.invest)}</td>`;
         bodyRows += `<tr${r.milestone?' class="milestone"':''}>${cells}</tr>`;
       });
@@ -2057,17 +2122,57 @@
     // ZEH チェックで詳細入力を開閉
     $('zeh-on').addEventListener('change', ()=>{ $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked); recompute(); });
 
-    // 印刷（ブラウザの印刷→PDFとして保存も可。PC向けに横向きで出力）
-    $('btn-print').addEventListener('click', ()=> window.print());
+    // PDF/印刷モードの準備：運用の金融資産（項目別）の表をCF表の下に複製して追加
+    function buildPdfExtras(){
+      recompute();                       // 最新の表・グラフを生成
+      removePdfExtras();                 // 二重生成を防止
+      const cf = document.querySelector('.table-section');
+      const atBody = $('at-body');
+      if(!cf || !atBody || !atBody.innerHTML.trim()) return;   // 運用商品が無ければ追加しない
+      const headHTML = $('at-head-row') ? $('at-head-row').innerHTML : '';
+      const summaryHTML = $('asset-summary') ? $('asset-summary').innerHTML : '';
+      const box = document.createElement('div');
+      box.className = 'table-section';
+      box.id = 'pdf-asset-extra';
+      box.innerHTML =
+        '<div class="table-head"><h3><i class="fa-solid fa-coins"></i> 運用の金融資産（項目別の推移）</h3></div>'+
+        '<p class="scroll-hint">運用（NISA・iDeCo・保険など）が項目ごとにどう増えるか（単位：万円）。各商品の数字の隣の（　）内が「投じた元本」です。</p>'+
+        '<div>'+summaryHTML+'</div>'+
+        '<div class="table-scroll"><table class="cf"><thead><tr>'+headHTML+'</tr></thead><tbody>'+atBody.innerHTML+'</tbody></table></div>';
+      cf.parentNode.insertBefore(box, cf.nextSibling);
+    }
+    function removePdfExtras(){ const e=$('pdf-asset-extra'); if(e) e.remove(); }
+
+    // 1カラム展開モードへ出入り（グラフは新しい幅に合わせて再描画）
+    function enterPdfMode(){
+      buildPdfExtras();
+      document.body.classList.add('pdf-mode');
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+    }
+    function exitPdfMode(){
+      document.body.classList.remove('pdf-mode');
+      removePdfExtras();
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+    }
+
+    // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力
+    $('btn-print').addEventListener('click', ()=>{
+      enterPdfMode();
+      const done = ()=>{ exitPdfMode(); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      setTimeout(()=> window.print(), 120);
+    });
 
     // PDFで送信：結果を画像化→PDF化し、共有メニュー（対応端末ならLINE）へ。非対応端末はDL＋LINEを開く
     async function sendPDF(){
       const btn = $('btn-send'); const orig = btn.innerHTML;
       if(typeof html2canvas==='undefined' || !window.jspdf){ alert('PDFの準備中です。数秒おいて再度お試しください。'); return; }
       btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 作成中…';
+      enterPdfMode();
+      await new Promise(r=> setTimeout(r, 180));   // 1カラム化・グラフ再描画の反映を待つ
       try{
-        const target = $('results');
-        const canvas = await html2canvas(target, { scale:2, backgroundColor:'#ffffff', useCORS:true, ignoreElements:(el)=> el.classList && el.classList.contains('no-print') });
+        const target = document.querySelector('.wrap:not(.hero-inner)');   // ヒーローではなく本文（入力・結果・表）を対象に
+        const canvas = await html2canvas(target, { scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth:1024, ignoreElements:(el)=> el.classList && el.classList.contains('no-print') });
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p','mm','a4');
         const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
@@ -2103,7 +2208,7 @@
         }
       } catch(e){
         alert('PDFの作成に失敗しました。「印刷」からPDFとして保存し、LINEに添付してください。');
-      } finally { btn.disabled=false; btn.innerHTML=orig; }
+      } finally { exitPdfMode(); btn.disabled=false; btn.innerHTML=orig; }
     }
     $('btn-send').addEventListener('click', sendPDF);
 
@@ -2286,9 +2391,21 @@
     /* ============================================================
        データの保存・読込（パスワード保護・このPCのブラウザに記録）
        ============================================================ */
-    const SAVE_KEY = 'lifeplan_saves_v1';
-    const PASSWORD = 'yosuke0603';
-    let unlocked = false;
+    const SAVE_KEY = 'lifeplan_saves_v1';      // お客様データ（このPC内・全アカウント共有）
+    const ACCT_KEY = 'lifeplan_accounts_v1';   // アカウント（ログインID＋パスワード）
+    const SESSION_KEY = 'lifeplan_session_v1'; // 前回ログインしていたID（自動ログイン用）
+    let currentUser = null;     // ログイン中のID
+    let currentSaveName = null; // 読込・保存中の資料名（上書き保存用）
+
+    // 簡易ハッシュ（パスワードを平文で保存しないため）
+    async function hashPass(p){
+      try{
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
+        return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      }catch(e){ return 'plain:'+p; }
+    }
+    function getAccounts(){ try{ return JSON.parse(localStorage.getItem(ACCT_KEY)||'{}'); }catch(e){ return {}; } }
+    function putAccounts(o){ try{ localStorage.setItem(ACCT_KEY, JSON.stringify(o)); return true; }catch(e){ alert('保存できませんでした。ブラウザの設定をご確認ください。'); return false; } }
 
     // 復元のため、住まい・生活費モードをプログラムから設定するヘルパー
     function setHouse(t){
@@ -2344,8 +2461,10 @@
       recompute();
     }
 
-    function getSaves(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}'); }catch(e){ return {}; } }
-    function putSaves(o){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(o)); return true; }catch(e){ alert('保存できませんでした。ブラウザの設定（プライベートモード等）をご確認ください。'); return false; } }
+    // 保存データはログイン中アカウントごとに別々のキーで管理（アカウント間で分離）
+    function saveKeyFor(u){ return SAVE_KEY + '__' + u; }
+    function getSaves(){ if(!currentUser) return {}; try{ return JSON.parse(localStorage.getItem(saveKeyFor(currentUser))||'{}'); }catch(e){ return {}; } }
+    function putSaves(o){ if(!currentUser){ alert('ログインしてから保存してください。'); return false; } try{ localStorage.setItem(saveKeyFor(currentUser), JSON.stringify(o)); return true; }catch(e){ alert('保存できませんでした。ブラウザの設定（プライベートモード等）をご確認ください。'); return false; } }
 
     function renderSaveList(){
       const saves = getSaves();
@@ -2360,31 +2479,120 @@
           <button class="btn btn-ghost btn-sm" data-load="${safe}"><i class="fa-solid fa-folder-open"></i> 読込</button>
           <button class="btn-del" data-del="${safe}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
       }).join('');
-      list.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{ const st=getSaves()[b.dataset.load]; if(st){ applyState(st.state); $('save-modal').hidden=true; } }));
-      list.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ if(confirm(`「${b.dataset.del}」を削除しますか？`)){ const o=getSaves(); delete o[b.dataset.del]; putSaves(o); renderSaveList(); } }));
+      list.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{ const name=b.dataset.load; const st=getSaves()[name]; if(st){ applyState(st.state); setCurrentSave(name); $('save-modal').hidden=true; } }));
+      list.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ if(confirm(`「${b.dataset.del}」を削除しますか？`)){ const o=getSaves(); delete o[b.dataset.del]; putSaves(o); if(currentSaveName===b.dataset.del) setCurrentSave(null); renderSaveList(); } }));
+    }
+
+    // 「編集中の資料」を設定し、上書きボタンの表示を切り替える
+    function setCurrentSave(name){
+      currentSaveName = name || null;
+      const bar = $('save-current-bar');
+      if(bar){
+        bar.hidden = !currentSaveName;
+        if(currentSaveName) $('current-save-name').textContent = currentSaveName;
+      }
     }
 
     const saveModal = $('save-modal');
-    function refreshSaveModal(){ $('save-lock').hidden=unlocked; $('save-panel').hidden=!unlocked; $('save-err').textContent=''; if(unlocked) renderSaveList(); }
+
+    // 表示切替：login（ログイン）/ signup（新規作成）/ panel（ログイン後）
+    function showSaveView(view){
+      $('save-login').hidden  = view!=='login';
+      $('save-signup').hidden = view!=='signup';
+      $('save-panel').hidden  = view!=='panel';
+      $('login-err').textContent=''; $('signup-err').textContent='';
+      if(view==='panel'){ $('current-user').textContent = currentUser||''; renderSaveList(); }
+    }
+    function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
     $('save-modal-close').addEventListener('click', ()=> saveModal.hidden=true);
     saveModal.addEventListener('click', (e)=>{ if(e.target===saveModal) saveModal.hidden=true; });
 
-    function tryUnlock(){
-      if($('save-pass').value === PASSWORD){ unlocked=true; refreshSaveModal(); }
-      else { $('save-err').textContent='パスワードが違います。'; }
-    }
-    $('save-unlock').addEventListener('click', tryUnlock);
-    $('save-pass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+    // ログイン⇄新規作成の切替リンク
+    $('to-signup').addEventListener('click', ()=> showSaveView('signup'));
+    $('to-login').addEventListener('click', ()=> showSaveView('login'));
 
+    // ログイン
+    async function doLogin(){
+      const u = ($('login-user').value||'').trim();
+      const p = $('login-pass').value||'';
+      if(!u || !p){ $('login-err').textContent='お名前とパスワードを入力してください。'; return; }
+      const accts = getAccounts();
+      if(!accts[u]){ $('login-err').textContent='アカウントが見つかりません。新規アカウント作成をお試しください。'; return; }
+      if(accts[u].pass !== await hashPass(p)){ $('login-err').textContent='パスワードが違います。'; return; }
+      currentUser = u;
+      try{ localStorage.setItem(SESSION_KEY, u); }catch(e){}
+      $('login-pass').value='';
+      showSaveView('panel');
+    }
+    $('login-do').addEventListener('click', doLogin);
+    $('login-user').addEventListener('keydown', e=>{ if(e.key==='Enter') $('login-pass').focus(); });
+    $('login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+    // 新規アカウント作成
+    async function doSignup(){
+      const u = ($('signup-user').value||'').trim();
+      const p = $('signup-pass').value||'';
+      const p2 = $('signup-pass2').value||'';
+      if(!u){ $('signup-err').textContent='お名前（ログインID）を入力してください。'; return; }
+      if(p.length<4){ $('signup-err').textContent='パスワードは4文字以上にしてください。'; return; }
+      if(p!==p2){ $('signup-err').textContent='パスワード（確認）が一致しません。'; return; }
+      const accts = getAccounts();
+      if(accts[u]){ $('signup-err').textContent='そのお名前は既に使われています。別の名前にしてください。'; return; }
+      accts[u] = { pass: await hashPass(p), created: Date.now() };
+      if(!putAccounts(accts)) return;
+      currentUser = u;
+      try{ localStorage.setItem(SESSION_KEY, u); }catch(e){}
+      $('signup-user').value=''; $('signup-pass').value=''; $('signup-pass2').value='';
+      alert(`アカウント「${u}」を作成しました。これからこのお名前とパスワードでログインできます。`);
+      showSaveView('panel');
+    }
+    $('signup-do').addEventListener('click', doSignup);
+    $('signup-pass2').addEventListener('keydown', e=>{ if(e.key==='Enter') doSignup(); });
+
+    // ログアウト
+    $('logout-do').addEventListener('click', ()=>{
+      currentUser=null;
+      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+      showSaveView('login');
+    });
+
+    // 新規保存
     $('save-do').addEventListener('click', ()=>{
       const name = ($('save-name').value||'').trim();
       if(!name){ alert('保存名（お客様名など）を入力してください。'); return; }
       const o = getSaves();
       if(o[name] && !confirm(`「${name}」は既に保存されています。上書きしますか？`)) return;
-      o[name] = { t: Date.now(), state: collectState() };
-      if(putSaves(o)){ $('save-name').value=''; renderSaveList(); alert(`「${name}」を保存しました。`); }
+      o[name] = { t: Date.now(), state: collectState(), by: currentUser };
+      if(putSaves(o)){ $('save-name').value=''; setCurrentSave(name); renderSaveList(); alert(`「${name}」を保存しました。`); }
     });
+
+    // 上書き保存（読み込み中の資料を更新）
+    $('save-overwrite').addEventListener('click', ()=>{
+      if(!currentSaveName){ alert('先に下の一覧から資料を読み込んでください。'); return; }
+      const o = getSaves();
+      o[currentSaveName] = { t: Date.now(), state: collectState(), by: currentUser };
+      if(putSaves(o)){ renderSaveList(); alert(`「${currentSaveName}」を上書き保存しました。`); }
+    });
+
+    // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
+    (function(){
+      const MIGRATE_FLAG = 'lifeplan_migrated_v2';
+      try{
+        if(localStorage.getItem(MIGRATE_FLAG)) return;        // すでに移行済み
+        const legacy = localStorage.getItem(SAVE_KEY);        // 旧・共通保存データ
+        if(!legacy || legacy==='{}') return;                  // 旧データなし
+        const users = Object.keys(getAccounts());
+        if(!users.length) return;                             // アカウント未作成なら次回に持ち越し
+        users.forEach(u=>{ const k=saveKeyFor(u); if(!localStorage.getItem(k)) localStorage.setItem(k, legacy); });
+        localStorage.setItem(MIGRATE_FLAG, '1');              // 旧共通キーはバックアップとして残す（新方式では参照しない）
+      }catch(e){}
+    })();
+
+    // 前回ログインしていたら自動でログイン状態にする
+    (function(){
+      try{ const last = localStorage.getItem(SESSION_KEY); if(last && getAccounts()[last]) currentUser = last; }catch(e){}
+    })();
 
     // 初期データ投入
     childRow(5,'public','shiritsu_b','home');   // 長子：私立大文系・自宅

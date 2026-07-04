@@ -2158,8 +2158,15 @@
         const n = insuranceNeed(); const nh = n.h, nw = n.w;
         const both = Math.max(nh.need, nw.need);
         const tone = both>0 ? 'warn' : 'ok';
-        const sum = `必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）で計算します。`
-          + `<b>${esc(hName())}に万一＝約${fmt(nh.need)}万円</b>／<b>${esc(wName())}に万一＝約${fmt(nw.need)}万円</b> が目安です。`;
+        // 「不足額＝いま追加で備えるべき生命保険の金額」を、内訳つきで分かりやすく表示
+        const needLine = (name, r)=>{
+          const res = r.need>0
+            ? `<b class="cmp-diff-down">追加で必要な保障 約${fmt(r.need)}万円</b>`
+            : `<b class="cmp-diff-up">追加の保障は不要（今の備えで足ります）</b>`;
+          return `● <b>${esc(name)}に万一のとき</b>：必要資金 約${fmt(r.spend)}万円 − いまの備え 約${fmt(r.cover)}万円 ＝ ${res}`;
+        };
+        const sum = `「必要保障額」とは、万一のときに<b>足りなくなるお金（不足額）</b>のこと。将来かかるお金から、いまの備え（遺族年金＋遺された方の収入＋いまの資産）を差し引いた、<b>今から生命保険で備えるべき金額</b>です。<br>`
+          + needLine(hName(), nh) + `<br>` + needLine(wName(), nw);
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hName())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
@@ -2767,8 +2774,8 @@
         const both = Math.max(n.h.need, n.w.need);
         const verdictCls = both>0 ? 'warn' : 'ok';
         const verdict = both>0
-          ? `診断：必要保障額の目安は、<b>${esc(hName())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wName())}に万一＝約${fmt(n.w.need)}万円</b>です。`
-          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>大きな死亡保険は不要です。`;
+          ? `診断：いま追加で備えるべき保障（不足額）は、<b>${esc(hName())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wName())}に万一＝約${fmt(n.w.need)}万円</b>です。（必要資金から、いまの備えを差し引いた金額）`
+          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>追加の死亡保険は不要です。`;
 
         const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
           + detail(n.h, hName(), wName())

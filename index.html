@@ -716,6 +716,25 @@
                 <span>毎月のローン返済額は金利・期間から自動計算します。住宅ローン控除（年末残高×0.7%）も最大13年分、自動で反映します。</span>
               </div>
 
+              <!-- 住宅ローンの組み方（万一の保障の計算に反映）-->
+              <div class="loan-payoff-box" data-couple-only>
+                <div class="lp-title"><i class="fa-solid fa-people-roof"></i> 住宅ローンの組み方（万一のときの保障に反映）</div>
+                <div class="field">
+                  <label>ローンの名義・団信（だんしん）</label>
+                  <div class="seg seg-wrap" id="loan-type-seg">
+                    <button type="button" data-loantype="solo-h" class="active">夫の単独（夫が団信）</button>
+                    <button type="button" data-loantype="solo-w">妻の単独（妻が団信）</button>
+                    <button type="button" data-loantype="pair">ペアローン（夫婦）</button>
+                  </div>
+                  <span class="hint">団信＝名義人に万一があると残債がゼロに。ペアローンは夫婦それぞれが団信に加入します。</span>
+                </div>
+                <div class="field hidden" id="loan-share-field" style="max-width:340px;">
+                  <label>夫の借入（負担）割合</label>
+                  <div class="input-unit"><input type="number" id="loan-share-h" value="50" min="0" max="100" step="5"><span class="u">％</span></div>
+                  <span class="hint">残り <b id="loan-share-w-lbl">50</b>％が妻の借入・妻の団信の対象です。</span>
+                </div>
+              </div>
+
               <!-- 残債・一括返済オプション（基準年齢は変更可・初期値65歳） -->
               <div class="loan-payoff-box">
                 <div class="lp-title"><i class="fa-solid fa-hand-holding-dollar"></i> 指定年齢での住宅ローンの扱い</div>
@@ -940,12 +959,12 @@
           <p class="chat-hint">ご入力いただいた家族構成・収入・資産をAIが読み取り、<b>あなたの数字で</b>その場で診断します。下のボタンをタップするだけでもOKです。</p>
           <div class="chat-log" id="chat-log"></div>
           <div class="chat-quick" id="chat-quick">
-            <button class="chat-chip" type="button" data-q="保険は必要？">🛡️ 保険は必要？</button>
             <button class="chat-chip" type="button" data-q="老後資金は足りる？">🏖️ 老後資金は足りる？</button>
             <button class="chat-chip" type="button" data-q="NISAは始めるべき？">📈 NISAは始めるべき？</button>
             <button class="chat-chip" type="button" data-q="教育費はいくらかかる？">🎓 教育費はいくら？</button>
             <button class="chat-chip" type="button" data-q="住宅ローンは大丈夫？">🏠 住宅ローンは大丈夫？</button>
             <button class="chat-chip" type="button" data-q="相続税はかかる？">📜 相続税はかかる？</button>
+            <button class="chat-chip" type="button" data-q="保険は必要？">🛡️ 保険は必要？</button>
           </div>
           <div class="chat-input">
             <input type="text" id="chat-text" placeholder="質問を入力（例：NISAは始めるべき？）" autocomplete="off">
@@ -1432,6 +1451,39 @@
       recompute();
     });
 
+    /* ---------- 住宅ローンの組み方（名義・団信・ペアローン割合）---------- */
+    const loanTypeSeg = $('loan-type-seg');
+    const loanType = ()=> loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h';
+    // who='h'|'w' の借入（団信）割合を 0〜1 で返す
+    function loanShareOf(who){
+      const t = loanType();
+      if(t==='solo-h') return who==='h' ? 1 : 0;
+      if(t==='solo-w') return who==='h' ? 0 : 1;
+      const sh = Math.min(Math.max(num('loan-share-h',50),0),100)/100;   // ペアローン：夫の割合
+      return who==='h' ? sh : (1-sh);
+    }
+    // 現時点のローン残債（万円）。これから購入は予定借入額で試算
+    function currentLoanBalance(){
+      if(houseType==='rent') return 0;
+      const principal = Math.max(num('house-price',0)-num('down',0),0);
+      const hAge0 = num('h-age',35);
+      const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
+      const yearsOwned = hAge0 - buyAge;
+      if(yearsOwned < 0) return principal;                                // 購入前：予定額
+      return remainingBalance(principal, num('loan-rate',0), num('loan-term',35), yearsOwned);
+    }
+    function updateLoanShareUI(){
+      const isPair = loanType()==='pair';
+      if($('loan-share-field')) $('loan-share-field').classList.toggle('hidden', !isPair);
+      if($('loan-share-w-lbl')) $('loan-share-w-lbl').textContent = fmt(100 - Math.min(Math.max(num('loan-share-h',50),0),100));
+    }
+    if(loanTypeSeg) loanTypeSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      updateLoanShareUI(); recompute();
+    });
+    if($('loan-share-h')) $('loan-share-h').addEventListener('input', ()=>{ updateLoanShareUI(); recompute(); });
+
     /* ---------- 生活費の入力方法切替（まとめて / 項目ごと） ---------- */
     const expSeg = $('exp-seg');
     expSeg.addEventListener('click', (e)=>{
@@ -1444,7 +1496,10 @@
     /* ---------- 世帯タイプ（ご夫婦／単身）---------- */
     const householdSeg = $('household-seg');
     const isSingle = ()=> householdSeg.querySelector('button.active')?.dataset.household==='single';
-    function applyHousehold(){ $('wife-section').classList.toggle('hidden', isSingle()); }
+    function applyHousehold(){
+      $('wife-section').classList.toggle('hidden', isSingle());
+      document.querySelectorAll('[data-couple-only]').forEach(el=> el.classList.toggle('hidden', isSingle()));
+    }
     householdSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
       [...householdSeg.children].forEach(x=> x.classList.toggle('active', x===b));
@@ -1855,7 +1910,6 @@
       el.innerHTML = `<table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>対策後</th><th>差</th></tr></thead><tbody>
         ${row('65歳時点の総資産', fmt(A.at65), fmt(B.at65), diffCell(B.at65, A.at65))}
         ${row(`最終（${B.endAge}歳）の総資産`, fmt(A.end), fmt(B.end), diffCell(B.end, A.end))}
-        ${row('いちばん少ない時の残高', fmt(A.min), fmt(B.min), diffCell(B.min, A.min))}
         ${row('資金ショート', dep(A), dep(B), '<td>—</td>')}
       </tbody></table>`;
     }
@@ -1975,96 +2029,285 @@
       // キーごとに1回だけ言い回しを抽選し、編集中は固定（再読込・データ読込で変わる）
       const V = (key, arr)=>{ if(adviceVariant[key]===undefined) adviceVariant[key]=Math.floor(Math.random()*arr.length); return arr[adviceVariant[key]]; };
 
-      // 冒頭コメント（バリエーション＋お名前を反映）
-      const famNm = (document.getElementById('h-name')?.value||'').trim();
-      const fam = famNm ? `${famNm}さんご一家` : 'ご家族';
-      const intro = V('intro',[
-        'AI診断コメント：','家計診断：','シミュレーションからの所見：','ファイナンシャル診断：'
-      ]);
-      add('tip','fa-robot', `<b>${intro}</b>${fam}の入力内容をもとに、気づいた点をまとめました。`);
+      // 診断に使う数値をまとめて用意（すべて入力データから自動計算）
+      const invs = readInvestments();
+      const totalMonthly = invs.reduce((a,v)=> a+v.monthly, 0);
+      const totalLump    = invs.reduce((a,v)=> a+v.lump, 0);
+      const ben = fmt(Math.max(s.benefit,0));
+      const surplus0 = Math.round(rows[0].income - rows[0].expense);
+      const defense  = Math.round(readLivingMonthly()*6);
+      const cashNow  = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
+      const kids     = readChildren().length;
+      const pensionM = num('pension-monthly',0), retLivingM = num('e-retire-living',0);
+      const insN = insuranceNeed();
 
-      // 総評
+      // ── ① 総合評価（10パターン）──
       if(s.depletion){
         add('warn','fa-triangle-exclamation', V('dep',[
-          `このままの計画では <b>${hName()}${s.depletion.hAge}歳ごろ</b> に資金が不足する見込みです。支出の見直し・積立や利回りの調整・退職年齢の延長などで改善できます。`,
-          `<b>${hName()}${s.depletion.hAge}歳ごろ</b> に資産が底をつくおそれがあります。固定費の最適化と運用の上乗せ、働く期間の延長を組み合わせて対策しましょう。`,
-          `気になるのは <b>${hName()}${s.depletion.hAge}歳ごろ</b> の資金ショートです。住居費・生活費の見直しと、NISA等での運用強化で立て直しを図りましょう。`
+          `このままの計画では <b>${hName()}${s.depletion.hAge}歳ごろ</b> に資金が不足する見込み。支出の見直し・積立増・退職延長で改善できます。`,
+          `<b>${hName()}${s.depletion.hAge}歳ごろ</b> に資産が底をつくおそれ。固定費の最適化と運用の上乗せ、就労延長を組み合わせましょう。`,
+          `気になるのは <b>${hName()}${s.depletion.hAge}歳ごろ</b> の資金ショート。住居費・生活費の見直しとNISA等で立て直しを図りましょう。`,
+          `<b>${hName()}${s.depletion.hAge}歳</b> で資金が不足する試算です。上の「現状と対策後をくらべる」で、改善策の効果をすぐ試せます。`,
+          `資金ショートの時期は <b>${s.depletion.hAge}歳ごろ</b>。早く手を打つほど、必要な対策は小さくて済みます。`,
+          `このままだと <b>${s.depletion.hAge}歳</b> で赤字に転落。積立の利回り・退職金・年金の受け取り方を見直しましょう。`,
+          `<b>${hName()}${s.depletion.hAge}歳ごろ</b> が要注意です。生活費を月1〜2万円絞るだけでも改善が見込めます。`,
+          `資金が続かない試算です（${s.depletion.hAge}歳ごろ）。収入を増やす・支出を減らす・運用する、の3方向で対策を。`,
+          `<b>${s.depletion.hAge}歳</b> で資産が枯渇する見込み。共働き期間の延長や、教育費プランの調整も有効です。`,
+          `いまのままでは <b>${hName()}${s.depletion.hAge}歳ごろ</b> に不足。危機ではなく「今なら間に合う」サインと捉えましょう。`
         ]));
       } else {
         add('ok','fa-circle-check', V('ok',[
           `現在の計画なら <b>${s.endRow.hAge}歳まで資産が枯渇しません</b>。バランスの取れた良いプランです。`,
           `<b>${s.endRow.hAge}歳まで資金ショートなし</b>。無理のない、安定した家計設計になっています。`,
-          `この設計なら <b>${s.endRow.hAge}歳</b> まで資産が持続する見込みです。引き続きこの調子で続けましょう。`
+          `この設計なら <b>${s.endRow.hAge}歳</b> まで資産が持続する見込み。引き続きこの調子で続けましょう。`,
+          `${s.endRow.hAge}歳まで資産が持つ試算です。さらに余裕をつくるなら、運用の継続と繰下げ受給が効きます。`,
+          `資金は <b>${s.endRow.hAge}歳まで安定</b>。ここからは「増やす」より「守りながら育てる」段階です。`,
+          `${s.endRow.hAge}歳まで枯渇なし。浮いた余力で、教育費や住み替えの選択肢も広がります。`,
+          `盤石なプランです（${s.endRow.hAge}歳まで持続）。想定外に備え、生活防衛資金だけは切らさないように。`,
+          `<b>${s.endRow.hAge}歳まで安心</b>の見込み。インフレ後の実質価値もKPIで確認しておきましょう。`,
+          `資産は長持ちする試算（${s.endRow.hAge}歳まで）。より良くするなら、非課税枠の使い切りが次の一手です。`,
+          `${s.endRow.hAge}歳まで資金ショートなし。堅実です。年に一度、数字を見直せば安心が続きます。`
         ]));
       }
 
-      // 投資の効果
-      const invs = readInvestments();
-      const totalMonthly = invs.reduce((a,v)=> a+v.monthly, 0);
-      const totalLump    = invs.reduce((a,v)=> a+v.lump, 0);
-      const ben = fmt(Math.max(s.benefit,0));
+      // ── ② 家計収支バランス（10パターン）──
+      if(surplus0>=0){
+        add('ok','fa-scale-balanced', V('balP',[
+          `年間の収支は約 <b>${fmt(surplus0)}万円の黒字</b>。この余力を積立と予備資金にバランス良く配分するのが理想です。`,
+          `いまの家計は年 <b>${fmt(surplus0)}万円</b> のプラス。黒字を「貯める・増やす・備える」の3つに振り分けましょう。`,
+          `毎年 <b>約${fmt(surplus0)}万円</b> 残る計算です。まず生活防衛資金、次にNISA、と優先順位をつけると迷いません。`,
+          `家計は黒字体質（年 約${fmt(surplus0)}万円）。固定費を一度見直すと、黒字はさらに厚くできます。`,
+          `収支は年 <b>${fmt(surplus0)}万円</b> の余裕あり。ボーナス頼みにせず、毎月の自動積立に回すと確実です。`,
+          `年間 <b>${fmt(surplus0)}万円</b> の黒字は貴重な原資。使い道を先に決めておくと貯まりやすくなります。`,
+          `プラス収支（年 約${fmt(surplus0)}万円）を維持できています。教育費ピークに向け、今のうちに厚めの貯蓄を。`,
+          `黒字 年 <b>${fmt(surplus0)}万円</b>。手取りが増える時期に、積立額も少しずつ引き上げるのがコツです。`,
+          `いまの余力は年 <b>${fmt(surplus0)}万円</b>。無理のない範囲で「先取り貯蓄」を仕組み化しましょう。`,
+          `収支は健全（年 約${fmt(surplus0)}万円の黒字）。この調子なら将来の選択肢を広げられます。`
+        ]));
+      } else {
+        const akaji = fmt(Math.abs(surplus0));
+        add('warn','fa-scale-balanced', V('balN',[
+          `いまの家計は年 <b>約${akaji}万円の赤字</b>。まずは固定費（通信・保険・サブスク）から見直しましょう。`,
+          `年間収支が <b>マイナス約${akaji}万円</b>です。支出の大きい項目から順に点検すると効果的です。`,
+          `支出が収入をやや上回っています（年 約${akaji}万円）。通信費や保険料は下げ余地が大きい項目です。`,
+          `家計は赤字傾向（年 約${akaji}万円）。ムダを1つ削るだけでも、将来の資産が変わります。`,
+          `毎年 <b>約${akaji}万円</b> の持ち出しです。④生活費の項目を見直し、黒字化を目指しましょう。`,
+          `収支マイナス（年 約${akaji}万円）。現状把握→固定費→変動費の順で整えると続きます。`,
+          `いまは支出超過（年 約${akaji}万円）。保険の重複や使っていないサブスクがないか確認を。`,
+          `年 <b>約${akaji}万円</b> 足りない計算です。収入UPより先に、固定費の削減が近道です。`,
+          `赤字幅は年 約${akaji}万円。左の生活費を実額に近づけると、より正確な診断になります。`,
+          `支出が先行しています（年 約${akaji}万円）。まずは月1万円の削減目標から始めてみましょう。`
+        ]));
+      }
+
+      // ── ③ 資産運用の効果（10パターン）──
       if(totalMonthly>0 || totalLump>0){
         add('tip','fa-arrow-trend-up', V('inv',[
-          `毎月 <b>${fmt(totalMonthly)}万円</b> の積立${totalLump>0?`＋まとまった資金 <b>${fmt(totalLump)}万円</b> の運用`:''}を続けると、運用しない場合より退職時に約 <b>${ben}万円</b> 多く残ります。NISA・iDeCoの非課税枠の活用がおすすめです。`,
-          `運用の効果は大きく、続けることで退職時に約 <b>${ben}万円</b> の差が生まれる試算です。非課税のNISA・iDeCoを優先して使いましょう。`,
-          `コツコツの積立が効いています。運用あり・なしで退職時に約 <b>${ben}万円</b> の違い。複利を味方につけるほど差は広がります。`
+          `毎月 <b>${fmt(totalMonthly)}万円</b> の積立${totalLump>0?`＋まとまった資金 <b>${fmt(totalLump)}万円</b>`:''}を続けると、運用なしより退職時に約 <b>${ben}万円</b> 多く残る試算です。`,
+          `運用の効果は大きく、退職時で約 <b>${ben}万円</b> の差。非課税のNISA・iDeCoを優先して使いましょう。`,
+          `コツコツ積立が効いています。運用あり・なしで退職時に約 <b>${ben}万円</b> の違いになります。`,
+          `複利が働き、退職時に約 <b>${ben}万円</b> の上乗せ。時間を味方につけるほど差は広がります。`,
+          `いまの積立ペースで、将来の資産に約 <b>${ben}万円</b> のプラス。相場が下がっても続けるのが正解です。`,
+          `運用は長期戦。この積立を続けるだけで、退職時に約 <b>${ben}万円</b> 多く残る計算です。`,
+          `積立投資は「入金力×時間」。今の ${fmt(totalMonthly)}万円/月 を維持できると効果は着実に育ちます。`,
+          `非課税枠の活用が効いています。運用益に約20%の税がかからない分、手残りが増えます。`,
+          `退職時の差 約 <b>${ben}万円</b>。値動きは気にせず、淡々と積み立てる仕組みが最強です。`,
+          `いい流れです。余力が増えたら積立額を少し引き上げると、複利効果がさらに伸びます。`
         ]));
       } else {
         add('tip','fa-seedling', V('inv0',[
-          `今は運用が <b>0円</b> です。月1〜3万円でも早く始めるほど複利が効きます。「運用商品を追加」からNISA・iDeCoを検討しましょう。`,
-          `運用枠が未設定です。少額でも早期スタートが効果的。まずはNISAのつみたて投資から始めてみましょう。`,
-          `資産運用がまだありません。時間を味方にできる今こそ、月数万円のつみたてを検討する好機です。`
+          `いまは運用が <b>0円</b>。月1〜3万円でも早く始めるほど複利が効きます。⑤からNISAを検討しましょう。`,
+          `運用枠が未設定です。少額でも早期スタートが効果的。まずはつみたて投資から始めてみましょう。`,
+          `資産運用はまだ0。時間を味方にできる今こそ、月数万円のつみたてを検討する好機です。`,
+          `預金だけではインフレで実質価値が目減りします。一部をNISAに回すと守りが強くなります。`,
+          `新NISAは運用益が無期限で非課税。月1万円からでも、始める価値は十分あります。`,
+          `運用未設定のため、将来の伸びしろが眠っています。まずは全世界株の投信を少額から。`,
+          `「増やすお金」がまだありません。生活防衛資金の確保後、余力の範囲でNISAを始めましょう。`,
+          `早く始めるほど複利の効果は大きくなります。金額より「始めること」がいちばん大切です。`,
+          `いまは0円運用。月2万円×20年でも、非課税でコツコツ育てれば大きな差になります。`,
+          `資産形成の第一歩は少額から。まずは無理のない金額で、つみたて投資に触れてみましょう。`
         ]));
       }
 
-      // 住宅
-      if(houseType==='buy'){
-        add('tip','fa-house-chimney', V('house',[
-          `マイホーム購入は家計が大きく動くイベントです。頭金・金利・返済期間を変えて、無理のない返済額か確認しましょう。`,
-          `住宅購入は人生最大級の支出。借入額と返済期間のバランスを試し、安心できる返済計画を見つけましょう。`,
-          `頭金を増やすほど総返済額は軽くなります。金利タイプ（変動・固定）の比較も忘れずに検討を。`
+      // ── ④ 生活防衛資金（10パターン）──
+      if(cashNow>=defense){
+        add('ok','fa-shield-halved', V('emgOK',[
+          `生活防衛資金（生活費6か月＝約${fmt(defense)}万円）は<b>確保済み</b>。安心のベースができています。`,
+          `預貯金は目安の <b>${fmt(defense)}万円</b> をクリア。余剰はNISA等で「増やすお金」に回せます。`,
+          `万一の備えの現金（約${fmt(defense)}万円）は十分。次のステップは運用での資産形成です。`,
+          `生活防衛資金OK。急な出費にも耐えられる家計です。余った預金は働かせましょう。`,
+          `半年分の生活費（約${fmt(defense)}万円）が貯まっています。守りは合格、次は攻めの一手を。`,
+          `現金クッションは十分。眠っている預金の一部を国債やNISAへ振り分けると効率的です。`,
+          `緊急予備資金は確保済み。これ以上の現金は、インフレで目減りする点に注意しましょう。`,
+          `生活防衛資金（${fmt(defense)}万円）達成。近い出費用の資金と運用資金を分けて管理を。`,
+          `守りの現金は十分です。iDeCo等の長期・非課税枠の活用も検討していきましょう。`,
+          `預金の備えは万全。あとは「使う時期」ごとに置き場所（預金・国債・投資）を分けるのがコツです。`
+        ]));
+      } else {
+        const need = fmt(Math.max(defense-cashNow,0));
+        add('tip','fa-shield-halved', V('emgLow',[
+          `生活防衛資金の目安は <b>約${fmt(defense)}万円</b>（生活費6か月）。いまの預金 ${fmt(cashNow)}万円から、まずここを目標に。`,
+          `急な出費に備える現金があと <b>約${need}万円</b> あると安心です。投資より先に確保を。`,
+          `万一の予備資金（約${fmt(defense)}万円）まであと少し。ここが整うと、安心して運用に踏み出せます。`,
+          `生活防衛資金が目安に未達です。まずは減らない預金で ${fmt(defense)}万円を目標にしましょう。`,
+          `現金クッションを厚くするのが最優先。目安は生活費6か月分（約${fmt(defense)}万円）です。`,
+          `いざという時の現金が少なめです。投資に回す前に、預金の土台づくりを優先しましょう。`,
+          `予備資金は「守りの要」。約${fmt(defense)}万円を確保できると、家計の安心感が大きく変わります。`,
+          `緊急資金があと約${need}万円。ボーナスの一部を回すと早く到達できます。`,
+          `まずは生活費6か月分（${fmt(defense)}万円）の預金を。ここが整えば運用も怖くありません。`,
+          `守りの現金が不足気味です。無理な投資より、当面は預金の積み増しをおすすめします。`
         ]));
       }
-      // ZEH
+
+      // ── ⑤ 住宅・ローンの組み方（10パターン）──
+      if(houseType==='buy'){
+        add('tip','fa-house-chimney', V('house',[
+          `マイホーム購入は家計が大きく動くイベント。頭金・金利・期間を変えて無理のない返済額か確認を。`,
+          `住宅購入は人生最大級の支出。借入額と返済期間のバランスを試し、安心の返済計画を見つけましょう。`,
+          `頭金を増やすほど総返済額は軽くなります。金利タイプ（変動・固定）の比較も忘れずに。`,
+          `返済負担率は手取りの20〜25%以内が目安。上の「住宅ローンは大丈夫？」で自動診断できます。`,
+          `変動金利は当初が軽い反面、上昇リスクあり。固定は計画が立てやすい——性格に合う方を。`,
+          `購入時期・価格・頭金を少し変えるだけで、70歳の資産が数百万円変わります。試してみましょう。`,
+          `住宅ローン控除（年末残高×0.7%・最大13年）は自動反映済み。省エネ住宅ほど枠が優遇されます。`,
+          `「借りられる額」ではなく「無理なく返せる額」で。教育費ピークと返済が重ならないか確認を。`,
+          `繰上返済 vs 運用は悩みどころ。低金利のうちはNISAに回す選択も合理的です。`,
+          `頭金・諸費用の準備と、購入後の維持費（固定資産税・修繕）も含めて総額で判断しましょう。`
+        ]));
+      }
+      if(houseType!=='rent' && currentLoanBalance()>0 && !isSingle()){
+        add('tip','fa-people-roof', V('loan',[
+          `団信（だんしん）付きローンは、名義人に万一があると<b>残債がゼロ</b>に。生命保険の代わりにもなります。`,
+          `ローンの組み方は保障に直結します。③の「住宅ローンの組み方」で名義・団信を設定できます。`,
+          `夫の単独ローンだと、<b>妻に万一のときローンは残ります</b>。妻側の備えも一度ご確認を。`,
+          `ペアローンは夫婦それぞれが団信対象。ただし一方の死亡で<b>相手の分は残る</b>点に注意です。`,
+          `団信があるぶん、死亡保険は住居費を除いて考えられます。保険の入りすぎ防止に役立ちます。`,
+          `繰上返済は利息を減らせますが、手元資金と団信保障が減る面も。バランスで判断を。`,
+          `残債と団信の関係は「必要保障額」に直結。上の「保険は必要？」で自動反映されます。`,
+          `共働きなら、収入比に応じたローン配分が基本。負担割合は③で調整できます。`,
+          `団信は健康状態で加入可否が決まります。健康なうちに手当てするのが安心です。`,
+          `ローンの名義・割合は、万一の保障設計と表裏一体。多角的に見て決めるのがおすすめです。`
+        ]));
+      }
+
+      // ── ⑥ ZEH・省エネ住宅（10パターン）──
       if($('zeh-on') && $('zeh-on').checked && (houseType==='buy'||houseType==='owned')){
         const z = fmt(num('zeh-sell')+num('zeh-save'));
         add('ok','fa-leaf', V('zeh',[
-          `ZEHなら売電と光熱費削減で毎年約 <b>${z}万円</b> 家計が軽くなります（FIT期間）。国・自治体の補助金（最大100万円超）も活用できます。`,
-          `省エネ住宅(ZEH)の効果で年約 <b>${z}万円</b> の家計改善が見込めます。補助金とあわせて初期費用の回収も早まります。`
+          `ZEHなら売電＋光熱費削減で毎年約 <b>${z}万円</b> 家計が軽くなります（FIT期間）。補助金も活用可。`,
+          `省エネ住宅(ZEH)の効果で年約 <b>${z}万円</b> の家計改善。初期費用の回収も早まります。`,
+          `太陽光＋高断熱で光熱費を圧縮。年 約${z}万円の削減は、35年で大きな差になります。`,
+          `ZEHは国・自治体の補助金（最大100万円超）も。売電収入と合わせて総合的にお得です。`,
+          `卒FIT後も自家消費で光熱費を抑えられます。長い目で見て家計にやさしい選択です。`,
+          `断熱性能が高い家は快適さも段違い。ヒートショック対策など健康面のメリットも見逃せません。`,
+          `年 約${z}万円の効果を積み上げると、住宅ローンの一部を実質相殺できる計算です。`,
+          `ZEHは資産価値の面でも有利。将来の売却・賃貸の際の評価にもプラスに働きます。`,
+          `売電単価は年々下がる傾向。自家消費を増やす使い方が、これからの主流です。`,
+          `光熱費の上昇局面ほどZEHの効果は大きくなります。物価高への備えにもなります。`
         ]));
       }
 
-      // 教育費
-      const kids = readChildren().length;
+      // ── ⑦ 教育費（10パターン）──
       if(kids>0){
         add('tip','fa-graduation-cap', V('edu',[
-          `お子さま${kids}人の教育費がかさむ時期は家計が締まります。児童手当の積立など、早めの準備が安心です。`,
-          `教育費のピークに備え、お子さまが小さいうちからの積立が効果的です。学資保険やNISAの併用も検討を。`,
-          `${kids}人分の進学時期は支出が重なります。今から少しずつ準備しておくと、その時期の負担が和らぎます。`
+          `お子さま${kids}人の教育費がかさむ時期は家計が締まります。児童手当の積立など、早めの準備を。`,
+          `教育費のピークに備え、小さいうちからの積立が効果的。学資保険やNISAの併用も検討を。`,
+          `${kids}人分の進学時期は支出が重なります。今から少しずつ準備すると負担が和らぎます。`,
+          `いちばんの山は大学費用。上の「教育費はいくら？」で、必要額と毎月の積立目安が分かります。`,
+          `教育資金はNISA積立が効率的。使う時期が決まっているので、後半は安全資産へ移すのがコツ。`,
+          `祖父母からの教育資金一括贈与（最大1,500万円非課税）も選択肢。早めの家族会議を。`,
+          `私立・下宿の有無で総額が大きく変わります。②で進路を変えて、影響を試してみましょう。`,
+          `児童手当を使わず全額積み立てると、お子さま1人あたり約200万円の準備になります。`,
+          `奨学金・教育ローンは最後の手段に。まずは計画的な積立で、返済負担を残さない準備を。`,
+          `教育費と老後資金は「同時進行」が基本。どちらかに偏らないバランスが大切です。`
         ]));
       }
 
-      // 保険（必要保障額の目安・入力データから自動計算）
-      const insN = insuranceNeed();
+      // ── ⑧ 老後・年金（10パターン）──
+      add('tip','fa-umbrella-beach', V('old',[
+        `退職後は年金 <b>月${pensionM}万円</b> に対し生活費 <b>月${retLivingM}万円</b>。差額は資産から取り崩します。`,
+        `老後は年金 月${pensionM}万円 と生活費 月${retLivingM}万円 の差を資産でカバー。繰下げ受給も有効です。`,
+        `退職後の収支は年金と生活費の差がカギ。取り崩しペースを早めに把握しておきましょう。`,
+        `年金の繰下げは1か月+0.7%（最大75歳で+84%）。長生きに備える有力な選択肢です。`,
+        `「ねんきん定期便」で見込み額の確認を。実額を入れると、この診断がより正確になります。`,
+        `退職〜年金開始までの空白期間の生活費も要チェック。ここが家計の谷になりやすい部分です。`,
+        `老後資金は年金＋自助努力（iDeCo・NISA）＋就労延長の3本柱で考えると安心です。`,
+        `生活費 月${retLivingM}万円 は妥当な水準か、上のグラフと合わせて確認してみましょう。`,
+        `長生きに備え、取り崩しは「定率」より「定額＋余裕」を意識すると資産が長持ちします。`,
+        `退職金の受け取り方（一時金・年金）で税金が変わります。受取前に一度シミュレーションを。`
+      ]));
+
+      // ── ⑨ 万一の備え・生命保険（夫／妻を多角的に。10パターンずつ）──
       if(insN){
-        if(insN.need>0){
-          add('tip','fa-piggy-bank', V('ins',[
-            `万一の備え（生命保険）の目安は <b>約${fmt(insN.need)}万円</b>。末子独立まで${insN.yrs}年分の生活費・教育費から、遺族年金・収入・資産を差し引いた概算です。掛け捨ての収入保障保険なら割安に確保できます。`,
-            `必要保障額はざっくり <b>約${fmt(insN.need)}万円</b> の計算です。公的保障でカバーされない部分だけを、掛け捨て型で効率よく備えるのがコツです。`
-          ]));
-        } else {
-          add('ok','fa-piggy-bank', V('ins0',[
-            `万一の備えは、遺族年金などの公的保障といまの資産で<b>おおむねカバーできる計算</b>です。死亡保険は最小限でOK。医療・就業不能の備えを優先しましょう。`,
-            `必要保障額は計算上ゼロです。<b>大きな死亡保険は不要</b>で、医療保障や貯蓄の充実に回すのが合理的です。`
+        const nh = insN.h, nw = insN.w;
+        if(nh.need>0){
+          add('tip','fa-piggy-bank', V('insH',[
+            `<b>${hName()}に万一</b>のとき、必要保障額の目安は <b>約${fmt(nh.need)}万円</b>（末子独立まで${nh.yrs}年分の生活費・教育費−遺族年金・収入・資産）。`,
+            `${hName()}の死亡保障は <b>約${fmt(nh.need)}万円</b> が目安。掛け捨ての収入保障保険なら月数千円で確保できます。`,
+            `万一の不足額（${hName()}側）は <b>約${fmt(nh.need)}万円</b>。公的保障で足りない分だけを効率よく備えましょう。`,
+            `${hName()}に万一の備えは約${fmt(nh.need)}万円。お子さまの独立とともに減らせるので、掛け捨てが合理的です。`,
+            `必要保障額（${hName()}）約${fmt(nh.need)}万円。上の「保険は必要？」で計算式と内訳を確認できます。`,
+            `${hName()}側の保障目安 約${fmt(nh.need)}万円。過不足なく持つことが、保険料のムダを防ぐコツです。`,
+            `遺族年金を差し引いても ${hName()}側で 約${fmt(nh.need)}万円 不足。ここは保険の出番です。`,
+            `${hName()}に万一の必要額 約${fmt(nh.need)}万円。終身より、期間を区切った定期・収入保障が割安です。`,
+            `保障の目安（${hName()}）約${fmt(nh.need)}万円。教育費ピークを超えたら見直して薄くしていきましょう。`,
+            `${hName()}側は約${fmt(nh.need)}万円の備えが安心。まず掛け捨てで必要額を、次に医療・就業不能を。`
           ]));
         }
+        if(nw.need>0){
+          add('tip','fa-piggy-bank', V('insW',[
+            `<b>${wName()}に万一</b>のとき、必要保障額の目安は <b>約${fmt(nw.need)}万円</b>。共働きでは妻側の保障も重要です。`,
+            `見落としがちですが、${wName()}側にも 約${fmt(nw.need)}万円 の備えが目安。家事・育児の外注費も家計を圧迫します。`,
+            `${wName()}に万一の不足額 約${fmt(nw.need)}万円。若い夫は遺族厚生年金が出にくく、保障が手薄になりがちです。`,
+            `妻側の必要保障 約${fmt(nw.need)}万円。夫の単独ローンだと、妻死亡でローンが残る点にも注意を。`,
+            `${wName()}側の備え 約${fmt(nw.need)}万円が目安。夫婦それぞれに保障を持つと、どちらの万一にも対応できます。`,
+            `共働き家庭は妻の収入も家計の柱。${wName()}に万一の不足 約${fmt(nw.need)}万円 を見込んでおくと安心です。`,
+            `妻死亡時は公的保障が薄くなりがち。${wName()}側 約${fmt(nw.need)}万円 を保険で補うのが現実的です。`,
+            `${wName()}側の保障目安 約${fmt(nw.need)}万円。育児中は特に、家事代行・保育の追加費用も考慮を。`,
+            `保障の目安（${wName()}）約${fmt(nw.need)}万円。夫側だけでなく両面で設計するのが「多角的な備え」です。`,
+            `${wName()}に万一で 約${fmt(nw.need)}万円 不足。上の「保険は必要？」で夫・妻それぞれの内訳を確認できます。`
+          ]));
+        }
+        if(nh.need<=0 && nw.need<=0){
+          add('ok','fa-piggy-bank', V('ins0',[
+            `万一の備えは、遺族年金などの公的保障と資産で<b>おおむねカバーできる計算</b>。死亡保険は最小限でOK。`,
+            `必要保障額は夫・妻とも計算上ゼロ。<b>大きな死亡保険は不要</b>で、医療・就業不能の備えを優先しましょう。`,
+            `公的保障＋資産で足りる試算です。保険料を払いすぎないことが、家計改善の近道になります。`,
+            `死亡保障の必要額は小さめ。浮いた保険料をNISA等の資産形成に回すのが合理的です。`,
+            `いまの資産と遺族年金で万一に対応できる見込み。保険は「掛け捨てで最小限」が正解です。`,
+            `必要保障はほぼ充足。既加入の保険があれば、重複や過剰がないか一度見直しましょう。`,
+            `万一の備えは十分な水準。次は医療・介護・就業不能など、生きるリスクへの備えを点検。`,
+            `保障の不足なし。貯蓄が育つほど必要な保険は小さくなる——「保険は貯蓄で卒業」が理想です。`,
+            `公的保障が手厚く、大きな保険は不要な家計です。保険料の見直しで支出を軽くできます。`,
+            `必要保障額ゼロの試算。過剰な保険に入っていないか、この機会にチェックしてみましょう。`
+          ]));
+        }
+      } else {
+        add('ok','fa-piggy-bank', V('insSingle',[
+          `扶養家族がいないため、大きな死亡保障は不要。<b>医療・就業不能</b>への備えを優先しましょう。`,
+          `単身の方は、入院時の収入減をカバーする最小限の医療保障＋貯蓄で十分なことが多いです。`,
+          `高額療養費制度で医療費の自己負担には上限があります。過度な医療保険は不要です。`,
+          `死亡保険より、働けなくなった時の備え（就業不能保険・貯蓄）が単身者には現実的です。`,
+          `保険は最小限にして、その分をNISA等の資産形成に回すのが効率的です。`,
+          `単身なら「守りは貯蓄、増やすはNISA」。保険はあくまで補助と考えましょう。`,
+          `将来ご家族が増えたら、その時に死亡保障を検討すればOK。今は身軽で大丈夫です。`,
+          `医療保障は貯蓄とのバランスで。預貯金が厚いほど、必要な保険は小さくなります。`,
+          `就業不能への備えは、傷病手当金（会社員）を踏まえ不足分だけで足りることが多いです。`,
+          `単身者の保険はシンプルが正解。医療＋少額の就業不能＋貯蓄で、十分に守れます。`
+        ]));
       }
 
-      // 老後
-      add('tip','fa-umbrella-beach', V('old',[
-        `退職後は年金 <b>月${num('pension-monthly',0)}万円</b> に対し生活費 <b>月${num('e-retire-living',0)}万円</b>。差額は資産から取り崩します。受給繰下げで年金を増やす選択肢もあります。`,
-        `老後は年金 <b>月${num('pension-monthly',0)}万円</b> と生活費 <b>月${num('e-retire-living',0)}万円</b> の差を資産でカバー。繰下げ受給や働き方の調整も有効です。`,
-        `退職後の収支は年金と生活費の差がカギ。生活費 <b>月${num('e-retire-living',0)}万円</b> に対し年金 <b>月${num('pension-monthly',0)}万円</b>。不足分の取り崩しペースを把握しておきましょう。`
+      // ── ⑩ 税金・節税（10パターン）──
+      add('tip','fa-coins', V('tax',[
+        `会社員の節税は①ふるさと納税 ②iDeCo ③医療費控除 ④住宅ローン控除 が柱。取りこぼしに注意を。`,
+        `ふるさと納税は実質2,000円で返礼品。年末調整・確定申告の前に上限額を確認しましょう。`,
+        `iDeCoの掛金は全額所得控除。老後資金づくりと節税を同時にできる制度です。`,
+        `医療費控除は世帯で年10万円超が対象。家族分をまとめると届くことがあります。`,
+        `生命保険料控除・地震保険料控除も忘れずに。年末調整の書類でしっかり申告を。`,
+        `投資はNISAで非課税が基本。課税口座は損益通算・繰越控除も活用しましょう。`,
+        `所得が高い方ほどiDeCo・小規模企業共済の節税効果が大きくなります。`,
+        `ふるさと納税×iDeCoの合わせ技で、年数万円〜の節税が現実的に狙えます。`,
+        `退職金は退職所得控除が手厚く、税負担が抑えられます。受け取り方の設計が大切です。`,
+        `正確な税額計算や有利な選択は、税理士に相談すると取りこぼしを防げます。`
       ]));
     }
 
@@ -2428,28 +2671,73 @@
                assetsNow: cashNow+investNow, hNet, wNet, eduByChild, eduRemain, yearsToLastIndep };
     }
 
-    /* 必要保障額の目安（夫に万一があった場合の簡易計算）。単身はnull */
-    function insuranceNeed(){
-      if(isSingle()) return null;
-      const p = buildProfile();
-      const yrs = p.children.length ? Math.max(p.yearsToLastIndep, 1) : 10;
-      let spend = p.living*12*0.7*yrs + p.eduRemain;                 // 遺族の生活費（現在の7割）＋教育費
-      if(houseType==='rent') spend += num('rent',0)*12*yrs;          // 賃貸なら家賃も（持ち家は団信でローン消滅）
-      const izoku = (p.children.length ? 150 : 60) * yrs;            // 遺族年金の目安（子ありは基礎＋厚生の概算）
-      const yrsW = Math.max(0, Math.min(yrs, num('w-retire',65) - p.wAge));
-      const cover = izoku + p.wNet*yrsW + p.assetsNow;               // 公的保障＋配偶者の収入＋いまの資産
-      const need = Math.max(0, Math.round((spend - cover)/100)*100); // 100万円単位に丸め
-      return { need, yrs, spend:Math.round(spend), cover:Math.round(cover), p };
+    /* 遺族年金の年額目安（万円）。deceased='h'|'w'、子の人数、遺族の年齢で概算 */
+    function izokuPerYear(deceased, kids, survivorAge){
+      // 遺族基礎年金：子のある家庭に、末子18歳まで（約 年81万＋子加算 約23万/人）
+      const kiso = kids>0 ? (81 + 23*Math.min(kids,3)) : 0;
+      // 遺族厚生年金：夫死亡→妻は受給可（約 年45万の概算）。
+      //   妻死亡→夫は「55歳以上」でないと受給できず支給も60歳から（若い夫は原則ゼロ）＝制度の盲点
+      const kosei = (deceased==='h') ? 45 : (survivorAge>=55 ? 30 : 0);
+      return { kiso, kosei, total: kiso + kosei };
     }
 
-    /* 診断カードの組み立て */
+    /* どちらかに万一があったときの必要保障額。deceased='h'（夫死亡）|'w'（妻死亡）。単身はnull */
+    function survivorNeed(deceased){
+      if(isSingle()) return null;
+      const p = buildProfile();
+      const survivorIsWife = (deceased==='h');
+      const surAge    = survivorIsWife ? p.wAge : p.hAge;
+      const surNet    = survivorIsWife ? p.wNet : p.hNet;
+      const surRetire = survivorIsWife ? num('w-retire',65) : num('h-retire',65);
+      // 保障を見込む年数：子ありは末子独立まで、子なしは配偶者の生活を15年目安
+      const yrs = p.children.length ? Math.max(p.yearsToLastIndep, 1) : 15;
+      // ① 生活費（遺族の生活は現在の約7割）
+      const living = p.living*12*0.7*yrs;
+      // 妻死亡・幼い子ありは、家事育児の外注で負担増（末子が12歳になるまで 年30万目安）
+      const youngKidYears = p.children.length ? Math.max(...p.children.map(c=> Math.max(12-c.age,0)), 0) : 0;
+      const childcare = (!survivorIsWife && youngKidYears>0) ? 30*Math.min(yrs, youngKidYears) : 0;
+      // ② 教育費（残り全額）
+      const edu = p.eduRemain;
+      // ③ 住居費：賃貸は家賃、持ち家は「亡くなった人の団信で消えない側」の残債が残る
+      let housing = 0, loanRemain = 0, loanErased = 0, loanBal = 0;
+      if(houseType==='rent'){ housing = num('rent',0)*12*yrs; }
+      else {
+        loanBal = currentLoanBalance();
+        loanErased = loanBal * loanShareOf(deceased);   // 亡くなった人の団信で消える分
+        loanRemain = loanBal - loanErased;              // 残る借入（遺族が返済を続ける）
+        housing = loanRemain;
+      }
+      const spend = living + childcare + edu + housing;
+      // ④ 遺族の資源：遺族年金＋遺族の勤労収入＋いまの資産
+      const iz = izokuPerYear(deceased, p.children.length, surAge);
+      const pension = iz.total * yrs;                    // 概算：年額×年数
+      const workYears = Math.max(0, Math.min(yrs, surRetire - surAge));
+      const income = surNet * workYears;
+      const cover = pension + income + p.assetsNow;
+      const need = Math.max(0, Math.round((spend - cover)/100)*100);  // 100万円単位に丸め
+      return { deceased, survivorIsWife, need, yrs,
+               spend:Math.round(spend), living:Math.round(living+childcare), childcare:Math.round(childcare),
+               edu:Math.round(edu), housing:Math.round(housing),
+               loanBal:Math.round(loanBal), loanErased:Math.round(loanErased), loanRemain:Math.round(loanRemain),
+               pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei,
+               income:Math.round(income), workYears, assets:p.assetsNow, cover:Math.round(cover),
+               surNet, surAge, p };
+    }
+
+    /* 夫・妻それぞれの万一に対する必要保障。単身はnull */
+    function insuranceNeed(){
+      if(isSingle()) return null;
+      return { h: survivorNeed('h'), w: survivorNeed('w') };
+    }
+
+    /* 診断カードの組み立て（専門家CTAは付けない。必要な時だけ後付けする）*/
+    const CTA_HTML = `<div class="chat-cta-wrap"><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button> <button class="chat-cta chat-cta-no" type="button" data-chatno>もう少し自分で考える</button></div>`;
     function diagBox(facts, verdictCls, verdictHtml, body){
       return `<div class="diag-head"><i class="fa-solid fa-user-check"></i> ご入力データからの個別診断</div>`
         + (facts && facts.length ? `<ul class="diag-facts">${facts.map(f=>`<li>${f}</li>`).join('')}</ul>` : '')
         + (verdictHtml ? `<span class="diag-verdict ${verdictCls}">${verdictHtml}</span>` : '')
         + (body ? `<span>${body}</span>` : '')
-        + `<div class="chat-cta-wrap"><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button> <button class="chat-cta chat-cta-no" type="button" data-chatno>もう少し考える</button></div>`
-        + `<div class="diag-note">※ 一般的な目安による概算です。正確な設計は無料相談で承ります。</div>`;
+        + `<div class="diag-note">※ 一般的な目安による概算です。数字の正確な計算は税理士・FPにご相談ください。</div>`;
     }
     function famFact(p){
       const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
@@ -2460,28 +2748,61 @@
       /* 保険は必要？ */
       hoken(){
         const p = buildProfile();
-        const loanLeft = (houseType!=='rent') && (num('house-price',0) - num('down',0)) > 0;
-        const facts = [ famFact(p),
-          `世帯の手取り収入：年 約<b>${fmt(p.hNet + p.wNet)}万円</b>`,
-          `いまの金融資産：<b>${fmt(p.assetsNow)}万円</b>（預貯金 ${fmt(p.cashNow)}＋運用 ${fmt(p.investNow)}）` ];
-        if(p.children.length) facts.push(`今後の教育費：合計 約<b>${fmt(p.eduRemain)}万円</b>（${p.eduByChild.map(x=>`${esc(x.name)} ${fmt(x.total)}`).join('・')}）`);
-        facts.push(houseType==='rent'
-          ? `住まい：賃貸（家賃 月${fmt(num('rent',0))}万円）→ 万一の後も家賃がかかるため保障に含めます`
-          : `住まい：持ち家${loanLeft ? '（ローンは<b>団信</b>で万一の際ゼロに→保障に含めません）' : ''}`);
         if(p.single){
+          const facts = [ famFact(p),
+            `年間の手取り収入：約<b>${fmt(p.hNet)}万円</b>／いまの金融資産：<b>${fmt(p.assetsNow)}万円</b>` ];
           return diagBox(facts, 'ok',
-            `診断：大きな死亡保障は<b>原則不要</b>です。`,
-            `単身の場合の優先順位は<b>①医療・就業不能への備え ②貯蓄</b>です。医療費は高額療養費制度で自己負担に上限があるため、預貯金${fmt(p.cashNow)}万円と合わせて、入院時の収入減を補う最小限の保障で足りることが多いです。`);
+            `診断：扶養するご家族がいないため、大きな死亡保障は<b>原則不要</b>です。`,
+            `単身の方の優先順位は<b>①医療・就業不能への備え ②貯蓄</b>。医療費は高額療養費制度で1か月の自己負担に上限（年収により約8万円〜）があるため、預貯金${fmt(p.cashNow)}万円と合わせ、入院時の収入減を補う最小限の保障で足りることが多いです。`);
         }
         const n = insuranceNeed();
-        if(n.need<=0){
-          return diagBox(facts, 'ok',
-            `診断：計算上、<b>公的保障＋いまの資産で必要額をカバーできています。</b>大きな死亡保険は不要です。`,
-            `万一の際に必要な資金 約${fmt(n.spend)}万円に対し、遺族年金・${esc(wName())}の収入・資産の合計が約${fmt(n.cover)}万円あります。医療保険や就業不能への備えを優先的に検討しましょう。`);
-        }
-        return diagBox(facts, 'warn',
-          `診断：必要保障額の目安は <b>約${fmt(n.need)}万円</b> です。`,
-          `${p.children.length ? `末子が独立するまでの${n.yrs}年分` : `${n.yrs}年分`}の生活費（現在の7割）${p.children.length?'と教育費':''}${houseType==='rent'?'と家賃':''}から、遺族年金・${esc(wName())}の収入・いまの資産を差し引いた概算です。この規模なら<b>掛け捨ての収入保障保険</b>が月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で減らしていくのがコツです。`);
+        const loanTypeLbl = houseType==='rent' ? '' :
+          (loanType()==='pair' ? `ペアローン（夫${fmt(num('loan-share-h',50))}％／妻${fmt(100-num('loan-share-h',50))}％）`
+           : loanType()==='solo-w' ? '妻の単独ローン（妻が団信）' : '夫の単独ローン（夫が団信）');
+
+        // 一方の万一についての詳しい計算を組み立てる
+        const detail = (r, deceasedName, survivorName)=>{
+          const parts = [];
+          parts.push(`生活費 ${fmt(r.living)}万円`);
+          if(r.edu>0) parts.push(`教育費 ${fmt(r.edu)}万円`);
+          parts.push(houseType==='rent' ? `家賃 ${fmt(r.housing)}万円`
+            : (r.loanRemain>0 ? `残るローン ${fmt(r.loanRemain)}万円（団信で消える分 ${fmt(r.loanErased)}万円を除く）` : `住居費 0万円（残債は団信で全額ゼロ）`));
+          const spendLine = `<b>必要資金 約${fmt(r.spend)}万円</b>＝ ${parts.join(' ＋ ')}`;
+          const pensionLine = `<b>遺族年金 約${fmt(r.pensionYear)}万円/年</b>（遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}）× ${r.yrs}年 ＝ 約${fmt(r.pension)}万円`
+            + (r.deceased==='w' && r.pensionKosei===0 ? `<br><span style="color:#bf5656">※ 妻が亡くなった場合、55歳未満の夫には<b>遺族厚生年金が支給されません</b>（制度の盲点）。夫死亡時より保障が手薄になりやすい点に注意です。</span>` : '');
+          const coverLine = `<b>用意できる資金 約${fmt(r.cover)}万円</b>＝ 遺族年金 約${fmt(r.pension)}＋${esc(survivorName)}の収入 約${fmt(r.income)}（${r.workYears}年分）＋いまの資産 ${fmt(r.assets)}`;
+          const resultLine = r.need>0
+            ? `→ <b class="cmp-diff-down">不足 約${fmt(r.need)}万円</b>＝ この分を死亡保障で備えると安心です。`
+            : `→ <b class="cmp-diff-up">不足なし</b>。公的保障と資産でカバーできる計算です。`;
+          return `<div style="margin:8px 0;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;">`
+            + `<b>■ ${esc(deceasedName)}に万一のとき（${esc(survivorName)}が遺される）</b><br>`
+            + spendLine + `<br>` + pensionLine + `<br>` + coverLine + `<br>` + resultLine + `</div>`;
+        };
+
+        const facts = [ famFact(p),
+          `世帯の手取り収入：年 約<b>${fmt(p.hNet + p.wNet)}万円</b>（夫 ${fmt(p.hNet)}／妻 ${fmt(p.wNet)}）`,
+          `いまの金融資産：<b>${fmt(p.assetsNow)}万円</b>（預貯金 ${fmt(p.cashNow)}＋運用 ${fmt(p.investNow)}）` ];
+        if(p.children.length) facts.push(`今後の教育費：合計 約<b>${fmt(p.eduRemain)}万円</b>`);
+        facts.push(houseType==='rent' ? `住まい：賃貸（家賃 月${fmt(num('rent',0))}万円）` : `住まい：持ち家・${loanTypeLbl}`);
+
+        const both = Math.max(n.h.need, n.w.need);
+        const verdictCls = both>0 ? 'warn' : 'ok';
+        const verdict = both>0
+          ? `診断：必要保障額の目安は、<b>${esc(hName())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wName())}に万一＝約${fmt(n.w.need)}万円</b>です。`
+          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>大きな死亡保険は不要です。`;
+
+        const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
+          + detail(n.h, hName(), wName())
+          + detail(n.w, wName(), hName())
+          + (both>0
+              ? `不足分は<b>掛け捨ての収入保障保険</b>なら月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
+              : `死亡保障は最小限にして、<b>医療・就業不能への備え</b>や資産形成に回すのが合理的です。`)
+          + (houseType!=='rent' && loanType()==='solo-h'
+              ? `<br><br><b>ご注意：</b>いまは夫の単独ローン（夫が団信）のため、<b>妻に万一のときはローンがそのまま残ります</b>。妻側にも一定の死亡保障を持つか、ペアローンで妻側にも団信を付けるか、多角的にご検討ください。`
+              : (houseType!=='rent' && loanType()==='pair'
+                  ? `<br><br><b>ペアローン</b>では、どちらか一方に万一があっても<b>残された側のローンは団信で消えません</b>。上記のとおり両方向で保障を確認しておくと安心です。`
+                  : ''));
+        return diagBox(facts, verdictCls, verdict, body);
       },
 
       /* 老後資金は足りる？ */
@@ -2609,7 +2930,7 @@
         }
         return diagBox(facts, 'warn',
           `診断：資産のピーク時には<b>基礎控除を超える可能性</b>があります。`,
-          `対策の候補：①暦年贈与（年110万円まで非課税）②生命保険の非課税枠（500万円×法定相続人）③ご自宅の小規模宅地等の特例（評価最大▲80%）。対策は早いほど選択肢が広がります。当事務所は税理士事務所ですので、正確な試算が可能です。`);
+          `対策の候補：①暦年贈与（年110万円まで非課税）②生命保険の非課税枠（500万円×法定相続人）③ご自宅の小規模宅地等の特例（評価最大▲80%）。対策は早いほど選択肢が広がります。正確な相続税額の計算については、税理士にご相談ください。`);
       },
 
       /* 税金・節税 */
@@ -2731,11 +3052,11 @@
       const topic = detectTopic(q);
       // 「必要？／足りる？／いくら？」などの相談 → ヒアリングせず、入力データから即・個別診断
       if(topic && DIAG[topic] && NECESSITY.test(q)){
-        return { html: DIAG[topic](), known:true, personal:false };
+        return { html: DIAG[topic](), known:true, personal:false, diag:true, topic };
       }
-      if(topic) return { html: genAnswer(topic), known:true, personal:true };
+      if(topic) return { html: genAnswer(topic), known:true, personal:true, topic };
       if(NECESSITY.test(q)){
-        return { html:'ご入力いただいたデータから、具体的な数字で診断できます。下のボタン（保険・老後資金・NISA・教育費・住宅・相続）からお選びいただくか、「保険は必要？」のように聞いてみてください。', known:true, personal:false };
+        return { html:'ご入力いただいたデータから、具体的な数字で診断できます。下のボタン（老後資金・NISA・教育費・住宅・相続・保険）からお選びいただくか、「保険は必要？」のように聞いてみてください。', known:true, personal:false };
       }
       return { html:'ご質問ありがとうございます。NISA・iDeCo・保険・国債・相続・税金・住宅・教育・年金など幅広くお答えできますが、ご質問の意図をうまく読み取れませんでした。言い回しを変えてお試しいただくか、', known:false, personal:false };
     }
@@ -2745,8 +3066,13 @@
       div.innerHTML = (who==='bot' ? `<span class="chat-ava"><i class="fa-solid fa-robot"></i></span>` : '') + `<div class="chat-bubble">${html}</div>`;
       chatLog.appendChild(div); chatLog.scrollTop = chatLog.scrollHeight;
     }
+    // 何度もやり取りして「困っていそう」なときだけ専門家CTAを出すための状態
+    let chatTurns = 0;
+    const topicAsk = {};
+    const CONFUSED = /わからない|分からない|わかりません|判らない|むずかし|難しい|困った|困っています|困る|不安|心配|迷って|迷います|どうすれば|どうしたら|どうすべき|自信がない|大丈夫でしょうか|助けて|相談したい|専門家/;
     function sendChat(q){
       q=(q||'').trim(); if(!q) return;
+      chatTurns++;
       addMsg('user', esc(q));
       $('chat-text').value='';
       // 思考中（タイピング）→ 少し揺らぎを持たせて回答（本物のAIっぽい“間”）。費用は一切かからない。
@@ -2759,7 +3085,14 @@
         const nm = (document.getElementById('h-name')?.value||'').trim();
         const lead = (nm && res.personal) ? `${esc(nm)}さん、` : '';
         const tail = res.known ? '' : `<b>くわしくは専門家へご相談ください。</b>`;
-        addMsg('bot', lead + res.html + tail);
+        let html = lead + res.html + tail;
+        // 専門家への案内は「くどく」しない：何度もやり取りした／同じ話題を繰り返す／困っていそうな時だけ
+        if(res.topic) topicAsk[res.topic] = (topicAsk[res.topic]||0)+1;
+        const seemsStuck = CONFUSED.test(q) || chatTurns>=4 || (res.topic && topicAsk[res.topic]>=2) || !res.known;
+        if(seemsStuck){
+          html += CTA_HTML;
+        }
+        addMsg('bot', html);
       }, 800 + Math.floor(Math.random()*900));
     }
     // チャット内ボタン（専門家へつなぐ／いいえ）
@@ -2845,6 +3178,7 @@
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
+        loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
@@ -2871,6 +3205,8 @@
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }
+      if(s.loanType && loanTypeSeg){ [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.loantype===s.loanType)); }
+      if(typeof updateLoanShareUI==='function') updateLoanShareUI();
       if($('zeh-fields')) $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked);
       recompute();
     }

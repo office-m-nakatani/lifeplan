@@ -404,7 +404,7 @@
 
     /* なんでも相談チャット */
     .chat-hint{ font-size:.82rem; color:var(--ink-soft); margin:2px 0 10px; line-height:1.6; }
-    .chat-quick{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
+    .chat-quick{ display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 0; }
     .chat-chip{ border:1px solid var(--blue-pale2); background:var(--blue-pale); color:var(--blue-deep); border-radius:999px; padding:6px 12px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; }
     .chat-chip:hover{ background:var(--blue-pale2); }
     .chat-log{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding:4px 2px; }
@@ -429,6 +429,33 @@
     .typing span:nth-child(2){ animation-delay:.2s; }
     .typing span:nth-child(3){ animation-delay:.4s; }
     @keyframes typingDot{ 0%,60%,100%{ opacity:.25; transform:translateY(0); } 30%{ opacity:.9; transform:translateY(-3px); } }
+
+    /* チャット内の個別診断カード（入力データを読み込んだ即時診断） */
+    .diag-head{ display:flex; align-items:center; gap:7px; font-weight:800; color:var(--blue-deep); margin-bottom:7px; font-size:.9rem; }
+    .diag-facts{ list-style:none; margin:7px 0; padding:9px 12px; background:#fff; border:1px solid var(--line); border-radius:12px; }
+    .diag-facts li{ padding:2px 0 2px 1.1em; position:relative; font-size:.84rem; line-height:1.6; }
+    .diag-facts li::before{ content:''; position:absolute; left:0; top:.66em; width:7px; height:7px; border-radius:50%; background:var(--blue); }
+    .diag-verdict{ display:block; font-weight:800; padding:9px 12px; border-radius:12px; margin:9px 0 7px; font-size:.9rem; line-height:1.55; }
+    .diag-verdict.ok{ background:var(--good-pale); color:#2f7d61; }
+    .diag-verdict.warn{ background:var(--warn-pale); color:#a4711f; }
+    .diag-verdict.bad{ background:var(--bad-pale); color:#bf5656; }
+    .diag-note{ font-size:.76rem; color:var(--ink-soft); margin-top:6px; }
+
+    /* 現状 ⇔ 対策後 プラン比較 */
+    .compare-card{ border:2px solid var(--yellow); background:linear-gradient(180deg,#fffdf2,#ffffff); }
+    .cmp-lead{ font-size:.84rem; color:var(--ink-soft); margin:2px 0 10px; line-height:1.65; }
+    .cmp-seg{ display:flex; border:2px solid var(--blue); border-radius:12px; overflow:hidden; margin-bottom:10px; }
+    .cmp-seg button{ flex:1; padding:11px 8px; border:0; background:#fff; color:var(--blue-deep); font-family:inherit; font-size:.92rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:background .15s; }
+    .cmp-seg button.active{ background:var(--blue); color:#fff; }
+    .cmp-seg button:not(.active):hover{ background:var(--blue-pale); }
+    table.cmp-table{ width:100%; border-collapse:collapse; font-size:.86rem; }
+    table.cmp-table th, table.cmp-table td{ padding:8px 6px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
+    table.cmp-table th:first-child, table.cmp-table td:first-child{ text-align:left; color:var(--ink-soft); font-weight:700; font-size:.78rem; white-space:normal; }
+    table.cmp-table thead th{ font-size:.76rem; color:var(--ink-soft); border-bottom:2px solid var(--blue-pale2); }
+    table.cmp-table td{ font-weight:700; }
+    .cmp-diff-up{ color:var(--good); }
+    .cmp-diff-down{ color:#d05a6e; }
+    .cmp-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
     table.cf td.neg{ color:var(--bad); font-weight:700; }
     table.cf td.networth{ font-weight:700; color:var(--blue-deep); }
     table.cf td.kids{ color:var(--ink-soft); font-size:.8rem; }
@@ -838,6 +865,26 @@
       <!-- ===================== 結果パネル ===================== -->
       <div class="results" id="results">
 
+        <!-- 現状 ⇔ 対策後 プラン比較（ワンクリック切替）-->
+        <div class="card compare-card no-print" id="compare-card">
+          <div class="card-title"><i class="fa-solid fa-code-compare"></i> 現状 と 対策後 をくらべる</div>
+          <div id="cmp-setup">
+            <p class="cmp-lead">いまの入力内容を「<b>現状プラン</b>」として記録し、そのあと積立・保険・住まいなどを変更すると、<b>対策の効果をワンクリックで比較</b>できます。</p>
+            <button class="btn btn-primary btn-full" id="cmp-record" type="button"><i class="fa-solid fa-camera"></i> いまの内容を「現状」として記録して比較をはじめる</button>
+          </div>
+          <div id="cmp-active" hidden>
+            <div class="cmp-seg" id="cmp-seg">
+              <button type="button" data-view="a"><i class="fa-solid fa-clock-rotate-left"></i> 現状プラン</button>
+              <button type="button" data-view="b" class="active"><i class="fa-solid fa-wand-magic-sparkles"></i> 対策後プラン</button>
+            </div>
+            <p class="cmp-lead" id="cmp-hint"></p>
+            <div id="cmp-kpis"></div>
+            <div class="cmp-actions">
+              <button class="btn btn-ghost btn-sm" id="cmp-clear" type="button"><i class="fa-solid fa-xmark"></i> 比較を終了</button>
+            </div>
+          </div>
+        </div>
+
         <!-- KPI：○歳時点の総資産額＋インフレ後の実質価値（年齢は編集できます）-->
         <div class="kpi-grid">
           <div class="kpi kpi-total">
@@ -890,8 +937,16 @@
           <div class="card-title"><i class="fa-solid fa-robot"></i> AIになんでも相談チャット
             <button class="btn btn-primary btn-sm" id="open-reserve" style="margin-left:auto;"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約</button>
           </div>
-          <p class="chat-hint">保険・NISA・iDeCo・国債・相続・税金・教育費・住宅・年金など、気になることをご質問ください。その場でお答えします。</p>
+          <p class="chat-hint">ご入力いただいた家族構成・収入・資産をAIが読み取り、<b>あなたの数字で</b>その場で診断します。下のボタンをタップするだけでもOKです。</p>
           <div class="chat-log" id="chat-log"></div>
+          <div class="chat-quick" id="chat-quick">
+            <button class="chat-chip" type="button" data-q="保険は必要？">🛡️ 保険は必要？</button>
+            <button class="chat-chip" type="button" data-q="老後資金は足りる？">🏖️ 老後資金は足りる？</button>
+            <button class="chat-chip" type="button" data-q="NISAは始めるべき？">📈 NISAは始めるべき？</button>
+            <button class="chat-chip" type="button" data-q="教育費はいくらかかる？">🎓 教育費はいくら？</button>
+            <button class="chat-chip" type="button" data-q="住宅ローンは大丈夫？">🏠 住宅ローンは大丈夫？</button>
+            <button class="chat-chip" type="button" data-q="相続税はかかる？">📜 相続税はかかる？</button>
+          </div>
           <div class="chat-input">
             <input type="text" id="chat-text" placeholder="質問を入力（例：NISAは始めるべき？）" autocomplete="off">
             <button class="btn btn-primary btn-sm" id="chat-send" type="button"><i class="fa-solid fa-paper-plane"></i></button>
@@ -1749,7 +1804,96 @@
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
       drawTable(rows);
       drawAssetTable(rows);
+      updateCompare(rows);
     }
+
+    /* ============================================================
+       現状 ⇔ 対策後 プラン比較（ワンクリック切替）
+       「現状」を記録 → 入力を変更 → セグメントボタンで即切替。
+       グラフにはもう一方のプランの総資産を点線で重ねて表示する。
+       ============================================================ */
+    let cmp = { on:false, view:'b', a:null, b:null, sumA:null, sumB:null };
+
+    function scenarioSummary(rows){
+      let minRow = rows[0], depletion = null;
+      rows.forEach(r=>{ if(r.net < minRow.net) minRow = r; if(!depletion && r.net < 0) depletion = r; });
+      const at = (age)=>{ const r = rows.find(x=> x.hAge===age) || rows[rows.length-1]; return Math.round(r.net); };
+      const byAge = {};
+      rows.forEach(r=> byAge[r.hAge] = Math.round(r.net));
+      const endRow = rows[rows.length-1];
+      return { byAge, at65:at(65), end:Math.round(endRow.net), endAge:endRow.hAge, min:Math.round(minRow.net), minAge:minRow.hAge, depAge: depletion ? depletion.hAge : null };
+    }
+
+    // recomputeのたびに、表示中プランの結果を記録して比較表を更新
+    function updateCompare(rows){
+      if(!cmp.on) return;
+      cmp[cmp.view==='a' ? 'sumA' : 'sumB'] = scenarioSummary(rows);
+      renderCompareTable();
+    }
+
+    // グラフに重ねる「もう一方のプラン」（点線）
+    function cmpGhost(){
+      if(!cmp.on) return null;
+      const s = cmp.view==='a' ? cmp.sumB : cmp.sumA;
+      if(!s) return null;
+      return { label: cmp.view==='a' ? '対策後プラン（総資産）' : '現状プラン（総資産）', byAge: s.byAge };
+    }
+
+    function diffCell(b, a){
+      const d = Math.round(b - a);
+      if(!isFinite(d) || d===0) return '<td>±0</td>';
+      const cls = d>0 ? 'cmp-diff-up' : 'cmp-diff-down';
+      return `<td class="${cls}">${d>0?'＋':'−'}${fmt(Math.abs(d))}</td>`;
+    }
+
+    function renderCompareTable(){
+      const el = $('cmp-kpis'); if(!el) return;
+      const A = cmp.sumA, B = cmp.sumB;
+      if(!A || !B){ el.innerHTML = ''; return; }
+      const dep = (s)=> s.depAge ? `<span class="cmp-diff-down">${s.depAge}歳で不足</span>` : `<span class="cmp-diff-up">なし</span>`;
+      const row = (label, a, b, diff)=> `<tr><td>${label}</td><td>${a}</td><td><b>${b}</b></td>${diff}</tr>`;
+      el.innerHTML = `<table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>対策後</th><th>差</th></tr></thead><tbody>
+        ${row('65歳時点の総資産', fmt(A.at65), fmt(B.at65), diffCell(B.at65, A.at65))}
+        ${row(`最終（${B.endAge}歳）の総資産`, fmt(A.end), fmt(B.end), diffCell(B.end, A.end))}
+        ${row('いちばん少ない時の残高', fmt(A.min), fmt(B.min), diffCell(B.min, A.min))}
+        ${row('資金ショート', dep(A), dep(B), '<td>—</td>')}
+      </tbody></table>`;
+    }
+
+    function updateCmpSeg(){
+      const seg = $('cmp-seg'); if(!seg) return;
+      [...seg.querySelectorAll('button')].forEach(b=> b.classList.toggle('active', b.dataset.view===cmp.view));
+      const hint = $('cmp-hint');
+      if(hint) hint.innerHTML = cmp.view==='b'
+        ? '<b>対策後プラン</b>を表示中。左の入力を自由に変更すると、現状との差が下の表とグラフの点線ですぐ分かります。'
+        : '<b>現状プラン</b>（記録した内容）を表示中。上のボタンで「対策後」にいつでも戻れます。';
+    }
+
+    if($('cmp-record')) $('cmp-record').addEventListener('click', ()=>{
+      cmp.on = true; cmp.view = 'b';
+      cmp.a = collectState(); cmp.b = null;
+      const s = scenarioSummary(simulate().rows);
+      cmp.sumA = s; cmp.sumB = s;
+      $('cmp-setup').hidden = true; $('cmp-active').hidden = false;
+      updateCmpSeg(); renderCompareTable(); recompute();
+    });
+
+    if($('cmp-seg')) $('cmp-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button');
+      if(!b || !cmp.on || b.dataset.view===cmp.view) return;
+      // いま表示中のプランを保存してから切り替える（両タブの編集内容はそれぞれ保持される）
+      if(cmp.view==='b') cmp.b = collectState(); else cmp.a = collectState();
+      cmp.view = b.dataset.view;
+      updateCmpSeg();
+      applyState(cmp.view==='a' ? cmp.a : (cmp.b || collectState()));
+    });
+
+    if($('cmp-clear')) $('cmp-clear').addEventListener('click', ()=>{
+      if(!confirm('比較を終了しますか？（いま表示中のプランが残ります）')) return;
+      cmp = { on:false, view:'b', a:null, b:null, sumA:null, sumB:null };
+      $('cmp-setup').hidden = false; $('cmp-active').hidden = true;
+      recompute();
+    });
 
     /* ---------- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）---------- */
     function drawAssetChart(rows){
@@ -1767,6 +1911,12 @@
           { type:'line', label:'総資産残高', data:totalD, borderColor:'#e8536a', backgroundColor:'rgba(232,83,106,.06)', borderWidth:2, pointRadius:0, fill:true, tension:.2, stack:'b', order:1 }
         ]
       };
+      // プラン比較中：もう一方のプランの総資産を点線で重ねる
+      const ghost = cmpGhost();
+      if(ghost){
+        data.datasets.push({ type:'line', label:ghost.label, data: rows.map(r=> (ghost.byAge[r.hAge]!=null ? ghost.byAge[r.hAge] : null)),
+          borderColor:'#8a97a5', borderDash:[7,5], borderWidth:2.5, pointRadius:0, fill:false, tension:.2, stack:'c', order:0 });
+      }
       if(assetChart){ assetChart.data=data; assetChart.update(); return; }
       assetChart = new Chart(ctx,{
         data,
@@ -1892,6 +2042,22 @@
           `教育費のピークに備え、お子さまが小さいうちからの積立が効果的です。学資保険やNISAの併用も検討を。`,
           `${kids}人分の進学時期は支出が重なります。今から少しずつ準備しておくと、その時期の負担が和らぎます。`
         ]));
+      }
+
+      // 保険（必要保障額の目安・入力データから自動計算）
+      const insN = insuranceNeed();
+      if(insN){
+        if(insN.need>0){
+          add('tip','fa-piggy-bank', V('ins',[
+            `万一の備え（生命保険）の目安は <b>約${fmt(insN.need)}万円</b>。末子独立まで${insN.yrs}年分の生活費・教育費から、遺族年金・収入・資産を差し引いた概算です。掛け捨ての収入保障保険なら割安に確保できます。`,
+            `必要保障額はざっくり <b>約${fmt(insN.need)}万円</b> の計算です。公的保障でカバーされない部分だけを、掛け捨て型で効率よく備えるのがコツです。`
+          ]));
+        } else {
+          add('ok','fa-piggy-bank', V('ins0',[
+            `万一の備えは、遺族年金などの公的保障といまの資産で<b>おおむねカバーできる計算</b>です。死亡保険は最小限でOK。医療・就業不能の備えを優先しましょう。`,
+            `必要保障額は計算上ゼロです。<b>大きな死亡保険は不要</b>で、医療保障や貯蓄の充実に回すのが合理的です。`
+          ]));
+        }
       }
 
       // 老後
@@ -2228,6 +2394,266 @@
     const pickOne = (a)=> a[Math.floor(Math.random()*a.length)];
     function sampleN(arr,n){ const a=arr.slice(),o=[]; while(o.length<n && a.length) o.push(a.splice(Math.floor(Math.random()*a.length),1)[0]); return o; }
 
+    /* ============================================================
+       個別診断エンジン（費用ゼロのルールベース）
+       「保険は必要？」等の質問に、ヒアリングせず①〜⑥の入力と
+       シミュレーション結果をまるごと読み込んで、その方の数字で即答する
+       ============================================================ */
+    function buildProfile(){
+      const single = isSingle();
+      const hAge = num('h-age',35), wAge = num('w-age',33);
+      const children = readChildren();
+      const sim = simulate();
+      const rows = sim.rows;
+      let minRow = rows[0], depletion = null;
+      rows.forEach(r=>{ if(r.net < minRow.net) minRow = r; if(!depletion && r.net < 0) depletion = r; });
+      const retireRow = rows.find(r=> r.hAge===sim.hRetire) || rows[rows.length-1];
+      const endRow = rows[rows.length-1];
+      const invs = readInvestments();
+      const living = readLivingMonthly();                                     // 生活費（月・万円）
+      const cashNow = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
+      const investNow = invs.reduce((a,v)=> a + (v.start<=hAge ? v.lump : 0), 0);
+      const hNet = grossToNet(num('h-income',0));
+      const wNet = single ? 0 : grossToNet(num('w-income',0));
+      // 教育費の残り（お子さまごと。独立＝進学終了年齢）
+      const indepAge = (c)=> 19 + ((HIGHED[c.highEd]?.years) || 0);
+      const eduByChild = children.map(c=>{
+        let s = 0; for(let a=Math.max(c.age,0); a<indepAge(c); a++) s += eduCostPerYear(a, c);
+        return { name:c.name, age:c.age, total:Math.round(s), indep:indepAge(c), c };
+      });
+      const eduRemain = eduByChild.reduce((a,x)=> a+x.total, 0);
+      const yearsToLastIndep = children.length ? Math.max(...eduByChild.map(x=> Math.max(x.indep - x.age, 0))) : 0;
+      return { single, hAge, wAge, children, rows, minRow, depletion, retireRow, endRow,
+               hRetire:sim.hRetire, endAge:sim.endAge, invs, living, cashNow, investNow,
+               assetsNow: cashNow+investNow, hNet, wNet, eduByChild, eduRemain, yearsToLastIndep };
+    }
+
+    /* 必要保障額の目安（夫に万一があった場合の簡易計算）。単身はnull */
+    function insuranceNeed(){
+      if(isSingle()) return null;
+      const p = buildProfile();
+      const yrs = p.children.length ? Math.max(p.yearsToLastIndep, 1) : 10;
+      let spend = p.living*12*0.7*yrs + p.eduRemain;                 // 遺族の生活費（現在の7割）＋教育費
+      if(houseType==='rent') spend += num('rent',0)*12*yrs;          // 賃貸なら家賃も（持ち家は団信でローン消滅）
+      const izoku = (p.children.length ? 150 : 60) * yrs;            // 遺族年金の目安（子ありは基礎＋厚生の概算）
+      const yrsW = Math.max(0, Math.min(yrs, num('w-retire',65) - p.wAge));
+      const cover = izoku + p.wNet*yrsW + p.assetsNow;               // 公的保障＋配偶者の収入＋いまの資産
+      const need = Math.max(0, Math.round((spend - cover)/100)*100); // 100万円単位に丸め
+      return { need, yrs, spend:Math.round(spend), cover:Math.round(cover), p };
+    }
+
+    /* 診断カードの組み立て */
+    function diagBox(facts, verdictCls, verdictHtml, body){
+      return `<div class="diag-head"><i class="fa-solid fa-user-check"></i> ご入力データからの個別診断</div>`
+        + (facts && facts.length ? `<ul class="diag-facts">${facts.map(f=>`<li>${f}</li>`).join('')}</ul>` : '')
+        + (verdictHtml ? `<span class="diag-verdict ${verdictCls}">${verdictHtml}</span>` : '')
+        + (body ? `<span>${body}</span>` : '')
+        + `<div class="chat-cta-wrap"><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button> <button class="chat-cta chat-cta-no" type="button" data-chatno>もう少し考える</button></div>`
+        + `<div class="diag-note">※ 一般的な目安による概算です。正確な設計は無料相談で承ります。</div>`;
+    }
+    function famFact(p){
+      const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
+      return `ご家族：${p.single ? `${esc(hName())}（${p.hAge}歳・単身）` : `ご夫婦（${esc(hName())} ${p.hAge}歳・${esc(wName())} ${p.wAge}歳）`}${kids}`;
+    }
+
+    const DIAG = {
+      /* 保険は必要？ */
+      hoken(){
+        const p = buildProfile();
+        const loanLeft = (houseType!=='rent') && (num('house-price',0) - num('down',0)) > 0;
+        const facts = [ famFact(p),
+          `世帯の手取り収入：年 約<b>${fmt(p.hNet + p.wNet)}万円</b>`,
+          `いまの金融資産：<b>${fmt(p.assetsNow)}万円</b>（預貯金 ${fmt(p.cashNow)}＋運用 ${fmt(p.investNow)}）` ];
+        if(p.children.length) facts.push(`今後の教育費：合計 約<b>${fmt(p.eduRemain)}万円</b>（${p.eduByChild.map(x=>`${esc(x.name)} ${fmt(x.total)}`).join('・')}）`);
+        facts.push(houseType==='rent'
+          ? `住まい：賃貸（家賃 月${fmt(num('rent',0))}万円）→ 万一の後も家賃がかかるため保障に含めます`
+          : `住まい：持ち家${loanLeft ? '（ローンは<b>団信</b>で万一の際ゼロに→保障に含めません）' : ''}`);
+        if(p.single){
+          return diagBox(facts, 'ok',
+            `診断：大きな死亡保障は<b>原則不要</b>です。`,
+            `単身の場合の優先順位は<b>①医療・就業不能への備え ②貯蓄</b>です。医療費は高額療養費制度で自己負担に上限があるため、預貯金${fmt(p.cashNow)}万円と合わせて、入院時の収入減を補う最小限の保障で足りることが多いです。`);
+        }
+        const n = insuranceNeed();
+        if(n.need<=0){
+          return diagBox(facts, 'ok',
+            `診断：計算上、<b>公的保障＋いまの資産で必要額をカバーできています。</b>大きな死亡保険は不要です。`,
+            `万一の際に必要な資金 約${fmt(n.spend)}万円に対し、遺族年金・${esc(wName())}の収入・資産の合計が約${fmt(n.cover)}万円あります。医療保険や就業不能への備えを優先的に検討しましょう。`);
+        }
+        return diagBox(facts, 'warn',
+          `診断：必要保障額の目安は <b>約${fmt(n.need)}万円</b> です。`,
+          `${p.children.length ? `末子が独立するまでの${n.yrs}年分` : `${n.yrs}年分`}の生活費（現在の7割）${p.children.length?'と教育費':''}${houseType==='rent'?'と家賃':''}から、遺族年金・${esc(wName())}の収入・いまの資産を差し引いた概算です。この規模なら<b>掛け捨ての収入保障保険</b>が月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で減らしていくのがコツです。`);
+      },
+
+      /* 老後資金は足りる？ */
+      nenkin(){
+        const p = buildProfile();
+        const pensionM = num('pension-monthly',0), retLiving = num('e-retire-living',24);
+        const gapM = retLiving - pensionM;
+        const facts = [ famFact(p),
+          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionM)}万円</b>（${num('pension-age',65)}歳〜）`,
+          `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金との差は月${fmt(Math.max(gapM,0))}万円`,
+          `退職時（${p.hRetire}歳）の金融資産見込み：<b>${fmt(p.retireRow.net)}万円</b>` ];
+        if(p.depletion){
+          return diagBox(facts, 'bad',
+            `診断：このままだと<b>${p.depletion.hAge}歳ごろに資金が不足</b>する見込みです。`,
+            `対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す ④年金の繰下げ受給（最大+84%）。上の「<b>現状と対策後をくらべる</b>」で、対策の効果をワンクリックで確認できます。`);
+        }
+        return diagBox(facts, 'ok',
+          `診断：<b>${p.endAge}歳まで資金ショートしない見込みです。</b>（最少残高 ${fmt(p.minRow.net)}万円・${p.minRow.hAge}歳時点）`,
+          `最終${p.endAge}歳時点の総資産は約${fmt(p.endRow.net)}万円の見込みです。さらに余裕をつくるなら、年金の繰下げ受給（1か月+0.7%）や運用の継続が有効です。`);
+      },
+
+      /* NISAは始めるべき？／資産運用 */
+      nisa(){
+        const p = buildProfile();
+        const totalMonthly = p.invs.reduce((a,v)=> a+v.monthly, 0);
+        const surplus = Math.max(0, Math.round(p.rows[0].income - p.rows[0].expense));   // 年間の黒字余力
+        const defense = Math.round(p.living*6);                                          // 生活防衛資金（生活費6か月分）
+        const noInv = simulate(0).rows;
+        const nr = noInv.find(r=> r.hAge===p.hRetire) || noInv[noInv.length-1];
+        const ben = Math.max(0, Math.round(p.retireRow.net - nr.net));
+        const facts = [ famFact(p),
+          `いまの運用：${totalMonthly>0 ? `月<b>${fmt(totalMonthly)}万円</b> 積立中（${p.invs.map(v=>esc(v.name)).join('・')}）` : '<b>なし</b>'}`,
+          `年間の黒字余力：約<b>${fmt(surplus)}万円</b>（手取り−支出）`,
+          `生活防衛資金の目安：<b>${fmt(defense)}万円</b>（生活費6か月分）⇔ いまの預貯金 ${fmt(p.cashNow)}万円` ];
+        if(p.cashNow < defense){
+          return diagBox(facts, 'warn',
+            `診断：投資の前に、まず<b>生活防衛資金 ${fmt(defense)}万円</b> を預貯金で確保しましょう。`,
+            `いまの預貯金は${fmt(p.cashNow)}万円で、目安まであと${fmt(defense-p.cashNow)}万円です。確保できたら、新NISAのつみたて投資枠で<b>月1〜3万円の少額</b>から始めるのが王道です。運用益は無期限で非課税です。`);
+        }
+        if(totalMonthly<=0){
+          const rec = Math.max(1, Math.min(Math.floor(surplus/24), 10));
+          return diagBox(facts, 'warn',
+            `診断：<b>始める余地は十分</b>あります。まずは月${fmt(rec)}万円程度からがおすすめです。`,
+            `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。左の「⑤資産運用」に追加すると、このシミュレーションにすぐ反映されます。`);
+        }
+        return diagBox(facts, 'ok',
+          `診断：いまの積立を<b>続けてOK</b>です。運用効果は退職時で <b>約${fmt(ben)}万円</b> のプラスです。`,
+          `運用しなかった場合と比べ、${p.hRetire}歳時点で約${fmt(ben)}万円の差が生まれる試算です。相場が下がっても<b>やめずに続ける</b>ことが、長期投資の最大のコツです。`);
+      },
+
+      /* 教育費はいくら？ */
+      kyoiku(){
+        const p = buildProfile();
+        if(!p.children.length){
+          return diagBox([famFact(p)], 'warn',
+            `診断：お子さまの情報が未入力です。`,
+            `左の「<b>② お子さま</b>」で年齢と進学プランを追加していただくと、教育費の総額と毎月の準備額を自動で診断します。`);
+        }
+        const univ = (c)=>{ const i = HIGHED[c.highEd] || HIGHED.none; return i.years*i.annual + (c.lodging==='boarding' ? LODGING_ANNUAL*i.years : 0); };
+        const facts = [ famFact(p),
+          ...p.eduByChild.map(x=> `${esc(x.name)}（${x.age}歳）：今後 約<b>${fmt(x.total)}万円</b>（うち19歳からの進学費 ${fmt(univ(x.c))}万円）`) ];
+        const yg = p.eduByChild.reduce((a,x)=> x.age<a.age ? x : a, p.eduByChild[0]);   // 末子
+        const yrsToUniv = Math.max(19 - yg.age, 1);
+        const monthly = Math.ceil(univ(yg.c) / (yrsToUniv*12) * 10) / 10;
+        return diagBox(facts, 'warn',
+          `診断：お子さま${p.children.length}人の教育費は、今後 <b>合計 約${fmt(p.eduRemain)}万円</b> です。`,
+          `いちばんの山は<b>19歳からの進学費用</b>です。${esc(yg.name)}の進学まであと${yrsToUniv}年なので、<b>月 約${monthly}万円</b>の積立（児童手当の活用＋新NISA併用）で無理なく準備できます。祖父母からの教育資金一括贈与（最大1,500万円非課税）も選択肢です。`);
+      },
+
+      /* 住宅ローンは大丈夫？ */
+      jutaku(){
+        const p = buildProfile();
+        if(houseType==='rent'){
+          const rent = num('rent',0);
+          const yrsAll = Math.max(p.endAge - p.hAge, 0);
+          return diagBox([ famFact(p), `住まい：賃貸（家賃 月<b>${fmt(rent)}万円</b>）`, `${p.endAge}歳までの家賃総額：約<b>${fmt(rent*12*yrsAll)}万円</b>` ],
+            'warn', `診断：生涯の家賃負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
+            `左の「③住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。上の「<b>現状と対策後をくらべる</b>」を使うとワンクリックで比較できます。`);
+        }
+        const price = num('house-price',0), down = num('down',0);
+        const principal = Math.max(price - down, 0);
+        const mPay = monthlyPayment(principal, num('loan-rate',0), num('loan-term',35));
+        const netY = p.hNet + p.wNet;
+        const ratio = netY>0 ? Math.round(mPay*12/netY*100) : 0;
+        const facts = [ famFact(p),
+          `物件 ${fmt(price)}万円／頭金 ${fmt(down)}万円 → 借入 <b>${fmt(principal)}万円</b>`,
+          `毎月の返済：約<b>${fmt(mPay)}万円</b>（金利${num('loan-rate',0)}%・${num('loan-term',35)}年）`,
+          `返済負担率：手取り収入の <b>約${ratio}%</b>（安心の目安は20〜25%以内）` ];
+        if(ratio<=25){
+          return diagBox(facts, 'ok',
+            `診断：返済負担率${ratio}%は<b>無理のない範囲</b>です。`,
+            `住宅ローン控除（年末残高×0.7%・最大13年）も収入に反映済みです。低金利のうちは繰上返済を急ぐより、<b>NISA等の運用に回す</b>選択も有効です。団信により万一の際は返済がなくなります。`);
+        }
+        return diagBox(facts, 'warn',
+          `診断：返済負担率${ratio}%は<b>やや重め</b>です（目安は25%以内）。`,
+          `①頭金を増やす ②返済期間を延ばす ③物件価格を見直す のいずれかで負担率を下げられます。左の「③住まい」の数字を変えると、この場で効果を確認できます。`);
+      },
+
+      /* iDeCo */
+      ideco(){
+        const p = buildProfile();
+        const gross = num('h-income',0);
+        const rate = gross<=300 ? 0.15 : gross<=500 ? 0.20 : gross<=800 ? 0.30 : 0.33;
+        const save = Math.round(2.3*12*rate*10)/10;
+        return diagBox([ famFact(p),
+          `${esc(hName())}の年収（額面）：<b>${fmt(gross)}万円</b> → 想定税率 約${Math.round(rate*100)}%（所得税＋住民税）`,
+          `会社員の掛金上限：月2.3万円（企業年金なしの場合）` ],
+          'ok', `診断：iDeCoに月2.3万円拠出すると、<b>年 約${save}万円</b> 税金が軽くなる目安です。`,
+          `掛金は全額所得控除・運用益も非課税で、老後資金づくりと節税を同時にできます。ただし<b>60歳まで引き出せない</b>ため、教育費などに使うお金はNISA、老後専用のお金はiDeCo、と使い分けるのが王道です。`);
+      },
+
+      /* 相続税はかかる？ */
+      souzoku(){
+        const p = buildProfile();
+        const heirs = (p.single ? 0 : 1) + p.children.length;
+        const base = 3000 + 600*Math.max(heirs,1);
+        let peakRow = p.rows[0]; p.rows.forEach(r=>{ if(r.net > peakRow.net) peakRow = r; });
+        const facts = [ famFact(p),
+          `法定相続人：<b>${Math.max(heirs,1)}人</b>${heirs>0?`（${p.single?'':'配偶者'}${p.children.length?`${p.single?'':'＋'}お子さま${p.children.length}人`:''}）`:''} → 基礎控除 <b>${fmt(base)}万円</b>`,
+          `金融資産のピーク：約<b>${fmt(peakRow.net)}万円</b>（${peakRow.hAge}歳時点）${houseType!=='rent' ? '＋ご自宅の評価額' : ''}` ];
+        if(peakRow.net + (houseType!=='rent' ? num('house-price',0)*0.7 : 0) <= base){
+          return diagBox(facts, 'ok',
+            `診断：試算上は<b>基礎控除の範囲内</b>で、相続税はかからない見込みです。`,
+            `相続税より大切なのは<b>分け方（遺産分割）</b>の準備です。遺言書があると手続きがスムーズで、争い防止にも役立ちます。`);
+        }
+        return diagBox(facts, 'warn',
+          `診断：資産のピーク時には<b>基礎控除を超える可能性</b>があります。`,
+          `対策の候補：①暦年贈与（年110万円まで非課税）②生命保険の非課税枠（500万円×法定相続人）③ご自宅の小規模宅地等の特例（評価最大▲80%）。対策は早いほど選択肢が広がります。当事務所は税理士事務所ですので、正確な試算が可能です。`);
+      },
+
+      /* 税金・節税 */
+      zeikin(){
+        const p = buildProfile();
+        const gross = num('h-income',0);
+        const FURU = [[300,2.8],[400,4.2],[500,6.1],[600,7.7],[700,10.8],[800,12.9],[900,15.1],[1000,17.6],[1500,38],[2000,55]];
+        let furu = FURU[0][1];
+        for(let i=0;i<FURU.length;i++){
+          if(gross>=FURU[i][0]) furu = FURU[i][1];
+          if(i<FURU.length-1 && gross>FURU[i][0] && gross<FURU[i+1][0]){
+            const [g1,f1] = FURU[i], [g2,f2] = FURU[i+1];
+            furu = Math.round((f1 + (f2-f1)*(gross-g1)/(g2-g1))*10)/10;
+          }
+        }
+        const facts = [ famFact(p),
+          `${esc(hName())}の年収（額面）：<b>${fmt(gross)}万円</b>`,
+          `ふるさと納税の上限目安：<b>年 約${furu}万円</b>（実質2,000円で返礼品）`,
+          `${houseType!=='rent' ? '住宅ローン控除：適用中（シミュレーションに反映済み）' : 'iDeCo・医療費控除・生命保険料控除も対象になり得ます'}` ];
+        return diagBox(facts, 'ok',
+          `診断：まずは<b>ふるさと納税＋iDeCo</b>で、年数万円レベルの節税が見込めます。`,
+          `会社員の節税の柱は①ふるさと納税 ②iDeCo（掛金全額控除）③医療費控除（世帯で年10万円超）④住宅ローン控除 です。取りこぼしがないか、年末調整・確定申告の前にチェックしましょう。`);
+      },
+
+      /* 国債・預け先 */
+      kokusai(){
+        const p = buildProfile();
+        const defense = Math.round(p.living*6);
+        const extra = Math.max(0, p.cashNow - defense);
+        const facts = [ famFact(p),
+          `いまの預貯金：<b>${fmt(p.cashNow)}万円</b>`,
+          `生活防衛資金の目安：<b>${fmt(defense)}万円</b>（生活費6か月分）` ];
+        if(extra>0){
+          return diagBox(facts, 'ok',
+            `診断：預貯金のうち <b>約${fmt(extra)}万円</b> は当面使わない資金です。`,
+            `この部分は<b>個人向け国債（変動10年）</b>の置き場所に向きます。元本保証・最低金利0.05%保証で、金利上昇にも追随します。「増やすお金はNISA、守るお金は国債・預金」と役割を分けるのがおすすめです。`);
+        }
+        return diagBox(facts, 'warn',
+          `診断：いまは<b>生活防衛資金の確保を優先</b>しましょう。`,
+          `預貯金が生活費6か月分（${fmt(defense)}万円）に届くまでは、元本が動かない預金中心で。確保できたら、余裕資金の置き場所として国債やNISAを検討しましょう。`);
+      }
+    };
+    DIAG.toushi = DIAG.nisa;   // 「投資すべき？」もNISA診断と同じロジックで
+
     /* FP1級・税理士レベルの知識ベース。説明文を毎回ランダムに組み合わせ、100通り以上の回答を生成 */
     const KB = {
       nisa:{ label:'NISA', re:/nisa|ニーサ|つみたて|積立/i,
@@ -2275,7 +2701,7 @@
     const OPENERS = ['','{T}についてですね。','{T}のご質問、ありがとうございます。','{T}は多くの方が気にされるところです。','なるほど、{T}のお話ですね。','{T}は大切なテーマですよね。','いいご質問です。{T}についてお答えしますね。','{T}について、ポイントを整理しますね。','{T}、承知しました。','{T}のことですね。一緒に見ていきましょう。'];
     const CLOSERS = ['','ご家庭の状況に合わせて最適化できます。','まずは無理のない範囲から始めましょう。','上のシミュレーションと合わせて見ると判断しやすくなりますよ。','ご不明な点は、いつでも掘り下げてご説明します。','優先順位をつけて、できることから整えていきましょう。','気になる点があれば、続けてお気軽にご質問くださいね。','ご自身のペースで進めて大丈夫ですよ。','ほかにも知りたいことがあれば、何でも聞いてください。'];
     const CONNECTORS = ['','また、','そして、','あわせて、','なお、','ちなみに、','加えて、'];
-    const NECESSITY = /必要|いる[?？]|入った方|入る?べき|始めた方|始める?べき|やった方|やる?べき|すべき|した方が|やめた方|やめる?べき|迷っ|どうすれ|どうしたら|べき[?？]?$|どっち|比較して/;
+    const NECESSITY = /必要|いる[?？]|入った方|入る?べき|始めた方|始める?べき|やった方|やる?べき|すべき|した方が|やめた方|やめる?べき|迷っ|どうすれ|どうしたら|べき[?？]?$|どっち|比較して|足り|いくら|大丈夫|かかる|見直/;
 
     function detectTopic(q){ for(const k of TOPIC_ORDER){ if(KB[k].re.test(q)) return k; } return null; }
     // ファクトを接続詞でつなぎ、言い回しに変化を出す
@@ -2301,32 +2727,16 @@
       return (op?op+' ':'') + joinFacts(fs) + (cl?' '+cl:'');
     }
 
-    let chatState = { mode:'idle', topic:null, step:0 };
     function botAnswer(q){
-      // 深掘り会話の途中
-      if(chatState.mode==='deep'){
-        const kb = chatState.topic ? KB[chatState.topic] : null;
-        if(chatState.step===1){
-          chatState.step = 2;
-          const probe2 = kb ? kb.probes[1] : '今の家計やお気持ちで、いちばん不安に感じている点はどこですか？';
-          return { html:'なるほど、ありがとうございます。'+probe2, known:true, personal:false };
-        } else {
-          chatState = { mode:'idle', topic:null, step:0 };
-          const concl = kb ? kb.concl : 'お話を踏まえると、まずは家計全体のバランスを整えたうえで、必要な備えを優先順位をつけて準備するのがよさそうです。';
-          return { html:'ありがとうございます。'+concl+'<br>ただ、最適な答えはお一人おひとり違います。<b>詳しくは専門家に相談してみましょう。</b><br>専門家にお繋ぎしましょうか？'+
-            `<div class="chat-cta-wrap"><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-circle-check"></i> はい、専門家につないでほしい</button> <button class="chat-cta chat-cta-no" type="button" data-chatno>いいえ、もう少し考える</button></div>`, known:true, personal:false };
-        }
-      }
       const topic = detectTopic(q);
-      // 「必要？／すべき？」などの相談 → 深掘りモードへ
-      if(NECESSITY.test(q)){
-        chatState = { mode:'deep', topic, step:1 };
-        const kb = topic ? KB[topic] : null;
-        const t = kb ? kb.label : 'そのこと';
-        const probe1 = kb ? kb.probes[0] : `${t}について迷っていらっしゃるのですね。差し支えなければ、そう思われた<b>きっかけ</b>を教えていただけますか？`;
-        return { html:probe1, known:true, personal:false };
+      // 「必要？／足りる？／いくら？」などの相談 → ヒアリングせず、入力データから即・個別診断
+      if(topic && DIAG[topic] && NECESSITY.test(q)){
+        return { html: DIAG[topic](), known:true, personal:false };
       }
       if(topic) return { html: genAnswer(topic), known:true, personal:true };
+      if(NECESSITY.test(q)){
+        return { html:'ご入力いただいたデータから、具体的な数字で診断できます。下のボタン（保険・老後資金・NISA・教育費・住宅・相続）からお選びいただくか、「保険は必要？」のように聞いてみてください。', known:true, personal:false };
+      }
       return { html:'ご質問ありがとうございます。NISA・iDeCo・保険・国債・相続・税金・住宅・教育・年金など幅広くお答えできますが、ご質問の意図をうまく読み取れませんでした。言い回しを変えてお試しいただくか、', known:false, personal:false };
     }
 
@@ -2359,11 +2769,15 @@
     });
     $('chat-send').addEventListener('click', ()=> sendChat($('chat-text').value));
     $('chat-text').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat($('chat-text').value); });
+    // ワンタップ質問（チップ）→ そのまま質問として送信
+    if($('chat-quick')) $('chat-quick').addEventListener('click', (e)=>{
+      const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
+    });
     // 最初のあいさつ（お名前を反映）
     function chatGreeting(){
       const nm = (document.getElementById('h-name')?.value||'').trim();
       const hello = nm ? `${esc(nm)}さん、こんにちは！` : 'こんにちは！';
-      addMsg('bot', `${hello}保険・NISA・iDeCo・国債・相続・税金・住宅・年金など、お金のことなら何でもお気軽にご質問ください。`);
+      addMsg('bot', `${hello}保険・NISA・老後資金・教育費・住宅・相続など、お金のことなら何でもどうぞ。<b>ご入力データを読み取って、あなたの数字で診断</b>します。下のボタンをタップするだけでもOKです。`);
     }
     chatGreeting();
 

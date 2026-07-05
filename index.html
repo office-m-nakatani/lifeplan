@@ -453,10 +453,12 @@
     .adv-sum-body b.adv-sum-title{ display:block; font-size:1rem; margin-bottom:3px; color:var(--ink); }
     .adv-sum-body{ font-size:.9rem; line-height:1.7; }
     .adv-cats-hint{ font-size:.8rem; color:var(--ink-soft); margin:2px 0 8px; }
-    .adv-cats{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
-    .adv-cat{ display:inline-flex; align-items:center; gap:7px; border:1.5px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:9px 13px; font-family:inherit; font-size:.86rem; font-weight:700; cursor:pointer; transition:all .15s; }
-    .adv-cat .adv-cat-ico{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:.7rem; }
-    .adv-cat .adv-cat-flag{ font-size:.66rem; font-weight:800; padding:1px 7px; border-radius:999px; }
+    .adv-cats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .adv-cats .adv-cat:first-child{ grid-column:1 / -1; }
+    @media(max-width:640px){ .adv-cats{ grid-template-columns:repeat(2,1fr); } }
+    .adv-cat{ display:flex; align-items:center; justify-content:center; gap:7px; border:1.5px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:9px 10px; font-family:inherit; font-size:.86rem; font-weight:700; cursor:pointer; transition:all .15s; text-align:center; }
+    .adv-cat .adv-cat-ico{ width:22px; height:22px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:.7rem; }
+    .adv-cat .adv-cat-flag{ font-size:.66rem; font-weight:800; padding:1px 7px; border-radius:999px; white-space:nowrap; }
     .adv-cat .flag-ok{ background:var(--good-pale); color:#2f8a6e; }
     .adv-cat .flag-warn{ background:var(--warn-pale); color:#a4711f; }
     .adv-cat .flag-bad{ background:var(--bad-pale); color:#bf5656; }
@@ -764,13 +766,13 @@
               <div class="loan-payoff-box" data-couple-only>
                 <div class="lp-title"><i class="fa-solid fa-people-roof"></i> 住宅ローンの組み方（万一のときの保障に反映）</div>
                 <div class="field">
-                  <label>ローンの名義・団信（だんしん）</label>
+                  <label>ローンの名義・団体信用生命保険（団信）</label>
                   <div class="seg seg-wrap" id="loan-type-seg">
                     <button type="button" data-loantype="solo-h" class="active">夫の単独（夫が団信）</button>
                     <button type="button" data-loantype="solo-w">妻の単独（妻が団信）</button>
                     <button type="button" data-loantype="pair">ペアローン（夫婦）</button>
                   </div>
-                  <span class="hint">団信＝名義人に万一があると残債がゼロに。ペアローンは夫婦それぞれが団信に加入します。</span>
+                  <span class="hint">団体信用生命保険（団信）＝名義人に万一があると残債がゼロになる保険。ペアローンは夫婦それぞれが団信に加入します。</span>
                 </div>
                 <div class="field hidden" id="loan-share-field" style="max-width:360px;">
                   <label><b id="loan-share-hname">夫</b> ： <b id="loan-share-wname">妻</b> の借入割合</label>

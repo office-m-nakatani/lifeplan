@@ -3617,7 +3617,8 @@
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
       const code = encodeShareState(collectState(), pass);
-      const url = location.origin + location.pathname + '#share=' + code;
+      // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
+      const url = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
       const nm = ($('h-name')?.value||'').trim();
       $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
       $('share-setup').hidden=true; $('share-result').hidden=false;

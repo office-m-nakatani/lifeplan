@@ -252,6 +252,8 @@
     .row-item.event-row{ padding-bottom:26px; }
     .event-row > .field.ev-age-field{ position:relative; }
     .ev-wife{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; color:#c2729a; }
+    .event-row > .field.ev-every-field{ position:relative; }
+    .event-row > .field.ev-every-field > .hint{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; }
     .row-item.income-row{ grid-template-columns:0.9fr 1.3fr 0.9fr auto; padding-bottom:26px; }
     .income-row > .field.ev-age-field{ position:relative; }
     .ir-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
@@ -775,9 +777,14 @@
                 <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
               </div>
 
-              <!-- 金利タイプ（固定／変動）-->
+              <!-- 返済方法（元利均等／元金均等）＋ 金利タイプ（固定／変動）-->
               <div class="loan-rate-box">
-                <div class="lp-title"><i class="fa-solid fa-chart-line"></i> 金利タイプ</div>
+                <div class="lp-title"><i class="fa-solid fa-scale-balanced"></i> 返済方法</div>
+                <div class="seg seg-wrap" id="loan-repaytype-seg">
+                  <button type="button" data-repaytype="ganri" class="active">元利均等返済（毎月の返済額が一定）</button>
+                  <button type="button" data-repaytype="gankin">元金均等返済（毎月の元金部分が一定）</button>
+                </div>
+                <div class="lp-title" style="margin-top:16px;"><i class="fa-solid fa-chart-line"></i> 金利タイプ</div>
                 <div class="seg seg-wrap" id="loan-ratetype-seg">
                   <button type="button" data-ratetype="fixed" class="active">固定金利</button>
                   <button type="button" data-ratetype="step5">5年ごと変動</button>
@@ -1400,7 +1407,7 @@
         <div class="field"><label>金額</label>
           <div class="input-unit"><input type="number" class="ev-amount" value="${amount}" min="0" step="10"><span class="u">万円</span></div>
         </div>
-        <div class="field"><label>繰り返し</label>
+        <div class="field ev-every-field"><label>繰り返し</label>
           <div class="input-unit"><input type="number" class="ev-every" value="${every}" min="0" max="50"><span class="u">年ごと</span></div>
           <span class="hint">0＝1回のみ</span>
         </div>
@@ -1618,10 +1625,19 @@
     // 返済期間を変えたら、期間ごとの金利欄の年数区切りも作り直す
     if($('loan-term')) $('loan-term').addEventListener('input', ()=>{ if(loanRateType()!=='fixed') buildLoanRatePeriodRows(loanRateType()); });
 
-    /* ---------- 住宅ローン：固定/変動金利・ボーナス払いに対応した月次返済スケジュール ----------
-       買った月を1か月目として、毎月の返済額・元金・利息・残高を配列で返す。
-       変動金利は見直し月にEMI（毎月返済額）を残存元本・残存期間で再計算し直す（実務の変動金利ローンと同じ方式）。
-       ボーナス月（6・12か月目ごと）には加算返済を残高からそのまま差し引く。 */
+    /* ---------- 住宅ローンの返済方法（元利均等／元金均等）---------- */
+    const loanRepayTypeSeg = $('loan-repaytype-seg');
+    const loanRepayType = ()=> loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri';
+    if(loanRepayTypeSeg) loanRepayTypeSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      [...loanRepayTypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      recompute();
+    });
+
+    /* ---------- 住宅ローン：固定/変動金利・元利均等/元金均等・ボーナス払いに対応した月次返済スケジュール ----------
+       通常返済（毎月）とボーナス返済（年2回・半年ごと）を、契約時の金利で按分した2本の償還を並行して計算し、
+       月次配列にまとめる。ボーナス払いは実際の住宅ローンと同じく契約当初から毎月の返済額に反映される。
+       変動金利は見直し月にEMI（返済額）を残存元本・残存期間で再計算し直す（実務の変動金利ローンと同じ方式）。 */
     function emiForMonths(principal, monthlyRate, months){
       if(months<=0) return 0;
       if(monthlyRate===0) return principal/months;
@@ -1649,35 +1665,80 @@
       }
       return arr;
     }
+    // 汎用の償還計算：元利均等（毎回の返済額を一定にする）／元金均等（毎回の元金部分を一定にする）
+    function amortizeStream(principal, rateSchedule, totalPayments, repayType){
+      const rows = [];
+      if(principal<=0 || totalPayments<=0) return rows;
+      let balance = principal;
+      if(repayType==='gankin'){
+        const fixedPrincipal = principal/totalPayments;
+        for(let i=0; i<totalPayments; i++){
+          const r = rateSchedule[i];
+          const interest = balance*r;
+          let princ = (i===totalPayments-1) ? balance : Math.min(fixedPrincipal, balance);
+          balance -= princ;
+          rows.push({ payment:princ+interest, principal:princ, interest, balance:Math.max(0,balance), rate:r });
+          if(balance<=0) break;
+        }
+        return rows;
+      }
+      let currentRate = rateSchedule[0];
+      let currentPay = emiForMonths(balance, currentRate, totalPayments);
+      for(let i=0; i<totalPayments; i++){
+        const r = rateSchedule[i];
+        if(r !== currentRate){ currentRate = r; currentPay = emiForMonths(balance, currentRate, totalPayments-i); }
+        const interest = balance*currentRate;
+        let princ = currentPay - interest;
+        if(i===totalPayments-1 || princ>=balance) princ = balance;
+        balance -= princ;
+        rows.push({ payment:princ+interest, principal:princ, interest, balance:Math.max(0,balance), rate:currentRate });
+        if(balance<=0) break;
+      }
+      return rows;
+    }
     function buildLoanSchedule(){
       const principal = Math.max(num('house-price',0)-num('down',0), 0);
       const term = num('loan-term',35);
       const totalMonths = Math.max(0, Math.round(term*12));
       const bonusPay = num('loan-bonus-pay',0);
+      const repayType = loanRepayType();
       const rateSchedule = getLoanRateSchedule(totalMonths);
+      if(principal<=0 || totalMonths<=0) return { rows:[], principal, totalMonths, rateSchedule };
+
+      // ボーナス返済分の元金を、契約当初の金利をもとに按分（実際の住宅ローンと同じ考え方）
+      const totalBonusPayments = Math.floor(totalMonths/6);   // 半年ごと＝年2回
+      const semiRateSchedule = [];
+      for(let i=0; i<totalBonusPayments; i++) semiRateSchedule.push((rateSchedule[Math.min(i*6+5, totalMonths-1)]||0) * 6);
+      let principalBonus = 0;
+      if(bonusPay>0 && totalBonusPayments>0){
+        const r0 = semiRateSchedule[0]||0;
+        principalBonus = r0===0 ? bonusPay*totalBonusPayments : bonusPay*(1-Math.pow(1+r0,-totalBonusPayments))/r0;
+        principalBonus = Math.min(principalBonus, principal*0.9);   // 通常返済分が0にならないよう安全側にクランプ
+      }
+      const principalMonthly = principal - principalBonus;
+
+      const monthlyRows = amortizeStream(principalMonthly, rateSchedule, totalMonths, repayType);
+      const bonusRows = principalBonus>0 ? amortizeStream(principalBonus, semiRateSchedule, totalBonusPayments, repayType) : [];
+
       const rows = [];
-      if(principal<=0 || totalMonths<=0) return { rows, principal, totalMonths, rateSchedule };
-      let balance = principal;
-      let currentRate = rateSchedule[0];
-      let currentPay = emiForMonths(balance, currentRate, totalMonths);
+      let bonusBalance = principalBonus, bIdx = 0;
       for(let m=0; m<totalMonths; m++){
-        const r = rateSchedule[m];
-        if(r !== currentRate){
-          currentRate = r;
-          currentPay = emiForMonths(balance, currentRate, totalMonths - m);
+        const mr = m<monthlyRows.length ? monthlyRows[m] : null;
+        let bonusAmt=0, bPrincipal=0, bInterest=0;
+        if(m%6===5 && bIdx<bonusRows.length){
+          const br = bonusRows[bIdx++];
+          bonusAmt = br.payment; bPrincipal = br.principal; bInterest = br.interest;
+          bonusBalance = br.balance;
         }
-        const interest = balance*currentRate;
-        let princPart = currentPay - interest;
-        if(m===totalMonths-1 || princPart>=balance) princPart = balance;
-        balance -= princPart;
-        let bonusAmt = 0;
-        if(bonusPay>0 && (m%12===5 || m%12===11) && balance>0){
-          bonusAmt = Math.min(bonusPay, balance);
-          balance -= bonusAmt;
-          if(balance>0 && m<totalMonths-1) currentPay = emiForMonths(balance, currentRate, totalMonths-m-1);
-        }
-        rows.push({ payment: princPart+interest+bonusAmt, principal:princPart, interest, balance: Math.max(0,balance), annualRatePct: currentRate*12*100, bonus:bonusAmt, rateChanged: m>0 && rateSchedule[m]!==rateSchedule[m-1] });
-        if(balance<=0) break;
+        const mPayment = mr ? mr.payment : 0, mPrincipal = mr ? mr.principal : 0, mInterest = mr ? mr.interest : 0, mBalance = mr ? mr.balance : 0;
+        rows.push({
+          payment: mPayment+bonusAmt, principal: mPrincipal+bPrincipal, interest: mInterest+bInterest,
+          balance: Math.max(0, mBalance+bonusBalance),
+          annualRatePct: (rateSchedule[m]||0)*12*100,
+          bonus: bonusAmt,
+          rateChanged: m>0 && rateSchedule[m]!==rateSchedule[m-1]
+        });
+        if(mBalance<=0 && bonusBalance<=0) break;
       }
       return { rows, principal, totalMonths, rateSchedule };
     }
@@ -2060,17 +2121,24 @@
       const schedule = buildLoanSchedule();
       if(!schedule.rows.length){ el.textContent = '物件価格・頭金・返済期間をご確認ください。'; return; }
       const type = loanRateType();
+      const repayType = loanRepayType();
       const bonusPay = num('loan-bonus-pay',0);
-      const first = schedule.rows[0];   // 1回目の返済（ボーナス月ではないため純粋な毎月返済額）
-      let html = `毎月の返済額：約<b>${fmt(first.payment)}万円</b>`;
+      // ボーナス月（m%6===5）を除いた「通常月」だけを見て、最初と最後の返済額を出す（元金均等は徐々に減る）
+      const normalRows = schedule.rows.filter((r,i)=> i%6!==5);
+      const first = normalRows[0] || schedule.rows[0];
+      const last  = normalRows[normalRows.length-1] || schedule.rows[schedule.rows.length-1];
+      let html = repayType==='gankin'
+        ? `毎月の返済額：約<b>${fmt(first.payment)}万円</b> 〜 約<b>${fmt(last.payment)}万円</b>（元金均等・徐々に減少）`
+        : `毎月の返済額：約<b>${fmt(first.payment)}万円</b>`;
       html += type==='fixed' ? `（金利${num('loan-rate',0)}%・固定金利・${num('loan-term',35)}年）`
                               : `（${type==='step5'?'5年':'10年'}ごと見直しの変動金利、当初${first.annualRatePct.toFixed(2)}%）`;
-      if(bonusPay>0) html += `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済</span>`;
+      if(bonusPay>0) html += `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済（毎月の返済額に反映済み）</span>`;
       if(type!=='fixed'){
         const step = type==='step5'?5:10, stepMonths=step*12;
         let shown=-1, extra='';
-        schedule.rows.forEach((r,i)=>{
-          const periodIdx = Math.floor(i/stepMonths);
+        normalRows.forEach((r,i)=>{
+          const monthIdx = schedule.rows.indexOf(r);
+          const periodIdx = Math.floor(monthIdx/stepMonths);
           if(periodIdx!==shown){
             shown = periodIdx;
             extra += `<span class="lm-sub">${periodIdx*step+1}年目〜：約${fmt(r.payment)}万円/月（金利${r.annualRatePct.toFixed(2)}%）</span>`;
@@ -3558,6 +3626,7 @@
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
+        loanRepayType: loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri',
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
@@ -3586,6 +3655,7 @@
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }
       if(s.loanType && loanTypeSeg){ [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.loantype===s.loanType)); }
       if(s.loanRateType && loanRateTypeSeg){ [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ratetype===s.loanRateType)); }
+      if(s.loanRepayType && loanRepayTypeSeg){ [...loanRepayTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.repaytype===s.loanRepayType)); }
       if(typeof updateLoanRateUI==='function') updateLoanRateUI();   // 金利タイプに応じて期間ごとの金利欄を作り直す
       // 動的に作られた期間ごとの金利欄に、保存値を反映（上で作り直した直後に上書き）
       Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id.startsWith('rate_step')){ const el=$(id); if(el) el.value=val; } });

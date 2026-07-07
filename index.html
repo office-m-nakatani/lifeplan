@@ -202,6 +202,13 @@
     .loan-monthly-result b{ color:var(--blue-deep); }
     .loan-monthly-result .lm-sub{ display:block; font-size:.78rem; color:var(--ink-soft); margin-top:3px; }
 
+    .loan-rate-box{ margin-top:14px; padding:14px 14px 12px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
+    .loan-rate-box .lp-title{ font-size:.85rem; font-weight:700; color:var(--blue-deep); margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+    .rate-period-rows{ display:grid; gap:8px; margin-top:10px; }
+    .rate-period-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 12px; background:#fff; border:1px solid var(--line); border-radius:10px; flex-wrap:wrap; }
+    .rate-period-row .rate-period-label{ font-size:.82rem; font-weight:700; color:var(--blue-deep); white-space:nowrap; }
+    .rate-period-row .input-unit{ max-width:130px; }
+
     .conditional{ margin-top:14px; }
     .hidden{ display:none !important; }
 
@@ -766,6 +773,22 @@
                 <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" id="loan-term" value="35" min="1" max="50"><span class="u">年</span></div></div>
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
                 <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
+              </div>
+
+              <!-- 金利タイプ（固定／変動）-->
+              <div class="loan-rate-box">
+                <div class="lp-title"><i class="fa-solid fa-chart-line"></i> 金利タイプ</div>
+                <div class="seg seg-wrap" id="loan-ratetype-seg">
+                  <button type="button" data-ratetype="fixed" class="active">固定金利</button>
+                  <button type="button" data-ratetype="step5">5年ごと変動</button>
+                  <button type="button" data-ratetype="step10">10年ごと変動</button>
+                </div>
+                <div id="loan-rate-fixed-note" class="hint" style="margin-top:10px;">上の「住宅ローン金利」を、全期間に適用します。</div>
+                <div id="loan-rate-variable-wrap" class="hidden" style="margin-top:10px;">
+                  <span class="hint">見直し時期ごとの想定金利を入力してください。実際の金利は市場環境により変動するため、あくまで目安としてご活用ください。</span>
+                  <div id="rows_step5" class="rate-period-rows hidden"></div>
+                  <div id="rows_step10" class="rate-period-rows hidden"></div>
+                </div>
               </div>
 
               <!-- 毎月のローン返済額（自動計算）＋ボーナス払い -->
@@ -1393,12 +1416,12 @@
       eventsList.querySelectorAll('.event-row').forEach(r=>{
         const ev = parseInt(r.querySelector('.ev-age').value)||0;
         const span = r.querySelector('.ev-wife');
-        if(span) span.textContent = `そのとき${wName()} ${w0 + (ev - h0)}歳ごろ`;
+        if(span) span.textContent = `そのとき${wNameH()} ${w0 + (ev - h0)}歳ごろ`;
       });
       incomeEventsList.querySelectorAll('.income-row').forEach(r=>{
         const ev = parseInt(r.querySelector('.ie-age').value)||0;
         const span = r.querySelector('.ie-wife');
-        if(span) span.textContent = `そのとき${wName()} ${w0 + (ev - h0)}歳ごろ`;
+        if(span) span.textContent = `そのとき${wNameH()} ${w0 + (ev - h0)}歳ごろ`;
       });
     }
 
@@ -1549,6 +1572,130 @@
       // 「購入時の年齢」は購入予定のときだけ表示。購入済みは「購入したときの年齢」を表示
       document.querySelectorAll('[data-buy-only]').forEach(el=> el.classList.toggle('hidden', houseType!=='buy'));
       document.querySelectorAll('[data-owned-only]').forEach(el=> el.classList.toggle('hidden', houseType!=='owned'));
+      if(typeof updateLoanRateUI==='function') updateLoanRateUI();
+    }
+
+    /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
+    const loanRateTypeSeg = $('loan-ratetype-seg');
+    const loanRateType = ()=> loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed';
+    // 期間ごとの金利入力欄を作り直す（返済期間の変更に追従・既存の入力値は保持）
+    function buildLoanRatePeriodRows(type){
+      const container = $('rows_'+type);
+      if(!container) return;
+      const term = num('loan-term',35);
+      const step = type==='step5' ? 5 : 10;
+      const base = num('loan-rate',0);
+      const bump = type==='step5' ? 0.2 : 0.3;   // 目安として金利が段階的に上がっていくシナリオを初期値に
+      const old = {};
+      container.querySelectorAll('input').forEach(el=>{ old[el.id]=el.value; });
+      let html='', y=0, idx=0;
+      while(y<term){
+        const end = Math.min(y+step, term);
+        const id = 'rate_'+type+'_'+idx;
+        const defVal = old[id]!==undefined ? old[id] : Math.max(0, base + bump*idx).toFixed(2);
+        html += `<div class="rate-period-row">
+          <div class="rate-period-label">${y+1}〜${end}年目</div>
+          <div class="input-unit"><input type="number" id="${id}" value="${defVal}" min="0" max="20" step="0.01"><span class="u">%</span></div>
+        </div>`;
+        y += step; idx++;
+      }
+      container.innerHTML = html;
+    }
+    function updateLoanRateUI(){
+      const type = loanRateType();
+      if($('loan-rate-fixed-note')) $('loan-rate-fixed-note').classList.toggle('hidden', type!=='fixed');
+      if($('loan-rate-variable-wrap')) $('loan-rate-variable-wrap').classList.toggle('hidden', type==='fixed');
+      if($('rows_step5'))  $('rows_step5').classList.toggle('hidden', type!=='step5');
+      if($('rows_step10')) $('rows_step10').classList.toggle('hidden', type!=='step10');
+      if(type==='step5') buildLoanRatePeriodRows('step5');
+      if(type==='step10') buildLoanRatePeriodRows('step10');
+    }
+    if(loanRateTypeSeg) loanRateTypeSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      updateLoanRateUI(); recompute();
+    });
+    // 返済期間を変えたら、期間ごとの金利欄の年数区切りも作り直す
+    if($('loan-term')) $('loan-term').addEventListener('input', ()=>{ if(loanRateType()!=='fixed') buildLoanRatePeriodRows(loanRateType()); });
+
+    /* ---------- 住宅ローン：固定/変動金利・ボーナス払いに対応した月次返済スケジュール ----------
+       買った月を1か月目として、毎月の返済額・元金・利息・残高を配列で返す。
+       変動金利は見直し月にEMI（毎月返済額）を残存元本・残存期間で再計算し直す（実務の変動金利ローンと同じ方式）。
+       ボーナス月（6・12か月目ごと）には加算返済を残高からそのまま差し引く。 */
+    function emiForMonths(principal, monthlyRate, months){
+      if(months<=0) return 0;
+      if(monthlyRate===0) return principal/months;
+      return principal*monthlyRate*Math.pow(1+monthlyRate,months) / (Math.pow(1+monthlyRate,months)-1);
+    }
+    function getLoanRateSchedule(totalMonths){
+      const type = loanRateType();
+      const arr = [];
+      if(type==='fixed'){
+        const r = num('loan-rate',0)/100/12;
+        for(let i=0;i<totalMonths;i++) arr.push(r);
+        return arr;
+      }
+      const step = type==='step5' ? 5 : 10;
+      const stepMonths = step*12;
+      const n = Math.max(1, Math.ceil(totalMonths/stepMonths));
+      const rates = [];
+      for(let i=0;i<n;i++){
+        const el = $('rate_'+type+'_'+i);
+        rates.push(el ? (parseFloat(el.value)||0)/100/12 : num('loan-rate',0)/100/12);
+      }
+      for(let i=0;i<totalMonths;i++){
+        const idx = Math.min(Math.floor(i/stepMonths), rates.length-1);
+        arr.push(rates[idx]);
+      }
+      return arr;
+    }
+    function buildLoanSchedule(){
+      const principal = Math.max(num('house-price',0)-num('down',0), 0);
+      const term = num('loan-term',35);
+      const totalMonths = Math.max(0, Math.round(term*12));
+      const bonusPay = num('loan-bonus-pay',0);
+      const rateSchedule = getLoanRateSchedule(totalMonths);
+      const rows = [];
+      if(principal<=0 || totalMonths<=0) return { rows, principal, totalMonths, rateSchedule };
+      let balance = principal;
+      let currentRate = rateSchedule[0];
+      let currentPay = emiForMonths(balance, currentRate, totalMonths);
+      for(let m=0; m<totalMonths; m++){
+        const r = rateSchedule[m];
+        if(r !== currentRate){
+          currentRate = r;
+          currentPay = emiForMonths(balance, currentRate, totalMonths - m);
+        }
+        const interest = balance*currentRate;
+        let princPart = currentPay - interest;
+        if(m===totalMonths-1 || princPart>=balance) princPart = balance;
+        balance -= princPart;
+        let bonusAmt = 0;
+        if(bonusPay>0 && (m%12===5 || m%12===11) && balance>0){
+          bonusAmt = Math.min(bonusPay, balance);
+          balance -= bonusAmt;
+          if(balance>0 && m<totalMonths-1) currentPay = emiForMonths(balance, currentRate, totalMonths-m-1);
+        }
+        rows.push({ payment: princPart+interest+bonusAmt, principal:princPart, interest, balance: Math.max(0,balance), annualRatePct: currentRate*12*100, bonus:bonusAmt, rateChanged: m>0 && rateSchedule[m]!==rateSchedule[m-1] });
+        if(balance<=0) break;
+      }
+      return { rows, principal, totalMonths, rateSchedule };
+    }
+    // 購入からyears年経過した時点の残高（万円）
+    function loanBalanceAt(schedule, years){
+      if(!schedule.rows.length) return schedule.principal||0;
+      const idx = Math.round(years*12)-1;
+      if(idx<0) return schedule.principal;
+      if(idx>=schedule.rows.length) return 0;
+      return schedule.rows[idx].balance;
+    }
+    // 購入からyearsOwned年目（0始まり）の年間返済額（ボーナス払い込み・万円）
+    function loanPaymentForYear(schedule, yearsOwned){
+      if(!schedule.rows.length || yearsOwned<0) return 0;
+      const start = Math.round(yearsOwned*12), end = start+12;
+      let sum=0;
+      for(let i=start; i<end && i<schedule.rows.length; i++) sum += schedule.rows[i].payment;
+      return sum;
     }
 
     /* ---------- 住宅ローン：○歳での一括返済 / 支払い継続 ---------- */
@@ -1574,12 +1721,12 @@
     // 現時点のローン残債（万円）。これから購入は予定借入額で試算
     function currentLoanBalance(){
       if(houseType==='rent') return 0;
-      const principal = Math.max(num('house-price',0)-num('down',0),0);
       const hAge0 = num('h-age',35);
       const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
       const yearsOwned = hAge0 - buyAge;
-      if(yearsOwned < 0) return principal;                                // 購入前：予定額
-      return remainingBalance(principal, num('loan-rate',0), num('loan-term',35), yearsOwned);
+      const schedule = buildLoanSchedule();
+      if(yearsOwned < 0) return schedule.principal;                       // 購入前：予定額
+      return loanBalanceAt(schedule, yearsOwned);
     }
     // ローンの名義ボタン・割合表示に、基本情報のお名前を反映（未入力は「夫」「妻」）
     function updateLoanLabels(){
@@ -1633,14 +1780,6 @@
       applyHousehold(); recompute();
     });
 
-    /* ---------- 住宅ローン月返済額（元利均等・万円） ---------- */
-    function monthlyPayment(principal, annualRatePct, years){
-      const n = years*12;
-      const r = annualRatePct/100/12;
-      if(n<=0) return 0;
-      if(r===0) return principal/n;
-      return principal * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
-    }
 
     /* ---------- 年収（額面）→ 手取りの自動計算（万円・概算） ----------
        社会保険料・所得税（復興特別税込）・住民税をざっくり見積もる簡易版。
@@ -1711,17 +1850,17 @@
       const rent = num('rent',0);
       const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
       const price = num('house-price',0), down = num('down',0);
-      const loanRate = num('loan-rate',0), loanTerm = num('loan-term',35);
+      const loanTerm = num('loan-term',35);
       const propTax = num('prop-tax',0), maint = num('maint',0);
       const principal = Math.max(price - down, 0);
-      const mPay = monthlyPayment(principal, loanRate, loanTerm);
+      const loanSchedule = buildLoanSchedule();   // 固定/変動金利・ボーナス払いを反映した月次返済スケジュール
 
       // ○歳での一括返済オプション（残債は自動計算。手入力があれば優先）
       const payoffAge = num('loan-payoff-age', 65);
       const payoffMode = loanPayoffMode();
       const manualBal = num('loan-balance-manual', 0);
       const payoffYears = Math.max(payoffAge - buyAge, 0);                       // その年齢までに支払う年数
-      const autoBalAtPayoff = remainingBalance(principal, loanRate, loanTerm, payoffYears);
+      const autoBalAtPayoff = loanBalanceAt(loanSchedule, payoffYears);
       const payoffBalance = manualBal>0 ? manualBal : autoBalAtPayoff;
       const willPayoff = (payoffMode==='lumpsum') && (principal>0) && (payoffYears < loanTerm);
 
@@ -1757,8 +1896,8 @@
         if(hAge < hRetire) income += grossToNet(hIncome0 * Math.pow(1+hRaise, t)); // 額面→手取り
         if(wAge < wRetire) income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
         if(hAge >= pensionAge) income += pensionAnnual * inflF;    // 年金（夫婦合計・物価スライドを簡易反映）
-        if(hAge === hRetire){ income += hBonus; eventList.push({label:hName()+' 退職金', type:'family'}); }
-        if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wName()+' 退職金', type:'family'}); }
+        if(hAge === hRetire){ income += hBonus; eventList.push({label:hNameH()+' 退職金', type:'family'}); }
+        if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wNameH()+' 退職金', type:'family'}); }
 
         /* ---- 支出 ---- */
         let expense = 0;
@@ -1779,9 +1918,9 @@
             if(willPayoff){
               // ○歳で一括返済：それまでは通常返済、当年に残債を一括計上、以降は返済なし
               if(yearsOwned>=0 && yearsOwned<payoffYears){
-                expense += mPay*12;
+                expense += loanPaymentForYear(loanSchedule, yearsOwned);   // ローン返済（固定/変動金利・ボーナス払いを反映）
                 if(yearsOwned<13){
-                  const bal = remainingBalance(principal, loanRate, loanTerm, yearsOwned+1);
+                  const bal = loanBalanceAt(loanSchedule, yearsOwned+1);
                   loanDeduction = Math.min(bal*0.007, 35);
                 }
               } else if(hAge===payoffAge){
@@ -1789,10 +1928,10 @@
                 eventList.push({label:'住宅ローン一括返済', type:'family'});
               }
             } else if(yearsOwned>=0 && yearsOwned<loanTerm){
-              expense += mPay*12;                         // ローン返済（名目・固定）
+              expense += loanPaymentForYear(loanSchedule, yearsOwned);     // ローン返済（固定/変動金利・ボーナス払いを反映）
               // 住宅ローン控除（年末残高×0.7%、最大13年・年35万円上限の簡易）
               if(yearsOwned<13){
-                const bal = remainingBalance(principal, loanRate, loanTerm, yearsOwned+1);
+                const bal = loanBalanceAt(loanSchedule, yearsOwned+1);
                 loanDeduction = Math.min(bal*0.007, 35);
               }
             }
@@ -1894,17 +2033,6 @@
       return { rows, hRetire, hAge0, endAge };
     }
 
-    /* 残債計算（k回支払い後の残高・万円） */
-    function remainingBalance(principal, annualRatePct, years, yearsPaid){
-      const r = annualRatePct/100/12;
-      const n = years*12;
-      const k = Math.min(yearsPaid*12, n);
-      if(r===0) return Math.max(principal*(1-k/n),0);
-      const pay = principal * r * Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
-      const bal = principal*Math.pow(1+r,k) - pay*(Math.pow(1+r,k)-1)/r;
-      return Math.max(bal,0);
-    }
-
     /* ---------- 表示ヘルパー ---------- */
     const fmt = (man)=> Math.round(man).toLocaleString('ja-JP');
     const manUnit = (man)=> fmt(man) + '<small> 万円</small>'; // 常に万円表記
@@ -1920,41 +2048,37 @@
       if(houseType==='rent'){ el.textContent = '自動計算：—'; return; }
       const hAge0 = num('h-age',35);
       const buyAge = (houseType==='owned') ? num('owned-age', hAge0) : num('buy-age', hAge0);
-      const principal = Math.max(num('house-price',0) - num('down',0), 0);
       const yrs = Math.max(num('loan-payoff-age',65) - buyAge, 0);
-      const bal = remainingBalance(principal, num('loan-rate',0), num('loan-term',35), yrs);
+      const bal = loanBalanceAt(buildLoanSchedule(), yrs);
       el.textContent = '自動計算：約 ' + fmt(bal) + ' 万円';
     }
 
-    /* ボーナス払い分の元金を、希望する加算返済額（1回あたり・年2回）から逆算する */
-    function bonusPrincipal(bonusPay, annualRatePct, years){
-      if(bonusPay<=0) return 0;
-      const n = years*2;               // ボーナス払いは年2回
-      const r = annualRatePct/100/2;    // 半年あたりの金利
-      if(n<=0) return 0;
-      if(r===0) return bonusPay*n;
-      return bonusPay * (1-Math.pow(1+r,-n)) / r;
-    }
-
-    /* 毎月のローン返済額（自動計算）＋ボーナス払いがある場合の毎月返済額の軽減を表示 */
+    /* 毎月のローン返済額（自動計算・固定/変動金利＋ボーナス払いに対応） */
     function updateMonthlyPayDisplay(){
       const el = $('loan-monthly-result'); if(!el) return;
       if(houseType==='rent'){ el.textContent = '賃貸のため対象外です。'; return; }
-      const price = num('house-price',0), down = num('down',0);
-      const principal = Math.max(price-down, 0);
-      const rate = num('loan-rate',0), term = num('loan-term',35);
-      const fullMonthly = monthlyPayment(principal, rate, term);
+      const schedule = buildLoanSchedule();
+      if(!schedule.rows.length){ el.textContent = '物件価格・頭金・返済期間をご確認ください。'; return; }
+      const type = loanRateType();
       const bonusPay = num('loan-bonus-pay',0);
-      if(bonusPay<=0){
-        el.innerHTML = `毎月の返済額：約<b>${fmt(fullMonthly)}万円</b>（金利${rate}%・${term}年、ボーナス払いなし）`;
-        return;
+      const first = schedule.rows[0];   // 1回目の返済（ボーナス月ではないため純粋な毎月返済額）
+      let html = `毎月の返済額：約<b>${fmt(first.payment)}万円</b>`;
+      html += type==='fixed' ? `（金利${num('loan-rate',0)}%・固定金利・${num('loan-term',35)}年）`
+                              : `（${type==='step5'?'5年':'10年'}ごと見直しの変動金利、当初${first.annualRatePct.toFixed(2)}%）`;
+      if(bonusPay>0) html += `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済</span>`;
+      if(type!=='fixed'){
+        const step = type==='step5'?5:10, stepMonths=step*12;
+        let shown=-1, extra='';
+        schedule.rows.forEach((r,i)=>{
+          const periodIdx = Math.floor(i/stepMonths);
+          if(periodIdx!==shown){
+            shown = periodIdx;
+            extra += `<span class="lm-sub">${periodIdx*step+1}年目〜：約${fmt(r.payment)}万円/月（金利${r.annualRatePct.toFixed(2)}%）</span>`;
+          }
+        });
+        html += extra;
       }
-      const pBonus = Math.min(bonusPrincipal(bonusPay, rate, term), principal);
-      const pMonthly = Math.max(principal - pBonus, 0);
-      const reducedMonthly = monthlyPayment(pMonthly, rate, term);
-      el.innerHTML = `毎月の返済額：約<b>${fmt(reducedMonthly)}万円</b>（ボーナス月以外）`
-        + `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済</span>`
-        + `<span class="lm-sub">ボーナス払いなしの場合の毎月返済額：約${fmt(fullMonthly)}万円</span>`;
+      el.innerHTML = html;
     }
 
     function recompute(){
@@ -2317,15 +2441,17 @@
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
         const price=num('house-price',0),down=num('down',0);
-        const principal=Math.max(price-down,0);
-        const mPay=monthlyPayment(principal,num('loan-rate',0),num('loan-term',35));
+        const schedule = buildLoanSchedule();
+        const principal = schedule.principal;
+        const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
         const netY=p.hNet+p.wNet; const ratio=netY>0?Math.round(mPay*12/netY*100):0;
         const zeh=$('zeh-on')&&$('zeh-on').checked;
+        const rateType = loanRateType();
         // 退職前後のローン残高（③の「残債を確認する年齢」設定を使用。手入力があれば優先）
         const buyA=(houseType==='owned')?num('owned-age',p.hAge):num('buy-age',p.hAge);
         const term=num('loan-term',35), payAge=num('loan-payoff-age',65);
         const manualBal=num('loan-balance-manual',0);
-        const balAt = manualBal>0 ? manualBal : remainingBalance(principal, num('loan-rate',0), term, Math.max(payAge-buyA,0));
+        const balAt = manualBal>0 ? manualBal : loanBalanceAt(schedule, Math.max(payAge-buyA,0));
         const finishAge = buyA + term;
         const willLump = loanPayoffMode()==='lumpsum';
         const tone = ratio>25 ? 'warn' : 'ok';
@@ -2340,10 +2466,12 @@
         good.push(`住宅ローン控除（年末残高×0.7%・最大13年）を、収入に自動反映しています。`);
         if(zeh) good.push(`ZEHの売電・光熱費削減（年 約${fmt(num('zeh-sell')+num('zeh-save'))}万円）が家計を助けます。`);
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
+        if(rateType==='fixed') good.push(`固定金利のため、返済額が将来にわたって変わらず、家計計画が立てやすいです。`);
         if(ratio>25) con.push(`返済負担率 約${ratio}% はやや重め。頭金の増額や返済期間の調整で軽くできます。`);
         if(balAt>0.5) con.push(`退職後は収入が年金中心に下がります。${payAge}歳時点の残高 約${fmt(balAt)}万円 を「払い続ける」か「退職金等で一括返済する」か、③の「指定年齢での住宅ローンの扱い」で切り替えて、老後の資産への影響を比較しておきましょう。`);
         if(balAt>0.5 && !willLump) con.push(`現在は「支払いを継続」の設定です。継続なら手元資金を厚く残せますが、年金からの返済が${finishAge}歳まで続きます。金利より運用利回りが高ければ継続が有利になる場合もあります。`);
         if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときローンが残る点に注意です。`);
+        if(rateType!=='fixed') con.push(`変動金利（${rateType==='step5'?'5年':'10年'}ごと見直し）を選択中です。金利が上昇した場合は毎月の返済額が増えます。③の「金利タイプ」で上昇シナリオを入力し、負担がどこまで増えるか事前に確認しておくと安心です。`);
         con.push(`固定資産税・修繕費（年 約${fmt(num('prop-tax',0)+num('maint',0))}万円）も継続してかかります。`);
         cats.push({ key:'housing', label:'住まい・ローン', icon:'fa-house-chimney', color:'#48a7a7', tone, sum, good, concern:con });
       }
@@ -2453,7 +2581,7 @@
       let kidHead = '';
       for(let k=0; k<nKids; k++){ const c = childColor(k); kidHead += `<th class="col-age" style="color:${c.text}">${esc(kidsMeta[k].name)}</th>`; }
       $('cf-head-row').innerHTML =
-        `<th class="col-year">西暦</th><th class="col-age">${esc(hName())}</th>${single?'':`<th class="col-age">${esc(wName())}</th>`}${kidHead}<th class="col-evt">ライフイベント・教育期間</th>` +
+        `<th class="col-year">西暦</th><th class="col-age">${esc(hNameH())}</th>${single?'':`<th class="col-age">${esc(wNameH())}</th>`}${kidHead}<th class="col-evt">ライフイベント・教育期間</th>` +
         `<th class="col-num">収入</th><th class="col-num">支出</th><th class="col-num">年間収支</th><th class="col-num">預貯金</th><th class="col-num">運用資産</th><th class="col-num">金融資産合計</th>`;
 
       rows.forEach(r=>{                         // 1年ごとに全行を表示
@@ -2515,7 +2643,7 @@
       const hAge0 = num('h-age',0), wAge0 = num('w-age',0);
       let ticks='';
       for(let y=0; y<=span; y+=5){
-        let lines = `<b>${CURRENT_YEAR+y}</b><em class="h">${esc(hName())} ${hAge0+y}</em>${isSingle()?'':`<em class="w">${esc(wName())} ${wAge0+y}</em>`}`;
+        let lines = `<b>${CURRENT_YEAR+y}</b><em class="h">${esc(hNameH())} ${hAge0+y}</em>${isSingle()?'':`<em class="w">${esc(wNameH())} ${wAge0+y}</em>`}`;
         children.forEach((c,ci)=>{ lines += `<em style="color:${childColor(ci).text}">${esc(c.name||('子'+(ci+1)))} ${c.age+y}</em>`; });
         ticks += `<span class="etl-tick" style="left:${Math.min(y/span*100,100)}%">${lines}</span>`;
       }
@@ -2599,7 +2727,7 @@
       const nKids = kidsMeta.length;
       let kidHead = '';
       for(let k=0; k<nKids; k++){ const c=childColor(k); kidHead += `<th class="col-age" style="color:${c.text}">${esc(kidsMeta[k].name)}</th>`; }
-      let head = `<th class="col-year">西暦</th><th class="col-age">${esc(hName())}</th>${single?'':`<th class="col-age">${esc(wName())}</th>`}${kidHead}<th class="col-num">預貯金</th>`;
+      let head = `<th class="col-year">西暦</th><th class="col-age">${esc(hNameH())}</th>${single?'':`<th class="col-age">${esc(wNameH())}</th>`}${kidHead}<th class="col-num">預貯金</th>`;
       items.forEach((it)=>{ head += `<th class="col-num" style="color:${col(it)}">${it.name}</th>`; });
       head += `<th class="col-num">運用合計</th>`;
       $('at-head-row').innerHTML = head;
@@ -2937,7 +3065,7 @@
         if(p.depletion){
           return diagBox(facts, 'bad',
             `診断：このままだと<b>${p.depletion.hAge}歳ごろに資金が不足</b>する見込みです（想定${p.endAge}歳より${Math.max(p.endAge-p.depletion.hAge,0)}年早い計算）。`,
-            `年金だけでは生活費の${coverage}%しかカバーできず、月${fmt(Math.max(gapM,0))}万円を資産の取り崩しで補う想定のため、資金が長持ちしません。対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す ④年金の繰下げ受給（1か月+0.7%・最大+84%で、月${fmt(pensionM)}万円が繰下げにより増額）。上の「<b>現状と対策後をくらべる</b>」で、対策の効果をワンクリックで確認できます。`);
+            `年金だけでは生活費の${coverage}%しかカバーできず、月${fmt(Math.max(gapM,0))}万円を資産の取り崩しで補う想定のため、資金が長持ちしません。対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す ④年金の繰下げ受給（1か月+0.7%・最大+84%で、月${fmt(pensionM)}万円が繰下げにより増額）。`);
         }
         return diagBox(facts, 'ok',
           `診断：<b>${p.endAge}歳まで資金ショートしない見込みです。</b>（最少残高 ${fmt(p.minRow.net)}万円・${p.minRow.hAge}歳時点）`,
@@ -3000,30 +3128,34 @@
           const yrsAll = Math.max(p.endAge - p.hAge, 0);
           return diagBox([ famFact(p), `住まい：賃貸（家賃 月<b>${fmt(rent)}万円</b>）`, `${p.endAge}歳までの家賃総額：約<b>${fmt(rent*12*yrsAll)}万円</b>` ],
             'warn', `診断：生涯の家賃負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
-            `左の「③住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。上の「<b>現状と対策後をくらべる</b>」を使うとワンクリックで比較できます。`);
+            `左の「③住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`);
         }
         const price = num('house-price',0), down = num('down',0);
-        const principal = Math.max(price - down, 0);
-        const mPay = monthlyPayment(principal, num('loan-rate',0), num('loan-term',35));
+        const schedule = buildLoanSchedule();
+        const principal = schedule.principal;
+        const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
         const netY = p.hNet + p.wNet;
         const ratio = netY>0 ? Math.round(mPay*12/netY*100) : 0;
+        const rateType = loanRateType();
+        const rateLabel = rateType==='fixed' ? `金利${num('loan-rate',0)}%・固定金利` : `${rateType==='step5'?'5年':'10年'}ごと見直しの変動金利（当初${schedule.rows.length?schedule.rows[0].annualRatePct.toFixed(2):'-'}%）`;
         // 退職前後（③で設定した年齢）のローン残高と、その扱い
         const buyA = (houseType==='owned') ? num('owned-age',p.hAge) : num('buy-age',p.hAge);
         const term = num('loan-term',35), payAge = num('loan-payoff-age',65);
         const manualBal = num('loan-balance-manual',0);
-        const balAt = manualBal>0 ? manualBal : remainingBalance(principal, num('loan-rate',0), term, Math.max(payAge-buyA,0));
+        const balAt = manualBal>0 ? manualBal : loanBalanceAt(schedule, Math.max(payAge-buyA,0));
         const finishAge = buyA + term;
         const willLump = loanPayoffMode()==='lumpsum';
         const facts = [ famFact(p),
           `物件 ${fmt(price)}万円／頭金 ${fmt(down)}万円 → 借入 <b>${fmt(principal)}万円</b>`,
-          `毎月の返済：約<b>${fmt(mPay)}万円</b>（金利${num('loan-rate',0)}%・${num('loan-term',35)}年）`,
+          `毎月の返済（当初）：約<b>${fmt(mPay)}万円</b>（${rateLabel}・${term}年）`,
           `返済負担率：手取り収入の <b>約${ratio}%</b>（安心の目安は20〜25%以内）`,
           balAt>0.5 ? `${payAge}歳時点のローン残高：約<b>${fmt(balAt)}万円</b>（完済予定 ${finishAge}歳）` : `完済予定 ${finishAge}歳 → ${payAge}歳時点にローンは残りません` ];
-        const retireTalk = balAt>0.5
+        const retireTalk = (balAt>0.5
           ? `<br><br><b>退職後の返済プラン：</b>退職後は収入が年金中心に下がるため、${payAge}歳時点の残高 約${fmt(balAt)}万円 の扱いが老後家計のカギです。${willLump
               ? `いまは「一括返済」の設定で、退職金等で清算すれば以後の固定費が軽くなります（手元資金の減らしすぎには注意）。`
               : `いまは「支払いを継続」の設定です。退職金等での一括返済に切り替えると年金生活の固定費が軽くなる一方、手元資金は減ります。③の設定で切り替えて比較できます。`}`
-          : `<br><br>${finishAge}歳で完済予定のため、退職後にローンは残りません。年金生活の固定費が軽く、安心して住まいを持ち続けられます。`;
+          : `<br><br>${finishAge}歳で完済予定のため、退職後にローンは残りません。年金生活の固定費が軽く、安心して住まいを持ち続けられます。`)
+          + (rateType!=='fixed' ? `<br><br><b>変動金利のご注意：</b>${rateType==='step5'?'5年':'10年'}ごとに金利が見直されるため、将来の金利上昇局面では毎月の返済額が増える可能性があります。左の「③住まい・金利タイプ」で見直し時期ごとの想定金利を変えて、上昇時の負担増をあらかじめ確認しておくと安心です。` : '');
         if(ratio<=25){
           return diagBox(facts, 'ok',
             `診断：返済負担率${ratio}%は<b>無理のない範囲</b>です。`,
@@ -3425,6 +3557,7 @@
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
+        loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
@@ -3452,6 +3585,10 @@
       if(s.expMode) setExpMode(s.expMode);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }
       if(s.loanType && loanTypeSeg){ [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.loantype===s.loanType)); }
+      if(s.loanRateType && loanRateTypeSeg){ [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ratetype===s.loanRateType)); }
+      if(typeof updateLoanRateUI==='function') updateLoanRateUI();   // 金利タイプに応じて期間ごとの金利欄を作り直す
+      // 動的に作られた期間ごとの金利欄に、保存値を反映（上で作り直した直後に上書き）
+      Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id.startsWith('rate_step')){ const el=$(id); if(el) el.value=val; } });
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();
       if($('zeh-fields')) $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked);
       recompute();

@@ -196,6 +196,12 @@
     .loan-payoff-box .lp-seg-field{ margin-top:12px; }
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
+    .loan-monthly-box{ margin-top:14px; padding:14px 14px 12px; background:var(--blue-pale); border:1px solid var(--blue-pale2); border-radius:12px; }
+    .loan-monthly-box .lp-title{ font-size:.85rem; font-weight:700; color:var(--blue-deep); margin-bottom:12px; display:flex; align-items:center; gap:7px; }
+    .loan-monthly-result{ margin-top:10px; padding:11px 13px; background:#fff; border:1px solid var(--blue-pale2); border-radius:10px; font-size:.86rem; line-height:1.7; color:var(--ink); }
+    .loan-monthly-result b{ color:var(--blue-deep); }
+    .loan-monthly-result .lm-sub{ display:block; font-size:.78rem; color:var(--ink-soft); margin-top:3px; }
+
     .conditional{ margin-top:14px; }
     .hidden{ display:none !important; }
 
@@ -440,6 +446,10 @@
     .diag-verdict.warn{ background:var(--warn-pale); color:#a4711f; }
     .diag-verdict.bad{ background:var(--bad-pale); color:#bf5656; }
     .diag-note{ font-size:.76rem; color:var(--ink-soft); margin-top:6px; }
+    .diag-checklist{ list-style:none; margin:6px 0 8px; padding:0; }
+    .diag-checklist li{ padding:4px 0; font-size:.84rem; line-height:1.55; }
+    .diag-checklist li.ok{ color:#2f7d61; }
+    .diag-checklist li.warn{ color:#a4711f; }
 
     /* AI診断：総括＋項目別の詳しい診断 */
     .adv-summary{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:14px; margin-bottom:12px; border:1.5px solid var(--line); background:var(--bg-soft); }
@@ -757,6 +767,18 @@
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
                 <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
               </div>
+
+              <!-- 毎月のローン返済額（自動計算）＋ボーナス払い -->
+              <div class="loan-monthly-box">
+                <div class="lp-title"><i class="fa-solid fa-calculator"></i> 毎月のローン返済額（自動計算）</div>
+                <div class="field" style="max-width:340px;">
+                  <label>ボーナス月の加算返済（1回あたり・年2回）</label>
+                  <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
+                  <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
+                </div>
+                <div class="loan-monthly-result" id="loan-monthly-result">毎月の返済額：計算中…</div>
+              </div>
+
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
                 <span>毎月のローン返済額は金利・期間から自動計算します。住宅ローン控除（年末残高×0.7%）も最大13年分、自動で反映します。</span>
@@ -1192,6 +1214,9 @@
     /* 夫・妻の表示名（未入力なら「夫」「妻」） */
     const hName = ()=> (document.getElementById('h-name')?.value||'').trim() || '夫';
     const wName = ()=> (document.getElementById('w-name')?.value||'').trim() || '妻';
+    /* 文章内で名前を呼ぶときは敬称「様」を付ける（お名前が未入力の「夫」「妻」はそのまま） */
+    const hNameH = ()=>{ const n=(document.getElementById('h-name')?.value||'').trim(); return n ? n+'様' : '夫'; };
+    const wNameH = ()=>{ const n=(document.getElementById('w-name')?.value||'').trim(); return n ? n+'様' : '妻'; };
 
     /* 運用商品の種類ごとの色（項目別テーブルで色分け） */
     const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a', other:'#5b6b7d' };
@@ -1507,7 +1532,7 @@
     }
     // ローンの名義ボタン・割合表示に、基本情報のお名前を反映（未入力は「夫」「妻」）
     function updateLoanLabels(){
-      const hn = hName(), wn = wName();
+      const hn = hNameH(), wn = wNameH();
       if(loanTypeSeg){
         const bh = loanTypeSeg.querySelector('[data-loantype="solo-h"]');
         const bw = loanTypeSeg.querySelector('[data-loantype="solo-w"]');
@@ -1850,10 +1875,42 @@
       el.textContent = '自動計算：約 ' + fmt(bal) + ' 万円';
     }
 
+    /* ボーナス払い分の元金を、希望する加算返済額（1回あたり・年2回）から逆算する */
+    function bonusPrincipal(bonusPay, annualRatePct, years){
+      if(bonusPay<=0) return 0;
+      const n = years*2;               // ボーナス払いは年2回
+      const r = annualRatePct/100/2;    // 半年あたりの金利
+      if(n<=0) return 0;
+      if(r===0) return bonusPay*n;
+      return bonusPay * (1-Math.pow(1+r,-n)) / r;
+    }
+
+    /* 毎月のローン返済額（自動計算）＋ボーナス払いがある場合の毎月返済額の軽減を表示 */
+    function updateMonthlyPayDisplay(){
+      const el = $('loan-monthly-result'); if(!el) return;
+      if(houseType==='rent'){ el.textContent = '賃貸のため対象外です。'; return; }
+      const price = num('house-price',0), down = num('down',0);
+      const principal = Math.max(price-down, 0);
+      const rate = num('loan-rate',0), term = num('loan-term',35);
+      const fullMonthly = monthlyPayment(principal, rate, term);
+      const bonusPay = num('loan-bonus-pay',0);
+      if(bonusPay<=0){
+        el.innerHTML = `毎月の返済額：約<b>${fmt(fullMonthly)}万円</b>（金利${rate}%・${term}年、ボーナス払いなし）`;
+        return;
+      }
+      const pBonus = Math.min(bonusPrincipal(bonusPay, rate, term), principal);
+      const pMonthly = Math.max(principal - pBonus, 0);
+      const reducedMonthly = monthlyPayment(pMonthly, rate, term);
+      el.innerHTML = `毎月の返済額：約<b>${fmt(reducedMonthly)}万円</b>（ボーナス月以外）`
+        + `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済</span>`
+        + `<span class="lm-sub">ボーナス払いなしの場合の毎月返済額：約${fmt(fullMonthly)}万円</span>`;
+    }
+
     function recompute(){
       updateNetDisplay();
       updateEventWifeAges();
       updateLoanBalanceHint();
+      updateMonthlyPayDisplay();
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       const { rows, hRetire, hAge0, endAge } = simulate();
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
@@ -1893,7 +1950,7 @@
         v.classList.add('bad');
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
         $('verdict-title').textContent = '要対策：資金がショートします';
-        $('verdict-text').innerHTML = `このままだと <b>${hName()}${depletion.hAge}歳（${depletion.year}年）</b> ごろに金融資産が底をつく見込みです。下のアドバイスをご覧ください。`;
+        $('verdict-text').innerHTML = `このままだと <b>${hNameH()}${depletion.hAge}歳（${depletion.year}年）</b> ごろに金融資産が底をつく見込みです。下のアドバイスをご覧ください。`;
       } else if(min.net < reserve6m){
         v.classList.add('warn');
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
@@ -2099,7 +2156,7 @@
                       : overTone==='warn' ? 'おおむね良好：一部に備えの余地があります'
                       : '安心：バランスの取れた家計プランです';
       const overSum = `${fam}の現在の計画では、`
-        + (p.depletion ? `<b>${hName()}${p.depletion.hAge}歳（${p.depletion.year}年）ごろに資金が不足</b>する見込みです。`
+        + (p.depletion ? `<b>${hNameH()}${p.depletion.hAge}歳（${p.depletion.year}年）ごろに資金が不足</b>する見込みです。`
                        : `<b>${p.endAge}歳まで資金ショートは起きない</b>見込みです（最少残高 約${fmt(p.minRow.net)}万円）。`)
         + `退職時（${p.hRetire}歳）の金融資産は約<b>${fmt(p.retireRow.net)}万円</b>、最終${p.endAge}歳で約<b>${fmt(p.endRow.net)}万円</b>の試算です。`;
       const overGood = [], overCon = [];
@@ -2168,15 +2225,15 @@
           return `● <b>${esc(name)}に万一のとき</b>：必要資金 約${fmt(r.spend)}万円 − いまの備え 約${fmt(r.cover)}万円 ＝ ${res}`;
         };
         const sum = `「必要保障額」とは、万一のときに<b>足りなくなるお金（不足額）</b>のこと。将来かかるお金から、いまの備え（遺族年金＋遺された方の収入＋いまの資産）を差し引いた、<b>今から生命保険で備えるべき金額</b>です。<br>`
-          + needLine(hName(), nh) + `<br>` + needLine(wName(), nw);
+          + needLine(hNameH(), nh) + `<br>` + needLine(wNameH(), nw);
         const good=[], con=[];
-        good.push(`公的な遺族年金（${esc(hName())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
+        good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
         if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。大きな死亡保険は不要です。`);
-        if(nh.need>0) con.push(`<b>${esc(hName())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険なら月数千円で確保できます。`);
-        if(nw.need>0) con.push(`<b>${esc(wName())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
-        if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hName())}の単独ローンのため、${esc(wName())}に万一のときは<b>ローンがそのまま残ります</b>。`);
-        if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wName())}死亡時、55歳未満の${esc(hName())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
+        if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険なら月数千円で確保できます。`);
+        if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
+        if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
+        if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wNameH())}死亡時、55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
         if(!con.length) con.push(`貯蓄が育つほど必要な保障は小さくなります。過剰な保険がないか、定期的に見直しましょう。`);
         cats.push({ key:'hoken', label:'万が一の備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
       }
@@ -2235,7 +2292,7 @@
         if(ratio>25) con.push(`返済負担率 約${ratio}% はやや重め。頭金の増額や返済期間の調整で軽くできます。`);
         if(balAt>0.5) con.push(`退職後は収入が年金中心に下がります。${payAge}歳時点の残高 約${fmt(balAt)}万円 を「払い続ける」か「退職金等で一括返済する」か、③の「指定年齢での住宅ローンの扱い」で切り替えて、老後の資産への影響を比較しておきましょう。`);
         if(balAt>0.5 && !willLump) con.push(`現在は「支払いを継続」の設定です。継続なら手元資金を厚く残せますが、年金からの返済が${finishAge}歳まで続きます。金利より運用利回りが高ければ継続が有利になる場合もあります。`);
-        if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hName())}の単独ローンのため、${esc(wName())}に万一のときローンが残る点に注意です。`);
+        if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときローンが残る点に注意です。`);
         con.push(`固定資産税・修繕費（年 約${fmt(num('prop-tax',0)+num('maint',0))}万円）も継続してかかります。`);
         cats.push({ key:'housing', label:'住まい・ローン', icon:'fa-house-chimney', color:'#48a7a7', tone, sum, good, concern:con });
       }
@@ -2262,7 +2319,7 @@
         let furu = FURU[0][1];
         for(let i=0;i<FURU.length;i++){ if(gross>=FURU[i][0]) furu=FURU[i][1];
           if(i<FURU.length-1 && gross>FURU[i][0] && gross<FURU[i+1][0]){ const [g1,f1]=FURU[i],[g2,f2]=FURU[i+1]; furu=Math.round((f1+(f2-f1)*(gross-g1)/(g2-g1))*10)/10; } }
-        const sum = `${esc(hName())}の年収（額面）約${fmt(gross)}万円。ふるさと納税の上限は 年 約<b>${furu}万円</b>（実質2,000円で返礼品）が目安です。`;
+        const sum = `${esc(hNameH())}の年収（額面）約${fmt(gross)}万円。ふるさと納税の上限は 年 約<b>${furu}万円</b>（実質2,000円で返礼品）が目安です。`;
         cats.push({ key:'tax', label:'税金・節税', icon:'fa-coins', color:'#e0a23b', tone:'ok', sum,
           good:[ `ふるさと納税（上限 約${furu}万円）＋iDeCo（掛金全額控除）で、年数万円〜の節税が狙えます。`,
                  houseType!=='rent' ? `住宅ローン控除を適用中で、税負担が軽くなっています。` : `iDeCo・医療費控除・生命保険料控除も活用の余地があります。`,
@@ -2732,6 +2789,11 @@
       return { h: survivorNeed('h'), w: survivorNeed('w') };
     }
 
+    /* 所得税＋住民税の実効税率の概算（給与収入ベースの簡易目安） */
+    function marginalTaxRate(gross){
+      return gross<=300 ? 0.15 : gross<=500 ? 0.20 : gross<=800 ? 0.30 : 0.33;
+    }
+
     /* 診断カードの組み立て（専門家CTAは付けない。必要な時だけ後付けする）*/
     const CTA_HTML = `<div class="chat-cta-wrap"><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button> <button class="chat-cta chat-cta-no" type="button" data-chatno>もう少し自分で考える</button></div>`;
     function diagBox(facts, verdictCls, verdictHtml, body){
@@ -2743,7 +2805,7 @@
     }
     function famFact(p){
       const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
-      return `ご家族：${p.single ? `${esc(hName())}（${p.hAge}歳・単身）` : `ご夫婦（${esc(hName())} ${p.hAge}歳・${esc(wName())} ${p.wAge}歳）`}${kids}`;
+      return `ご家族：${p.single ? `${esc(hNameH())}（${p.hAge}歳・単身）` : `ご夫婦（${esc(hNameH())} ${p.hAge}歳・${esc(wNameH())} ${p.wAge}歳）`}${kids}`;
     }
 
     const DIAG = {
@@ -2790,12 +2852,12 @@
         const both = Math.max(n.h.need, n.w.need);
         const verdictCls = both>0 ? 'warn' : 'ok';
         const verdict = both>0
-          ? `診断：いま追加で備えるべき保障（不足額）は、<b>${esc(hName())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wName())}に万一＝約${fmt(n.w.need)}万円</b>です。（必要資金から、いまの備えを差し引いた金額）`
+          ? `診断：いま追加で備えるべき保障（不足額）は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>です。（必要資金から、いまの備えを差し引いた金額）`
           : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>追加の死亡保険は不要です。`;
 
         const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
-          + detail(n.h, hName(), wName())
-          + detail(n.w, wName(), hName())
+          + detail(n.h, hNameH(), wNameH())
+          + detail(n.w, wNameH(), hNameH())
           + (both>0
               ? `不足分は<b>掛け捨ての収入保障保険</b>なら月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
               : `死亡保障は最小限にして、<b>医療・就業不能への備え</b>や資産形成に回すのが合理的です。`)
@@ -2811,19 +2873,24 @@
       nenkin(){
         const p = buildProfile();
         const pensionM = num('pension-monthly',0), retLiving = num('e-retire-living',24);
+        const pensionAge = num('pension-age',65);
         const gapM = retLiving - pensionM;
+        const coverage = retLiving>0 ? Math.round(Math.min(pensionM/retLiving,1)*100) : 100;
+        const yearsAfterPension = Math.max(p.endAge - pensionAge, 0);
+        const shortfallTotal = Math.round(Math.max(gapM,0)*12*yearsAfterPension);
         const facts = [ famFact(p),
-          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionM)}万円</b>（${num('pension-age',65)}歳〜）`,
-          `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金との差は月${fmt(Math.max(gapM,0))}万円`,
+          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionM)}万円</b>（${pensionAge}歳〜）`,
+          `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金は生活費の<b>約${coverage}%をカバー</b>（不足 月${fmt(Math.max(gapM,0))}万円）`,
+          gapM>0 ? `不足分の目安総額：<b>約${fmt(shortfallTotal)}万円</b>（${pensionAge}〜${p.endAge}歳の${yearsAfterPension}年間・単純計算）` : `年金だけで生活費をまかなえる見込みです`,
           `退職時（${p.hRetire}歳）の金融資産見込み：<b>${fmt(p.retireRow.net)}万円</b>` ];
         if(p.depletion){
           return diagBox(facts, 'bad',
-            `診断：このままだと<b>${p.depletion.hAge}歳ごろに資金が不足</b>する見込みです。`,
-            `対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す ④年金の繰下げ受給（最大+84%）。上の「<b>現状と対策後をくらべる</b>」で、対策の効果をワンクリックで確認できます。`);
+            `診断：このままだと<b>${p.depletion.hAge}歳ごろに資金が不足</b>する見込みです（想定${p.endAge}歳より${Math.max(p.endAge-p.depletion.hAge,0)}年早い計算）。`,
+            `年金だけでは生活費の${coverage}%しかカバーできず、月${fmt(Math.max(gapM,0))}万円を資産の取り崩しで補う想定のため、資金が長持ちしません。対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す ④年金の繰下げ受給（1か月+0.7%・最大+84%で、月${fmt(pensionM)}万円が繰下げにより増額）。上の「<b>現状と対策後をくらべる</b>」で、対策の効果をワンクリックで確認できます。`);
         }
         return diagBox(facts, 'ok',
           `診断：<b>${p.endAge}歳まで資金ショートしない見込みです。</b>（最少残高 ${fmt(p.minRow.net)}万円・${p.minRow.hAge}歳時点）`,
-          `最終${p.endAge}歳時点の総資産は約${fmt(p.endRow.net)}万円の見込みです。さらに余裕をつくるなら、年金の繰下げ受給（1か月+0.7%）や運用の継続が有効です。`);
+          `年金は生活費の約${coverage}%をカバーし、残りは資産の取り崩しでまかなう計算でも${p.endAge}歳まで持ちます。最終${p.endAge}歳時点の総資産は約${fmt(p.endRow.net)}万円の見込みです。さらに余裕をつくるなら、年金の繰下げ受給（1か月+0.7%）や運用の継続が有効です。`);
       },
 
       /* NISAは始めるべき？／資産運用 */
@@ -2920,10 +2987,10 @@
       ideco(){
         const p = buildProfile();
         const gross = num('h-income',0);
-        const rate = gross<=300 ? 0.15 : gross<=500 ? 0.20 : gross<=800 ? 0.30 : 0.33;
+        const rate = marginalTaxRate(gross);
         const save = Math.round(2.3*12*rate*10)/10;
         return diagBox([ famFact(p),
-          `${esc(hName())}の年収（額面）：<b>${fmt(gross)}万円</b> → 想定税率 約${Math.round(rate*100)}%（所得税＋住民税）`,
+          `${esc(hNameH())}の年収（額面）：<b>${fmt(gross)}万円</b> → 想定税率 約${Math.round(rate*100)}%（所得税＋住民税）`,
           `会社員の掛金上限：月2.3万円（企業年金なしの場合）` ],
           'ok', `診断：iDeCoに月2.3万円拠出すると、<b>年 約${save}万円</b> 税金が軽くなる目安です。`,
           `掛金は全額所得控除・運用益も非課税で、老後資金づくりと節税を同時にできます。ただし<b>60歳まで引き出せない</b>ため、教育費などに使うお金はNISA、老後専用のお金はiDeCo、と使い分けるのが王道です。`);
@@ -2952,6 +3019,7 @@
       zeikin(){
         const p = buildProfile();
         const gross = num('h-income',0);
+        const rate = marginalTaxRate(gross);
         const FURU = [[300,2.8],[400,4.2],[500,6.1],[600,7.7],[700,10.8],[800,12.9],[900,15.1],[1000,17.6],[1500,38],[2000,55]];
         let furu = FURU[0][1];
         for(let i=0;i<FURU.length;i++){
@@ -2961,13 +3029,27 @@
             furu = Math.round((f1 + (f2-f1)*(gross-g1)/(g2-g1))*10)/10;
           }
         }
+        const idecoSave = Math.round(2.3*12*rate*10)/10;
+        const invNames = p.invs.map(v=>v.name);
+        const hasIdeco = invNames.some(n=> /ideco|イデコ|確定拠出/i.test(n));
+        const checklist = [
+          `<li class="ok">☑ ふるさと納税：上限 約${furu}万円まで実質2,000円で利用可能</li>`,
+          hasIdeco
+            ? `<li class="ok">☑ iDeCo：すでに活用中</li>`
+            : `<li class="warn">☐ iDeCo：未活用（月2.3万円の掛金で年 約${idecoSave}万円の節税余地）</li>`,
+          houseType!=='rent'
+            ? `<li class="ok">☑ 住宅ローン控除：適用中（シミュレーションに反映済み）</li>`
+            : `<li class="warn">☐ 住宅ローン控除：賃貸のため対象外</li>`,
+          `<li class="warn">☐ 医療費控除・生命保険料控除：世帯の医療費が年10万円超、または生命保険に加入していれば対象になり得ます（要確認）</li>`
+        ].join('');
         const facts = [ famFact(p),
-          `${esc(hName())}の年収（額面）：<b>${fmt(gross)}万円</b>`,
-          `ふるさと納税の上限目安：<b>年 約${furu}万円</b>（実質2,000円で返礼品）`,
-          `${houseType!=='rent' ? '住宅ローン控除：適用中（シミュレーションに反映済み）' : 'iDeCo・医療費控除・生命保険料控除も対象になり得ます'}` ];
+          `${esc(hNameH())}の年収（額面）：<b>${fmt(gross)}万円</b> → 想定税率 約${Math.round(rate*100)}%（所得税＋住民税）`,
+          `ふるさと納税の上限目安：<b>年 約${furu}万円</b>（実質2,000円で返礼品）` ];
+        const untappedTotal = (hasIdeco?0:idecoSave);
         return diagBox(facts, 'ok',
-          `診断：まずは<b>ふるさと納税＋iDeCo</b>で、年数万円レベルの節税が見込めます。`,
-          `会社員の節税の柱は①ふるさと納税 ②iDeCo（掛金全額控除）③医療費控除（世帯で年10万円超）④住宅ローン控除 です。取りこぼしがないか、年末調整・確定申告の前にチェックしましょう。`);
+          `診断：<b>取りこぼしなく使えば、年${fmt(furu+untappedTotal)}万円前後</b>の節税・還元が見込めます。`,
+          `<b>【いま使える制度チェック】</b><ul class="diag-checklist">${checklist}</ul>`
+          + `年収${fmt(gross)}万円の場合、税率は約${Math.round(rate*100)}%（所得税＋住民税）です。税率が高いほど、iDeCoなど所得控除系の制度の節税効果が大きくなります。取りこぼしがないか、年末調整・確定申告の前にチェックしましょう。`);
       },
 
       /* 国債・預け先 */
@@ -3137,7 +3219,7 @@
         else {
           const both = Math.max(n.h.need, n.w.need);
           concl = both>0
-            ? `いま追加で備える目安は、<b>${esc(hName())}に万一＝約${fmt(n.h.need)}万円／${esc(wName())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら月数千円程度から、<b>無理なく備えられる規模</b>です。`
+            ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら月数千円程度から、<b>無理なく備えられる規模</b>です。`
             : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできています</b>。過剰な保険は不要です。`;
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`

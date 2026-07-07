@@ -1130,9 +1130,60 @@
             <span>編集中の資料：<strong id="current-save-name"></strong></span>
             <button class="btn btn-primary btn-sm" id="save-overwrite"><i class="fa-solid fa-pen-to-square"></i> 上書き保存</button>
           </div>
+          <div class="save-row" style="margin-top:10px;">
+            <button class="btn btn-primary btn-sm btn-full" id="open-share" type="button"><i class="fa-solid fa-share-nodes"></i> お客様にこの内容を共有する</button>
+          </div>
           <p class="at-note">保存したデータは<strong>ログイン中のアカウントごと</strong>に、このパソコン（ブラウザ）へ記録されます（他のアカウントからは見えません）。下の一覧から読み込んで続きを作成できます。</p>
           <div class="save-list" id="save-list"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== お客様への共有リンク作成 モーダル ===================== -->
+  <div class="modal-overlay" id="share-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="お客様への共有">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-share-nodes"></i> お客様に共有する</h3>
+        <button class="modal-close" id="share-modal-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="share-setup">
+          <p class="at-note">いま画面に表示している内容を、お客様がご自身のスマホ・パソコンで確認できるリンクを作成します。データはリンクの中に暗号化して埋め込むだけなので、サーバーへの保存は行いません（費用もかかりません）。</p>
+          <div class="field" style="margin-bottom:12px;">
+            <label>閲覧用パスワード（お客様にお伝えください）</label>
+            <input type="text" id="share-pass" placeholder="例：4桁の数字など" autocomplete="off">
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="share-make" type="button"><i class="fa-solid fa-link"></i> 共有リンクを作成</button>
+          <div class="lock-err" id="share-err"></div>
+        </div>
+        <div id="share-result" hidden>
+          <p class="at-note">下記をコピーして、LINEやメールでお客様にお送りください。</p>
+          <div class="field" style="margin-bottom:10px;">
+            <label>お客様に送るメッセージ</label>
+            <textarea id="share-msg" rows="6" readonly></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="share-copy" type="button"><i class="fa-solid fa-copy"></i> コピーする</button>
+          <p class="at-note" style="margin-top:10px;">※ このリンクとパスワードを知っている人は誰でも閲覧できます。お客様ご本人にのみお伝えください。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== お客様専用ページ（共有リンクを開いたときのパスワード入力）===================== -->
+  <div class="modal-overlay" id="viewer-gate-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="お客様専用ページ">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-lock"></i> お客様専用ページ</h3>
+      </div>
+      <div class="modal-body">
+        <p class="at-note">担当者からお伝えしたパスワードを入力してください。</p>
+        <div class="field" style="margin-bottom:12px;">
+          <label>パスワード</label>
+          <input type="text" id="viewer-pass" placeholder="パスワードを入力" autocomplete="off">
+        </div>
+        <button class="btn btn-primary btn-sm btn-full" id="viewer-open" type="button"><i class="fa-solid fa-unlock"></i> 開く</button>
+        <div class="lock-err" id="viewer-err"></div>
       </div>
     </div>
   </div>
@@ -3520,6 +3571,64 @@
       if(putSaves(o)){ renderSaveList(); alert(`「${currentSaveName}」を上書き保存しました。`); }
     });
 
+    /* ============================================================
+       お客様への共有リンク（サーバー不要・費用ゼロ）
+       いまの入力内容をパスワードでXOR暗号化してURLの#に埋め込み、
+       お客様がご自身の端末でリンク＋パスワードを開くと同じ内容を見られる
+       ============================================================ */
+    function b64urlEncode(bytes){
+      let bin=''; bytes.forEach(b=> bin+=String.fromCharCode(b));
+      return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    }
+    function b64urlDecode(str){
+      str = str.replace(/-/g,'+').replace(/_/g,'/');
+      while(str.length%4) str+='=';
+      const bin = atob(str);
+      const bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return bytes;
+    }
+    function xorBytes(bytes, password){
+      const key = new TextEncoder().encode(password||'');
+      if(!key.length) return bytes;
+      const out = new Uint8Array(bytes.length);
+      for(let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ key[i%key.length];
+      return out;
+    }
+    function encodeShareState(stateObj, password){
+      const bytes = new TextEncoder().encode(JSON.stringify(stateObj));
+      return b64urlEncode(xorBytes(bytes, password));
+    }
+    function decodeShareState(str, password){
+      const dec = xorBytes(b64urlDecode(str), password);
+      const json = new TextDecoder('utf-8', {fatal:true}).decode(dec);
+      return JSON.parse(json);
+    }
+
+    const shareModal = $('share-modal');
+    function openShareModal(){
+      $('share-setup').hidden=false; $('share-result').hidden=true; $('share-err').textContent=''; $('share-pass').value='';
+      shareModal.hidden=false;
+    }
+    if($('open-share')) $('open-share').addEventListener('click', openShareModal);
+    if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
+    shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
+    if($('share-make')) $('share-make').addEventListener('click', ()=>{
+      const pass = ($('share-pass').value||'').trim();
+      if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
+      const code = encodeShareState(collectState(), pass);
+      const url = location.origin + location.pathname + '#share=' + code;
+      const nm = ($('h-name')?.value||'').trim();
+      $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
+      $('share-setup').hidden=true; $('share-result').hidden=false;
+    });
+    if($('share-copy')) $('share-copy').addEventListener('click', ()=>{
+      const ta=$('share-msg'); ta.select();
+      const done=()=> alert('コピーしました。LINEやメールに貼り付けてお送りください。');
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ document.execCommand('copy'); done(); }); }
+      else { document.execCommand('copy'); done(); }
+    });
+
     // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
     (function(){
       const MIGRATE_FLAG = 'lifeplan_migrated_v2';
@@ -3548,6 +3657,32 @@
     eventRow(50,'家族旅行（記念）',80);
     applyHousePanels();
     recompute();
+
+    // お客様専用ページ：共有リンク（#share=...）で開いた場合、パスワード入力後に内容を復元する
+    (function(){
+      const m = location.hash.match(/#share=([^&]+)/);
+      if(!m) return;
+      const code = m[1];
+      const modal = $('viewer-gate-modal');
+      if(!modal) return;
+      modal.hidden = false;
+      const tryOpen = ()=>{
+        const pass = ($('viewer-pass').value||'').trim();
+        $('viewer-err').textContent='';
+        if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
+        try{
+          const state = decodeShareState(code, pass);
+          applyState(state);
+          setCurrentSave(null);
+          modal.hidden = true;
+          history.replaceState(null, '', location.pathname + location.search);
+        }catch(e){
+          $('viewer-err').textContent='パスワードが正しくないか、リンクが壊れています。もう一度お確かめください。';
+        }
+      };
+      $('viewer-open').addEventListener('click', tryOpen);
+      $('viewer-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryOpen(); });
+    })();
 
   })();
   </script>

@@ -2493,25 +2493,25 @@
     }
 
     /* ---------- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）---------- */
+    let assetRowsCache = [];
     function drawAssetChart(rows){
+      assetRowsCache = rows;
       const labels = rows.map(r=> r.hAge+'歳');
-      const cashD   = rows.map(r=> Math.round(r.cash));
-      const investD = rows.map(r=> Math.round(r.invest));
+      const totalD = rows.map(r=> Math.round(r.net));
 
       const ctx = $('assetChart').getContext('2d');
-      // すっきりした積み上げ棒グラフ（塗りつぶしの面グラフは廃止。棒の高さ＝総資産）
+      // 総資産1本のシンプルな棒グラフ（内訳はマウスを乗せると表示）
       const data = {
         labels,
         datasets:[
-          { type:'bar', label:'現預金残高', data:cashD, backgroundColor:'#5b9bd5', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 },
-          { type:'bar', label:'運用総資産', data:investD, backgroundColor:'#9b8cf0', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
+          { type:'bar', label:'総資産', data:totalD, backgroundColor:'#5b9bd5', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
         ]
       };
       // 将来プラン表示中：現状プランの総資産を点線で重ねて比較できるようにする
       const ghost = planGhost();
       if(ghost){
         data.datasets.push({ type:'line', label:ghost.label, data: rows.map(r=> (ghost.byAge[r.hAge]!=null ? ghost.byAge[r.hAge] : null)),
-          borderColor:'#e8536a', borderDash:[7,5], borderWidth:2.5, pointRadius:0, fill:false, tension:.2, stack:'c', order:0 });
+          borderColor:'#e8536a', borderDash:[7,5], borderWidth:2.5, pointRadius:0, fill:false, tension:.2, order:0 });
       }
       if(assetChart){ assetChart.data=data; assetChart.update(); return; }
       assetChart = new Chart(ctx,{
@@ -2519,16 +2519,16 @@
         options:{
           responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
           scales:{
-            y:{ stacked:true, beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} },
-            x:{ stacked:true, ticks:{ maxTicksLimit:14, autoSkip:true }, grid:{display:false} }
+            y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} },
+            x:{ ticks:{ maxTicksLimit:14, autoSkip:true }, grid:{display:false} }
           },
           plugins:{
             legend:{ labels:{ font:{family:'Noto Sans JP'}, usePointStyle:true, pointStyle:'rectRounded' } },
             tooltip:{ callbacks:{
               label:(c)=> c.dataset.label+'：'+c.parsed.y.toLocaleString()+'万円',
               footer:(items)=>{
-                const total = items.filter(i=> i.dataset.type!=='line').reduce((a,i)=> a+i.parsed.y, 0);
-                return '総資産合計：'+ total.toLocaleString() +'万円';
+                const r = assetRowsCache[items[0].dataIndex];
+                return r ? '内訳：預貯金 '+fmt(r.cash)+'万円 ＋ 運用 '+fmt(r.invest)+'万円' : '';
               }
             } }
           }
@@ -3601,9 +3601,17 @@
       fudosan:{ label:'不動産', re:/不動産|土地|マンション|戸建て|空き家|売却|譲渡|賃貸経営|大家|リバースモーゲージ|リースバック|買い替え|住み替え/,
         facts:['マイホームを売却したときの利益には<b>3,000万円の特別控除</b>があり、多くの場合税金がかかりません。','不動産の譲渡税率は<b>所有期間5年超で約20%（長期）、5年以下で約39%（短期）</b>と大きく変わります。','所有期間<b>10年超のマイホーム</b>は、さらに軽減税率（6,000万円まで約14%）が使えます。','購入時には物件価格のほかに<b>諸費用（仲介手数料・登記・不動産取得税など、価格の3〜8%）</b>がかかります。','固定資産税は<b>評価額×1.4%</b>が標準。住宅用地は<b>200㎡まで評価額が1/6</b>に軽減されます。','相続した空き家を売る場合も、要件を満たせば<b>3,000万円特別控除（空き家特例）</b>が使えます。','自宅を担保に老後資金を借りる<b>リバースモーゲージ</b>、売って住み続ける<b>リースバック</b>という選択肢もあります。','賃貸経営の家賃収入は<b>不動産所得</b>として確定申告が必要です（青色申告で最大65万円控除）。','不動産は<b>相続税評価が時価より低くなりやすく</b>（貸家はさらに減額）、相続対策に使われることがあります。'],
         probes:['不動産のご相談ですね。売却・購入・賃貸経営・相続など、どの場面のお話でしょうか？','対象の物件は、ご自宅ですか？それとも投資用・相続された物件でしょうか？'],
-        concl:'一般的には、不動産は<b>「いつ売るか（所有期間）」と「特例を使えるか」</b>で税額が数百万円変わります。売却・住み替えの前に、必ず適用できる特例を確認するのが鉄則です。' }
+        concl:'一般的には、不動産は<b>「いつ売るか（所有期間）」と「特例を使えるか」</b>で税額が数百万円変わります。売却・住み替えの前に、必ず適用できる特例を確認するのが鉄則です。' },
+      sandai:{ label:'三大疾病・先進医療', re:/三大疾病|特定疾病|がん|ガン|癌|上皮内|悪性新生物|脳卒中|脳梗塞|脳出血|くも膜下|脳血管|心筋梗塞|心疾患|狭心症|先進医療|重粒子|陽子線|抗がん剤|放射線治療/,
+        facts:['三大疾病とは<b>がん・急性心筋梗塞・脳卒中</b>の3つ。日本人の死因の約5割を占めます。','<b>脳卒中</b>は「脳梗塞・脳出血・くも膜下出血」の3つの総称です。<b>脳血管疾患</b>はさらに広い概念で、一過性脳虚血発作（TIA）なども含みます。最近は広い「脳血管疾患」まで保障する保険も増えています。','<b>急性心筋梗塞</b>は心疾患のひとつ。<b>心疾患</b>には狭心症・心不全・不整脈なども含まれ、「急性心筋梗塞のみ」か「心疾患全体」かで保険の支払い範囲が大きく違います。','<b>上皮内がん（上皮内新生物）</b>は、がん細胞が上皮内にとどまり転移の可能性がほぼない初期段階。商品によって<b>対象外・給付金が1〜2割に縮小・全額支払い</b>と扱いが分かれる重要チェックポイントです。','三大疾病保険の支払い条件は要注意：がんは「診断確定」で支払われる商品が多い一方、急性心筋梗塞・脳卒中は<b>「60日以上の労働制限・後遺症」等の条件</b>が付く商品と「入院・手術のみ」で支払われる商品があります。','<b>先進医療</b>とは、厚生労働大臣が定める高度な医療技術。<b>技術料は全額自己負担</b>で、高額療養費制度の対象外です（診察・投薬など通常部分は保険適用）。','<b>重粒子線治療は約300万円前後、陽子線治療は約270万円前後</b>が技術料の目安。がん治療で用いられ、一部のがんは公的保険適用に移行しています。','<b>先進医療特約</b>は月100円前後の負担で技術料を通算2,000万円まで保障するものが多く、コストパフォーマンスの高い特約です。','がん治療費の自己負担は、高額療養費制度を使って<b>入院・通院トータルで50〜100万円程度</b>が一つの目安（長期の通院治療や差額ベッド代・先進医療は別途）。','三大疾病で長期間働けなくなった場合は、治療費よりも<b>収入減少</b>の影響が大きくなりがちです。傷病手当金（最長1年6か月）の後を就業不能保険や貯蓄でどう支えるかがポイントです。'],
+        probes:['三大疾病への備えを確認したいのですね。特に気になるのは、がん・心疾患・脳血管疾患のどれでしょうか？','いま医療保険やがん保険には加入されていますか？上皮内がんの扱いなど、保障内容を確認されたことはありますか？'],
+        concl:'一般的には、①<b>高額療養費制度でカバーされる部分</b>を把握し、②<b>上皮内がんの扱い・心疾患/脳血管疾患の範囲・支払い条件</b>を商品ごとに確認、③<b>先進医療特約は安価なので付けておく</b>——の順で整理すると、ムダなく備えられます。' },
+      shigyo:{ label:'法律・士業', re:/弁護士|司法書士|行政書士|社労士|社会保険労務士|公証|士業|登記|公正証書|検認|成年後見|家族信託|民事信託|遺産分割調停|税務調査|過料|認知症対策/,
+        facts:['<b>税理士</b>は税の専門家。相続税申告・確定申告・税務調査の対応ができます。相続税申告の報酬目安は<b>遺産総額の0.5〜1%</b>です。','<b>弁護士</b>は紛争解決の専門家。遺産分割で争いになった場合、<b>代理人として交渉・調停・裁判ができるのは弁護士だけ</b>です。','<b>司法書士</b>は登記の専門家。相続登記・抵当権抹消・会社設立登記などを担います。','<b>相続登記は2024年4月から義務化</b>されました。相続を知った日から<b>3年以内</b>に登記しないと<b>10万円以下の過料</b>の対象になります（過去の相続分も対象）。','<b>行政書士</b>は官公署への書類作成の専門家。遺言書の起案支援・許認可申請などを担います。','<b>社会保険労務士</b>は年金・労務の専門家。障害年金や遺族年金の請求手続きを支援できます。','<b>公正証書遺言</b>は公証役場で作成する最も確実な遺言。費用は財産額に応じて<b>数万円〜十数万円</b>、家庭裁判所の検認が不要ですぐ手続きできます。','<b>自筆証書遺言</b>は法務局の保管制度（1件3,900円）を使うと、紛失・改ざんの心配がなく検認も不要になります。','<b>成年後見制度</b>は判断能力が低下した方の財産を守る制度。<b>家族信託（民事信託）</b>は元気なうちに家族へ管理を託し、認知症による資産凍結を防げる注目の仕組みです。','住宅ローンを完済したら、<b>抵当権抹消登記</b>が必要です（自動では消えません。司法書士依頼で1〜2万円程度）。'],
+        probes:['法律・手続きのご相談ですね。相続・遺言・登記・後見など、どの場面のお話でしょうか？','すでに専門家（税理士・弁護士・司法書士など）に相談されたことはありますか？'],
+        concl:'一般的には、<b>税金＝税理士、争い＝弁護士、登記＝司法書士、書類＝行政書士、年金・労務＝社労士</b>と役割が分かれています。入口を間違えると二度手間になるので、まず全体を整理してから適切な専門家につなぐのが近道です。' }
     };
-    const TOPIC_ORDER = ['kokusai','souzoku','ideco','kyoiku','izoku','shaho','fudosan','hoken','jutaku','nenkin','zeikin','nisa','toushi'];
+    const TOPIC_ORDER = ['kokusai','shigyo','souzoku','ideco','kyoiku','izoku','shaho','sandai','fudosan','hoken','jutaku','nenkin','zeikin','nisa','toushi'];
     const OPENERS = ['','{T}についてですね。','{T}のご質問、ありがとうございます。','{T}は多くの方が気にされるところです。','なるほど、{T}のお話ですね。','{T}は大切なテーマですよね。','いいご質問です。{T}についてお答えしますね。','{T}について、ポイントを整理しますね。','{T}、承知しました。','{T}のことですね。一緒に見ていきましょう。'];
     const CLOSERS = ['','ご家庭の状況に合わせて最適化できます。','まずは無理のない範囲から始めましょう。','上のシミュレーションと合わせて見ると判断しやすくなりますよ。','ご不明な点は、いつでも掘り下げてご説明します。','優先順位をつけて、できることから整えていきましょう。','気になる点があれば、続けてお気軽にご質問くださいね。','ご自身のペースで進めて大丈夫ですよ。','ほかにも知りたいことがあれば、何でも聞いてください。'];
     const CONNECTORS = ['','また、','そして、','あわせて、','なお、','ちなみに、','加えて、'];
@@ -3616,14 +3624,33 @@
       for(let i=1;i<fs.length;i++){ out += ' ' + pickOne(CONNECTORS) + fs[i]; }
       return out;
     }
+    // 質問文と最も関係の深いファクトを探す（2文字ずつの部分一致でざっくり採点）
+    function bestMatchingFact(kb, q){
+      if(!q) return null;
+      const qs = q.replace(/[？?。、！!\s]/g,'');
+      const grams = [];
+      for(let i=0; i<qs.length-1; i++) grams.push(qs.substr(i,2));
+      let best = null, bestScore = 0;
+      kb.facts.forEach(f=>{
+        const plain = f.replace(/<[^>]+>/g,'');
+        let score = 0;
+        grams.forEach(g=>{ if(plain.includes(g)) score++; });
+        if(score > bestScore){ bestScore = score; best = f; }
+      });
+      return bestScore >= 3 ? best : null;   // 十分に関係が深いときだけ優先
+    }
     // トピックごとに「直近6回と同じファクトの組み合わせ」を避け、毎回違う回答にする
     const recentFactSets = {};
-    function genAnswer(key){
+    function genAnswer(key, q){
       const kb=KB[key];
       const seen = recentFactSets[key] || (recentFactSets[key]=[]);
+      // 「〜の違いは？」「費用は？」などピンポイントの質問には、該当するファクトを必ず先頭に入れる
+      const priority = bestMatchingFact(kb, q);
       let fs, sig, tries=0;
       do{
-        fs = sampleN(kb.facts, 2 + Math.floor(Math.random()*2)); // 2〜3個をランダム抽出（順序もシャッフル）
+        const pool = priority ? kb.facts.filter(f=> f!==priority) : kb.facts;
+        fs = sampleN(pool, priority ? 1 + Math.floor(Math.random()*2) : 2 + Math.floor(Math.random()*2));
+        if(priority) fs.unshift(priority);
         sig = fs.slice().sort().join('|');
         tries++;
       } while(seen.includes(sig) && tries<16);
@@ -3643,11 +3670,11 @@
       if(topic && DIAG[topic] && NECESSITY.test(q)){
         return { html: DIAG[topic](), known:true, personal:false, diag:true, topic };
       }
-      if(topic) return { html: genAnswer(topic), known:true, personal:true, topic };
+      if(topic) return { html: genAnswer(topic, q), known:true, personal:true, topic };
       if(NECESSITY.test(q)){
         return { html: worryPrompt(), known:true, personal:false };
       }
-      return { html:'ご質問ありがとうございます。NISA・iDeCo・保険・国債・相続・税金・住宅・教育・年金など幅広くお答えできますが、ご質問の意図をうまく読み取れませんでした。言い回しを変えてお試しいただくか、', known:false, personal:false };
+      return { html:'ご質問ありがとうございます。NISA・iDeCo・保険・三大疾病・先進医療・遺族年金・社会保険・国債・相続・税金・不動産・法律（弁護士・税理士・司法書士など）・住宅・教育・年金など幅広くお答えできますが、ご質問の意図をうまく読み取れませんでした。言い回しを変えてお試しいただくか、', known:false, personal:false };
     }
 
     /* ============================================================

@@ -988,8 +988,8 @@
               <div class="subgroup-title"><i class="fa-solid fa-umbrella-beach"></i> 老後の生活費（退職後）</div>
               <div class="field" style="max-width:260px;">
                 <label>退職後の生活費（夫婦・月額）</label>
-                <div class="input-unit"><input type="number" id="e-retire-living" value="24" min="0" step="1"><span class="u">万円</span></div>
-                <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後</span>
+                <div class="input-unit"><input type="number" id="e-retire-living" value="25" min="0" step="1"><span class="u">万円</span></div>
+                <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後／ゆとりある生活費は月35万円前後</span>
               </div>
             </div>
           </div>
@@ -2686,7 +2686,7 @@
       /* ── 万が一の備え（生命保険）── */
       if(single){
         const sum = `扶養するご家族がいないため、大きな死亡保障は<b>原則不要</b>です。優先すべきは医療・就業不能への備えと貯蓄になります。`;
-        cats.push({ key:'hoken', label:'万が一の備え', icon:'fa-shield-heart', color:'#e2849a', tone:'ok', sum,
+        cats.push({ key:'hoken', label:'万が一の備え', label2:'万が一の<br>備え', icon:'fa-shield-heart', color:'#e2849a', tone:'ok', sum,
           good:[`高額療養費制度により、医療費の1か月の自己負担には上限（年収により約8万円〜）があります。`,
                 `預貯金 ${fmt(p.cashNow)}万円 が、入院・療養で収入が減った時のクッションになります。`],
           concern:[`働けない期間が長引くリスクには、就業不能保険や貯蓄で備えておくと安心です。`,
@@ -2713,7 +2713,7 @@
         if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
         if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wNameH())}死亡時、55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
         if(!con.length) con.push(`貯蓄が育つほど必要な保障は小さくなります。過剰な保険がないか、定期的に見直しましょう。`);
-        cats.push({ key:'hoken', label:'万が一の備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
+        cats.push({ key:'hoken', label:'万が一の備え', label2:'万が一の<br>備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
       }
 
       /* ── 資産運用 ── */
@@ -2824,7 +2824,7 @@
     }
     function renderAdviceCats(cats){
       const wrap=$('advice-cats'); if(!wrap) return;
-      wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
+      wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label2||c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
     }
     function renderAdviceDetail(c){
       const box=$('advice-detail'); if(!box||!c) return;
@@ -3904,7 +3904,7 @@
       if(NECESSITY.test(q)){
         return { html: worryPrompt(), known:true, personal:false };
       }
-      return { html:'ご質問ありがとうございます。うまく読み取れなかったので、よろしければ<b>「NISAとは？」「家を建てるお金はいくら？」「おじいちゃんの家はどうすればいい？」</b>のように、知りたいことを短い言葉で聞いてみてください。「やさしく教えて」と付けていただければ、中学生にも分かる言葉でご説明します。NISA・保険・相続・税金・不動産・住宅・教育・年金・労働・離婚・法律の専門家のことなど、お金まわりは幅広くお答えできます。それでも見つからないときは、', known:false, personal:false };
+      return { html:'ご質問ありがとうございます。うまく読み取れなかったので、よろしければ<b>「NISAとは？」「家を建てるお金はいくら？」「おじいちゃんの家はどうすればいい？」</b>のように、知りたいことを短い言葉で聞いてみてください。NISA・保険・相続・税金・不動産・住宅・教育・年金・労働・離婚・法律の専門家のことなど、お金まわりは幅広くお答えできます。それでも見つからないときは、', known:false, personal:false };
     }
 
     /* ============================================================
@@ -4319,7 +4319,7 @@
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
       const code = encodeShareState(collectState(), pass);
       // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
-      const url = 'https://office-m-nakatani.github.io/lifeplan/index2.html' + '#share=' + code;
+      const url = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
       const nm = ($('h-name')?.value||'').trim();
       $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
       $('share-setup').hidden=true; $('share-result').hidden=false;

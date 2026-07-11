@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ご夫婦のライフプランシミュレーター | これからのお金を見える化</title>
+  <title>ご夫婦のライフプランシミュレーター② | 現状と将来をくらべる</title>
   <meta name="description" content="30代のご夫婦のための、やさしいライフプランシミュレーター。住宅・教育・老後・資産運用までまとめて見える化できます。" />
 
   <!-- HPとしての体裁：ファビコン（ブラウザのタブに出るアイコン）・テーマ色・将来のアプリ追加にも対応 -->
@@ -422,6 +422,12 @@
     .chat-quick{ display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 0; }
     .chat-chip{ border:1px solid var(--blue-pale2); background:var(--blue-pale); color:var(--blue-deep); border-radius:999px; padding:6px 12px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; }
     .chat-chip:hover{ background:var(--blue-pale2); }
+    .pen-presets{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+    .pen-preset{ border:1px solid var(--blue-pale2); background:var(--blue-pale); color:var(--blue-deep); border-radius:999px; padding:4px 10px; font-size:.75rem; font-weight:700; cursor:pointer; font-family:inherit; }
+    .pen-preset:hover{ background:var(--blue-pale2); }
+    .premise{ margin:10px auto 14px; max-width:860px; text-align:left; font-size:.78rem; opacity:.9; }
+    .premise summary{ cursor:pointer; font-weight:700; }
+    .premise ul{ margin:8px 0 0 18px; display:flex; flex-direction:column; gap:6px; }
     .chat-log{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding:4px 2px; }
     .chat-msg{ display:flex; gap:8px; align-items:flex-start; }
     .chat-msg.user{ flex-direction:row-reverse; }
@@ -521,6 +527,47 @@
     .cmp-diff-up{ color:var(--good); }
     .cmp-diff-down{ color:#d05a6e; }
     .cmp-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+
+    /* ============================================================
+       ② 現状 ⇔ 将来 プラン切替・差額表示
+       ============================================================ */
+    .plan-wrap{ position:sticky; top:8px; z-index:60; }
+    .plan-bar{
+      background:#fff; border:2px solid var(--blue); border-radius:16px; box-shadow:var(--shadow);
+      padding:10px 14px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:14px auto 4px;
+    }
+    body.plan-mirai .plan-bar{ border-color:var(--yellow); background:linear-gradient(180deg,#fffdf2,#ffffff); }
+    .plan-tabs{ display:flex; border-radius:12px; overflow:hidden; border:1.5px solid var(--blue-pale2); flex:0 0 auto; }
+    .plan-tabs button{
+      font-family:inherit; font-weight:800; font-size:.95rem; padding:10px 22px; border:0; cursor:pointer;
+      background:#fff; color:var(--blue-deep); display:flex; gap:8px; align-items:center; transition:background .15s;
+    }
+    .plan-tabs button:not(.active):hover{ background:var(--blue-pale); }
+    .plan-tabs button.active{ background:var(--blue); color:#fff; }
+    .plan-tabs button[data-plan="mirai"].active{ background:var(--yellow); color:#5a4a12; }
+    .plan-hint{ font-size:.8rem; color:var(--ink-soft); line-height:1.55; flex:1 1 240px; }
+    /* 差額：プラス＝青、マイナス＝赤（小さな文字） */
+    .diff-plus{ color:#2f7cb5; font-weight:800; }
+    .diff-minus{ color:#d05a6e; font-weight:800; }
+    .kpi-diff{ min-height:1.05em; font-size:.8rem; margin-top:2px; }
+    .fdiff{ margin-left:7px; font-size:.72rem; white-space:nowrap; }
+    .cmp2-placeholder{ font-size:.84rem; color:var(--ink-soft); background:var(--bg-soft); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+    /* ④生活費：トータル表示（下の項目の合計が自動反映される） */
+    .living-total{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      background:var(--yellow-pale); border:1.5px solid var(--yellow); border-radius:12px;
+      padding:10px 14px; margin-bottom:14px;
+    }
+    .living-total .lt-label{ font-size:.88rem; font-weight:800; color:#7a611c; display:flex; align-items:center; gap:7px; }
+    .living-total .lt-value{ font-size:1rem; color:var(--ink); }
+    .living-total .lt-value b{ font-size:1.45rem; color:var(--blue-deep); font-weight:900; }
+    .living-total .lt-diff{ margin-left:8px; font-size:.8rem; }
+    #plan-effect{ margin-bottom:12px; }
+    #compare-card2{ border:2px solid var(--blue-pale2); }
+    @media(max-width:560px){
+      .plan-tabs{ width:100%; }
+      .plan-tabs button{ flex:1; justify-content:center; padding:10px 8px; font-size:.88rem; }
+    }
     table.cf td.neg{ color:var(--bad); font-weight:700; }
     table.cf td.networth{ font-weight:700; color:var(--blue-deep); }
     table.cf td.kids{ color:var(--ink-soft); font-size:.8rem; }
@@ -637,8 +684,8 @@
   <section class="hero">
     <div class="wrap hero-inner">
       <div class="hero-text">
-        <h1>30年後の家計は、<em>今</em>えがける。</h1>
-        <p class="lead">ご夫婦の年齢・収入・お子さま・住まい・老後まで入力すると、将来の資産推移をグラフと表で自動計算します。気になる数字を変えながら「わが家の安心ライン」を見つけましょう。</p>
+        <h1><em>現状</em>と<em>将来</em>、ふたつの人生をくらべる。</h1>
+        <p class="lead">まず「現状プラン」にいまの家計を入力し、「将来プラン」で保険・住まい・積立などを変えてみてください。<b>いくらプラスになるか・マイナスになるか</b>が、その場で青と赤の数字で見えます。</p>
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
@@ -647,6 +694,17 @@
       </div>
     </div>
   </section>
+
+  <!-- ============================= プラン切替（現状 ⇔ 将来）============================= -->
+  <div class="wrap plan-wrap no-print">
+    <div class="plan-bar">
+      <div class="plan-tabs" id="plan-tabs">
+        <button type="button" data-plan="genjo" class="active"><i class="fa-solid fa-clipboard-list"></i> 現状プラン</button>
+        <button type="button" data-plan="mirai"><i class="fa-solid fa-wand-magic-sparkles"></i> 将来プラン</button>
+      </div>
+      <div class="plan-hint" id="plan-hint"></div>
+    </div>
+  </div>
 
   <!-- ============================= MAIN ============================= -->
   <div class="wrap">
@@ -880,6 +938,12 @@
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
+            <!-- トータルの生活費（下の項目を入力すると自動で反映）-->
+            <div class="living-total" id="living-total-box">
+              <span class="lt-label"><i class="fa-solid fa-calculator"></i> 毎月の生活費 合計</span>
+              <span class="lt-value"><b id="living-total">—</b> 万円<span class="lt-diff" id="living-total-diff"></span></span>
+            </div>
+
             <div class="field">
               <label>入力方法</label>
               <div class="seg" id="exp-seg">
@@ -924,8 +988,8 @@
               <div class="subgroup-title"><i class="fa-solid fa-umbrella-beach"></i> 老後の生活費（退職後）</div>
               <div class="field" style="max-width:260px;">
                 <label>退職後の生活費（夫婦・月額）</label>
-                <div class="input-unit"><input type="number" id="e-retire-living" value="24" min="0" step="1"><span class="u">万円</span></div>
-                <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後</span>
+                <div class="input-unit"><input type="number" id="e-retire-living" value="25" min="0" step="1"><span class="u">万円</span></div>
+                <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後／ゆとりある生活費は月35万円前後</span>
               </div>
             </div>
           </div>
@@ -948,6 +1012,7 @@
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-arrow-trend-up"></i> 資産運用（NISA・iDeCo・一括運用など）<button type="button" class="btn btn-ghost btn-sm no-print" id="open-asset-modal" style="margin-left:auto;"><i class="fa-solid fa-table-list"></i> 詳細を見る</button></div>
               <div id="invest-list"></div>
+              <div id="ret-warn" style="display:none; margin:8px 0 0; padding:8px 12px; border:1px solid #e3b04b; background:#fdf6e3; color:#8a6d1a; border-radius:8px; font-size:.82rem;"></div>
               <button class="btn-add" id="add-invest" type="button"><i class="fa-solid fa-plus"></i> 運用商品を追加</button>
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
@@ -958,7 +1023,14 @@
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
               <div class="grid2">
                 <div class="field"><label>受給開始（夫の年齢）</label><div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div></div>
-                <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">夫婦の標準的な目安は月22万円前後</span></div>
+                <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">「ねんきん定期便」の見込額があれば最優先で入力を。目安は下のボタンから選べます</span>
+                  <div class="pen-presets">
+                    <button type="button" class="pen-preset" data-v="26">会社員×会社員 約26万</button>
+                    <button type="button" class="pen-preset" data-v="22">会社員＋専業・扶養内 約22万</button>
+                    <button type="button" class="pen-preset" data-v="14">自営業ご夫婦 約14万</button>
+                  </div>
+                  <span class="hint">自営業（国民年金のみ）は満額でも1人 月約6.8万円。厚生年金の上乗せがない分、iDeCo等での上積みが重要です</span>
+                </div>
               </div>
             </div>
             <div class="note">
@@ -991,18 +1063,22 @@
           <div class="kpi kpi-total">
             <div class="k-label"><input type="number" id="age-point-1" class="age-input" value="65" min="20" max="110"> 歳時点：総資産額</div>
             <div class="k-value" id="kpi-total-1">—</div>
+            <div class="kpi-diff" id="kpi-diff-1"></div>
           </div>
           <div class="kpi kpi-real">
             <div class="k-label">上記の実質価値（インフレ後）</div>
             <div class="k-value" id="kpi-real-1">—</div>
+            <div class="kpi-diff" id="kpi-diff-r1"></div>
           </div>
           <div class="kpi kpi-total">
             <div class="k-label"><input type="number" id="age-point-2" class="age-input" value="100" min="20" max="110"> 歳時点：総資産額</div>
             <div class="k-value" id="kpi-total-2">—</div>
+            <div class="kpi-diff" id="kpi-diff-2"></div>
           </div>
           <div class="kpi kpi-real">
             <div class="k-label">上記の実質価値（インフレ後）</div>
             <div class="k-value" id="kpi-real-2">—</div>
+            <div class="kpi-diff" id="kpi-diff-r2"></div>
           </div>
         </div>
 
@@ -1010,6 +1086,13 @@
         <div class="card">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
           <div class="chart-box tall"><canvas id="assetChart"></canvas></div>
+        </div>
+
+        <!-- 現状 と 将来 のくらべ（②の中核機能）-->
+        <div class="card" id="compare-card2">
+          <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
+          <div id="plan-effect"></div>
+          <div class="chart-box"><canvas id="compareChart"></canvas></div>
         </div>
 
         <!-- 総合判定（金融資産の推移の下に配置）-->
@@ -1266,6 +1349,19 @@
         ※ 本シミュレーションは、入力情報と一般的な統計・前提にもとづく簡易試算です。実際の収支・税額・年金額・運用結果を保証するものではありません。
         正確な設計は、ファイナンシャルプランナー等の専門家にご相談ください。
       </p>
+      <details class="premise">
+        <summary>計算の前提と限界を見る</summary>
+        <ul>
+          <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
+          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から物価スライドを簡易反映して計上します。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
+          <li><b>遺族年金</b>：ご家族構成と年収から遺族基礎年金＋遺族厚生年金を概算します（中高齢寡婦加算を考慮。実際の受給額は加入記録により変わります）。</li>
+          <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
+          <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
+          <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
+          <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
+          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正を反映）。前提は年1回の見直しを想定しています。</li>
+        </ul>
+      </details>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
@@ -1497,13 +1593,40 @@
       }));
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
+    const LIVING_IDS = ['e-food','e-water','e-elec','e-gas','e-daily','e-cloth','e-life','e-nonlife','e-car','e-fuel','e-phone','e-net','e-pocket','e-hobby','e-other'];
     function readLivingMonthly(){
       const simple = document.querySelector('#exp-seg button.active')?.dataset.exp === 'simple';
       if(simple) return num('e-bulk',0);
-      const ids = ['e-food','e-water','e-elec','e-gas','e-daily','e-cloth','e-life','e-nonlife','e-car','e-fuel','e-phone','e-net','e-pocket','e-hobby','e-other'];
-      let s = ids.reduce((a,id)=> a + num(id,0), 0);
+      let s = LIVING_IDS.reduce((a,id)=> a + num(id,0), 0);
       s += readCustomExpenses().reduce((a,x)=> a + x.amount, 0);
       return s;
+    }
+    // 保存済みプラン（現状）の生活費合計を、DOMを使わずに計算する（将来プランでの差額表示用）
+    function livingMonthlyFromState(s){
+      if(!s || !s.fields) return null;
+      const f = s.fields;
+      if(s.expMode === 'simple') return parseFloat(f['e-bulk'])||0;
+      let sum = LIVING_IDS.reduce((a,id)=> a + (parseFloat(f[id])||0), 0);
+      (s.expenses||[]).forEach(x=> sum += parseFloat(x.amount)||0);
+      return sum;
+    }
+    // ④の一番上「毎月の生活費 合計」を更新（下の項目を入力すると自動反映。将来プランでは現状比も表示）
+    function updateLivingTotal(){
+      const el = $('living-total'); if(!el) return;
+      const t = readLivingMonthly();
+      el.textContent = (Math.round(t*10)/10).toLocaleString('ja-JP');
+      const diffEl = $('living-total-diff');
+      if(!diffEl) return;
+      if(typeof PLANS!=='undefined' && PLANS.active==='mirai' && PLANS.genjo.state){
+        const base = livingMonthlyFromState(PLANS.genjo.state);
+        if(base!=null && Math.round((t-base)*10)!==0){
+          const d = Math.round((t-base)*10)/10;
+          diffEl.innerHTML = d>0 ? `<span class="diff-plus">現状比 ＋${d.toLocaleString('ja-JP')}万円</span>`
+                                  : `<span class="diff-minus">現状比 −${Math.abs(d).toLocaleString('ja-JP')}万円</span>`;
+          return;
+        }
+      }
+      diffEl.innerHTML = '';
     }
 
     /* ---------- 資産運用の商品（自由追加・種類選択＋一括/積立） ---------- */
@@ -2154,9 +2277,22 @@
       updateEventWifeAges();
       updateLoanBalanceHint();
       updateMonthlyPayDisplay();
+      updateLivingTotal();
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       const { rows, hRetire, hAge0, endAge } = simulate();
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
+
+      // 楽観的すぎる想定利回り（5%超）への注意表示
+      const retWarn = $('ret-warn');
+      if(retWarn){
+        const maxRet = Math.max(0, ...readInvestments().map(iv=> iv.ret));
+        if(maxRet > 5){
+          retWarn.innerHTML = `<b>想定利回り ${maxRet}% は、長期の世界株式の平均（年5%前後）を上回る楽観的な想定です。</b> 将来の成果を保証するものではないため、控えめな利回りにした場合の結果もあわせてご確認ください。`;
+          retWarn.style.display = '';
+        } else {
+          retWarn.style.display = 'none';
+        }
+      }
 
       /* --- サマリー --- */
       const retireRow = rows.find(r=> r.hAge===hRetire) || rows[rows.length-1];
@@ -2211,117 +2347,210 @@
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
       drawTable(rows);
       drawAssetTable(rows);
-      updateCompare(rows);
+      planAfterRecompute(rows);
     }
 
     /* ============================================================
-       現状 ⇔ 対策後 プラン比較（ワンクリック切替）
-       「現状」を記録 → 入力を変更 → セグメントボタンで即切替。
-       グラフにはもう一方のプランの総資産を点線で重ねて表示する。
+       ② 現状 ⇔ 将来 プラン比較（このツールの中核機能）
+       ・大きなタブで「現状プラン」「将来プラン」を切り替える
+       ・将来プランで数字を変えると、現状との差額を
+         青（プラス）／赤（マイナス）の小さな文字で表示する
+       ・比較カードには両プランの総資産を棒グラフで並べて表示する
        ============================================================ */
-    let cmp = { on:false, view:'b', a:null, b:null, sumA:null, sumB:null };
+    const PLANS = { active:'genjo', genjo:{ state:null, sum:null }, mirai:{ state:null, sum:null } };
+    const PLAN_LABEL = { genjo:'現状プラン', mirai:'将来プラン' };
 
-    function scenarioSummary(rows){
-      let minRow = rows[0], depletion = null;
-      rows.forEach(r=>{ if(r.net < minRow.net) minRow = r; if(!depletion && r.net < 0) depletion = r; });
-      const at = (age)=>{ const r = rows.find(x=> x.hAge===age) || rows[rows.length-1]; return Math.round(r.net); };
-      const byAge = {};
-      rows.forEach(r=> byAge[r.hAge] = Math.round(r.net));
-      const endRow = rows[rows.length-1];
-      return { byAge, at65:at(65), end:Math.round(endRow.net), endAge:endRow.hAge, min:Math.round(minRow.net), minAge:minRow.hAge, depAge: depletion ? depletion.hAge : null };
+    // プランの計算結果を、比較に必要な最小限の形で記録する
+    function planSummary(rows){
+      return rows.map(r=> ({ hAge:r.hAge, net:Math.round(r.net), inflF:r.inflF }));
+    }
+    function sumAt(sum, age){
+      if(!sum || !sum.length) return null;
+      return sum.find(x=> x.hAge===age) || sum[sum.length-1];
+    }
+    function sumStats(sum){
+      if(!sum || !sum.length) return null;
+      let min = sum[0], dep = null;
+      sum.forEach(x=>{ if(x.net < min.net) min = x; if(!dep && x.net < 0) dep = x; });
+      return { min, dep, end: sum[sum.length-1] };
+    }
+    // 差額を青（プラス）／赤（マイナス）で返す
+    function diffHTML(diff, unit='万円'){
+      const d = Math.round(diff);
+      if(!isFinite(d) || d===0) return '';
+      return d>0 ? `<span class="diff-plus">＋${fmt(d)}${unit}</span>` : `<span class="diff-minus">−${fmt(Math.abs(d))}${unit}</span>`;
     }
 
-    // recomputeのたびに、表示中プランの結果を記録して比較表を更新
-    function updateCompare(rows){
-      if(!cmp.on) return;
-      cmp[cmp.view==='a' ? 'sumA' : 'sumB'] = scenarioSummary(rows);
-      renderCompareTable();
+    // recomputeのたびに：表示中プランの結果を記録し、差額表示・比較カードを更新
+    function planAfterRecompute(rows){
+      PLANS[PLANS.active].sum = planSummary(rows);
+      renderKpiDiffs(rows);
+      renderFieldDiffs();
+      renderPlanEffect();
+      drawCompareChart();
     }
 
-    // グラフに重ねる「もう一方のプラン」（点線）
-    function cmpGhost(){
-      if(!cmp.on) return null;
-      const s = cmp.view==='a' ? cmp.sumB : cmp.sumA;
-      if(!s) return null;
-      return { label: cmp.view==='a' ? '対策後プラン（総資産）' : '現状プラン（総資産）', byAge: s.byAge };
+    // KPIカード：将来プラン表示中は、現状との差額を小さく表示
+    function renderKpiDiffs(rows){
+      const ids = ['kpi-diff-1','kpi-diff-r1','kpi-diff-2','kpi-diff-r2'];
+      const base = PLANS.genjo.sum;
+      if(PLANS.active!=='mirai' || !base){ ids.forEach(id=>{ const el=$(id); if(el) el.innerHTML=''; }); return; }
+      const a1 = Math.round(num('age-point-1',65)), a2 = Math.round(num('age-point-2',100));
+      const cur1 = rows.find(r=> r.hAge===a1) || rows[rows.length-1];
+      const cur2 = rows.find(r=> r.hAge===a2) || rows[rows.length-1];
+      const b1 = sumAt(base,a1), b2 = sumAt(base,a2);
+      const put = (id, d)=>{ const el=$(id); if(el) el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
+      put('kpi-diff-1',  cur1.net - b1.net);
+      put('kpi-diff-r1', cur1.net/cur1.inflF - b1.net/b1.inflF);
+      put('kpi-diff-2',  cur2.net - b2.net);
+      put('kpi-diff-r2', cur2.net/cur2.inflF - b2.net/b2.inflF);
     }
 
-    function diffCell(b, a){
-      const d = Math.round(b - a);
-      if(!isFinite(d) || d===0) return '<td>±0</td>';
-      const cls = d>0 ? 'cmp-diff-up' : 'cmp-diff-down';
-      return `<td class="${cls}">${d>0?'＋':'−'}${fmt(Math.abs(d))}</td>`;
+    // 入力欄：将来プランで現状から変えた数字の横に、差分を小さく表示
+    function renderFieldDiffs(){
+      const panel = $('input-panel'); if(!panel) return;
+      panel.querySelectorAll('.fdiff').forEach(el=> el.remove());
+      if(PLANS.active!=='mirai' || !PLANS.genjo.state) return;
+      const base = PLANS.genjo.state.fields || {};
+      panel.querySelectorAll('input[type="number"][id]').forEach(el=>{
+        if(!(el.id in base)) return;
+        const cur = parseFloat(el.value), prev = parseFloat(base[el.id]);
+        if(!isFinite(cur) || !isFinite(prev) || cur===prev) return;
+        const d = cur - prev;
+        const span = document.createElement('span');
+        span.className = 'fdiff ' + (d>0 ? 'diff-plus' : 'diff-minus');
+        // 単位（万円・％・歳など）は入力欄の隣にある単位表示から取得して付ける
+        const unit = el.closest('.input-unit')?.querySelector('.u')?.textContent || '';
+        span.textContent = (d>0?'＋':'−') + (Math.round(Math.abs(d)*100)/100).toLocaleString('ja-JP') + unit;
+        const label = el.closest('.field')?.querySelector('label');
+        if(label) label.appendChild(span);
+      });
     }
 
-    function renderCompareTable(){
-      const el = $('cmp-kpis'); if(!el) return;
-      const A = cmp.sumA, B = cmp.sumB;
-      if(!A || !B){ el.innerHTML = ''; return; }
-      const dep = (s)=> s.depAge ? `<span class="cmp-diff-down">${s.depAge}歳で不足</span>` : `<span class="cmp-diff-up">なし</span>`;
-      const row = (label, a, b, diff)=> `<tr><td>${label}</td><td>${a}</td><td><b>${b}</b></td>${diff}</tr>`;
-      el.innerHTML = `<table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>対策後</th><th>差</th></tr></thead><tbody>
-        ${row('65歳時点の総資産', fmt(A.at65), fmt(B.at65), diffCell(B.at65, A.at65))}
-        ${row(`最終（${B.endAge}歳）の総資産`, fmt(A.end), fmt(B.end), diffCell(B.end, A.end))}
-        ${row('資金ショート', dep(A), dep(B), '<td>—</td>')}
-      </tbody></table>`;
+    // 比較カード：現状⇔将来の差額表と、総資産の棒グラフ比較
+    function renderPlanEffect(){
+      const el = $('plan-effect'); if(!el) return;
+      const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
+      if(!g || !m){
+        el.innerHTML = `<p class="cmp2-placeholder">上の「<b>将来プラン</b>」タブに切り替えて数字を変更すると、ここに現状との比較（差額の表と棒グラフ）が表示されます。</p>`;
+        return;
+      }
+      const gs = sumStats(g), ms = sumStats(m);
+      const g65 = sumAt(g,65).net, m65 = sumAt(m,65).net;
+      const dep = (s)=> s.dep ? `<span class="diff-minus">${s.dep.hAge}歳で不足</span>` : `<span class="diff-plus">なし</span>`;
+      const depDiff = gs.dep && !ms.dep ? '<span class="diff-plus">解消！</span>'
+                    : (!gs.dep && ms.dep ? '<span class="diff-minus">発生</span>' : '—');
+      const row = (label, gv, mv, diff)=> `<tr><td>${label}</td><td>${gv}</td><td><b>${mv}</b></td><td>${diff||'±0'}</td></tr>`;
+      el.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
+        ${row('65歳時点の総資産', fmt(g65), fmt(m65), diffHTML(m65-g65,''))}
+        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), diffHTML(ms.end.net-gs.end.net,''))}
+        ${row('資金ショート', dep(gs), dep(ms), depDiff)}
+      </tbody></table></div>`;
     }
 
-    function updateCmpSeg(){
-      const seg = $('cmp-seg'); if(!seg) return;
-      [...seg.querySelectorAll('button')].forEach(b=> b.classList.toggle('active', b.dataset.view===cmp.view));
-      const hint = $('cmp-hint');
-      if(hint) hint.innerHTML = cmp.view==='b'
-        ? '<b>対策後プラン</b>を表示中。左の入力を自由に変更すると、現状との差が下の表とグラフの点線ですぐ分かります。'
-        : '<b>現状プラン</b>（記録した内容）を表示中。上のボタンで「対策後」にいつでも戻れます。';
+    let compareChart2 = null;
+    function drawCompareChart(){
+      const cv = $('compareChart'); if(!cv || typeof Chart==='undefined') return;
+      const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
+      const baseSum = g || m; if(!baseSum || !baseSum.length) return;
+      // 5歳きざみで、現状と将来の総資産を棒グラフで並べる
+      const first = baseSum[0].hAge, last = baseSum[baseSum.length-1].hAge;
+      const ages = [];
+      for(let a = Math.ceil(first/5)*5; a <= last; a += 5) ages.push(a);
+      if(!ages.length || ages[0] !== first) ages.unshift(first);
+      const pick = (sum)=> ages.map(a=>{ const v = sum && sum.find(x=> x.hAge===a); return v ? v.net : null; });
+      const datasets = [{ label:'現状プラン', data:pick(g), backgroundColor:'#b9c9d8', borderRadius:6, maxBarThickness:26 }];
+      if(m) datasets.push({ label:'将来プラン', data:pick(m), backgroundColor:'#4a9fd4', borderRadius:6, maxBarThickness:26 });
+      const data = { labels: ages.map(a=> a+'歳'), datasets };
+      if(compareChart2){ compareChart2.data = data; compareChart2.update(); return; }
+      compareChart2 = new Chart(cv.getContext('2d'), { type:'bar', data, options:{
+        responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} }, x:{ grid:{display:false} } },
+        plugins:{
+          legend:{ labels:{ font:{family:'Noto Sans JP'}, usePointStyle:true, pointStyle:'rectRounded' } },
+          tooltip:{ callbacks:{ label:(c)=> c.dataset.label+'：'+(c.parsed.y==null?'—':c.parsed.y.toLocaleString()+'万円') } }
+        }
+      }});
     }
 
-    if($('cmp-record')) $('cmp-record').addEventListener('click', ()=>{
-      cmp.on = true; cmp.view = 'b';
-      cmp.a = collectState(); cmp.b = null;
-      const s = scenarioSummary(simulate().rows);
-      cmp.sumA = s; cmp.sumB = s;
-      $('cmp-setup').hidden = true; $('cmp-active').hidden = false;
-      updateCmpSeg(); renderCompareTable(); recompute();
+    // 資産推移グラフに重ねる「現状プラン」の点線（将来プラン表示中のみ）
+    function planGhost(){
+      if(PLANS.active!=='mirai' || !PLANS.genjo.sum) return null;
+      const byAge = {}; PLANS.genjo.sum.forEach(x=> byAge[x.hAge] = x.net);
+      return { label:'現状プラン（総資産）', byAge };
+    }
+
+    function updatePlanTabs(){
+      const tabs = $('plan-tabs'); if(!tabs) return;
+      [...tabs.querySelectorAll('button')].forEach(b=> b.classList.toggle('active', b.dataset.plan===PLANS.active));
+      document.body.classList.toggle('plan-mirai', PLANS.active==='mirai');
+      const hint = $('plan-hint');
+      if(hint) hint.innerHTML = PLANS.active==='genjo'
+        ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
+        : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span >／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。';
+    }
+
+    function switchPlan(p){
+      if(p===PLANS.active || !PLANS[p]) return;
+      PLANS[PLANS.active].state = collectState();
+      if(!PLANS[p].state){
+        // 初回の切り替え：現状の内容をコピーして将来プランのたたき台にする
+        PLANS[p].state = PLANS[PLANS.active].state;
+        PLANS[p].sum = PLANS[PLANS.active].sum;
+      }
+      PLANS.active = p;
+      updatePlanTabs();
+      applyState(PLANS[p].state);
+    }
+    if($('plan-tabs')) $('plan-tabs').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(b) switchPlan(b.dataset.plan);
     });
 
-    if($('cmp-seg')) $('cmp-seg').addEventListener('click', (e)=>{
-      const b = e.target.closest('button');
-      if(!b || !cmp.on || b.dataset.view===cmp.view) return;
-      // いま表示中のプランを保存してから切り替える（両タブの編集内容はそれぞれ保持される）
-      if(cmp.view==='b') cmp.b = collectState(); else cmp.a = collectState();
-      cmp.view = b.dataset.view;
-      updateCmpSeg();
-      applyState(cmp.view==='a' ? cmp.a : (cmp.b || collectState()));
-    });
-
-    if($('cmp-clear')) $('cmp-clear').addEventListener('click', ()=>{
-      if(!confirm('比較を終了しますか？（いま表示中のプランが残ります）')) return;
-      cmp = { on:false, view:'b', a:null, b:null, sumA:null, sumB:null };
-      $('cmp-setup').hidden = false; $('cmp-active').hidden = true;
-      recompute();
-    });
+    // 保存・読込用：両プランをまとめて集める／復元する
+    function collectPlans(){
+      PLANS[PLANS.active].state = collectState();
+      return { active: PLANS.active,
+        genjo:{ state:PLANS.genjo.state, sum:PLANS.genjo.sum },
+        mirai:{ state:PLANS.mirai.state, sum:PLANS.mirai.sum } };
+    }
+    function applyPlans(saved){
+      if(saved && saved.plans){
+        const pl = saved.plans;
+        PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
+        PLANS.mirai = { state: pl.mirai && pl.mirai.state || null, sum: pl.mirai && pl.mirai.sum || null };
+        PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
+        updatePlanTabs();
+        if(PLANS[PLANS.active].state) applyState(PLANS[PLANS.active].state);
+      } else if(saved && saved.state){
+        // 旧形式（ツール①の保存データ）：現状プランとして読み込む
+        PLANS.genjo = { state: saved.state, sum:null };
+        PLANS.mirai = { state:null, sum:null };
+        PLANS.active = 'genjo';
+        updatePlanTabs();
+        applyState(saved.state);
+      }
+    }
 
     /* ---------- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）---------- */
+    let assetRowsCache = [];
     function drawAssetChart(rows){
+      assetRowsCache = rows;
       const labels = rows.map(r=> r.hAge+'歳');
-      const cashD   = rows.map(r=> Math.round(r.cash));
-      const investD = rows.map(r=> Math.round(r.invest));
-      const totalD  = rows.map(r=> Math.round(r.net));
+      const totalD = rows.map(r=> Math.round(r.net));
 
       const ctx = $('assetChart').getContext('2d');
+      // 総資産1本のシンプルな棒グラフ（内訳はマウスを乗せると表示）
       const data = {
         labels,
         datasets:[
-          { type:'bar', label:'現預金残高', data:cashD, backgroundColor:'#5b9bd5', stack:'a', categoryPercentage:1.0, barPercentage:0.96, order:3 },
-          { type:'bar', label:'運用総資産', data:investD, backgroundColor:'#9b8cf0', stack:'a', categoryPercentage:1.0, barPercentage:0.96, order:3 },
-          { type:'line', label:'総資産残高', data:totalD, borderColor:'#e8536a', backgroundColor:'rgba(232,83,106,.06)', borderWidth:2, pointRadius:0, fill:true, tension:.2, stack:'b', order:1 }
+          { type:'bar', label:'総資産', data:totalD, backgroundColor:'#5b9bd5', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
         ]
       };
-      // プラン比較中：もう一方のプランの総資産を点線で重ねる
-      const ghost = cmpGhost();
+      // 将来プラン表示中：現状プランの総資産を点線で重ねて比較できるようにする
+      const ghost = planGhost();
       if(ghost){
         data.datasets.push({ type:'line', label:ghost.label, data: rows.map(r=> (ghost.byAge[r.hAge]!=null ? ghost.byAge[r.hAge] : null)),
-          borderColor:'#8a97a5', borderDash:[7,5], borderWidth:2.5, pointRadius:0, fill:false, tension:.2, stack:'c', order:0 });
+          borderColor:'#e8536a', borderDash:[7,5], borderWidth:2.5, pointRadius:0, fill:false, tension:.2, order:0 });
       }
       if(assetChart){ assetChart.data=data; assetChart.update(); return; }
       assetChart = new Chart(ctx,{
@@ -2329,12 +2558,18 @@
         options:{
           responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
           scales:{
-            y:{ stacked:true, beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} },
-            x:{ stacked:true, ticks:{ maxTicksLimit:14, autoSkip:true }, grid:{display:false} }
+            y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} },
+            x:{ ticks:{ maxTicksLimit:14, autoSkip:true }, grid:{display:false} }
           },
           plugins:{
             legend:{ labels:{ font:{family:'Noto Sans JP'}, usePointStyle:true, pointStyle:'rectRounded' } },
-            tooltip:{ callbacks:{ label:(c)=> c.dataset.label+'：'+c.parsed.y.toLocaleString()+'万円' } }
+            tooltip:{ callbacks:{
+              label:(c)=> c.dataset.label+'：'+c.parsed.y.toLocaleString()+'万円',
+              footer:(items)=>{
+                const r = assetRowsCache[items[0].dataIndex];
+                return r ? '内訳：預貯金 '+fmt(r.cash)+'万円 ＋ 運用 '+fmt(r.invest)+'万円' : '';
+              }
+            } }
           }
         }
       });
@@ -2451,7 +2686,7 @@
       /* ── 万が一の備え（生命保険）── */
       if(single){
         const sum = `扶養するご家族がいないため、大きな死亡保障は<b>原則不要</b>です。優先すべきは医療・就業不能への備えと貯蓄になります。`;
-        cats.push({ key:'hoken', label:'万が一の備え', icon:'fa-shield-heart', color:'#e2849a', tone:'ok', sum,
+        cats.push({ key:'hoken', label:'万が一の備え', label2:'万が一の<br>備え', icon:'fa-shield-heart', color:'#e2849a', tone:'ok', sum,
           good:[`高額療養費制度により、医療費の1か月の自己負担には上限（年収により約8万円〜）があります。`,
                 `預貯金 ${fmt(p.cashNow)}万円 が、入院・療養で収入が減った時のクッションになります。`],
           concern:[`働けない期間が長引くリスクには、就業不能保険や貯蓄で備えておくと安心です。`,
@@ -2472,13 +2707,13 @@
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
-        if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。大きな死亡保険は不要です。`);
+        if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
         if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険なら月数千円で確保できます。`);
         if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
         if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
         if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wNameH())}死亡時、55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
         if(!con.length) con.push(`貯蓄が育つほど必要な保障は小さくなります。過剰な保険がないか、定期的に見直しましょう。`);
-        cats.push({ key:'hoken', label:'万が一の備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
+        cats.push({ key:'hoken', label:'万が一の備え', label2:'万が一の<br>備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
       }
 
       /* ── 資産運用 ── */
@@ -2589,7 +2824,7 @@
     }
     function renderAdviceCats(cats){
       const wrap=$('advice-cats'); if(!wrap) return;
-      wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
+      wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label2||c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
     }
     function renderAdviceDetail(c){
       const box=$('advice-detail'); if(!box||!c) return;
@@ -3048,7 +3283,7 @@
         + (facts && facts.length ? `<ul class="diag-facts">${facts.map(f=>`<li>${f}</li>`).join('')}</ul>` : '')
         + (verdictHtml ? `<span class="diag-verdict ${verdictCls}">${verdictHtml}</span>` : '')
         + (body ? `<span>${body}</span>` : '')
-        + `<div class="diag-note">※ 一般的な目安による概算です。数字の正確な計算は税理士・FPにご相談ください。</div>`;
+        + `<div class="diag-note">※ 一般的な目安による概算です。ご家族構成や前提条件が変わると結果も変わります。数字の正確な計算は税理士・FPにご相談ください。</div>`;
     }
     function famFact(p){
       const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
@@ -3100,14 +3335,14 @@
         const verdictCls = both>0 ? 'warn' : 'ok';
         const verdict = both>0
           ? `診断：いま追加で備えるべき保障（不足額）は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>です。（必要資金から、いまの備えを差し引いた金額）`
-          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>追加の死亡保険は不要です。`;
+          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできる結果です。</b>現在のご入力条件では、追加の死亡保障は必須ではないと考えられます。`;
 
         const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
           + detail(n.h, hNameH(), wNameH())
           + detail(n.w, wNameH(), hNameH())
           + (both>0
               ? `不足分は<b>掛け捨ての収入保障保険</b>なら月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
-              : `死亡保障は最小限にして、<b>医療・就業不能への備え</b>や資産形成に回すのが合理的です。`)
+              : `死亡保障は最小限にし、<b>医療・就業不能への備え</b>や資産形成に回す考え方が一般的です。最終的な要否は、ご意向やご家族の状況とあわせてご確認ください。`)
           + (houseType!=='rent' && loanType()==='solo-h'
               ? `<br><br><b>ご注意：</b>いまは夫の単独ローン（夫が団信）のため、<b>妻に万一のときはローンがそのまま残ります</b>。妻側にも一定の死亡保障を持つか、ペアローンで妻側にも団信を付けるか、多角的にご検討ください。`
               : (houseType!=='rent' && loanType()==='pair'
@@ -3322,7 +3557,35 @@
       }
     };
     DIAG.toushi = DIAG.nisa;   // 「投資すべき？」もNISA診断と同じロジックで
-    DIAG.izoku  = DIAG.hoken;  // 「遺族年金で足りる？」「団信があれば保険は不要？」も保険診断で数字を出す
+    // 「遺族年金はいくら？」→ 家族構成から夫・妻それぞれの万一時の受給額を具体的に診断（FP1級・社労士分野）
+    DIAG.izoku = function(){
+      const p = buildProfile();
+      if(p.single){
+        return diagBox([famFact(p)], 'ok',
+          `診断：遺族年金は「遺されたご家族」に支給される制度です。`,
+          `単身の方の場合、支給対象となるご遺族（生計を共にする配偶者・お子さま）がいないため、原則として遺族年金は発生しません。ご自身の備えとしては、病気やケガで働けなくなったときの<b>障害年金・傷病手当金</b>のほうが重要です。`);
+      }
+      const ih = izokuPerYear('h', p.children.length, p.wAge);   // 夫に万一→妻が受給
+      const iw = izokuPerYear('w', p.children.length, p.hAge);   // 妻に万一→夫が受給
+      const yrsKids = p.children.length ? Math.max(...p.children.map(c=> Math.max(18-c.age,0))) : 0;
+      const perMonth = (y)=> (Math.round(y/12*10)/10).toLocaleString('ja-JP');
+      const facts = [ famFact(p),
+        p.children.length
+          ? `遺族基礎年金の対象：<b>末子が18歳の年度末まで</b>（あと約${yrsKids}年）。お子さま${p.children.length}人の加算込みで計算`
+          : `お子さまがいないため遺族基礎年金は対象外（遺族厚生年金が中心になります）`,
+        `遺族年金は<b>非課税</b>です（所得税・住民税はかかりません）` ];
+      const line = (name, r, extra)=> `<div style="margin:8px 0;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;">`
+        + `<b>■ ${esc(name)}に万一のとき</b><br>`
+        + `遺族基礎年金 約${fmt(r.kiso)}万円/年 ＋ 遺族厚生年金 約${fmt(r.kosei)}万円/年<br>`
+        + `＝ <b>合計 約${fmt(r.total)}万円/年（月 約${perMonth(r.total)}万円）</b>` + (extra||'') + `</div>`;
+      const body = `<b>【受給額の目安】</b>ご入力の家族構成で概算しています。`
+        + line(hNameH(), ih, p.children.length ? `<br><span style="font-size:.82em;color:var(--ink-soft)">末子が18歳になると遺族基礎年金は終了。その後、${esc(wNameH())}が40〜65歳の間は<b>中高齢寡婦加算（年約61万円）</b>が遺族厚生年金に上乗せされる場合があります。</span>` : '')
+        + line(wNameH(), iw, iw.kosei===0 ? `<br><span style="font-size:.82em;color:#bf5656">※ 55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。${esc(wNameH())}に万一の場合の公的保障は手薄になります。なお2028年4月の制度改正で男女差は解消され、男女とも「子のない60歳未満は5年間の有期給付」に統一される予定です。</span>` : '')
+        + `実際の受給額は厚生年金の加入記録（平均標準報酬額）で変わります。「ねんきん定期便」をもとにした正確な試算は、無料相談で承ります。`;
+      return diagBox(facts, 'ok',
+        `診断：${esc(hNameH())}に万一のとき、遺族年金は <b>年 約${fmt(ih.total)}万円（月 約${perMonth(ih.total)}万円）</b>。${esc(wNameH())}に万一のときは <b>年 約${fmt(iw.total)}万円</b> の見込みです。`,
+        body);
+    };
 
     /* FP1級・税理士レベルの知識ベース。説明文を毎回ランダムに組み合わせ、100通り以上の回答を生成 */
     const KB = {
@@ -3355,11 +3618,11 @@
         probes:['マイホームを検討中なのですね。希望の物件価格と、頭金に充てられる額はどのくらいでしょうか？','現在の手取り年収と、毎月いくらまでなら返済に無理がなさそうかも教えてください。'],
         concl:'一般的には、<b>頭金＋諸費用</b>を準備し、返済負担率を手取りの2割前後に抑え、教育費・老後資金とのバランスで借入額を決めるのが安心です。控除や補助金も活用しましょう。' },
       nenkin:{ label:'年金・老後', re:/年金|老後|退職後|繰下|繰上げ受給|加給|ねんきん|セカンドライフ|リタイア/,
-        facts:['公的年金は<b>国民年金（満額 月約6.8万円）＋厚生年金</b>です。','夫婦の標準的な受給は<b>月22万円前後</b>が目安です。','受給は<b>60〜75歳</b>で選べます。','<b>繰下げ</b>ると1か月+0.7%（最大75歳で+84%）増えます。','<b>繰上げ</b>ると減額（−0.4%/月）になります。','年下の配偶者がいると<b>加給年金</b>が付く場合があります。','不足分は<b>iDeCo・NISA</b>や就労延長で備えられます。','「ねんきん定期便」で見込み額を確認できます。','働きながら受け取る場合は<b>在職老齢年金</b>により一部支給停止になることがあります。','繰下げ待機中は<b>加給年金が受け取れない</b>点に注意が必要です。','60歳以降も<b>国民年金の任意加入</b>で満額に近づけられます。'],
+        facts:['公的年金は<b>国民年金（満額 月約6.8万円）＋厚生年金</b>です。','夫婦の標準的な受給は<b>月22万円前後</b>が目安です。','受給は<b>60〜75歳</b>で選べます。','<b>繰下げ</b>ると1か月+0.7%（最大75歳で+84%）増えます。','<b>繰上げ</b>ると減額（−0.4%/月）になります。','年下の配偶者がいると<b>加給年金</b>が付く場合があります。','不足分は<b>iDeCo・NISA</b>や就労延長で備えられます。','「ねんきん定期便」で見込み額を確認できます。','働きながら年金を受け取る場合の<b>在職老齢年金</b>：賃金と年金の合計が基準額を超えると一部支給停止になりますが、基準額は<b>2026年4月に月51万円→62万円へ大幅に引き上げ</b>られ、働いても年金が減りにくくなりました。','繰下げ待機中は<b>加給年金が受け取れない</b>点に注意が必要です。','60歳以降も<b>国民年金の任意加入</b>で満額に近づけられます。'],
         probes:['老後の年金が気になるのですね。見込みの受給額は確認されていますか？','退職後、毎月どのくらいの生活費を見込んでいらっしゃいますか？'],
         concl:'一般的には、<b>見込み受給額と老後生活費の差額</b>を把握し、不足分を<b>運用・繰下げ受給・就労延長</b>で補う設計が有効です。上のグラフでも確認できます。' },
       zeikin:{ label:'税金・節税', re:/節税|税金|控除|所得税|住民税|扶養|年末調整|確定申告|ふるさと|医療費|退職金|セルフメディ|e-?tax/i,
-        facts:['節税の基本は<b>使える控除を取りこぼさない</b>ことです。','<b>ふるさと納税</b>は実質2,000円で返礼品がもらえ、上限内なら住民税等が控除されます。','<b>医療費控除</b>は世帯で年10万円超の医療費が対象です（確定申告が必要）。','<b>iDeCo</b>の掛金は全額所得控除になります。','投資は<b>NISAで非課税</b>、課税口座は損益通算・繰越控除を活用。','<b>生命保険料控除・地震保険料控除</b>も忘れずに。','退職金は<b>退職所得控除</b>が手厚く税負担が抑えられます。','個人事業なら<b>青色申告（最大65万円控除）・小規模企業共済</b>が柱です。','住宅取得資金の贈与は<b>最大1,000万円まで非課税</b>（省エネ住宅・要件あり）です。','パートの<b>103万・130万円の壁</b>は、超え方しだいで世帯の手取りが変わります。','退職金は<b>一時金なら退職所得控除、年金受取なら公的年金等控除</b>。受け取り方で税額が変わります。'],
+        facts:['節税の基本は<b>使える控除を取りこぼさない</b>ことです。','<b>ふるさと納税</b>は実質2,000円で返礼品がもらえ、上限内なら住民税等が控除されます。','<b>医療費控除</b>は世帯で年10万円超の医療費が対象です（確定申告が必要）。','<b>iDeCo</b>の掛金は全額所得控除になります。','投資は<b>NISAで非課税</b>、課税口座は損益通算・繰越控除を活用。','<b>生命保険料控除・地震保険料控除</b>も忘れずに。','退職金は<b>退職所得控除</b>が手厚く税負担が抑えられます。','個人事業なら<b>青色申告（最大65万円控除）・小規模企業共済</b>が柱です。','住宅取得資金の贈与は<b>最大1,000万円まで非課税</b>（省エネ住宅・要件あり）です。','2025年の税制改正で、所得税のかからない<b>「103万円の壁」は「160万円の壁」へ</b>大幅に引き上げられました（基礎控除95万円＋給与所得控除65万円）。ただし<b>社会保険の130万円（106万円）の壁</b>は別に残る点に注意です。','退職金は<b>一時金なら退職所得控除、年金受取なら公的年金等控除</b>。受け取り方で税額が変わります。'],
         probes:['節税をお考えなのですね。会社員の方ですか？それとも個人事業・経営者の方でしょうか？','ふるさと納税・iDeCo・医療費控除など、すでに使っているものはありますか？'],
         concl:'一般的には、会社員なら<b>ふるさと納税・iDeCo・医療費控除・住宅ローン控除</b>の活用が効果的です。所得や家族構成で最適な組み合わせが変わります。' },
       toushi:{ label:'資産運用', re:/投資|運用|資産運用|複利|分散|ドルコスト|インデックス|株|ファンド|投信|為替|外貨|リスク/i,
@@ -3373,13 +3636,194 @@
       shaho:{ label:'社会保険・公的制度', re:/傷病手当|高額療養|出産|育休|産休|育児休業|失業|雇用保険|労災|介護保険|健康保険|社会保険|障害年金|働けなくなった/,
         facts:['会社員が病気やケガで働けない間は<b>傷病手当金</b>（給与の約3分の2・最長1年6か月）が支給されます。','<b>高額療養費制度</b>により、1か月の医療費の自己負担には上限（年収約370〜770万円の方で約8〜9万円）があります。','病気やケガで働けなくなったときは<b>障害年金</b>という公的保障もあります（障害厚生年金は3級から）。','出産時には<b>出産育児一時金（50万円）</b>が支給されます。','<b>育児休業給付金</b>は休業前賃金の67%（181日目以降は50%）が非課税で支給されます。','介護が必要になったら<b>公的介護保険</b>で、費用の1〜3割負担でサービスを利用できます。','失業した場合は<b>雇用保険の基本手当</b>が90〜330日分支給されます。','こうした公的保障を知っておくと、<b>民間保険は不足分だけ</b>で済み、保険料を抑えられます。'],
         probes:['公的な保障を確認したいのですね。会社員・公務員・自営業のどちらでしょうか？','特に気になる場面（病気・出産・介護・失業など）はありますか？'],
-        concl:'一般的には、まず<b>公的保障で何がどこまでカバーされるか</b>を把握し、足りない部分だけを民間保険や貯蓄で補うのが合理的です。' }
+        concl:'一般的には、まず<b>公的保障で何がどこまでカバーされるか</b>を把握し、足りない部分だけを民間保険や貯蓄で補うのが合理的です。' },
+      fudosan:{ label:'不動産', re:/不動産|土地|マンション|戸建て|空き家|売却|譲渡|賃貸経営|大家|リバースモーゲージ|リースバック|買い替え|住み替え/,
+        facts:['マイホームを売却したときの利益には<b>3,000万円の特別控除</b>があり、多くの場合税金がかかりません。','不動産の譲渡税率は<b>所有期間5年超で約20%（長期）、5年以下で約39%（短期）</b>と大きく変わります。','所有期間<b>10年超のマイホーム</b>は、さらに軽減税率（6,000万円まで約14%）が使えます。','購入時には物件価格のほかに<b>諸費用（仲介手数料・登記・不動産取得税など、価格の3〜8%）</b>がかかります。','固定資産税は<b>評価額×1.4%</b>が標準。住宅用地は<b>200㎡まで評価額が1/6</b>に軽減されます。','相続した空き家を売る場合も、要件を満たせば<b>3,000万円特別控除（空き家特例）</b>が使えます。','自宅を担保に老後資金を借りる<b>リバースモーゲージ</b>、売って住み続ける<b>リースバック</b>という選択肢もあります。','賃貸経営の家賃収入は<b>不動産所得</b>として確定申告が必要です（青色申告で最大65万円控除）。','不動産は<b>相続税評価が時価より低くなりやすく</b>（貸家はさらに減額）、相続対策に使われることがあります。'],
+        probes:['不動産のご相談ですね。売却・購入・賃貸経営・相続など、どの場面のお話でしょうか？','対象の物件は、ご自宅ですか？それとも投資用・相続された物件でしょうか？'],
+        concl:'一般的には、不動産は<b>「いつ売るか（所有期間）」と「特例を使えるか」</b>で税額が数百万円変わります。売却・住み替えの前に、必ず適用できる特例を確認するのが鉄則です。' },
+      kasai:{ label:'火災保険・地震保険', re:/火災保険|地震保険|水災|水害|台風被害|家財|再調達価額|ハザードマップ|類焼|水濡れ/,
+        facts:['火災保険は<b>建物と家財</b>が対象。<b>住宅ローンを組む場合は加入がほぼ必須</b>（金融機関の融資条件になっていることが多いです）。','補償範囲は契約プラン次第：<b>火災・落雷・破裂爆発</b>が基本補償、<b>風災・雹災・雪災・水災・盗難・破損</b>などはプランやオプションで追加できます。','<b>地震保険は単独では加入できず、必ず火災保険とセット</b>で契約します。地震・噴火・津波による損害（火災・埋没・流失を含む）を補償します。','地震保険の保険金額は<b>火災保険金額の30〜50%の範囲内</b>、上限は建物5,000万円・家財1,000万円です。','地震保険料は<b>どの保険会社でも同じ</b>（全社共通の基準料率）。都道府県と建物の構造（耐火・非耐火）だけで決まります。','<b>地震保険料控除</b>で所得税は年間最大5万円、住民税は最大2.5万円の所得控除が受けられます。','契約期間は<b>火災保険・地震保険とも最長5年</b>（2022年10月以降、火災保険は10年契約が廃止され短縮されました）。','保険金額は<b>再調達価額（同じ建物を建て直す費用）</b>で設定するのが基本。時価（築年数で減価）で設定すると、いざという時に再建費用が不足します。','建物と家財は別契約：<b>建物のみの契約では家具・家電・衣類などの家財は補償されません</b>。','<b>水災補償</b>は近年の豪雨被害の増加で重要性が高まっています。ハザードマップで浸水想定を確認し、必要性を判断しましょう。','地震保険には<b>耐震等級割引・免震建築物割引など最大50%の割引制度</b>があります。'],
+        probes:['火災保険・地震保険のご検討ですね。物件は新築・中古のどちらでしょうか？所在地のハザードマップ（水害・地震）は確認されていますか？','住宅ローンの契約に合わせて加入されますか？保険期間は何年でお考えですか？'],
+        concl:'一般的には、<b>建物は再調達価額で、地震保険は上限（火災保険の30〜50%）まで</b>付けるのが基本です。水災など地域のリスクに応じて補償範囲を選び、保険料は複数社で比較するのがおすすめです。' },
+      sandai:{ label:'三大疾病・先進医療', re:/三大疾病|特定疾病|がん|ガン|癌|上皮内|悪性新生物|脳卒中|脳梗塞|脳出血|くも膜下|脳血管|心筋梗塞|心疾患|狭心症|先進医療|重粒子|陽子線|抗がん剤|放射線治療/,
+        facts:['三大疾病とは<b>がん・急性心筋梗塞・脳卒中</b>の3つ。日本人の死因の約5割を占めます。','<b>脳卒中</b>は「脳梗塞・脳出血・くも膜下出血」の3つの総称です。<b>脳血管疾患</b>はさらに広い概念で、一過性脳虚血発作（TIA）なども含みます。最近は広い「脳血管疾患」まで保障する保険も増えています。','<b>急性心筋梗塞</b>は心疾患のひとつ。<b>心疾患</b>には狭心症・心不全・不整脈なども含まれ、「急性心筋梗塞のみ」か「心疾患全体」かで保険の支払い範囲が大きく違います。','<b>上皮内がん（上皮内新生物）</b>は、がん細胞が上皮内にとどまり転移の可能性がほぼない初期段階。商品によって<b>対象外・給付金が1〜2割に縮小・全額支払い</b>と扱いが分かれる重要チェックポイントです。','三大疾病保険の支払い条件は要注意：がんは「診断確定」で支払われる商品が多い一方、急性心筋梗塞・脳卒中は<b>「60日以上の労働制限・後遺症」等の条件</b>が付く商品と「入院・手術のみ」で支払われる商品があります。','<b>先進医療</b>とは、厚生労働大臣が定める高度な医療技術。<b>技術料は全額自己負担</b>で、高額療養費制度の対象外です（診察・投薬など通常部分は保険適用）。','<b>重粒子線治療は約300万円前後、陽子線治療は約270万円前後</b>が技術料の目安。がん治療で用いられ、一部のがんは公的保険適用に移行しています。','<b>先進医療特約</b>は月100円前後の負担で技術料を通算2,000万円まで保障するものが多く、コストパフォーマンスの高い特約です。','がん治療費の自己負担は、高額療養費制度を使って<b>入院・通院トータルで50〜100万円程度</b>が一つの目安（長期の通院治療や差額ベッド代・先進医療は別途）。','三大疾病で長期間働けなくなった場合は、治療費よりも<b>収入減少</b>の影響が大きくなりがちです。傷病手当金（最長1年6か月）の後を就業不能保険や貯蓄でどう支えるかがポイントです。'],
+        probes:['三大疾病への備えを確認したいのですね。特に気になるのは、がん・心疾患・脳血管疾患のどれでしょうか？','いま医療保険やがん保険には加入されていますか？上皮内がんの扱いなど、保障内容を確認されたことはありますか？'],
+        concl:'一般的には、①<b>高額療養費制度でカバーされる部分</b>を把握し、②<b>上皮内がんの扱い・心疾患/脳血管疾患の範囲・支払い条件</b>を商品ごとに確認、③<b>先進医療特約は安価なので付けておく</b>——の順で整理すると、ムダなく備えられます。' },
+      shigyo:{ label:'法律・士業', re:/弁護士|司法書士|行政書士|社労士|社会保険労務士|公証|士業|登記|公正証書|検認|成年後見|家族信託|民事信託|遺産分割調停|税務調査|過料|認知症対策/,
+        facts:['<b>税理士</b>は税の専門家。相続税申告・確定申告・税務調査の対応ができます。相続税申告の報酬目安は<b>遺産総額の0.5〜1%</b>です。','<b>弁護士</b>は紛争解決の専門家。遺産分割で争いになった場合、<b>代理人として交渉・調停・裁判ができるのは弁護士だけ</b>です。','<b>司法書士</b>は登記の専門家。相続登記・抵当権抹消・会社設立登記などを担います。','<b>相続登記は2024年4月から義務化</b>されました。相続を知った日から<b>3年以内</b>に登記しないと<b>10万円以下の過料</b>の対象になります（過去の相続分も対象）。','<b>行政書士</b>は官公署への書類作成の専門家。遺言書の起案支援・許認可申請などを担います。','<b>社会保険労務士</b>は年金・労務の専門家。障害年金や遺族年金の請求手続きを支援できます。','<b>公正証書遺言</b>は公証役場で作成する最も確実な遺言。費用は財産額に応じて<b>数万円〜十数万円</b>、家庭裁判所の検認が不要ですぐ手続きできます。','<b>自筆証書遺言</b>は法務局の保管制度（1件3,900円）を使うと、紛失・改ざんの心配がなく検認も不要になります。','<b>成年後見制度</b>は判断能力が低下した方の財産を守る制度。<b>家族信託（民事信託）</b>は元気なうちに家族へ管理を託し、認知症による資産凍結を防げる注目の仕組みです。','住宅ローンを完済したら、<b>抵当権抹消登記</b>が必要です（自動では消えません。司法書士依頼で1〜2万円程度）。'],
+        probes:['法律・手続きのご相談ですね。相続・遺言・登記・後見など、どの場面のお話でしょうか？','すでに専門家（税理士・弁護士・司法書士など）に相談されたことはありますか？'],
+        concl:'一般的には、<b>税金＝税理士、争い＝弁護士、登記＝司法書士、書類＝行政書士、年金・労務＝社労士</b>と役割が分かれています。入口を間違えると二度手間になるので、まず全体を整理してから適切な専門家につなぐのが近道です。' },
+      rodo:{ label:'労働トラブル・失業', re:/解雇|クビ|リストラ|退職勧奨|残業代|未払い|サービス残業|パワハラ|セクハラ|ハラスメント|労基署|労働基準監督署|労働審判|労働組合|失業保険|失業給付|基本手当|離職票|退職代行|ブラック企業|不当解雇|あっせん/,
+        facts:['<b>解雇</b>には「客観的に合理的な理由」と「社会通念上の相当性」が必要です（解雇権濫用法理）。業績不振・態度が気に入らない程度の理由では無効になり得ます。手続き面でも<b>30日前の予告か30日分以上の解雇予告手当</b>が必要です。','<b>残業代の割増率</b>：時間外25%増・深夜（22〜5時）はさらに25%増・法定休日35%増・<b>月60時間を超える時間外は50%増</b>（中小企業も適用済み）です。','未払い残業代を請求できる<b>消滅時効は「当分の間3年」</b>です（2026年現在。5年への延長は未定）。まずは<b>タイムカード・シフト表・業務メールの時刻</b>などの証拠確保が先決です。','<b>失業給付（基本手当）</b>：自己都合退職の給付制限は<b>2025年4月から2か月→1か月に短縮</b>されました。さらに<b>教育訓練を受講すれば給付制限なし</b>で受給できます。','会社都合退職（倒産・解雇など）は<b>給付制限なし</b>で給付日数も長くなります。<b>離職票の「離職理由」欄</b>は必ず確認を——実態と違う場合はハローワークで異議を申し立てられます。','<b>労働審判</b>は裁判所で原則3回以内の期日・<b>平均約80日</b>で決着する手続きです。解雇・残業代トラブルの解決に広く使われ、代理人になれるのは弁護士です。','<b>パワハラ防止措置はすべての企業に義務化</b>されています。社内窓口で解決しなければ、都道府県労働局の<b>総合労働相談コーナー（無料）→あっせん→労働審判</b>と、費用の軽い順に進めるのが定石です。','相談先の使い分け：<b>賃金未払いなどの法違反＝労働基準監督署、あっせん代理・手続き＝社労士（特定社労士）、労働審判・訴訟＝弁護士</b>。労働局のあっせんは無料で利用できます。'],
+        probes:['お仕事のトラブルですね。差し支えなければ、解雇・残業代・ハラスメントなど、どのようなお困りごとか教えていただけますか？','雇用契約書・タイムカード・メールなど、証拠になりそうな資料はお手元にありますか？'],
+        concl:'一般的には、<b>①証拠の確保→②社内・労働局の無料相談→③あっせん・労働審判</b>の順で、費用の軽い手段から段階的に進めるのが定石です。生活に直結する話なので、一人で抱え込まず早めに専門家へつなぎましょう。' },
+      rikon:{ label:'離婚とお金', re:/離婚|親権|養育費|財産分与|婚姻費用|慰謝料|年金分割|別居|母子家庭|父子家庭|ひとり親|シングルマザー|児童扶養手当/,
+        facts:['<b>2026年4月の民法改正</b>で、離婚後の<b>共同親権</b>が選べるようになりました（従来どおり単独親権も可。父母で合意できないときは家庭裁判所が判断します）。','<b>法定養育費</b>（2026年4月〜）：養育費を取り決めずに離婚しても、<b>子ども1人あたり月2万円</b>を法律上請求できる暫定額が新設されました。あくまで最低限の暫定措置で、<b>算定表に基づく取り決め</b>が基本です。','養育費には<b>先取特権</b>が付与され（2026年4月〜）、不払いのとき<b>裁判を経ずに給与などを差し押さえ</b>やすくなりました。','養育費の金額は<b>裁判所の養育費算定表</b>（父母の年収・子の人数と年齢）が実務の基準です。取り決めは<b>強制執行認諾文言付きの公正証書</b>にしておくと不払い時に強力です。','<b>財産分与</b>は婚姻中に二人で築いた財産（預金・持ち家・退職金など）を<b>原則2分の1ずつ</b>分けます。請求期限は<b>離婚から5年</b>に延長されました（2026年4月以降の離婚。それ以前の離婚は2年）。','<b>年金分割</b>：婚姻期間中の厚生年金記録を最大2分の1に分割できます。<b>請求期限は原則離婚から2年</b>なのでお早めに。','別居中は、収入の多い側に<b>婚姻費用（生活費）</b>を請求できます。金額は裁判所の算定表が目安です。','<b>慰謝料</b>は不貞行為・DVなどの有責行為があった場合に請求でき、相場は<b>50〜300万円程度</b>と事情によって幅があります。','ひとり親には<b>児童扶養手当・医療費助成・保育料や住民税の軽減</b>などの公的支援があります（児童手当とは別に受給できます）。','離婚を弁護士に依頼する費用は<b>着手金・報酬金それぞれ22〜55万円程度</b>が目安です。収入が一定以下なら<b>法テラスの立替制度</b>も使えます。'],
+        probes:['ご事情お察しします。お子さまはいらっしゃいますか？また、持ち家や住宅ローンはありますか？','いま特に気になっているのは、養育費・財産分与・年金分割・住まいのどれでしょうか？'],
+        concl:'一般的には、離婚のお金は<b>①養育費（算定表＋公正証書）②財産分与（原則半分・離婚から5年以内）③年金分割（2年以内）</b>の3点セットで押さえるのが基本です。期限のあるものから順に、必ず書面で取り決めましょう。' },
+      hojin:{ label:'法人保険', re:/法人|会社契約|経営者保険|役員保険|損金|全損|半損|ハーフタックス|養老保険|福利厚生|逓増|長期平準|節税保険|退職金準備|名義変更プラン|バレンタインショック|事業保障|解約返戻率|解約返戻金/,
+        facts:['法人保険の損金算入は<b>2019年（令和元年）の税制改正</b>で大きく変わり、定期保険等は<b>「最高解約返戻率」によって4区分</b>で判定します（法人税基本通達9-3-5の2）。','<b>最高解約返戻率50%以下</b>の定期保険等は、支払保険料の<b>全額を損金</b>にできます。','<b>最高解約返戻率50%超〜70%以下</b>は、保険期間の当初4割の期間は<b>6割損金（4割を資産計上）</b>。ただし<b>1人あたり年換算保険料30万円以下なら全額損金</b>にできる特例があります。','<b>最高解約返戻率70%超〜85%以下</b>は、当初4割の期間は<b>4割損金（6割を資産計上）</b>です。','<b>最高解約返戻率85%超</b>は、当初10年間は「支払保険料×最高解約返戻率×90%」を資産計上（＝損金はごくわずか）、11年目以降は×70%と、最も厳しい扱いになります。','資産計上した保険料は、<b>解約返戻率のピークを過ぎた後、保険期間の終わりまでの間で均等に取り崩して損金化</b>します。','<b>養老保険の福利厚生プラン（ハーフタックスプラン）</b>：死亡保険金の受取人＝従業員の遺族、満期保険金の受取人＝法人にすると、保険料の<b>2分の1を損金（福利厚生費）、2分の1を資産計上</b>にできます（法人税基本通達9-3-4）。','ハーフタックスプランは<b>役員・従業員の全員加入（普遍的加入）が要件</b>。役員や特定の従業員だけを対象にすると、その分は<b>給与扱い（損金でも本人に所得税）</b>になります。','養老保険で死亡保険金・満期保険金の<b>受取人をともに法人</b>にすると保険料は<b>全額資産計上</b>（損金になりません）。','解約時は<b>解約返戻金と資産計上額との差額が雑収入（益金）または雑損失</b>になります。返戻金のピークと<b>役員退職金の支給時期をぶつける「出口戦略」</b>が法人保険設計の本質です。','低解約返戻金型保険を法人から個人へ安く移す<b>「名義変更プラン」は2021年の通達改正で封じられました</b>。','医療保険などの<b>短期払い（第三分野）は1人あたり年30万円以下なら全額損金</b>にできます。'],
+        probes:['法人契約のご相談ですね。目的は退職金準備・事業保障・福利厚生のどれに近いですか？','年間の保険料規模と、解約返戻金をいつ頃使いたいか（勇退時期など）は決まっていますか？'],
+        concl:'一般的には、いまの法人保険は<b>「いくら損金になるか」より「出口（解約返戻金のピークと退職金の時期）を合わせられるか」</b>が本質です。実際の損金算入割合は商品・契約日・返戻率で大きく異なるため、契約前に税理士に確認するのが鉄則です。' }
     };
-    const TOPIC_ORDER = ['kokusai','souzoku','ideco','kyoiku','izoku','shaho','hoken','jutaku','nenkin','zeikin','nisa','toushi'];
+    /* ============================================================
+       知識の増強（FP検定3級〜1級の基礎知識＋各士業の教科書レベル）
+       「〜とは？」の定義と「いくらかかる？」の費用相場を中心に追加。
+       genAnswerが質問と関係の深いものを優先して使う
+       ============================================================ */
+    const KB_EXTRA = {
+      nenkin: [
+        '<b>厚生年金とは</b>、会社員・公務員が加入する年金の「2階部分」。保険料は給与の18.3%を会社と本人で半分ずつ負担し、受給額は<b>収入と加入期間</b>で決まります。',
+        '<b>国民年金（基礎年金）とは</b>、20〜60歳の全員が加入する年金の「1階部分」。保険料は月約1.7万円の定額で、40年納めると<b>満額 月約6.8万円</b>を受け取れます。',
+        '日本の年金は<b>3階建て</b>：1階＝国民年金、2階＝厚生年金、3階＝iDeCo・企業年金など自分で上乗せする部分です。',
+        '会社員の配偶者（年収130万円未満）は<b>第3号被保険者</b>となり、保険料の負担なしで国民年金に加入できます。',
+        '保険料が払えない時期は<b>免除・学生納付特例</b>を申請しましょう。未納と違い受給資格期間に入り、<b>10年以内なら追納</b>で満額に戻せます。',
+        '年金の受給には<b>10年以上</b>の加入期間（受給資格期間）が必要です。',
+        '公的年金は<b>老齢・遺族・障害</b>の3つの保障がセットになった「国の総合保険」です。'
+      ],
+      shigyo: [
+        '<b>家・土地の登記費用</b>＝<b>登録免許税＋司法書士報酬</b>。登録免許税は固定資産税評価額に対して<b>相続0.4%・売買（土地）1.5%・売買（建物）2%（自宅は軽減あり）・住宅ローンの抵当権設定0.1〜0.4%</b>です。',
+        '<b>司法書士報酬の相場</b>：相続登記で6〜10万円前後、売買の所有権移転で5〜10万円前後、抵当権抹消で1〜2万円程度です（物件数・地域で変動）。',
+        '新築時は<b>表題登記（土地家屋調査士）→所有権保存登記（司法書士）</b>の2段階になります。',
+        '<b>検認とは</b>、自筆の遺言書を家庭裁判所で開封・確認する手続き。公正証書遺言と法務局保管の自筆遺言は検認不要です。',
+        '相続手続きでは<b>遺産分割協議書</b>（相続人全員の実印＋印鑑証明）が登記や銀行手続きに必要です。',
+        '<b>法定相続情報一覧図</b>（法務局・無料）を作ると、戸籍の束を何度も出さずに銀行・登記の手続きができて便利です。',
+        '<b>弁護士費用の目安</b>：法律相談は<b>30分5,500円</b>程度（初回無料の事務所も多数）。事件を依頼すると<b>着手金（経済的利益の8%前後）＋成功報酬（同16%前後）</b>が伝統的な目安です（事務所により異なります）。',
+        '<b>法テラス（日本司法支援センター）</b>：収入・資産が基準以下の方は<b>無料法律相談（同じ問題につき3回まで）</b>と<b>弁護士・司法書士費用の立替え（分割返済）</b>が利用できます。',
+        '自動車保険などに付いている<b>弁護士費用特約（上限300万円が一般的）</b>が使えると、自己負担なく弁護士に依頼できるケースが多くあります。日常のトラブルに使えるタイプもあり、まず特約の有無を確認しましょう。',
+        '<b>社労士の障害年金サポート</b>：請求代行の報酬は<b>着手金1〜2万円＋成功報酬（年金額の2か月分程度）</b>が相場です。初回請求で認定を取ることが重要で、複雑な事案ほど専門家に依頼する価値があります。',
+        '<b>雇用関係の助成金</b>（キャリアアップ助成金など）の申請代行は<b>社労士の独占業務</b>です。返済不要の資金ですが要件・期限管理が厳格なので、制度を使う予定ができた時点で早めに相談を。',
+        '<b>住所変更登記も義務化</b>されました：2026年4月から、引っ越し・氏名変更から<b>2年以内</b>の登記が義務です（怠ると<b>5万円以下の過料</b>）。事前に検索用情報を登録しておけば法務局が自動で変更する<b>スマート変更登記（無料）</b>も始まっています。',
+        '<b>戸籍の広域交付</b>（2024年3月〜）：本籍地が遠方でも<b>最寄りの市区町村の窓口でまとめて戸籍謄本を取得</b>できるようになり、相続手続きの負担が大きく減りました。'
+      ],
+      fudosan: [
+        '不動産会社に払う<b>仲介手数料の上限は「売買価格×3%＋6万円＋消費税」</b>（400万円超の場合）と法律で決まっています。',
+        '<b>重要事項説明とは</b>、契約前に宅地建物取引士が物件・契約条件を説明する義務手続き。ここで疑問を解消してから契約するのが鉄則です。',
+        '<b>手付金</b>は解約手付が一般的：買主は手付を放棄、売主は倍額を返すことで契約を解除できます（相場は価格の5〜10%）。',
+        '<b>住宅ローン特約</b>があれば、ローン審査に通らなかったとき手付金が戻り白紙解除できます。契約書で必ず確認を。',
+        '引き渡し後に欠陥が見つかったときは<b>契約不適合責任</b>で修補・代金減額・解除を請求できます（通知期間に注意）。',
+        '土地の価格には<b>一物四価</b>（実勢価格・公示価格・路線価＝約8割・固定資産税評価額＝約7割）があります。相続税は路線価、固定資産税は評価額で計算します。',
+        '購入時には<b>不動産取得税（原則3%・軽減あり）と印紙税</b>もかかります。',
+        '<b>家の解体費用</b>の相場は、木造で<b>坪3〜5万円（30坪の家なら約90〜150万円）</b>。鉄骨・鉄筋コンクリート造はさらに高くなります。自治体によっては<b>空き家の解体補助金</b>が出ることもあるので、壊す前に市区町村へ確認を。',
+        '古い家を解体して<b>更地にすると、土地の固定資産税が上がります</b>（住宅が建っている間は土地の評価が最大6分の1に軽減されているため）。<b>解体の時期と建て替えの計画はセットで</b>考えるのが鉄則です。',
+        '祖父母や親など<b>亡くなった方の名義のままの家は、解体・建て替え・売却の前に相続登記で名義をそろえる</b>必要があります（2024年から義務化・3年以内）。相続人が複数いる場合は<b>全員の同意</b>も必要です。',
+        '親や祖父母の<b>土地をタダで借りて家を建てる（使用貸借）なら贈与税はかかりません</b>。ただし土地の名義を自分に移すと贈与税の対象になります。建てるお金の援助は<b>「住宅取得等資金の贈与」で最大1,000万円まで非課税</b>にできます（省エネ住宅・要件あり）。'
+      ],
+      toushi: [
+        '<b>72の法則</b>：72÷利回り＝お金が2倍になる年数。年3%なら約24年、年6%なら約12年です。',
+        '<b>単利と複利</b>：複利は「利息にも利息が付く」増え方。期間が長いほど単利との差が大きく開きます。',
+        '<b>債券価格と金利は逆に動きます</b>：金利が上がると既発債券の価格は下がります。',
+        '株式指標の基本：<b>PER</b>（株価÷1株利益＝割安性）・<b>PBR</b>（株価÷1株純資産）・<b>配当利回り</b>（配当÷株価）。',
+        '投資信託のコストは<b>購入時手数料・信託報酬（保有中ずっと）・信託財産留保額（解約時）</b>の3つ。長期では信託報酬が最重要です。',
+        '<b>預金保険制度（ペイオフ）</b>：銀行が破綻しても、1金融機関につき1人<b>元本1,000万円＋利息</b>まで保護されます。',
+        '<b>分散投資</b>は値動きの異なる資産（株式・債券・国内外）を組み合わせてリスクを下げる基本戦略です。'
+      ],
+      zeikin: [
+        '所得税は収入を<b>給与・事業・不動産・利子・配当・退職・譲渡・一時・山林・雑の10種類</b>に分けて計算します。',
+        '所得税は<b>5%〜45%の累進課税</b>＋住民税約10%。「稼ぐほど税率が上がる」仕組みです。',
+        '<b>扶養控除</b>は16歳以上の扶養親族1人につき38万円（19〜22歳は63万円）の所得控除です。',
+        '保険の満期金や解約返戻金（契約者＝受取人）は<b>一時所得</b>：（収入−払込保険料−特別控除50万円）×1/2 に課税されるため、実際の税負担は軽めです。',
+        '<b>退職金の税金</b>は退職所得控除（勤続20年まで年40万円、超える分は年70万円）を引いた残りの<b>さらに半分</b>にしか課税されない優遇があります。',
+        '給与年収2,000万円超、副業の所得20万円超、医療費控除やふるさと納税（6自治体以上）を使う人などは<b>確定申告が必要</b>です。',
+        '大学生年代（19〜22歳）のお子さまのアルバイトは、<b>特定親族特別控除</b>の新設（2025年〜）で<b>年収150万円までは親の控除が満額63万円</b>、188万円まで段階的に控除を受けられるようになりました。'
+      ],
+      hoken: [
+        '<b>生命保険料控除</b>は「一般・介護医療・個人年金」の3枠で、所得税は各枠最大4万円（合計12万円）まで控除できます。',
+        '保険契約は申込後でも<b>クーリングオフ（原則8日以内・書面等）</b>で撤回できます。',
+        '保険会社が破綻しても<b>生命保険契約者保護機構</b>が責任準備金の90%まで補償します。',
+        '<b>告知義務</b>：健康状態を正しく告知しないと、保険金が支払われない（契約解除）ことがあります。',
+        '保険料が負担になったら、解約の前に<b>払済保険・延長保険・減額</b>という「保障を残しながら軽くする」方法があります。',
+        '死亡保険金の税金は<b>契約者・被保険者・受取人の組み合わせ</b>で変わります：夫契約・夫被保険・妻受取＝相続税（非課税枠あり）、夫契約・妻被保険・夫受取＝所得税、夫契約・妻被保険・子受取＝贈与税（最も不利）。'
+      ],
+      souzoku: [
+        '<b>法定相続分</b>：配偶者と子なら「配偶者1/2・子1/2」、配偶者と親なら「2/3・1/3」、配偶者と兄弟なら「3/4・1/4」です。',
+        '<b>遺留分とは</b>、遺言でも奪えない最低限の取り分。原則<b>法定相続分の1/2</b>です（兄弟姉妹にはありません）。',
+        '<b>相続放棄は3か月以内</b>に家庭裁判所へ。借金も相続財産なので、債務超過なら早めの判断が必要です。',
+        '期限の目安：<b>相続放棄3か月・準確定申告4か月・相続税申告10か月</b>（相続を知った日から）。',
+        '配偶者と一親等（子・親）以外の人（孫・兄弟姉妹など）が相続すると、相続税が<b>2割加算</b>されます。'
+      ],
+      shaho: [
+        '<b>健康保険（会社員）と国民健康保険（自営業等）の違い</b>：健康保険は保険料が労使折半で扶養制度・傷病手当金あり。国保は全額自己負担で傷病手当金は原則ありません。',
+        '退職後は「<b>任意継続（最長2年）</b>・国保・家族の扶養」の3択から健康保険を選びます。保険料の比較が大切です。',
+        '<b>産休・育休中は社会保険料が免除</b>され、将来の年金額は減りません。',
+        '<b>介護保険料は40歳から</b>徴収が始まります（40〜64歳は医療保険と一緒に納付）。',
+        '<b>障害年金</b>は病気やケガで生活・仕事が制限されたときの公的年金です。<b>障害基礎年金は1級 約102万円・2級 約81万円</b>（＋子の加算）、厚生年金加入中に初診があれば<b>障害厚生年金（3級・一時金の障害手当金も）</b>が上乗せされます。',
+        '障害年金のカギは<b>「初診日」の証明と保険料納付要件</b>（加入期間の3分の2以上納付、または直近1年間に未納なし）です。うつ病などの精神疾患、がん・糖尿病などの内部疾患も対象になり得ます。',
+        '<b>労災保険</b>は仕事中・通勤中のケガや病気を補償します（治療費は原則全額・休業補償は給付基礎日額の約8割）。<b>パート・アルバイトを含む全労働者</b>が対象で、保険料は全額会社負担です。',
+        '<b>出生後休業支援給付金</b>（2025年4月〜）：両親がともに14日以上の育休を取ると、<b>最大28日間は給付率80%＝手取りほぼ10割</b>になりました（給付は非課税＋社会保険料免除のため）。',
+        '<b>「106万円の壁」は2026年10月に撤廃</b>されます：賃金要件がなくなり、<b>週20時間以上働くパート・アルバイトは（学生を除き）社会保険に加入</b>する仕組みに変わります。手取りは減っても、厚生年金の上乗せや傷病手当金などの保障が手に入ります。'
+      ],
+      kyoiku: [
+        '<b>児童手当</b>（2024年10月拡充後）：3歳未満 月1.5万円、3歳〜高校生 月1万円、<b>第3子以降は月3万円</b>。所得制限は撤廃されました。',
+        '<b>奨学金</b>には返さなくてよい「給付型」と、返す「貸与型（無利子の第一種／有利子の第二種）」があります。',
+        '<b>国の教育ローン</b>（日本政策金融公庫）は最大350万円・固定金利で、奨学金と併用できます。'
+      ],
+      izoku: [
+        '<b>2028年4月から遺族厚生年金は大きく変わります</b>：18歳年度末までの子がいない<b>60歳未満の配偶者は、男女とも原則5年間の有期給付</b>に統一されます（女性は約20年かけて段階的に移行。施行時にすでに受給中の方は変わりません）。あわせて<b>中高齢寡婦加算も段階的に縮小</b>されます。',
+        '現行制度では「妻を亡くした55歳未満の夫」に遺族厚生年金が出ないなどの男女差がありますが、<b>2028年4月の改正で男女差は解消</b>へ向かいます（男性は改正で新たに5年有期の給付を受けられるようになります）。'
+      ],
+      ideco: [
+        'iDeCoは現在<b>65歳まで加入</b>できます（<b>2027年1月からは70歳未満まで拡大予定</b>）。受け取りは<b>60〜75歳</b>の間で選べます。',
+        'iDeCoの受け取りは<b>一時金なら退職所得控除、年金なら公的年金等控除</b>の対象。退職金と時期をずらすと控除を有効に使えます。',
+        '企業年金がある会社員もiDeCoに入れます（掛金上限は企業年金の種類で変わります）。',
+        '<b>2027年1月からiDeCoの掛金上限が大幅アップ</b>予定：会社員（企業年金なし）は月2.3万円→<b>6.2万円</b>、自営業は月6.8万円→<b>7.5万円</b>に。老後資金づくりの節税枠が大きく広がります。'
+      ],
+      jutaku: [
+        '<b>フラット35とは</b>、住宅金融支援機構の全期間固定金利ローン。保証料ゼロ・繰上返済手数料無料が特長です。',
+        '夫婦で借りる方法は3つ：<b>ペアローン（2本の契約）・連帯債務（1本を2人で）・連帯保証（1人の契約を保証）</b>。住宅ローン控除や団信の扱いが変わります。',
+        '<b>繰上返済</b>には「期間短縮型」（利息軽減が大きい）と「返済額軽減型」（毎月が楽になる）があります。'
+      ]
+    };
+    Object.entries(KB_EXTRA).forEach(([k, arr])=>{ if(KB[k]) KB[k].facts.push(...arr); });
+
+    // 追加した知識の語句でも話題を見つけられるよう、判定の正規表現も増強する
+    const KB_RE_EXTRA = {
+      toushi:'72の法則|単利|PER|PBR|投資信託|信託報酬|ペイオフ|預金保険|貯金|お金を増や|お金持ち',
+      fudosan:'仲介手数料|重要事項説明|手付|契約不適合|路線価|公示価格|一物四価|印紙税|解体|取り壊|更地|建て替え|実家|(おじいちゃん|おばあちゃん|じいちゃん|ばあちゃん|祖父|祖母)の(家|土地|うち)',
+      souzoku:'(祖父|祖母|おじいちゃん|おばあちゃん|じいちゃん|ばあちゃん|親|父|母)が(死|亡くな)|遺産分割|形見',
+      izoku:'死んだら|死亡したら|亡くなったら|死んじゃったら',
+      hoken:'クーリングオフ|告知義務|払済|延長保険|保護機構|保険料控除',
+      shaho:'国民健康保険|任意継続|106万|適用拡大|週20時間|出生後休業|育児時短|労災',
+      jutaku:'フラット35|連帯債務|連帯保証|家を建て|家をたて|新築|注文住宅|一戸建て|一軒家|おうちを買|家がほしい|家が欲しい',
+      zeikin:'一時所得|退職所得|累進課税|103万|150万|160万|188万|年収の壁|基礎控除|扶養内|バイト|アルバイト|給料から|天引き',
+      nenkin:'厚生年金|国民年金|基礎年金|第3号|納付特例|受給資格|在職老齢',
+      shigyo:'登記費用|法定相続情報|協議書|法テラス|弁護士費用|住所変更登記|広域交付|助成金',
+      kyoiku:'児童手当|教育ローン|給付型'
+    };
+    Object.entries(KB_RE_EXTRA).forEach(([k, add])=>{
+      if(KB[k]) KB[k].re = new RegExp(KB[k].re.source + '|' + add, KB[k].re.flags);
+    });
+
+    const TOPIC_ORDER = ['kokusai','hojin','rikon','rodo','shigyo','souzoku','ideco','kyoiku','izoku','shaho','sandai','fudosan','kasai','hoken','jutaku','nenkin','zeikin','nisa','toushi'];
     const OPENERS = ['','{T}についてですね。','{T}のご質問、ありがとうございます。','{T}は多くの方が気にされるところです。','なるほど、{T}のお話ですね。','{T}は大切なテーマですよね。','いいご質問です。{T}についてお答えしますね。','{T}について、ポイントを整理しますね。','{T}、承知しました。','{T}のことですね。一緒に見ていきましょう。'];
     const CLOSERS = ['','ご家庭の状況に合わせて最適化できます。','まずは無理のない範囲から始めましょう。','上のシミュレーションと合わせて見ると判断しやすくなりますよ。','ご不明な点は、いつでも掘り下げてご説明します。','優先順位をつけて、できることから整えていきましょう。','気になる点があれば、続けてお気軽にご質問くださいね。','ご自身のペースで進めて大丈夫ですよ。','ほかにも知りたいことがあれば、何でも聞いてください。'];
     const CONNECTORS = ['','また、','そして、','あわせて、','なお、','ちなみに、','加えて、'];
     const NECESSITY = /必要|いる[?？]|入った方|入る?べき|始めた方|始める?べき|やった方|やる?べき|すべき|した方が|やめた方|やめる?べき|迷っ|どうすれ|どうしたら|べき[?？]?$|どっち|比較して|足り|いくら|大丈夫|かかる|見直/;
+
+    /* 中学生・お子さまにも分かる「ひとこと解説」。
+       「やさしく」「中学生にもわかるように」等の質問で、専門用語の前にまずこれを出す */
+    const EASY_RE = /中学生|小学生|高校生でも|子ども(にも|でも)|子供(にも|でも)|やさしく|わかりやすく|分かりやすく|かんたんに|簡単に|ひとことで|一言で/;
+    const EASY_INTRO = {
+      nisa:'NISA（ニーサ）をひとことで言うと、「投資でもうかったお金に税金がかからない、国がつくった特別な箱」です。ふつうは利益の約2割が税金で引かれますが、NISAの箱の中なら引かれません。',
+      ideco:'iDeCo（イデコ）をひとことで言うと、「自分でつみたてる、もうひとつの年金」です。老後まで引き出せないかわりに、税金がぐっと安くなるごほうびがあります。',
+      hoken:'保険をひとことで言うと、「めったに起きないけれど、起きたらお金が足りなくなる出来事に、みんなで少しずつお金を出し合って備えるしくみ」です。',
+      kasai:'火災保険をひとことで言うと、「家や家具が火事や台風でこわれたとき、直すお金がもらえる保険」です。地震のときは、セットで入る地震保険が守ってくれます。',
+      souzoku:'相続をひとことで言うと、「亡くなった人のお金や家を、家族が引き継ぐこと」です。たくさん引き継ぐと相続税という税金がかかることがあります。',
+      kokusai:'国債をひとことで言うと、「国にお金を貸して、利子をもらえる貸し借りの証書」です。相手が国なので、とても安全な預け先のひとつです。',
+      kyoiku:'教育費をひとことで言うと、「幼稚園から大学までにかかる学びのお金」です。お子さま1人あたり約1,000万〜2,000万円で、いちばん大きいのは大学のお金です。',
+      jutaku:'住宅ローンをひとことで言うと、「家を買うお金を銀行に借りて、30年くらいかけて少しずつ返すしくみ」です。借りている間は利子も一緒に払います。',
+      nenkin:'年金をひとことで言うと、「働いている間にみんなで保険料を出し合い、年をとったら順番に受け取るしくみ」です。国の年金は何歳まで生きても一生もらえます。',
+      zeikin:'税金をひとことで言うと、「道路や学校、救急車などみんなで使うものの代金を、収入に応じて出し合うお金」です。ルールを知っていると、ムダなく安くできます。',
+      toushi:'投資をひとことで言うと、「お金にも働いてもらって、時間をかけて増やすこと」です。貯金とちがって減ることもあるので、「長く・少しずつ・分けて」がコツです。',
+      izoku:'遺族年金をひとことで言うと、「家族を養っていた人が亡くなったとき、残された家族が国からもらえるお金」です。',
+      shaho:'社会保険をひとことで言うと、「病気・ケガ・失業・年をとったときに、みんなで助け合う国の保険セット」です。お給料から自動で保険料が引かれています。',
+      sandai:'三大疾病をひとことで言うと、「がん・急性心筋梗塞・脳卒中という、日本人がかかりやすい3つの大きな病気」のことです。治療のお金は公的制度でかなりカバーされます。',
+      fudosan:'不動産をひとことで言うと、「土地や建物のこと」です。買う・売る・こわす・引き継ぐ、それぞれの場面で税金とルールが決まっています。',
+      shigyo:'士業（しぎょう）をひとことで言うと、「法律やお金の国家資格を持つ専門家たち」です。税金は税理士、争いごとは弁護士、登記は司法書士、年金や働き方は社労士が味方になってくれます。',
+      hojin:'法人保険をひとことで言うと、「会社が社長や社員のためにかける保険」です。会社の税金の計算や、社長の退職金づくりに関係します。',
+      rodo:'労働トラブルをひとことで言うと、「働くうえでの困りごと（急なクビ・働いた分のお金がもらえない・いじめなど）」のことです。働く人は法律でしっかり守られています。',
+      rikon:'離婚のお金をひとことで言うと、「夫婦が別れるときに決める、子どものためのお金（養育費）と、ふたりで築いた財産の分け方」のことです。'
+    };
 
     function detectTopic(q){ for(const k of TOPIC_ORDER){ if(KB[k].re.test(q)) return k; } return null; }
     // ファクトを接続詞でつなぎ、言い回しに変化を出す
@@ -3388,17 +3832,50 @@
       for(let i=1;i<fs.length;i++){ out += ' ' + pickOne(CONNECTORS) + fs[i]; }
       return out;
     }
+    // 質問文とファクトの関連度：質問に含まれる「連続した一致部分（2文字以上）」の長さ合計で採点
+    // （「登記」のような短いキーワードでも、長い一致ほど高得点になる方式）
+    function factScore(plain, qs){
+      let score = 0, i = 0;
+      while(i < qs.length - 1){
+        let len = Math.min(8, qs.length - i);
+        while(len >= 2 && !plain.includes(qs.substr(i, len))) len--;
+        if(len >= 2){ score += len; i += len; } else { i++; }
+      }
+      return score;
+    }
+    function rankedFacts(kb, q){
+      if(!q) return [];
+      const qs = q.replace(/[？?。、！!\s]/g,'');
+      return kb.facts
+        .map(f=> ({ f, s: factScore(f.replace(/<[^>]+>/g,''), qs) }))
+        .sort((a,b)=> b.s - a.s);
+    }
     // トピックごとに「直近6回と同じファクトの組み合わせ」を避け、毎回違う回答にする
     const recentFactSets = {};
-    function genAnswer(key){
+    function genAnswer(key, q){
       const kb=KB[key];
       const seen = recentFactSets[key] || (recentFactSets[key]=[]);
+      // 質問に関係するファクトがあれば、それを中心に答える（無関係な知識を混ぜない）
+      // 定義質問（〜とは 等）は「労災」のような2文字の専門用語でも拾えるよう閾値を下げる
+      const ranked = rankedFacts(kb, q);
+      const minScore = /とは|って何|ってなに|どういう/.test(q) ? 2 : 4;
+      const strong = ranked.filter(x=> x.s >= minScore);
       let fs, sig, tries=0;
-      do{
-        fs = sampleN(kb.facts, 2 + Math.floor(Math.random()*2)); // 2〜3個をランダム抽出（順序もシャッフル）
+      if(strong.length){
+        fs = strong.slice(0, Math.min(strong.length, 2 + (Math.random()<0.4?1:0))).map(x=> x.f);
+        if(fs.length===1){
+          // 補足は「次に関係が深いもの」から選ぶ（完全ランダムにしない）
+          const next = ranked.find(x=> x.s >= 2 && !fs.includes(x.f));
+          fs.push(next ? next.f : sampleN(kb.facts.filter(f=> f!==fs[0]), 1)[0]);
+        }
         sig = fs.slice().sort().join('|');
-        tries++;
-      } while(seen.includes(sig) && tries<16);
+      } else {
+        do{
+          fs = sampleN(kb.facts, 2 + Math.floor(Math.random()*2)); // 2〜3個をランダム抽出（順序もシャッフル）
+          sig = fs.slice().sort().join('|');
+          tries++;
+        } while(seen.includes(sig) && tries<16);
+      }
       seen.push(sig); if(seen.length>6) seen.shift();
       const op = pickOne(OPENERS).replace('{T}', kb.label);
       const cl = pickOne(CLOSERS);
@@ -3411,15 +3888,23 @@
       if(CONFUSED.test(q) && !topic){
         return { html: worryPrompt(), known:true, personal:false };
       }
+      // 「やさしく」「中学生にもわかるように」→ まず、ひとこと解説から入る
+      if(topic && EASY_RE.test(q) && EASY_INTRO[topic]){
+        const r = rankedFacts(KB[topic], q).filter(x=> x.s >= 2);
+        const extra = r.length ? r[0].f : KB[topic].facts[0];
+        return { html: '<b>' + EASY_INTRO[topic] + '</b> ' + extra + ' もっとくわしく知りたいことがあれば、そのまま続けて聞いてくださいね。', known:true, personal:true, topic };
+      }
       // 「必要？／足りる？／いくら？」などの相談 → ヒアリングせず、入力データから即・個別診断
-      if(topic && DIAG[topic] && NECESSITY.test(q)){
+      // ただし「年収の壁」「〜とは」「違い」など知識を尋ねる質問は、個別診断より知識ベースの回答を優先する
+      const KNOWLEDGE_Q = /壁|103万|106万|130万|150万|160万|188万|とは|って何|ってなに|違い/;
+      if(topic && DIAG[topic] && NECESSITY.test(q) && !KNOWLEDGE_Q.test(q)){
         return { html: DIAG[topic](), known:true, personal:false, diag:true, topic };
       }
-      if(topic) return { html: genAnswer(topic), known:true, personal:true, topic };
+      if(topic) return { html: genAnswer(topic, q), known:true, personal:true, topic };
       if(NECESSITY.test(q)){
         return { html: worryPrompt(), known:true, personal:false };
       }
-      return { html:'ご質問ありがとうございます。NISA・iDeCo・保険・国債・相続・税金・住宅・教育・年金など幅広くお答えできますが、ご質問の意図をうまく読み取れませんでした。言い回しを変えてお試しいただくか、', known:false, personal:false };
+      return { html:'ご質問ありがとうございます。うまく読み取れなかったので、よろしければ<b>「NISAとは？」「家を建てるお金はいくら？」「おじいちゃんの家はどうすればいい？」</b>のように、知りたいことを短い言葉で聞いてみてください。NISA・保険・相続・税金・不動産・住宅・教育・年金・労働・離婚・法律の専門家のことなど、お金まわりは幅広くお答えできます。それでも見つからないときは、', known:false, personal:false };
     }
 
     /* ============================================================
@@ -3471,7 +3956,7 @@
           const both = Math.max(n.h.need, n.w.need);
           concl = both>0
             ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら月数千円程度から、<b>無理なく備えられる規模</b>です。`
-            : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできています</b>。過剰な保険は不要です。`;
+            : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`;
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`
           + `どんな保障をどう組むかは、ご家庭ごとに最適解が異なります。<b>数字の裏付けを一緒に確認する</b>のが、いちばんの安心につながります。` + CTA_HTML;
@@ -3552,6 +4037,15 @@
     if($('chat-quick')) $('chat-quick').addEventListener('click', (e)=>{
       const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
     });
+    // 印刷・PDF時は「計算の前提」を開いた状態で出力する（お客様に渡る振り返り資料に前提を残す）
+    window.addEventListener('beforeprint', ()=> document.querySelectorAll('details.premise').forEach(d=> d.open = true));
+    // 年金月額の目安プリセット（会社員・自営業など働き方別）
+    document.addEventListener('click', (e)=>{
+      const p = e.target.closest('.pen-preset'); if(!p) return;
+      const el = $('pension-monthly'); if(!el) return;
+      el.value = p.dataset.v;
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+    });
     // 最初のあいさつ（お名前を反映）
     function chatGreeting(){
       const nm = (document.getElementById('h-name')?.value||'').trim();
@@ -3584,7 +4078,7 @@
     /* ============================================================
        データの保存・読込（パスワード保護・このPCのブラウザに記録）
        ============================================================ */
-    const SAVE_KEY = 'lifeplan_saves_v1';      // お客様データ（このPC内・全アカウント共有）
+    const SAVE_KEY = 'lifeplan2_saves_v1';     // ②専用のお客様データ（①とは別に保存。アカウントは共通）
     const ACCT_KEY = 'lifeplan_accounts_v1';   // アカウント（ログインID＋パスワード）
     const SESSION_KEY = 'lifeplan_session_v1'; // 前回ログインしていたID（自動ログイン用）
     let currentUser = null;     // ログイン中のID
@@ -3682,7 +4176,7 @@
           <button class="btn btn-ghost btn-sm" data-load="${safe}"><i class="fa-solid fa-folder-open"></i> 読込</button>
           <button class="btn-del" data-del="${safe}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
       }).join('');
-      list.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{ const name=b.dataset.load; const st=getSaves()[name]; if(st){ applyState(st.state); setCurrentSave(name); $('save-modal').hidden=true; } }));
+      list.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{ const name=b.dataset.load; const st=getSaves()[name]; if(st){ applyPlans(st); setCurrentSave(name); $('save-modal').hidden=true; } }));
       list.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ if(confirm(`「${b.dataset.del}」を削除しますか？`)){ const o=getSaves(); delete o[b.dataset.del]; putSaves(o); if(currentSaveName===b.dataset.del) setCurrentSave(null); renderSaveList(); } }));
     }
 
@@ -3766,7 +4260,7 @@
       if(!name){ alert('保存名（お客様名など）を入力してください。'); return; }
       const o = getSaves();
       if(o[name] && !confirm(`「${name}」は既に保存されています。上書きしますか？`)) return;
-      o[name] = { t: Date.now(), state: collectState(), by: currentUser };
+      o[name] = { t: Date.now(), plans: collectPlans(), by: currentUser };
       if(putSaves(o)){ $('save-name').value=''; setCurrentSave(name); renderSaveList(); alert(`「${name}」を保存しました。`); }
     });
 
@@ -3774,7 +4268,7 @@
     $('save-overwrite').addEventListener('click', ()=>{
       if(!currentSaveName){ alert('先に下の一覧から資料を読み込んでください。'); return; }
       const o = getSaves();
-      o[currentSaveName] = { t: Date.now(), state: collectState(), by: currentUser };
+      o[currentSaveName] = { t: Date.now(), plans: collectPlans(), by: currentUser };
       if(putSaves(o)){ renderSaveList(); alert(`「${currentSaveName}」を上書き保存しました。`); }
     });
 
@@ -3866,6 +4360,10 @@
     applyHousePanels();
     recompute();
 
+    // ② プラン比較の初期化：読み込み時は「現状プラン」から
+    PLANS.genjo.state = collectState();
+    updatePlanTabs();
+
     // お客様専用ページ：共有リンク（#share=...）で開いた場合、パスワード入力後に内容を復元する
     (function(){
       const m = location.hash.match(/#share=([^&]+)/);
@@ -3880,7 +4378,7 @@
         if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
         try{
           const state = decodeShareState(code, pass);
-          applyState(state);
+          applyPlans({ state: state });
           setCurrentSave(null);
           modal.hidden = true;
           history.replaceState(null, '', location.pathname + location.search);

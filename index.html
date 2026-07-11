@@ -4163,7 +4163,31 @@
     function getSaves(){ if(!currentUser) return {}; try{ return JSON.parse(localStorage.getItem(saveKeyFor(currentUser))||'{}'); }catch(e){ return {}; } }
     function putSaves(o){ if(!currentUser){ alert('ログインしてから保存してください。'); return false; } try{ localStorage.setItem(saveKeyFor(currentUser), JSON.stringify(o)); return true; }catch(e){ alert('保存できませんでした。ブラウザの設定（プライベートモード等）をご確認ください。'); return false; } }
 
+    /* ── ①（旧版）の保存データ救済 ──────────────────────────
+       2026-07-12 に公開URLを①→②へ切り替えたため、②の保存キーは空でも
+       ①の保存データ（lifeplan_saves_v1__ユーザー名）がこのブラウザに残っている。
+       ユーザーごとに一度だけ②へ取り込む。②側で削除した保存が復活しないよう
+       取込済みフラグで管理し、①側のデータは消さずバックアップとして残す。 */
+    const OLD_SAVE_KEY = 'lifeplan_saves_v1';
+    function importOldSaves(){
+      if(!currentUser) return;
+      const flagKey = 'lifeplan2_imported_from1__' + currentUser;
+      try{
+        if(localStorage.getItem(flagKey)) return;
+        let old = {};
+        try{ old = JSON.parse(localStorage.getItem(OLD_SAVE_KEY+'__'+currentUser) || localStorage.getItem(OLD_SAVE_KEY) || '{}'); }catch(e){ old = {}; }
+        const cur = getSaves();
+        let added = 0;
+        Object.keys(old).forEach(name=>{
+          if(!(name in cur)){ cur[name] = old[name]; added++; }
+        });
+        if(added) localStorage.setItem(saveKeyFor(currentUser), JSON.stringify(cur));
+        localStorage.setItem(flagKey, '1');
+      }catch(e){}
+    }
+
     function renderSaveList(){
+      importOldSaves();
       const saves = getSaves();
       const names = Object.keys(saves).sort((a,b)=> (saves[b].t||0)-(saves[a].t||0));
       const list = $('save-list');

@@ -4094,6 +4094,19 @@
     function getAccounts(){ try{ return JSON.parse(localStorage.getItem(ACCT_KEY)||'{}'); }catch(e){ return {}; } }
     function putAccounts(o){ try{ localStorage.setItem(ACCT_KEY, JSON.stringify(o)); return true; }catch(e){ alert('保存できませんでした。ブラウザの設定をご確認ください。'); return false; } }
 
+    /* ── 事務所の管理者アカウント ─────────────────────────────
+       nakatani でログインすると、全アカウントの保存データを横断して一覧・読込できる。
+       アカウントは初回アクセス時に自動登録（コードにはパスワードのSHA-256ハッシュのみを置き、
+       平文は置かない。ログイン判定は通常アカウントと同じ hashPass 比較で行われる） */
+    const ADMIN_USER = 'nakatani';
+    try{
+      const _accts = getAccounts();
+      if(!_accts[ADMIN_USER]){
+        _accts[ADMIN_USER] = { pass:'bf9efc10825768fcd8346f4f8143cda3f1d2479b30f377431d11bacb0f1c6e09', created: Date.now(), admin:true };
+        localStorage.setItem(ACCT_KEY, JSON.stringify(_accts));
+      }
+    }catch(e){}
+
     // 復元のため、住まい・生活費モードをプログラムから設定するヘルパー
     function setHouse(t){
       houseType = t;
@@ -4186,8 +4199,57 @@
       }catch(e){}
     }
 
+    /* 管理者用：全アカウントの保存（②）＋未移行の①の保存を横断して集める。
+       同じアカウント・同じ保存名は②を優先（①は移行前の残骸のため） */
+    function mergedSavesForAdmin(){
+      const seen = {};
+      const items = [];   // {owner, name, t, entry, storeKey}
+      const scan = (prefix)=>{
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(!k || k.indexOf(prefix+'__')!==0) continue;
+          const owner = k.slice(prefix.length+2);
+          let o={}; try{ o=JSON.parse(localStorage.getItem(k)||'{}'); }catch(e){ continue; }
+          Object.keys(o).forEach(name=>{
+            const id = owner+'\n'+name;
+            if(seen[id]) return;
+            seen[id]=true;
+            items.push({ owner, name, t:(o[name]&&o[name].t)||0, entry:o[name], storeKey:k });
+          });
+        }
+      };
+      scan(SAVE_KEY);       // ②の保存（優先）
+      scan(OLD_SAVE_KEY);   // ①の保存（②に一度もログインしていないアカウントの救済）
+      return items.sort((a,b)=> b.t-a.t);
+    }
+    function renderAdminSaveList(){
+      const items = mergedSavesForAdmin();
+      const list = $('save-list');
+      if(!items.length){ list.innerHTML = '<div class="save-empty">保存されたデータはまだありません。</div>'; return; }
+      list.innerHTML = items.map((it,idx)=>{
+        const d = new Date(it.t||0);
+        const ds = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;
+        const badge = it.owner===ADMIN_USER ? '' : ` <span style="font-size:.72em;background:var(--blue-pale);color:var(--blue-deep);border-radius:6px;padding:1px 6px;">${esc(it.owner)}</span>`;
+        return `<div class="save-item"><span class="si-name">${esc(it.name)}${badge}</span><span class="si-date">${ds}</span>
+          <button class="btn btn-ghost btn-sm" data-adm-load="${idx}"><i class="fa-solid fa-folder-open"></i> 読込</button>
+          <button class="btn-del" data-adm-del="${idx}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
+      }).join('');
+      list.querySelectorAll('[data-adm-load]').forEach(b=> b.addEventListener('click', ()=>{
+        const it = items[+b.dataset.admLoad]; if(!it) return;
+        applyPlans(it.entry); setCurrentSave(it.name); $('save-modal').hidden=true;
+      }));
+      list.querySelectorAll('[data-adm-del]').forEach(b=> b.addEventListener('click', ()=>{
+        const it = items[+b.dataset.admDel]; if(!it) return;
+        if(!confirm(`「${it.name}」（${it.owner} の保存）を削除しますか？`)) return;
+        try{ const o=JSON.parse(localStorage.getItem(it.storeKey)||'{}'); delete o[it.name]; localStorage.setItem(it.storeKey, JSON.stringify(o)); }catch(e){}
+        if(currentSaveName===it.name) setCurrentSave(null);
+        renderSaveList();
+      }));
+    }
+
     function renderSaveList(){
       importOldSaves();
+      if(currentUser===ADMIN_USER){ renderAdminSaveList(); return; }
       const saves = getSaves();
       const names = Object.keys(saves).sort((a,b)=> (saves[b].t||0)-(saves[a].t||0));
       const list = $('save-list');

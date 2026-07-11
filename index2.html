@@ -422,6 +422,12 @@
     .chat-quick{ display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 0; }
     .chat-chip{ border:1px solid var(--blue-pale2); background:var(--blue-pale); color:var(--blue-deep); border-radius:999px; padding:6px 12px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; }
     .chat-chip:hover{ background:var(--blue-pale2); }
+    .pen-presets{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+    .pen-preset{ border:1px solid var(--blue-pale2); background:var(--blue-pale); color:var(--blue-deep); border-radius:999px; padding:4px 10px; font-size:.75rem; font-weight:700; cursor:pointer; font-family:inherit; }
+    .pen-preset:hover{ background:var(--blue-pale2); }
+    .premise{ margin:10px auto 14px; max-width:860px; text-align:left; font-size:.78rem; opacity:.9; }
+    .premise summary{ cursor:pointer; font-weight:700; }
+    .premise ul{ margin:8px 0 0 18px; display:flex; flex-direction:column; gap:6px; }
     .chat-log{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding:4px 2px; }
     .chat-msg{ display:flex; gap:8px; align-items:flex-start; }
     .chat-msg.user{ flex-direction:row-reverse; }
@@ -1006,6 +1012,7 @@
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-arrow-trend-up"></i> 資産運用（NISA・iDeCo・一括運用など）<button type="button" class="btn btn-ghost btn-sm no-print" id="open-asset-modal" style="margin-left:auto;"><i class="fa-solid fa-table-list"></i> 詳細を見る</button></div>
               <div id="invest-list"></div>
+              <div id="ret-warn" style="display:none; margin:8px 0 0; padding:8px 12px; border:1px solid #e3b04b; background:#fdf6e3; color:#8a6d1a; border-radius:8px; font-size:.82rem;"></div>
               <button class="btn-add" id="add-invest" type="button"><i class="fa-solid fa-plus"></i> 運用商品を追加</button>
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
@@ -1016,7 +1023,14 @@
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
               <div class="grid2">
                 <div class="field"><label>受給開始（夫の年齢）</label><div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div></div>
-                <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">夫婦の標準的な目安は月22万円前後</span></div>
+                <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">「ねんきん定期便」の見込額があれば最優先で入力を。目安は下のボタンから選べます</span>
+                  <div class="pen-presets">
+                    <button type="button" class="pen-preset" data-v="26">会社員×会社員 約26万</button>
+                    <button type="button" class="pen-preset" data-v="22">会社員＋専業・扶養内 約22万</button>
+                    <button type="button" class="pen-preset" data-v="14">自営業ご夫婦 約14万</button>
+                  </div>
+                  <span class="hint">自営業（国民年金のみ）は満額でも1人 月約6.8万円。厚生年金の上乗せがない分、iDeCo等での上積みが重要です</span>
+                </div>
               </div>
             </div>
             <div class="note">
@@ -1335,6 +1349,19 @@
         ※ 本シミュレーションは、入力情報と一般的な統計・前提にもとづく簡易試算です。実際の収支・税額・年金額・運用結果を保証するものではありません。
         正確な設計は、ファイナンシャルプランナー等の専門家にご相談ください。
       </p>
+      <details class="premise">
+        <summary>計算の前提と限界を見る</summary>
+        <ul>
+          <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
+          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から物価スライドを簡易反映して計上します。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
+          <li><b>遺族年金</b>：ご家族構成と年収から遺族基礎年金＋遺族厚生年金を概算します（中高齢寡婦加算を考慮。実際の受給額は加入記録により変わります）。</li>
+          <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
+          <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
+          <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
+          <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
+          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正を反映）。前提は年1回の見直しを想定しています。</li>
+        </ul>
+      </details>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
@@ -2255,6 +2282,18 @@
       const { rows, hRetire, hAge0, endAge } = simulate();
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
 
+      // 楽観的すぎる想定利回り（5%超）への注意表示
+      const retWarn = $('ret-warn');
+      if(retWarn){
+        const maxRet = Math.max(0, ...readInvestments().map(iv=> iv.ret));
+        if(maxRet > 5){
+          retWarn.innerHTML = `<b>想定利回り ${maxRet}% は、長期の世界株式の平均（年5%前後）を上回る楽観的な想定です。</b> 将来の成果を保証するものではないため、控えめな利回りにした場合の結果もあわせてご確認ください。`;
+          retWarn.style.display = '';
+        } else {
+          retWarn.style.display = 'none';
+        }
+      }
+
       /* --- サマリー --- */
       const retireRow = rows.find(r=> r.hAge===hRetire) || rows[rows.length-1];
       const noInvRetire = noInvRows.find(r=> r.hAge===hRetire) || noInvRows[noInvRows.length-1];
@@ -2668,7 +2707,7 @@
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
-        if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。大きな死亡保険は不要です。`);
+        if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
         if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険なら月数千円で確保できます。`);
         if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
         if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
@@ -3244,7 +3283,7 @@
         + (facts && facts.length ? `<ul class="diag-facts">${facts.map(f=>`<li>${f}</li>`).join('')}</ul>` : '')
         + (verdictHtml ? `<span class="diag-verdict ${verdictCls}">${verdictHtml}</span>` : '')
         + (body ? `<span>${body}</span>` : '')
-        + `<div class="diag-note">※ 一般的な目安による概算です。数字の正確な計算は税理士・FPにご相談ください。</div>`;
+        + `<div class="diag-note">※ 一般的な目安による概算です。ご家族構成や前提条件が変わると結果も変わります。数字の正確な計算は税理士・FPにご相談ください。</div>`;
     }
     function famFact(p){
       const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
@@ -3296,14 +3335,14 @@
         const verdictCls = both>0 ? 'warn' : 'ok';
         const verdict = both>0
           ? `診断：いま追加で備えるべき保障（不足額）は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>です。（必要資金から、いまの備えを差し引いた金額）`
-          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできています。</b>追加の死亡保険は不要です。`;
+          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできる結果です。</b>現在のご入力条件では、追加の死亡保障は必須ではないと考えられます。`;
 
         const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
           + detail(n.h, hNameH(), wNameH())
           + detail(n.w, wNameH(), hNameH())
           + (both>0
               ? `不足分は<b>掛け捨ての収入保障保険</b>なら月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
-              : `死亡保障は最小限にして、<b>医療・就業不能への備え</b>や資産形成に回すのが合理的です。`)
+              : `死亡保障は最小限にし、<b>医療・就業不能への備え</b>や資産形成に回す考え方が一般的です。最終的な要否は、ご意向やご家族の状況とあわせてご確認ください。`)
           + (houseType!=='rent' && loanType()==='solo-h'
               ? `<br><br><b>ご注意：</b>いまは夫の単独ローン（夫が団信）のため、<b>妻に万一のときはローンがそのまま残ります</b>。妻側にも一定の死亡保障を持つか、ペアローンで妻側にも団信を付けるか、多角的にご検討ください。`
               : (houseType!=='rent' && loanType()==='pair'
@@ -3917,7 +3956,7 @@
           const both = Math.max(n.h.need, n.w.need);
           concl = both>0
             ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら月数千円程度から、<b>無理なく備えられる規模</b>です。`
-            : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできています</b>。過剰な保険は不要です。`;
+            : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`;
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`
           + `どんな保障をどう組むかは、ご家庭ごとに最適解が異なります。<b>数字の裏付けを一緒に確認する</b>のが、いちばんの安心につながります。` + CTA_HTML;
@@ -3997,6 +4036,15 @@
     // ワンタップ質問（チップ）→ そのまま質問として送信
     if($('chat-quick')) $('chat-quick').addEventListener('click', (e)=>{
       const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
+    });
+    // 印刷・PDF時は「計算の前提」を開いた状態で出力する（お客様に渡る振り返り資料に前提を残す）
+    window.addEventListener('beforeprint', ()=> document.querySelectorAll('details.premise').forEach(d=> d.open = true));
+    // 年金月額の目安プリセット（会社員・自営業など働き方別）
+    document.addEventListener('click', (e)=>{
+      const p = e.target.closest('.pen-preset'); if(!p) return;
+      const el = $('pension-monthly'); if(!el) return;
+      el.value = p.dataset.v;
+      el.dispatchEvent(new Event('input', {bubbles:true}));
     });
     // 最初のあいさつ（お名前を反映）
     function chatGreeting(){

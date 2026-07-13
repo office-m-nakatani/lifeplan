@@ -219,15 +219,29 @@
       padding:12px 12px; margin-top:10px;
     }
     .row-item.event-row{ grid-template-columns:0.9fr 1.3fr 0.9fr 1fr auto; }
-    .row-item.expense-row{ grid-template-columns:1.2fr 0.9fr 1.15fr auto; }
-    .ex-period{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .ex-period select{ flex:0 1 auto; min-width:96px; }
-    .ex-years-wrap{ display:inline-flex; align-items:center; gap:4px; font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
-    .ex-years-wrap input{ width:56px; text-align:center; padding:8px 6px; }
+    /* 生活費の追加項目：1段目＝費目名・金額・削除、2段目＝いつまで（全幅） */
+    .row-item.expense-row{
+      grid-template-columns:1.3fr 1fr auto;
+      grid-template-areas:"exname examount exdel" "experiod experiod experiod";
+      row-gap:12px;
+    }
+    .row-item.expense-row .ex-name-field{ grid-area:exname; }
+    .row-item.expense-row .ex-amount-field{ grid-area:examount; }
+    .row-item.expense-row .ex-del{ grid-area:exdel; }
+    .row-item.expense-row .ex-period-field{ grid-area:experiod; }
+    .ex-period-seg{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .ex-mode-btn{
+      padding:8px 16px; border:1.5px solid var(--line); border-radius:999px; background:#fff;
+      color:var(--ink-soft); font-family:inherit; font-size:.85rem; font-weight:700; cursor:pointer; white-space:nowrap;
+    }
+    .ex-mode-btn.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+    .ex-mode-btn:hover:not(.active){ background:var(--blue-pale); border-color:var(--blue-pale2); }
+    .ex-years-wrap{ display:inline-flex; align-items:center; gap:6px; font-size:.88rem; color:var(--ink); white-space:nowrap; }
+    .ex-years-wrap[hidden]{ display:none !important; }
+    .ex-years-wrap input{ width:60px; text-align:center; padding:8px 6px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; font-size:.92rem; }
     @media(max-width:560px){
       .row-item, .row-item.event-row, .row-item.income-row{ grid-template-columns:1fr 1fr; }
-      .row-item.expense-row{ grid-template-columns:1fr 1fr; }
-      .row-item.expense-row .ex-period-field{ grid-column:1 / -1; }
+      .row-item.expense-row{ grid-template-columns:1fr auto; grid-template-areas:"exname exname" "examount exdel" "experiod experiod"; }
     }
     .btn-del{
       width:38px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
@@ -1587,25 +1601,30 @@
       div.className = 'row-item expense-row';
       const isYears = (parseInt(years)||0) > 0;
       const yv = isYears ? parseInt(years) : 6;
+      div.dataset.exMode = isYears ? 'years' : 'forever';
       div.innerHTML = `
-        <div class="field"><label>費目名</label><input type="text" class="ex-name" placeholder="例：習い事・保育料" value="${name}"></div>
-        <div class="field"><label>毎月の金額</label>
+        <div class="field ex-name-field"><label>費目名</label><input type="text" class="ex-name" placeholder="例：習い事・保育料" value="${name}"></div>
+        <div class="field ex-amount-field"><label>毎月の金額</label>
           <div class="input-unit"><input type="number" class="ex-amount" value="${amount}" min="0" step="0.5"><span class="u">万円</span></div>
         </div>
+        <button class="btn-del ex-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         <div class="field ex-period-field"><label>いつまで</label>
-          <div class="ex-period">
-            <select class="ex-mode">
-              <option value="forever"${isYears?'':' selected'}>ずっと</option>
-              <option value="years"${isYears?' selected':''}>期間を指定</option>
-            </select>
+          <div class="ex-period-seg">
+            <button type="button" class="ex-mode-btn${isYears?'':' active'}" data-mode="forever">ずっと</button>
+            <button type="button" class="ex-mode-btn${isYears?' active':''}" data-mode="years">期間を指定</button>
             <span class="ex-years-wrap"${isYears?'':' hidden'}>あと<input type="number" class="ex-years" value="${yv}" min="1" max="60" step="1">年</span>
           </div>
-        </div>
-        <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>`;
-      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
-      const mode = div.querySelector('.ex-mode');
+        </div>`;
+      div.querySelector('.ex-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       const yearsWrap = div.querySelector('.ex-years-wrap');
-      mode.addEventListener('change', ()=>{ yearsWrap.hidden = (mode.value!=='years'); recompute(); });
+      div.querySelectorAll('.ex-mode-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          div.querySelectorAll('.ex-mode-btn').forEach(b=> b.classList.toggle('active', b===btn));
+          div.dataset.exMode = btn.dataset.mode;
+          yearsWrap.hidden = (btn.dataset.mode !== 'years');
+          recompute();
+        });
+      });
       div.querySelectorAll('input').forEach(el=> el.addEventListener('input', recompute));
       $('custom-expenses').appendChild(div);
     }
@@ -1614,7 +1633,7 @@
         name: r.querySelector('.ex-name').value,
         amount: parseFloat(r.querySelector('.ex-amount').value)||0,
         // 期間指定なら「あと○年」、ずっとなら0（simulateで退職まで継続）
-        years: (r.querySelector('.ex-mode').value==='years') ? (parseInt(r.querySelector('.ex-years').value)||0) : 0
+        years: (r.dataset.exMode==='years') ? (parseInt(r.querySelector('.ex-years').value)||0) : 0
       }));
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
@@ -4190,7 +4209,7 @@
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
-        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.querySelector('.ex-mode').value==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0 })),
+        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0 })),
         investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked }))
       };
     }

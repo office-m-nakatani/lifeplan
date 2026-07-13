@@ -3212,15 +3212,32 @@
         const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
         const margin = 8, iw = pw - margin*2;
         const pxPerPage = canvas.width * (ph - margin*2) / iw;   // 1ページ分の元画像ピクセル高さ
-        let pos = 0, page = 0;
-        while(pos < canvas.height){
-          const sliceH = Math.min(pxPerPage, canvas.height - pos);
+        // 行や見出しの途中で改ページしないよう、安全に切れる位置（要素の下端）をcanvas座標で集める
+        const tRect = target.getBoundingClientRect();
+        const scaleY = canvas.height / tRect.height;   // CSS px → canvas px
+        const breakSel = 'tr, .row-item, .field, .kpi, .card, .verdict, .acc, .adv-detail, .adv-summary, .table-section, .table-head, .subgroup, .adv-points li, h2, h3, .cr-quote';
+        const breaks = [];
+        target.querySelectorAll(breakSel).forEach(el=>{
+          const r = el.getBoundingClientRect();
+          if(r.height<=0) return;
+          breaks.push((r.bottom - tRect.top) * scaleY);
+        });
+        breaks.push(canvas.height);
+        const breakYs = [...new Set(breaks.map(y=> Math.round(y)))].sort((a,b)=> a-b);
+        let pos = 0, page = 0, guard = 0;
+        while(pos < canvas.height - 1 && guard++ < 200){
+          const idealEnd = pos + pxPerPage;
+          // idealEnd以下で最大の区切りを選ぶ（見つからなければハード切り＝要素が1ページより大きい場合）
+          let cut = -1;
+          for(const y of breakYs){ if(y > pos + 40 && y <= idealEnd) cut = y; }
+          if(cut < 0) cut = Math.min(idealEnd, canvas.height);
+          const sliceH = Math.round(cut - pos);
           const slice = document.createElement('canvas');
           slice.width = canvas.width; slice.height = sliceH;
           slice.getContext('2d').drawImage(canvas, 0, pos, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
           if(page>0) pdf.addPage();
           pdf.addImage(slice.toDataURL('image/jpeg',0.92), 'JPEG', margin, margin, iw, sliceH*iw/canvas.width);
-          pos += sliceH; page++;
+          pos = cut; page++;
         }
         const who = (currentSaveName || (document.getElementById('h-name') && document.getElementById('h-name').value) || '').trim();
         pdf.save(who ? `ライフプラン_${who}.pdf` : 'ライフプラン.pdf');

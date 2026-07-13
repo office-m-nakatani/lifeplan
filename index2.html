@@ -4454,11 +4454,54 @@
       for(let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ key[i%key.length];
       return out;
     }
-    function encodeShareState(stateObj, password){
+    // 共有リンクを短くするため、入力の初期値（HTMLのdefault）を算出。
+    // 初期値と同じ項目は共有データから省く（受け取り側も同じ初期値から復元するので情報は失われない）
+    function shareDefaultFields(){
+      const f = {};
+      document.querySelectorAll('#input-panel [id], #age-point-1, #age-point-2').forEach(el=>{
+        if((el.tagName!=='INPUT' && el.tagName!=='SELECT') || !el.id) return;
+        if(el.type==='checkbox') f[el.id] = el.defaultChecked;
+        else if(el.tagName==='SELECT'){ const o=[...el.options].find(o=>o.defaultSelected)||el.options[0]; f[el.id]=o?o.value:''; }
+        else f[el.id] = el.defaultValue;
+      });
+      return f;
+    }
+    // gzip 圧縮（URLを短くしてLINE等でリンクが途切れないようにする）
+    async function gzipBytes(bytes){
+      const cs=new CompressionStream('gzip'); const w=cs.writable.getWriter(); w.write(bytes); w.close();
+      return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    }
+    async function gunzipBytes(bytes){
+      const ds=new DecompressionStream('gzip'); const w=ds.writable.getWriter(); w.write(bytes); w.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    }
+    // 新形式（先頭"~"）＝ 初期値との差分JSON → gzip → パスワードでXOR → base64url。
+    // 未対応ブラウザや失敗時は旧形式（非圧縮）にフォールバック。
+    async function encodeShareState(stateObj, password){
+      if(typeof CompressionStream!=='undefined'){
+        try{
+          const DEF = shareDefaultFields();
+          const full = stateObj.fields || {};
+          const diff = {};
+          Object.keys(full).forEach(id=>{ if(String(full[id])!==String(DEF[id])) diff[id]=full[id]; });
+          const slim = Object.assign({}, stateObj, { f:diff }); delete slim.fields;
+          const gz = await gzipBytes(new TextEncoder().encode(JSON.stringify(slim)));
+          return '~' + b64urlEncode(xorBytes(gz, password));
+        }catch(e){ /* 失敗時は下の旧形式へ */ }
+      }
       const bytes = new TextEncoder().encode(JSON.stringify(stateObj));
       return b64urlEncode(xorBytes(bytes, password));
     }
-    function decodeShareState(str, password){
+    async function decodeShareState(str, password){
+      if(str && str.charAt(0)==='~'){
+        const gz = xorBytes(b64urlDecode(str.slice(1)), password);
+        const bytes = await gunzipBytes(gz);
+        const slim = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes));
+        slim.fields = Object.assign({}, shareDefaultFields(), slim.f||{});
+        delete slim.f;
+        return slim;
+      }
+      // 旧形式（非圧縮）
       const dec = xorBytes(b64urlDecode(str), password);
       const json = new TextDecoder('utf-8', {fatal:true}).decode(dec);
       return JSON.parse(json);
@@ -4472,15 +4515,19 @@
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
-    if($('share-make')) $('share-make').addEventListener('click', ()=>{
+    if($('share-make')) $('share-make').addEventListener('click', async ()=>{
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
-      const code = encodeShareState(collectState(), pass);
-      // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
-      const url = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
-      const nm = ($('h-name')?.value||'').trim();
-      $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
-      $('share-setup').hidden=true; $('share-result').hidden=false;
+      const btn = $('share-make'); const orig = btn.textContent; btn.disabled=true; btn.textContent='作成中…';
+      try{
+        const code = await encodeShareState(collectState(), pass);
+        // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
+        const url = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
+        const nm = ($('h-name')?.value||'').trim();
+        $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
+        $('share-setup').hidden=true; $('share-result').hidden=false;
+      }catch(e){ $('share-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
+      finally{ btn.disabled=false; btn.textContent=orig; }
     });
     if($('share-copy')) $('share-copy').addEventListener('click', ()=>{
       const ta=$('share-msg'); ta.select();
@@ -4530,12 +4577,12 @@
       const modal = $('viewer-gate-modal');
       if(!modal) return;
       modal.hidden = false;
-      const tryOpen = ()=>{
+      const tryOpen = async ()=>{
         const pass = ($('viewer-pass').value||'').trim();
         $('viewer-err').textContent='';
         if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
         try{
-          const state = decodeShareState(code, pass);
+          const state = await decodeShareState(code, pass);
           applyPlans({ state: state });
           setCurrentSave(null);
           modal.hidden = true;

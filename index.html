@@ -677,6 +677,12 @@
     .pdf-mode .table-scroll{ overflow:visible !important; }   /* 横スクロールを展開し全列を表示 */
     .pdf-mode .table-section{ margin-top:18px; }
     #pdf-asset-extra{ margin-top:18px; }
+    /* PDF時：AI診断はカテゴリ選択UI（チップ・ヒント・単一詳細）を隠し、全カテゴリ展開版を表示 */
+    #pdf-all-advice{ display:none; }
+    .pdf-mode #advice-cats, .pdf-mode .adv-cats-hint, .pdf-mode #advice-detail{ display:none !important; }
+    .pdf-mode #pdf-all-advice{ display:block; }
+    .pdf-mode #pdf-all-advice .adv-detail{ margin-top:14px; break-inside:avoid; }
+    .pdf-mode #pdf-all-advice .adv-detail:first-child{ margin-top:0; }
 
     @media print{
       @page{ size:A4 portrait; margin:10mm; }
@@ -2886,13 +2892,17 @@
       const wrap=$('advice-cats'); if(!wrap) return;
       wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label2||c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
     }
-    function renderAdviceDetail(c){
-      const box=$('advice-detail'); if(!box||!c) return;
+    // 診断詳細のHTML（PDF時は末尾のCTAボタンを省く）
+    function adviceDetailInnerHTML(c, forPdf){
       const goodHTML = c.good && c.good.length ? `<div class="adv-sec-title good"><i class="fa-solid fa-circle-check"></i> 安心できるポイント</div><ul class="adv-points good">${c.good.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
       const conHTML  = c.concern && c.concern.length ? `<div class="adv-sec-title concern"><i class="fa-solid fa-triangle-exclamation"></i> 気をつけたいポイント</div><ul class="adv-points concern">${c.concern.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
-      box.innerHTML=`<div class="adv-detail-head"><span class="adv-dh-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label}の診断</div>`
-        +`<div class="adv-summary-text">${c.sum}</div>`+goodHTML+conHTML
-        +`<div class="adv-detail-cta">より詳しい試算や、ご家庭に最適なプランづくりは無料相談で承ります。<br><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button></div>`;
+      const cta = forPdf ? '' : `<div class="adv-detail-cta">より詳しい試算や、ご家庭に最適なプランづくりは無料相談で承ります。<br><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button></div>`;
+      return `<div class="adv-detail-head"><span class="adv-dh-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label}の診断</div>`
+        +`<div class="adv-summary-text">${c.sum}</div>`+goodHTML+conHTML+cta;
+    }
+    function renderAdviceDetail(c){
+      const box=$('advice-detail'); if(!box||!c) return;
+      box.innerHTML = adviceDetailInnerHTML(c, false);
     }
     function drawAdvice(rows, s){
       const cats = analysisData(rows, s);
@@ -3151,11 +3161,22 @@
         '<div class="table-scroll"><table class="cf"><thead><tr>'+headHTML+'</tr></thead><tbody>'+atBody.innerHTML+'</tbody></table></div>';
       cf.parentNode.insertBefore(box, cf.nextSibling);
     }
-    function removePdfExtras(){ const e=$('pdf-asset-extra'); if(e) e.remove(); }
+    // PDF/印刷用：AI診断を全カテゴリ（老後資金・教育資金・万が一の備え…）展開して表示
+    function buildAllAdviceForPdf(){
+      const host = $('advice-detail'); if(!host) return;
+      const old = $('pdf-all-advice'); if(old) old.remove();
+      if(!lastAdviceCats || !lastAdviceCats.length) return;
+      const box = document.createElement('div');
+      box.id = 'pdf-all-advice';
+      box.innerHTML = lastAdviceCats.map(c=> `<div class="adv-detail">${adviceDetailInnerHTML(c, true)}</div>`).join('');
+      host.parentNode.insertBefore(box, host.nextSibling);
+    }
+    function removePdfExtras(){ const e=$('pdf-asset-extra'); if(e) e.remove(); const a=$('pdf-all-advice'); if(a) a.remove(); }
 
     // 1カラム展開モードへ出入り（グラフは新しい幅に合わせて再描画）
     function enterPdfMode(){
       buildPdfExtras();
+      buildAllAdviceForPdf();            // AI診断を全カテゴリ展開
       document.body.classList.add('pdf-mode');
       try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
     }

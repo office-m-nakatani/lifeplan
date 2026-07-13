@@ -219,8 +219,15 @@
       padding:12px 12px; margin-top:10px;
     }
     .row-item.event-row{ grid-template-columns:0.9fr 1.3fr 0.9fr 1fr auto; }
+    .row-item.expense-row{ grid-template-columns:1.2fr 0.9fr 1.15fr auto; }
+    .ex-period{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .ex-period select{ flex:0 1 auto; min-width:96px; }
+    .ex-years-wrap{ display:inline-flex; align-items:center; gap:4px; font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
+    .ex-years-wrap input{ width:56px; text-align:center; padding:8px 6px; }
     @media(max-width:560px){
       .row-item, .row-item.event-row, .row-item.income-row{ grid-template-columns:1fr 1fr; }
+      .row-item.expense-row{ grid-template-columns:1fr 1fr; }
+      .row-item.expense-row .ex-period-field{ grid-column:1 / -1; }
     }
     .btn-del{
       width:38px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
@@ -690,7 +697,7 @@
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <button class="btn btn-ghost btn-sm" id="btn-print"><i class="fa-solid fa-print"></i> 印刷</button>
-        <button class="btn btn-yellow btn-sm" id="btn-send"><i class="fa-solid fa-paper-plane"></i> PDFで送信</button>
+        <button class="btn btn-yellow btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div>
     </div>
   </section>
@@ -970,9 +977,9 @@
                 <div class="field"><label>ガス</label><div class="input-unit"><input type="number" id="e-gas" value="0.8" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>生命保険</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>損害保険</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>車（維持費）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ネット代</label><div class="input-unit"><input type="number" id="e-net" value="0.5" min="0" step="0.5"><span class="u">万円</span></div></div>
@@ -1394,6 +1401,8 @@
     /* 文章内で名前を呼ぶときは敬称「様」を付ける（お名前が未入力の「夫」「妻」はそのまま） */
     const hNameH = ()=>{ const n=(document.getElementById('h-name')?.value||'').trim(); return n ? n+'様' : '夫'; };
     const wNameH = ()=>{ const n=(document.getElementById('w-name')?.value||'').trim(); return n ? n+'様' : '妻'; };
+    // お子さまのお名前：入力があれば「君」を自動付与（すでに君・ちゃん・さん等が付いていれば付けない）。未入力は「子1」等
+    const cNameH = (nm, i)=>{ nm=(nm||'').trim(); if(!nm) return '子'+((i||0)+1); return /(君|くん|ちゃん|チャン|さん|サン|様|ちゃま)$/.test(nm) ? nm : nm+'君'; };
 
     /* 運用商品の種類ごとの色（項目別テーブルで色分け） */
     const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a', other:'#5b6b7d' };
@@ -1530,7 +1539,7 @@
 
     function readChildren(){
       return [...childrenList.querySelectorAll('.row-item')].map((r,i)=>({
-        name: (r.querySelector('.ch-name').value||'').trim() || ('子'+(i+1)),
+        name: cNameH(r.querySelector('.ch-name').value, i),
         age: parseInt(r.querySelector('.ch-age').value)||0,
         k12: r.querySelector('.ch-k12').value,
         highEd: r.querySelector('.ch-highed').value,
@@ -1573,23 +1582,39 @@
     }
 
     /* ---------- 生活費の費目（自由追加） ---------- */
-    function expenseRow(name='', amount=1){
+    function expenseRow(name='', amount=1, years=0){
       const div = document.createElement('div');
       div.className = 'row-item expense-row';
+      const isYears = (parseInt(years)||0) > 0;
+      const yv = isYears ? parseInt(years) : 6;
       div.innerHTML = `
-        <div class="field"><label>費目名</label><input type="text" class="ex-name" placeholder="例：習い事・サブスク" value="${name}"></div>
+        <div class="field"><label>費目名</label><input type="text" class="ex-name" placeholder="例：習い事・保育料" value="${name}"></div>
         <div class="field"><label>毎月の金額</label>
           <div class="input-unit"><input type="number" class="ex-amount" value="${amount}" min="0" step="0.5"><span class="u">万円</span></div>
         </div>
+        <div class="field ex-period-field"><label>いつまで</label>
+          <div class="ex-period">
+            <select class="ex-mode">
+              <option value="forever"${isYears?'':' selected'}>ずっと</option>
+              <option value="years"${isYears?' selected':''}>期間を指定</option>
+            </select>
+            <span class="ex-years-wrap"${isYears?'':' hidden'}>あと<input type="number" class="ex-years" value="${yv}" min="1" max="60" step="1">年</span>
+          </div>
+        </div>
         <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
+      const mode = div.querySelector('.ex-mode');
+      const yearsWrap = div.querySelector('.ex-years-wrap');
+      mode.addEventListener('change', ()=>{ yearsWrap.hidden = (mode.value!=='years'); recompute(); });
       div.querySelectorAll('input').forEach(el=> el.addEventListener('input', recompute));
       $('custom-expenses').appendChild(div);
     }
     function readCustomExpenses(){
       return [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({
         name: r.querySelector('.ex-name').value,
-        amount: parseFloat(r.querySelector('.ex-amount').value)||0
+        amount: parseFloat(r.querySelector('.ex-amount').value)||0,
+        // 期間指定なら「あと○年」、ずっとなら0（simulateで退職まで継続）
+        years: (r.querySelector('.ex-mode').value==='years') ? (parseInt(r.querySelector('.ex-years').value)||0) : 0
       }));
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
@@ -1601,6 +1626,13 @@
       s += readCustomExpenses().reduce((a,x)=> a + x.amount, 0);
       return s;
     }
+    // simulate用：固定の生活費だけ（追加項目は期間指定に対応するため、simulateで年ごとに個別加算する）
+    function readLivingBaseMonthly(){
+      const simple = document.querySelector('#exp-seg button.active')?.dataset.exp === 'simple';
+      if(simple) return num('e-bulk',0);
+      return LIVING_IDS.reduce((a,id)=> a + num(id,0), 0);
+    }
+    function isSimpleExpMode(){ return document.querySelector('#exp-seg button.active')?.dataset.exp === 'simple'; }
     // 保存済みプラン（現状）の生活費合計を、DOMを使わずに計算する（将来プランでの差額表示用）
     function livingMonthlyFromState(s){
       if(!s || !s.fields) return null;
@@ -2053,10 +2085,11 @@
       const zehSell = num('zeh-sell',0);   // 売電収入（年・万円）
       const zehSave = num('zeh-save',0);   // 光熱費の削減（年・万円）
 
-      // 生活費（月→年。まとめて入力 or 項目ごと＋自由追加）
-      const livingMonthly = readLivingMonthly();
-      const livingAnnual = livingMonthly*12;
+      // 生活費（月→年。まとめて入力 or 項目ごと）。追加項目は期間指定に対応するため年ごとに別加算
+      const livingBaseMonthly = readLivingBaseMonthly();
+      const livingAnnual = livingBaseMonthly*12;
       const retireLivingAnnual = num('e-retire-living',24)*12;
+      const customExpenses = isSimpleExpMode() ? [] : readCustomExpenses();   // まとめて入力時は追加項目を使わない
 
       // 資産運用（複数商品）・年金
       let cash = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
@@ -2088,6 +2121,14 @@
         // 生活費（退職後は老後生活費へ。インフレ反映）
         const baseLiving = (hAge < hRetire ? livingAnnual : retireLivingAnnual) * inflF;
         expense += baseLiving;
+        // 追加の生活費項目：退職前のみ、指定「あと○年」まで計上（0＝ずっと＝退職まで）
+        if(hAge < hRetire){
+          customExpenses.forEach(x=>{
+            if(x.amount<=0) return;
+            if(x.years>0 && t >= x.years) return;   // 指定年数を過ぎたら計上しない
+            expense += x.amount*12*inflF;
+          });
+        }
 
         // 住居費
         let loanDeduction = 0;
@@ -2736,7 +2777,7 @@
       /* ── 住まい・ローン ── */
       if(houseType==='rent'){
         const rent=num('rent',0); const yrsAll=Math.max(p.endAge-p.hAge,0);
-        cats.push({ key:'housing', label:'住まい・ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
+        cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
           sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
                 `③住まいで「これから購入」に切り替えると、購入した場合との比較ができます。`],
@@ -2776,7 +2817,7 @@
         if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときローンが残る点に注意です。`);
         if(rateType!=='fixed') con.push(`変動金利（${rateType==='step5'?'5年':'10年'}ごと見直し）を選択中です。金利が上昇した場合は毎月の返済額が増えます。③の「金利タイプ」で上昇シナリオを入力し、負担がどこまで増えるか事前に確認しておくと安心です。`);
         con.push(`固定資産税・修繕費（年 約${fmt(num('prop-tax',0)+num('maint',0))}万円）も継続してかかります。`);
-        cats.push({ key:'housing', label:'住まい・ローン', icon:'fa-house-chimney', color:'#48a7a7', tone, sum, good, concern:con });
+        cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone, sum, good, concern:con });
       }
 
       /* ── 家計収支 ── */
@@ -3113,16 +3154,19 @@
       setTimeout(()=> window.print(), 120);
     });
 
-    // PDFで送信：結果を画像化→PDF化し、共有メニュー（対応端末ならLINE）へ。非対応端末はDL＋LINEを開く
+    // PDF作成：結果を画像化→A4複数ページのPDFにして保存（ダウンロード）
     async function sendPDF(){
       const btn = $('btn-send'); const orig = btn.innerHTML;
       if(typeof html2canvas==='undefined' || !window.jspdf){ alert('PDFの準備中です。数秒おいて再度お試しください。'); return; }
       btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 作成中…';
       enterPdfMode();
-      await new Promise(r=> setTimeout(r, 180));   // 1カラム化・グラフ再描画の反映を待つ
+      await new Promise(r=> setTimeout(r, 260));   // 1カラム化・グラフ再描画の反映を待つ
       try{
-        const target = document.querySelector('.wrap:not(.hero-inner)');   // ヒーローではなく本文（入力・結果・表）を対象に
-        const canvas = await html2canvas(target, { scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth:1024, ignoreElements:(el)=> el.classList && el.classList.contains('no-print') });
+        // 本文（入力・結果・表）を対象に。プラン切替バー等の短いwrapを誤って掴まないよう #results を含むwrapを選ぶ
+        const target = (document.getElementById('results') && document.getElementById('results').closest('.wrap'))
+                      || document.querySelector('.layout')
+                      || document.querySelector('.wrap:not(.hero-inner):not(.plan-wrap)');
+        const canvas = await html2canvas(target, { scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth:1024, ignoreElements:(el)=> el.classList && (el.classList.contains('no-print')||el.classList.contains('plan-wrap')) });
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p','mm','a4');
         const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
@@ -3138,26 +3182,10 @@
           pdf.addImage(slice.toDataURL('image/jpeg',0.92), 'JPEG', margin, margin, iw, sliceH*iw/canvas.width);
           pos += sliceH; page++;
         }
-        const blob = pdf.output('blob');
-        const file = new File([blob], 'ライフプラン.pdf', { type:'application/pdf' });
-        // パソコン：PDFをそのまま保存（ダウンロード）してLINEを開く
-        const saveAndLine = ()=>{
-          const url = URL.createObjectURL(blob);
-          const a=document.createElement('a'); a.href=url; a.download='ライフプラン.pdf'; document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(()=>URL.revokeObjectURL(url), 4000);
-          window.open('https://line.me/', '_blank');
-          alert('PDFをパソコンに保存しました（ダウンロードフォルダ）。\n開いたLINEのトークに、保存したPDFをドラッグ＆ドロップ（または「ファイル」添付）で送ってください。');
-        };
-        // スマートフォンは共有メニューから直接LINEへ。パソコンは保存＋LINEを開く
-        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-        if(isMobile && navigator.canShare && navigator.canShare({ files:[file] })){
-          try{ await navigator.share({ files:[file], title:'ライフプラン', text:'ライフプランのシミュレーション結果です。' }); }
-          catch(err){ if(err && err.name!=='AbortError') saveAndLine(); }
-        } else {
-          saveAndLine();
-        }
+        const who = (currentSaveName || (document.getElementById('h-name') && document.getElementById('h-name').value) || '').trim();
+        pdf.save(who ? `ライフプラン_${who}.pdf` : 'ライフプラン.pdf');
       } catch(e){
-        alert('PDFの作成に失敗しました。「印刷」からPDFとして保存し、LINEに添付してください。');
+        alert('PDFの作成に失敗しました。恐れ入りますが「印刷」ボタンから「PDFに保存」をお試しください。');
       } finally { exitPdfMode(); btn.disabled=false; btn.innerHTML=orig; }
     }
     $('btn-send').addEventListener('click', sendPDF);
@@ -4162,7 +4190,7 @@
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
-        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value })),
+        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.querySelector('.ex-mode').value==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0 })),
         investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked }))
       };
     }
@@ -4175,7 +4203,7 @@
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||''));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
-      (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0));
+      (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0));
       (s.investments||[]).forEach(it=>{
         investRow(it.type, it.name, parseFloat(it.lump)||0, parseFloat(it.monthly)||0, parseFloat(it.ret)||0, parseInt(it.end)||65, (it.start!=null && it.start!=='') ? parseInt(it.start) : undefined, it.after||'continue');
         if(it.on===false){ const row=$('invest-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }

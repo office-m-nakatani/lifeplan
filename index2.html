@@ -4553,14 +4553,30 @@
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
+    // LINE等でリンクが途切れないよう、URLを短縮する（da.gd）。失敗時は元の長いURLを返す（＝共有はできる）。
+    // 埋め込みデータはパスワードで暗号化済みのため、短縮サービス側では中身を読めない。
+    async function shortenShareUrl(longUrl){
+      try{
+        const ctrl = new AbortController();
+        const timer = setTimeout(()=> ctrl.abort(), 7000);
+        const res = await fetch('https://da.gd/shorten?url=' + encodeURIComponent(longUrl), { signal: ctrl.signal });
+        clearTimeout(timer);
+        if(res.ok){
+          const short = (await res.text()).trim();
+          if(/^https?:\/\/\S+$/.test(short) && short.length < longUrl.length) return short;
+        }
+      }catch(e){ /* 失敗時は長いURLのまま */ }
+      return longUrl;   // 短縮に失敗しても長いURLで共有できる（機能自体は止めない）
+    }
     if($('share-make')) $('share-make').addEventListener('click', async ()=>{
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
-      const btn = $('share-make'); const orig = btn.textContent; btn.disabled=true; btn.textContent='作成中…';
+      const btn = $('share-make'); const orig = btn.textContent; btn.disabled=true; btn.textContent='リンク作成中…';
       try{
         const code = await encodeShareState(collectState(), pass);
         // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
-        const url = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
+        const longUrl = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
+        const url = await shortenShareUrl(longUrl);   // 短くしてLINEで開けるように
         const nm = ($('h-name')?.value||'').trim();
         $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
         $('share-setup').hidden=true; $('share-result').hidden=false;

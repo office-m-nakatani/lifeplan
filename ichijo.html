@@ -4,9 +4,12 @@
   一条工務店版 ライフプランシミュレーター
   ・ベース＝ライフプラン②（現状⇔将来の比較）と共通。②の改修はこちらにも手で反映する。
   ・一条工務店専用のコードは下記の目印で分離。他ライフプランに流用する場合は削除/差し替え可。
-      大きなブロック : 「【一条工務店 専用スタイル/HTML/ロジック ここから〜ここまで】」で囲み（CSS/HTML/JS 各1〜2箇所）
+      大きなブロック : 「【一条工務店 専用スタイル/HTML/ロジック ここから〜ここまで】」で囲み
+                        （CSS 1・HTML 2・JS 2箇所＝住まい切替/30年比較と、チャット個別診断 DIAG.ichijo）
       ベースへの差込 : コメント「【一条フック】」で1行タグ付け（recompute末尾・collectState・applyState・
-                        TOPIC_ORDER・KBのichijoトピック・チャットチップ・免責・SAVE_KEY・共有URL）
+                        TOPIC_ORDER・KBのichijoトピック・チャットチップ・免責・SAVE_KEY・共有URL・
+                        ヒーロー「一条の家で試す」・予約フォームrv-topicの一条2択・住まい診断の一条分岐・
+                        賃貸診断の誘導文・フッター非公式表示）
   ・エディタで「【一条」を検索すると、一条関連の全箇所が一覧できます。
   ============================================================================
 -->
@@ -14,8 +17,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>一条工務店版 ライフプランシミュレーター | 高性能住宅の価値を数字で見える化</title>
-  <meta name="description" content="一条工務店の高性能住宅と一般住宅を30年で数字比較。光熱費・太陽光・メンテナンス費まで含めた「買った後も安心」のライフプランを、ご夫婦の数字で見える化します。" />
+  <title>一条工務店の家 ライフプラン試算（非公式）｜高性能住宅の価値を数字で見える化</title>
+  <meta name="description" content="一条工務店の高性能住宅と一般住宅を30年で数字比較（非公式・独立系FPの独自試算）。光熱費・太陽光・メンテナンス費まで含めた「買った後も安心」のライフプランを、ご夫婦の数字で見える化します。" />
 
   <!-- HPとしての体裁：ファビコン（ブラウザのタブに出るアイコン）・テーマ色・将来のアプリ追加にも対応 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234a9fd4'/><path d='M32 12 C20 21 20 41 32 52 C44 41 44 21 32 12 Z' fill='%23ffd166'/><path d='M32 20 L32 48' stroke='%234a9fd4' stroke-width='3' stroke-linecap='round'/></svg>" />
@@ -752,9 +755,10 @@
     <div class="wrap hero-inner">
       <div class="hero-text">
         <h1><em>一条工務店</em>の家で、<em>買った後</em>も安心。</h1>
-        <p class="lead">「買えるか」ではなく<b>「買った後も幸せか」</b>を数字で。まず「現状プラン」に今の家計を、「将来プラン」で一条工務店の家を選ぶと、<b>高性能住宅による光熱費・売電・メンテ費の差</b>が、その場で青と赤の数字で見えます。</p>
+        <p class="lead">「買えるか」ではなく<b>「買った後も幸せか」</b>を数字で。まず「現状プラン」に今の家計を、「将来プラン」で一条工務店の家を選ぶと、<b>高性能住宅による光熱費・売電・メンテ費の差</b>が、その場で青と赤の数字で見えます。 <span style="font-size:.76rem; color:var(--ink-soft);">（一条工務店非公式・FP事務所の独自試算）</span></p>
       </div>
       <div class="hero-actions-top no-print">
+        <button class="btn btn-primary btn-sm" id="btn-try-ichijo"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す</button><!-- 【一条フック】1クリックで購入＋一条を選択し比較カードへ -->
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <button class="btn btn-ghost btn-sm" id="btn-print"><i class="fa-solid fa-print"></i> 印刷</button>
         <button class="btn btn-yellow btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
@@ -904,10 +908,11 @@
               <div class="ichijo-perf-note hidden" id="ichijo-perf-note">
                 <div class="ipn-title"><i class="fa-solid fa-house-circle-check"></i> 一条工務店の家の標準性能（この設定に反映）</div>
                 <ul>
-                  <li><b>超断熱・高気密</b>（UA値の目安0.25／省エネ基準の約3.5倍）＋<b>全館床暖房</b>で、光熱費が一般住宅より安くなりやすい</li>
-                  <li><b>大容量の太陽光発電＋蓄電池</b>（搭載の目安 約12kW）で売電収入と自家消費</li>
-                  <li><b>ハイドロテクトタイル外壁</b>（再塗装不要）で、30年のメンテ費を抑えやすい</li>
-                  <li><b>耐震等級3（最高等級）が標準</b>→ <b>地震保険が50%割引</b>（「④生活費」の損害保険に反映できます）</li>
+                  <li><b>超断熱・高気密</b>：i-smart等の主力商品で<b>断熱等級7・UA値0.25</b>が標準（省エネ基準の約3.5倍＝家全体が魔法瓶のイメージ）。<b>全館床暖房</b>で冬の朝も廊下や脱衣所まで寒くなりにくい</li>
+                  <li><b>大容量の太陽光発電＋蓄電池</b>（平均搭載 約12kW・2024年度実績）で売電収入と自家消費</li>
+                  <li><b>ハイドロテクトタイル外壁</b>（再塗装不要）で、30年の外壁メンテ費を抑えやすい</li>
+                  <li><b>耐震等級3（最高等級）が標準</b>→ 確認資料があれば<b>地震保険が50%割引</b>（「④生活費」の損害保険に反映できます）</li>
+                  <li>高断熱＋太陽光は、国の<b>GX志向型補助金（2026年度は最大110万円等）</b>の対象になりやすい仕様（要件・予算枠あり）</li>
                 </ul>
                 <span class="ipn-note">※ いずれも一般的な目安です。地域・仕様・使用状況で変わります。金額は下の比較・入力欄で調整できます。</span>
               </div>
@@ -1006,12 +1011,12 @@
                 </label>
                 <div class="conditional" id="zeh-fields">
                   <div class="grid2">
-                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">余った電気の売却。FIT期間(10年)目安</span></div>
+                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">売電＋自家消費の目安。FITは最初の4年が高単価（2026年度）</span></div>
                     <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額</span></div>
                   </div>
                   <div class="note" style="background:var(--good-pale);color:#2a6b52;">
                     <i class="fa-solid fa-solar-panel" style="color:var(--good);"></i>
-                    <span>売電収入はFIT期間（購入後10年）は満額、11〜30年目は約4割（卒FIT）で計算。光熱費の削減は物価上昇に合わせて毎年ふくらみます。</span>
+                    <span>売電収入は最初の4年間が満額、5〜10年目は約半分（2026年度FITの二段階単価を簡易反映・自家消費分は下がりません）、11年目以降は卒FIT単価（約45%）で計算。光熱費の削減は物価上昇に合わせて毎年ふくらみます。</span>
                   </div>
                 </div>
               </div>
@@ -1189,16 +1194,19 @@
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（30年のランニングコスト比較）</div>
           <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでからの30年で差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を比べます。</p>
           <div class="ic-level">
-            <span class="ic-level-label">比較の強さ：</span>
+            <span class="ic-level-label">前提シナリオ：</span>
             <div class="seg" id="ichijo-level-seg">
               <button type="button" data-iclevel="low">控えめ</button>
               <button type="button" data-iclevel="std" class="active">標準</button>
-              <button type="button" data-iclevel="high">大きめ</button>
+              <button type="button" data-iclevel="high">上振れ</button>
             </div>
           </div>
-          <div class="ic-bars" id="ic-bars"></div>
           <div class="ic-total" id="ic-total"></div>
+          <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
+            <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この差額を、わが家の数字で確かめる（無料相談）</button>
+          </div>
           <div class="chart-box"><canvas id="ichijoChart"></canvas></div>
+          <div class="ic-bars" id="ic-bars" style="margin-top:12px;"></div>
           <div class="ic-note" id="ic-note"></div>
         </div>
         <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
@@ -1232,18 +1240,22 @@
           <div class="card-title"><i class="fa-solid fa-robot"></i> AIになんでも相談チャット
             <button class="btn btn-primary btn-sm" id="open-reserve" style="margin-left:auto;"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約</button>
           </div>
-          <p class="chat-hint">ご入力いただいた家族構成・収入・資産をAIが読み取り、<b>あなたの数字で</b>その場で診断します。下のボタンをタップするだけでもOKです。</p>
+          <p class="chat-hint">ご入力いただいた家族構成・収入・資産を読み取り、<b>あなたの数字で</b>その場で診断します。下のボタンをタップするだけでもOKです。<br><span style="font-size:.72rem; color:var(--ink-soft);">※外部のAIサービスには接続しておらず、ご入力データが外部に送信されることはありません（この画面の中だけで診断します）。</span></p>
           <div class="chat-log" id="chat-log"></div>
           <div class="chat-quick" id="chat-quick">
-            <!-- 【一条フック】一条向けチップ2つ -->
-            <button class="chat-chip" type="button" data-q="一条工務店の家は光熱費が安いの？">🏡 一条は光熱費が安い？</button>
-            <button class="chat-chip" type="button" data-q="太陽光は得ですか？">☀️ 太陽光は得？</button>
-            <button class="chat-chip" type="button" data-q="老後資金は足りる？">🏖️ 老後資金は足りる？</button>
-            <button class="chat-chip" type="button" data-q="NISAは始めるべき？">📈 NISAは始めるべき？</button>
-            <button class="chat-chip" type="button" data-q="教育費はいくらかかる？">🎓 教育費はいくら？</button>
-            <button class="chat-chip" type="button" data-q="住宅ローンは大丈夫？">🏠 住宅ローンは大丈夫？</button>
-            <button class="chat-chip" type="button" data-q="相続税はかかる？">📜 相続税はかかる？</button>
-            <button class="chat-chip" type="button" data-q="保険は必要？">🛡️ 保険は必要？</button>
+            <!-- 【一条フック】一条向けチップ6つ -->
+            <button class="chat-chip" type="button" data-q="一条工務店の家は光熱費が安いの？"><i class="fa-solid fa-house"></i> 一条は光熱費が安い？</button>
+            <button class="chat-chip" type="button" data-q="太陽光は得ですか？"><i class="fa-solid fa-solar-panel"></i> 太陽光は得？</button>
+            <button class="chat-chip" type="button" data-q="一条の家は30年でいくら差が出る？"><i class="fa-solid fa-scale-balanced"></i> 30年でいくら差？</button>
+            <button class="chat-chip" type="button" data-q="メンテナンス費はどう違う？"><i class="fa-solid fa-screwdriver-wrench"></i> メンテ費はどう違う？</button>
+            <button class="chat-chip" type="button" data-q="補助金や減税はありますか？"><i class="fa-solid fa-coins"></i> 補助金・減税は？</button>
+            <button class="chat-chip" type="button" data-q="団信だけで大丈夫？"><i class="fa-solid fa-shield-halved"></i> 団信だけで大丈夫？</button>
+            <button class="chat-chip" type="button" data-q="老後資金は足りる？"><i class="fa-solid fa-umbrella-beach"></i> 老後資金は足りる？</button>
+            <button class="chat-chip" type="button" data-q="NISAは始めるべき？"><i class="fa-solid fa-chart-line"></i> NISAは始めるべき？</button>
+            <button class="chat-chip" type="button" data-q="教育費はいくらかかる？"><i class="fa-solid fa-graduation-cap"></i> 教育費はいくら？</button>
+            <button class="chat-chip" type="button" data-q="住宅ローンは大丈夫？"><i class="fa-solid fa-house-circle-check"></i> 住宅ローンは大丈夫？</button>
+            <button class="chat-chip" type="button" data-q="相続税はかかる？"><i class="fa-solid fa-scroll"></i> 相続税はかかる？</button>
+            <button class="chat-chip" type="button" data-q="保険は必要？"><i class="fa-solid fa-heart-circle-check"></i> 保険は必要？</button>
           </div>
           <div class="chat-input">
             <input type="text" id="chat-text" placeholder="質問を入力（例：NISAは始めるべき？）" autocomplete="off">
@@ -1421,7 +1433,7 @@
       </div>
       <div class="modal-body">
         <div id="reserve-form-wrap">
-          <p class="at-note">保険・NISA・iDeCo・相続・住宅など、<b>専門家が無料</b>でご相談に応じます。下記をご記入のうえ送信してください。</p>
+          <p class="at-note">保険・NISA・iDeCo・相続・住宅など、<b>FP資格を持つ担当者（Office-M・生命保険募集人）が無料</b>でご相談に応じます。ご相談内容によっては具体的な保険商品のご案内を行う場合があります。下記をご記入のうえ送信してください。</p>
           <div class="field"><label>お名前 <span class="req">*</span></label><input type="text" id="rv-name" placeholder="山田 太郎"></div>
           <div class="field"><label>ご連絡先（メール または 電話）<span class="req">*</span></label><input type="text" id="rv-contact" placeholder="example@mail.com ／ 090-0000-0000"></div>
           <div class="field"><label>ご相談内容 <span class="req">*</span></label>
@@ -1431,6 +1443,8 @@
               <option>NISA・iDeCoなどの資産運用</option>
               <option>相続・贈与</option>
               <option>住宅・住宅ローン</option>
+              <option>一条工務店の家の資金計画</option><!-- 【一条フック】 -->
+              <option>住宅購入にあわせた保険の見直し</option><!-- 【一条フック】 -->
               <option>教育資金</option>
               <option>老後資金</option>
               <option>総合的に相談したい</option>
@@ -1445,7 +1459,7 @@
         <div id="reserve-done" hidden style="text-align:center; padding:14px 6px;">
           <div style="font-size:2.6rem; color:var(--good);"><i class="fa-solid fa-circle-check"></i></div>
           <h3 style="margin:10px 0 6px;">ご予約ありがとうございます</h3>
-          <p class="at-note" id="reserve-done-msg">メールソフトが開きます。そのまま送信いただければ、担当者より折り返しご連絡いたします。</p>
+          <p class="at-note" id="reserve-done-msg">メールソフトが開きます。そのまま送信いただければ、Office-Mの担当者より折り返しご連絡いたします。</p>
         </div>
       </div>
     </div>
@@ -1471,10 +1485,11 @@
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
           <!-- 【一条フック】一条向け免責 -->
-          <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価はFIT期間中に段階的に下がり、<b>11年目の卒FIT以降はさらに低下</b>します。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
-          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、一条工務店の公表値・実例を反映）。前提は年1回の見直しを想定しています。</li>
+          <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価は2026年度FITでは<b>最初の4年が高単価・5年目以降に段階的に下がる二段階制</b>で、<b>11年目以降は卒FIT単価</b>となります。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
+          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金、一条工務店の公表値・実例を反映）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
+      <p style="margin-bottom:6px;"><b>本サイトは一条工務店株式会社の公式サイト・提携サイトではありません。</b>公表情報をもとに独立系FP（Office-M・生命保険募集人）が作成した非公式の試算ツールです。<!-- 【一条フック】非公式・運営主体の表示 --></p>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
@@ -1861,19 +1876,29 @@
          - チャットチップ、フッター前提文、SAVE_KEY、共有URL
        ══════════════════════════════════════════════════════════════════ */
     /* ---------- 一条工務店：住宅の性能タイプ／30年比較 ---------- */
-    // 比較の強さ（控えめ／標準／大きめ）。数値は「一条ファクトシート」に基づく控えめ寄りの目安。
-    // util=光熱費の年差（一条が安い）, solar=太陽光の売電＋自家消費（10年満額の目安）, maint30=メンテ費30年差
+    // 前提シナリオ（控えめ／標準／上振れ）。2026-07の辛口監査で公式公表値・施主実測と突き合わせて再調整済み。
+    // util=光熱費の年差（一条が安い）, solar=太陽光の売電＋自家消費の年額目安（FIT二段階は ichijoSolar30 で反映）,
+    // maint30=外壁・屋根メンテ費の30年差（一条側の設備更新費は含めない＝ic-noteに明記）
     const ICHIJO_PRESET = {
-      low:  { util:3,  solar:10, maint30:100 },
-      std:  { util:6,  solar:15, maint30:180 },
-      high: { util:12, solar:20, maint30:280 },
+      low:  { util:3, solar:12, maint30:60  },   // 温暖地・太陽光ひかえめ → 30年計 約334万円
+      std:  { util:6, solar:18, maint30:100 },   // 標準 → 30年計 約566万円
+      high: { util:9, solar:20, maint30:160 },   // 寒冷地・大容量など好条件 → 30年計 約750万円
     };
-    // 比較チャートの一般住宅ベースライン（30年・目安）
+    // 太陽光の30年収支（2026年度FITの二段階単価を簡易反映：最初の4年満額→5〜10年目約5割→卒FIT後45%×20年）
+    function ichijoSolar30(p){ return p.solar*4 + Math.round(p.solar*0.5)*6 + Math.round(p.solar*0.45)*20; }
+    // 3項目合計の30年差（比較カード・AI診断・チャット個別診断で共有する単一の計算源）
+    function ichijoCompareTotal(){
+      const p = ICHIJO_PRESET[ichijoLevel];
+      return p.util*30 + ichijoSolar30(p) + p.maint30;
+    }
+    // 比較チャートの一般住宅ベースライン（30年・目安。出典：総務省家計調査の光熱費水準＋窯業サイディングの30年メンテ相場）
     const GEN_UTIL_PER_YEAR = 24;   // 一般住宅の光熱費 月2万円×12＝年24万円の目安
-    const GEN_MAINT_30 = 300;       // 一般住宅（窯業サイディング等）の30年メンテ費 目安
+    const GEN_MAINT_30 = 300;       // 一般住宅の30年メンテ費 目安（相場240〜380万円の中央値近辺）
     let htype = 'normal';
     let ichijoLevel = 'std';
     let ichijoChart = null;
+    let userEditedZeh = false;      // 商談中に手入力した実見積の値をプリセットで巻き戻さないためのフラグ
+    ['zeh-sell','zeh-save'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedZeh = true; }); });
 
     const htypeSeg = $('htype-seg');
     if(htypeSeg) htypeSeg.addEventListener('click', (e)=>{
@@ -1882,6 +1907,10 @@
       [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
       applyHtype();
       recompute();
+      if(htype==='ichijo' && window.innerWidth<=960){   // モバイル商談：切替と同時に比較カードを見せる
+        const c = $('ichijo-compare-card');
+        if(c && c.style.display!=='none') c.scrollIntoView({behavior:'smooth', block:'start'});
+      }
     });
     const ichijoLevelSeg = $('ichijo-level-seg');
     if(ichijoLevelSeg) ichijoLevelSeg.addEventListener('click', (e)=>{
@@ -1900,8 +1929,10 @@
           const p = ICHIJO_PRESET[ichijoLevel];
           $('zeh-on').checked = true;
           $('zeh-fields').classList.remove('hidden');
-          if($('zeh-sell')) $('zeh-sell').value = p.solar;   // 売電＋自家消費の目安
-          if($('zeh-save')) $('zeh-save').value = p.util;    // 高断熱による光熱費削減
+          if(!userEditedZeh){   // 手入力済みの値（実見積など）はプリセットで上書きしない
+            if($('zeh-sell')) $('zeh-sell').value = p.solar;   // 売電＋自家消費の目安
+            if($('zeh-save')) $('zeh-save').value = p.util;    // 高断熱による光熱費削減
+          }
         } else {
           // 一般住宅はベースライン（太陽光・高断熱の上乗せなし）
           $('zeh-on').checked = false;
@@ -1910,21 +1941,30 @@
       }
     }
     // 「一般住宅 vs 一条」30年比較カードの描画
+    const ICHIJO_SOLAR_INIT_COST = 270;   // 太陽光＋蓄電池の初期費用の目安（万円・公式試算例ベース）
     function renderIchijoCompare(){
       const card = $('ichijo-compare-card'); if(!card) return;
       const show = (houseType==='buy' || houseType==='owned');
       card.style.display = show ? '' : 'none';
       if(!show) return;
       const p = ICHIJO_PRESET[ichijoLevel];
-      const utilDiff30 = p.util * 30;                                  // 光熱費：一条が安い総額
-      const solar30    = p.solar*10 + Math.round(p.solar*0.45)*20;     // 太陽光：10年満額＋卒FIT以降を約45%で20年
-      const maint30    = p.maint30;                                    // メンテ費30年差
+      const utilDiff30 = p.util * 30;              // 光熱費：一条が安い総額
+      const solar30    = ichijoSolar30(p);         // 太陽光：2026年度FITの二段階＋卒FIT逓減
+      const maint30    = p.maint30;                // 外壁・屋根メンテ費の30年差
       const total = utilDiff30 + solar30 + maint30;
+      // 結論を最初に：合計→月あたり→初期費用差引の順で「自分ごと」の数字に翻訳
+      const monthly = (total/360).toFixed(1);
+      const afterInit = total - ICHIJO_SOLAR_INIT_COST;
+      const initLine = afterInit > 0
+        ? `太陽光・蓄電池の初期費用の目安 約${fmt(ICHIJO_SOLAR_INIT_COST)}万円を差し引いても、30年で約${fmt(afterInit)}万円プラスの計算です。`
+        : `太陽光・蓄電池の初期費用の目安 約${fmt(ICHIJO_SOLAR_INIT_COST)}万円までは届かない前提です（停電時の安心や快適性は金額外のメリットです）。`;
+      $('ic-total').innerHTML = `<div class="ict-num">30年で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
+        + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${initLine}</div>`;
       // 3項目の内訳バー
       const rows = [
         { label:'光熱費',          amt:utilDiff30, sub:'高断熱＋オール電化' },
-        { label:'太陽光の収支',    amt:solar30,    sub:'売電＋自家消費（卒FIT逓減込み）' },
-        { label:'メンテナンス費',  amt:maint30,    sub:'タイル外壁で塗替え不要' },
+        { label:'太陽光の収支',    amt:solar30,    sub:'売電＋自家消費（2026年度FITの二段階単価・卒FIT逓減込み）' },
+        { label:'メンテナンス費',  amt:maint30,    sub:'外壁・屋根の塗替え不要分（床暖房・換気設備の更新費は含まず）' },
       ];
       const max = Math.max(...rows.map(r=> r.amt), 1);
       $('ic-bars').innerHTML = rows.map(r=>
@@ -1933,13 +1973,12 @@
         + `<span class="ic-amt">＋${fmt(r.amt)}万円</span></div>`
         + `<div style="grid-column:1 / -1; font-size:.72rem; color:var(--ink-soft); margin-top:-4px;">${r.sub}</div>`
       ).join('');
-      $('ic-total').innerHTML = `<div class="ict-num">約 ${fmt(total)}万円 おトク</div>`
-        + `<div class="ict-sub">一条工務店の家を選ぶと、住んでからの30年でこれだけ差が出る計算です（建物価格とは別）</div>`;
       // 一般 vs 一条 の30年ランニングコスト（棒グラフ）
       const genTotal = GEN_UTIL_PER_YEAR*30 + GEN_MAINT_30;
-      const ichTotal = Math.max(genTotal - total, 0);
+      const ichTotal = Math.max(genTotal - total, Math.round(genTotal*0.25));   // 一条側が「0円」にならない下限ガード（誇張防止）
       drawIchijoChart(genTotal, ichTotal);
-      $('ic-note').innerHTML = `※ 光熱費・太陽光・メンテ費は<b>居住地域・仕様・使用状況・FIT制度改定</b>で大きく変わる概算の目安です。売電単価はFIT期間中に下がり、11年目の卒FIT以降はさらに低下します。太陽光・タイル等の<b>初期費用は別途</b>で、上の金額はそれと相殺してご検討ください。`;
+      const highNote = (ichijoLevel==='high') ? `「上振れ」は<b>寒冷地・大容量太陽光など好条件がそろった前提</b>のシナリオです。` : '';
+      $('ic-note').innerHTML = `※ ${highNote}光熱費・太陽光・メンテ費は<b>居住地域・仕様・使用状況・FIT制度改定</b>で大きく変わる概算の目安です。売電単価は2026年度FITでは最初の4年が高単価・5年目以降に段階的に下がり、11年目以降は卒FIT単価となります。一般住宅側は<b>総務省家計調査の光熱費水準（月約2万円）と窯業サイディングの30年メンテ相場（約240〜380万円）</b>を目安にしています。全館床暖房・ロスガード90等の<b>一条側の設備更新費（30年で200万円前後の施主試算）</b>と、国の補助金（2026年度はGX志向型で最大110万円等）は、この比較に含めていません。`;
     }
     function drawIchijoChart(genTotal, ichTotal){
       const cv = $('ichijoChart'); if(!cv || typeof Chart==='undefined') return;
@@ -1956,6 +1995,23 @@
           scales:{ x:{ ticks:{ callback:(v)=> v+'万' } }, y:{ grid:{ display:false } } } }
       });
     }
+    // ヒーロー「一条の家で試す」＝1クリックで「これから購入」＋「一条工務店の家」を選び比較カードへ
+    const tryIchijoBtn = $('btn-try-ichijo');
+    if(tryIchijoBtn) tryIchijoBtn.addEventListener('click', ()=>{
+      const hs = document.getElementById('house-seg');
+      const buyBtn = hs && hs.querySelector('[data-house="buy"]');
+      if(buyBtn && !buyBtn.classList.contains('active')) buyBtn.click();
+      const ib = htypeSeg && htypeSeg.querySelector('[data-htype="ichijo"]');
+      if(ib && !ib.classList.contains('active')) ib.click();
+      const c = $('ichijo-compare-card');
+      if(c) setTimeout(()=> c.scrollIntoView({behavior:'smooth', block:'start'}), 200);
+    });
+    // 比較カードのCTA → 無料相談（相談内容を一条の資金計画に自動セット）
+    const icReserveBtn = $('ic-reserve');
+    if(icReserveBtn) icReserveBtn.addEventListener('click', ()=>{
+      openReserve();
+      const t = $('rv-topic'); if(t) t.value = '一条工務店の家の資金計画';
+    });
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
@@ -2971,7 +3027,7 @@
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
         if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
-        if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険なら月数千円で確保できます。`);
+        if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険で、比較的少ない保険料から備えやすい規模です（保険料は年齢・保障額・健康状態で変わります）。`);
         if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
         if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
         if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wNameH())}死亡時、55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
@@ -3002,7 +3058,7 @@
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
           sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
-                `③住まいで「これから購入」に切り替えると、購入した場合との比較ができます。`],
+                `③住まいで「これから購入」に切り替えると、購入した場合との比較ができます。「一条工務店の家（高性能）」を選ぶと、30年のランニングコスト差も表示されます。` /* 【一条フック】誘導文に一条明記 */],
           concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
@@ -3031,6 +3087,12 @@
         if(balAt>0.5 && willLump) good.push(`${payAge}歳での一括返済を設定済み。退職金などで残高 約${fmt(balAt)}万円 を清算すると、以後の固定費がぐっと軽くなります（手元資金の減らしすぎには注意）。`);
         good.push(`住宅ローン控除（年末残高×0.7%・最大13年）を、収入に自動反映しています。`);
         if(zeh) good.push(`ZEHの売電・光熱費削減（年 約${fmt(num('zeh-sell')+num('zeh-save'))}万円）が家計を助けます。`);
+        if(typeof htype!=='undefined' && htype==='ichijo'){   // 【一条フック】一条選択時の診断
+          const ict = (typeof ichijoCompareTotal==='function') ? ichijoCompareTotal() : 0;
+          if(ict>0) good.push(`一条工務店の家（高性能）を選択中。光熱費・太陽光・メンテの3項目で、一般住宅より30年で 約${fmt(ict)}万円 負担が軽くなる試算です（結果の比較カード参照・目安）。`);
+          good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。④生活費の損害保険料に反映できます。`);
+          con.push(`太陽光・タイル等の初期費用は建物側にかかります。30年の差額と初期費用はセットでご検討ください（無料相談でくわしく試算できます）。`);
+        }
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
         if(rateType==='fixed') good.push(`固定金利のため、返済額が将来にわたって変わらず、家計計画が立てやすいです。`);
         if(ratio>25) con.push(`返済負担率 約${ratio}% はやや重め。頭金の増額や返済期間の調整で軽くできます。`);
@@ -3038,6 +3100,8 @@
         if(balAt>0.5 && !willLump) con.push(`現在は「支払いを継続」の設定です。継続なら手元資金を厚く残せますが、年金からの返済が${finishAge}歳まで続きます。金利より運用利回りが高ければ継続が有利になる場合もあります。`);
         if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときローンが残る点に注意です。`);
         if(rateType!=='fixed') con.push(`変動金利（${rateType==='step5'?'5年':'10年'}ごと見直し）を選択中です。金利が上昇した場合は毎月の返済額が増えます。③の「金利タイプ」で上昇シナリオを入力し、負担がどこまで増えるか事前に確認しておくと安心です。`);
+        con.push(`団信が守るのは死亡・高度障害が中心です。働けなくなった場合の返済は残るため、就業不能への備えとセットで考えると安心です。`);
+        if(houseType==='buy') con.push(`火災保険はローン実行までに加入が必要です。住宅購入は、生命保険をまとめて見直す良い節目でもあります。`);
         con.push(`固定資産税・修繕費（年 約${fmt(num('prop-tax',0)+num('maint',0))}万円）も継続してかかります。`);
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone, sum, good, concern:con });
       }
@@ -3565,7 +3629,7 @@
         + (facts && facts.length ? `<ul class="diag-facts">${facts.map(f=>`<li>${f}</li>`).join('')}</ul>` : '')
         + (verdictHtml ? `<span class="diag-verdict ${verdictCls}">${verdictHtml}</span>` : '')
         + (body ? `<span>${body}</span>` : '')
-        + `<div class="diag-note">※ 一般的な目安による概算です。ご家族構成や前提条件が変わると結果も変わります。数字の正確な計算は税理士・FPにご相談ください。</div>`;
+        + `<div class="diag-note">※ 一般的な目安による概算です。ご家族構成や前提条件が変わると結果も変わります。保険・投資の最終的なご判断はご自身のご意向を第一に。数字の正確な計算は税理士・FPにご相談ください。</div>`;
     }
     function famFact(p){
       const kids = p.children.length ? `＋お子さま${p.children.length}人（${p.children.map(c=>`${esc(c.name)} ${c.age}歳`).join('・')}）` : '';
@@ -3623,7 +3687,7 @@
           + detail(n.h, hNameH(), wNameH())
           + detail(n.w, wNameH(), hNameH())
           + (both>0
-              ? `不足分は<b>掛け捨ての収入保障保険</b>なら月数千円程度で割安に確保できます。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
+              ? `不足分は<b>掛け捨ての収入保障保険</b>で比較的割安に確保しやすい形です（保険料は年齢・保障額・健康状態で変わります）。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
               : `死亡保障は最小限にし、<b>医療・就業不能への備え</b>や資産形成に回す考え方が一般的です。なお保険には掛け捨てだけでなく、<b>個人年金（5年・10年・終身で受け取る）や積立利率が生涯固定の終身保険</b>のように「貯めながら備える」使い方もあります。最終的な要否は、ご意向やご家族の状況とあわせてご確認ください。`)
           + (houseType!=='rent' && loanType()==='solo-h'
               ? `<br><br><b>ご注意：</b>いまは夫の単独ローン（夫が団信）のため、<b>妻に万一のときはローンがそのまま残ります</b>。妻側にも一定の死亡保障を持つか、ペアローンで妻側にも団信を付けるか、多角的にご検討ください。`
@@ -3678,7 +3742,7 @@
         if(totalMonthly<=0){
           const rec = Math.max(1, Math.min(Math.floor(surplus/24), 10));
           return diagBox(facts, 'warn',
-            `診断：<b>始める余地は十分</b>あります。まずは月${fmt(rec)}万円程度からがおすすめです。`,
+            `診断：<b>始める余地は十分</b>ありそうです。一般的には月${fmt(rec)}万円程度から始める方が多い水準です。`,
             `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。左の「⑤資産運用」に追加すると、このシミュレーションにすぐ反映されます。`);
         }
         return diagBox(facts, 'ok',
@@ -3869,28 +3933,61 @@
         body);
     };
 
+    /* ══════════════════════════════════════════════════════════════════
+       【一条工務店 専用ロジック②（チャット個別診断）ここから】
+       「一条の家は30年でいくら差が出る？」等の相談に、選択中の前提シナリオで即答する。
+       他のライフプラン用に流用する場合はこのブロックごと削除。
+       ══════════════════════════════════════════════════════════════════ */
+    DIAG.ichijo = function(){
+      const p = ICHIJO_PRESET[ichijoLevel];
+      const solar30 = ichijoSolar30(p);
+      const total = ichijoCompareTotal();
+      const lvlName = ichijoLevel==='low' ? '控えめ' : (ichijoLevel==='high' ? '上振れ' : '標準');
+      const facts = [
+        `前提シナリオ：<b>${lvlName}</b>（結果の「一般住宅と一条工務店の家」カードで切替できます）`,
+        `光熱費の差：年 約${fmt(p.util)}万円 × 30年 ＝ 約<b>${fmt(p.util*30)}万円</b>`,
+        `太陽光の収支：30年で 約<b>${fmt(solar30)}万円</b>（2026年度FITの二段階単価・卒FITの低下を織込み）`,
+        `メンテナンス費の差：30年で 約<b>${fmt(p.maint30)}万円</b>（外壁・屋根の塗替え分。一条側の設備更新費は含まず）`,
+      ];
+      const verdict = `試算：この前提では、一般住宅より30年で 約<b>${fmt(total)}万円</b>（月々に直すと約${(total/360).toFixed(1)}万円）負担が軽くなる計算です。`;
+      const body = (htype==='ichijo')
+        ? `太陽光・蓄電池の<b>初期費用（目安 約270万円）は別途</b>のため、差し引きでは30年で約${fmt(Math.max(total-270,0))}万円プラスの計算になります。地域・間取り・電気の使い方で大きく変わるため、正確な金額は無料相談で試算できます。`
+        : `いまは「一般的な住宅」を選択中です。③住まいの「住宅の性能タイプ」で<b>一条工務店の家（高性能）</b>を選ぶと、太陽光・光熱費が本体の試算にも反映されます。`;
+      return diagBox(facts, 'ok', verdict, body);
+    };
+    /* ══════ 【一条工務店 専用ロジック② ここまで】 ══════ */
+
     /* FP1級・税理士レベルの知識ベース。説明文を毎回ランダムに組み合わせ、100通り以上の回答を生成 */
     const KB = {
       // 【一条フック】一条工務店トピック（他ライフプランに流用時はこのトピックを削除）
-      ichijo:{ label:'一条工務店の家', re:/一条|いちじょう|ｉ-?ｓｍａｒｔ|i-?smart|アイスマート|グランセゾン|グランスマート|床暖房|全館|ロスガード|ハイドロテクト|タイル外壁|高性能住宅|高気密|高断熱|ua値|c値|樹脂サッシ|太陽光|蓄電池|売電|zeh|ゼッチ|オール電化|坪単価|注文住宅/i,
-        facts:['<b>一条工務店</b>は「家は、性能。」を掲げるハウスメーカーで、断熱・気密・耐震・太陽光を高い水準で標準化しています。総額の坪単価は<b>約105〜107万円/坪</b>が目安です（2026年頃・太陽光や全館床暖房・タイル外壁・耐震等級3が標準込み）。',
-        '<b>断熱性能（UA値）</b>：i-smartのUA値は<b>約0.25 W/㎡K</b>が目安で、2025年に義務化された省エネ基準（0.87）の約3.5倍の断熱性能とされます。',
-        '<b>気密（C値）</b>：実測平均で<b>約0.59 cm²/㎡</b>。家全体のすき間がとても小さく、冷暖房の効率が高いのが特長です。',
+      ichijo:{ label:'一条工務店の家', re:/一条|いちじょう|ｉ-?ｓｍａｒｔ|i-?smart|アイスマート|アイ・スマート|グランセゾン|グラン・セゾン|グランスマート|グラン・スマート|アイキューブ|i-?cube|ハグミー|hugme|床暖房|全館|ロスガード|うるケア|さらぽか|ハイドロテクト|タイル外壁|高性能住宅|高気密|高断熱|ua値|c値|断熱等級|樹脂サッシ|太陽光|蓄電池|売電|zeh|ゼッチ|オール電化|坪単価|注文住宅|一条ルール|(?<!連帯)保証|アフター|点検|乾燥|加湿|耐水害|免震|2倍耐震|二倍耐震|ギネス|メンテ|補助金|gx/i,
+        facts:['<b>一条工務店</b>は「家は、性能。」を掲げるハウスメーカーで、断熱・気密・耐震・太陽光を標準仕様で高水準に揃えています。<b>ギネス世界記録3項目</b>（注文住宅の年間販売数・太陽光搭載住宅数・工業化住宅工場の規模）を5年連続で認定されています。',
+        '<b>価格の目安</b>：本体の坪単価はおおよそ<b>75〜85万円</b>、オプション込みの実勢は<b>平均約92万円/坪</b>（施主アンケート・62〜112万円と幅あり）。太陽光・全館床暖房・タイル外壁・耐震等級3など標準装備込みでの価格です。',
+        '<b>断熱性能（UA値）</b>：i-smart等の主力商品は<b>断熱等級7・UA値約0.25 W/㎡K</b>が標準（2025年義務化の省エネ基準0.87の約3.5倍）。家全体が魔法瓶のイメージで、冬の朝も廊下や脱衣所が寒くなりにくい住まいです。',
+        '<b>気密（C値）</b>：全棟で気密測定を行い、実測平均は<b>約0.59 cm²/㎡</b>。すき間が小さいほど、冷暖房と計画換気がムダなく働きます。',
         '<b>全館床暖房の電気代</b>：関東・関西では冬のピーク月で<b>1.8〜2.5万円程度</b>が目安。「月5万円」といった話は寒冷地・大面積のピーク値で、全国平均ではありません。',
         '<b>光熱費は本当に安い？</b>：電気代単体は高く見えても、ガス代・灯油代が0円のオール電化＋高断熱で、総額では一般住宅より<b>年3〜12万円ほど安くなる傾向</b>です（あくまで目安）。',
-        '<b>太陽光は得か</b>：搭載の目安は約12kWで、実例では売電が<b>年10〜18万円</b>。ただしFITの売電単価は4〜5年目以降と11年目の卒FITで下がるため、<b>自家消費を前提</b>に見るのが安全です。',
-        '<b>タイル外壁のメンテ</b>：ハイドロテクトタイルは光触媒で汚れが雨で落ち、<b>再塗装が不要</b>。必要なのは25〜30年目のシーリング打ち替え（約60〜80万円）と洗浄程度が目安です。',
-        '<b>一般サイディングとの差</b>：窯業サイディングは10年ごとに再塗装（1回60〜150万円）。30年でメンテ費に<b>約100〜280万円</b>の差が出るのが目安です（外壁単体の試算）。',
-        '<b>蓄電池</b>：1台7.04kWh、寿命は約12,000サイクル（一般の約2倍）。2台で実効約13kWh、停電時も最大5.5kVA・約26時間の電力が使えます。',
-        '<b>耐震</b>：全棟が最高等級の<b>耐震等級3が標準</b>。これにより<b>地震保険料が50%割引</b>になり（等級1は10%・等級2は30%）、毎年の保険料負担が下がります。',
-        '<b>窓</b>：防犯ツインLow-Eトリプル樹脂サッシが標準（窓のU値0.73 W/㎡K）で、断熱・防音・防犯を兼ねます。第1種の熱交換換気「ロスガード90」で、換気しても熱を逃がしにくい設計です。',
-        '<b>健康面</b>：室温を保ちやすい高断熱住宅は<b>ヒートショック対策</b>にも役立ちます。断熱改修で起床時血圧が平均で下がったという調査や、WHOが冬の室温18℃以上を推奨している知見があります。'],
+        '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。実測では売電が<b>年16〜22万円</b>の報告が多く、自家消費も含めた経済効果は年20〜30万円相当の報告もあります。売電単価は2026年度FITでは<b>最初の4年が高く5年目以降に下がる二段階</b>のため、自家消費を前提に見るのが安全です。',
+        '<b>タイル外壁のメンテ</b>：ハイドロテクトタイルは光触媒で汚れが雨で落ち、<b>再塗装が不要</b>。必要なのは25〜30年目ごろのシーリング打ち替え（<b>足場代込みで約70〜100万円</b>の施主試算もあり幅があります）と洗浄程度が目安です。',
+        '<b>一般サイディングとの差</b>：窯業サイディングは約10年ごとに再塗装（1回60〜150万円）。外壁・屋根の塗替え分として、30年で<b>約60〜180万円</b>の差が目安です（一条側の設備更新費は含みません）。',
+        '<b>一条側のメンテナンス費</b>：全館床暖房の熱源機・ロスガード90・太陽光パワコン等、設備の30年更新費は<b>施主試算で約270〜390万円</b>。外壁で浮く分とは別にかかるため、この試算では外壁の差だけを比較しています。',
+        '<b>蓄電池</b>：標準は容量<b>7.04kWh</b>のリン酸鉄リチウム電池。寿命は<b>約12,000サイクル</b>（一般的な蓄電池の約2倍）で、停電時は最大5.5kVAまで給電できます。',
+        '<b>耐震</b>：主力商品は<b>耐震等級3（最高等級）が標準</b>で、全棟で許容応力度計算を実施。i-smart等は建築基準法の2倍の強さの<b>「2倍耐震」</b>も選べます。<b>地震保険50%割引</b>の適用には、性能評価書などの確認資料が必要です。',
+        '<b>窓</b>：防犯ツインLow-Eトリプル樹脂サッシが標準（窓のU値<b>0.8 W/㎡K</b>・ハニカムシェード併用で0.6）。第1種の熱交換換気<b>「ロスガード90」</b>（温度交換効率最大90%）で、換気しても熱を逃がしにくい設計です。',
+        '<b>健康面</b>：室温を保ちやすい高断熱住宅は<b>ヒートショック対策</b>にも役立ちます。断熱改修で起床時血圧が平均で下がったという調査や、WHOが冬の室温18℃以上を推奨している知見があります。',
+        '<b>保証・点検</b>：構造・防水は<b>最長30年保証</b>です。ただし10年目以降の定期点検と、必要と判断された<b>有償メンテナンス工事の実施が延長の条件</b>です（施主情報では数十万円〜規模の例も）。24時間サポートとアプリ「i-サポ」があります。',
+        '<b>設計の自由度</b>：性能を全棟で保つための規格化（いわゆる<b>一条ルール</b>）があり、総二階が基本・窓のサイズや位置に規格・大開口に制限など、間取りの自由度は他社より狭めです。デザインの希望が強い方は事前の確認がおすすめです。',
+        '<b>冬の乾燥</b>：高気密高断熱＋床暖房の冬は室内が乾きやすく（湿度30%台の報告も）、<b>加湿器の併用が定番</b>です。湿度を保つ換気「うるケア」や、夏向けの「さらぽか空調」という選択肢もあります。',
+        '<b>全館さらぽか空調</b>：デシカント方式で<b>夏の湿度を約50%に保つ</b>オプション。8月の除湿コスト試算は約1.1万円です。体感の好みが分かれるため、宿泊体験棟での確認がおすすめです。',
+        '<b>災害への備え</b>：床上浸水を防ぐ<b>耐水害住宅</b>（水深約1mまで対応・2020年自社調べで世界初）や<b>免震</b>も選べます。実大の耐震実験は40年以上・業界最多クラスの実績です。',
+        '<b>商品ラインナップ</b>：主力は<b>グラン・スマート／i-smart</b>（断熱等級7標準）。<b>グラン・セゾン</b>はデザイン重視の木質感、規格住宅<b>HUGme</b>は本体1,490万円〜・100プラン（断熱等級6）で、性能と予算のバランスで選べます。',
+        '<b>補助金・減税</b>：高断熱＋太陽光の新築は、国の「みらいエコ住宅2026」の<b>GX志向型補助（110万円・寒冷地125万円）</b>の要件と相性の良い仕様です（予算枠・着工時期の条件あり・最新の受付状況は要確認）。<b>住宅ローン減税もZEH水準以上は借入限度額が優遇</b>されます。'],
         probes:['一条工務店の家をご検討中なのですね。いま特に気になっているのは、光熱費・太陽光・メンテ費・建築費のどれでしょうか？','ご予算のイメージ（総額）や、土地はお決まりかどうかも教えていただけると、資金計画がより具体的になります。'],
         concl:'一条工務店の家は、建物価格だけでなく<b>「住んでからの30年」で光熱費・売電・メンテ費に差が出る</b>のが特長です。上の「一般住宅と一条工務店の家（30年比較）」で、ご家庭の数字での違いをご確認いただけます。金額はいずれも目安のため、正確な資金計画は無料相談で承ります。' },
       nisa:{ label:'NISA', re:/nisa|ニーサ|つみたて|積立/i,
         facts:['新NISAは運用益が<b>無期限で非課税</b>です。','年間の投資枠は<b>つみたて120万円＋成長240万円＝最大360万円</b>。','生涯の非課税保有限度は<b>1,800万円</b>（うち成長投資枠1,200万円）です。','売却すると<b>翌年に非課税枠が復活</b>します。','初心者は<b>全世界株や米国株のインデックス投信</b>が王道です。','<b>毎月一定額の積立（ドルコスト平均法）</b>で買付タイミングを分散できます。','いつでも引き出せる<b>流動性の高さ</b>がiDeCoとの違いです。','長期では<b>信託報酬（手数料）の低さ</b>がリターンを左右します。','夫婦それぞれの口座で世帯の<b>非課税枠を2人分</b>使えます。'],
         probes:['NISAを検討中なのですね。差し支えなければ、始めたいと思われた<b>きっかけ</b>を教えていただけますか？','毎月どのくらいなら無理なく続けられそうですか？また、当面使う予定のない<b>余裕資金</b>はありますか？'],
-        concl:'一般的には、まず<b>生活防衛資金（生活費の約6か月分）</b>を預金で確保し、その上で新NISAのつみたて投資枠で<b>少額から長期・分散</b>で始めるのが王道です。なお「増やすお金＝NISA、確実に受け取るお金＝保険（個人年金など）」と役割を分けておくと、相場が下がった時期にも慌てない設計になります。' },
+        concl:'一般的には、まず<b>生活防衛資金（生活費の約6か月分）</b>を預金で確保し、その上で新NISAのつみたて投資枠で<b>少額から長期・分散</b>で始めるのが王道です。なお「増やすお金＝NISA、確実に受け取るお金＝預金・個人向け国債・個人年金保険など」と役割を分けておくと、相場が下がった時期にも慌てない設計になります。' },
       ideco:{ label:'iDeCo', re:/ideco|イデコ|確定拠出|個人型|401k/i,
         facts:['iDeCoは掛金が<b>全額所得控除</b>になり、所得税・住民税が軽くなります。','運用益も<b>非課税</b>で再投資できます。','受取時も<b>退職所得控除・公的年金等控除</b>の対象です。','掛金上限は会社員（企業年金なし）で<b>月2.3万円</b>。','自営業は<b>月6.8万円</b>まで拠出でき節税効果が大きいです。','原則<b>60歳まで引き出せない</b>ので余裕資金で行います。','受取は60〜75歳で一時金・年金・併用が選べます。','「いつでも引き出せるNISA」に対し、iDeCoは<b>節税しながら老後専用</b>です。'],
         probes:['老後の備えをお考えなのですね。今、企業年金やiDeCoには加入されていますか？ご職業も教えていただけると目安が出ます。','毎月いくらくらいなら、60歳まで動かさなくても大丈夫な余裕資金として続けられそうですか？'],
@@ -3927,7 +4024,7 @@
         facts:['資産運用の王道は<b>長期・積立・分散</b>です。','<b>ドルコスト平均法</b>（毎月一定額）で買付タイミングを分散できます。','まずは<b>全世界株や米国株のインデックス投信</b>が分かりやすい選択です。','<b>複利</b>は時間を味方につけるほど効果が大きくなります。','リスク許容度に応じて<b>株式と債券・預金の比率</b>を調整します。','長期では<b>信託報酬（手数料）の低さ</b>がリターンを左右します。','<b>生活防衛資金（生活費の6か月分）</b>を確保してから投資に回すのが基本です。'],
         probes:['資産運用を始めたいのですね。投資のご経験はありますか？どのくらいの期間で考えていますか？','毎月いくらくらい、当面使わない余裕資金から回せそうですか？'],
         concl:'一般的には、<b>生活防衛資金を確保→新NISAでインデックス投信を少額から積立</b>が王道です。値動きに動じず長く続けることが最大の成功要因です。' },
-      izoku:{ label:'遺族年金・公的保障', re:/遺族|寡婦|万一|万が一|死亡保障|亡くなっ|団信|団体信用/,
+      izoku:{ label:'遺族年金・公的保障', re:/遺族|寡婦|万一|万が一|死亡保障|亡くなっ/,   /* 団信・団体信用はhokenへ移設（団信の要否は必要保障額診断DIAG.hokenが正解のため） */
         facts:['遺族年金は<b>遺族基礎年金＋遺族厚生年金</b>の2階建てです。','遺族基礎年金は<b>子のある配偶者</b>に、年約81万円＋子の加算（約23万円/人）が末子18歳の年度末まで支給されます。','遺族厚生年金は、亡くなった方の厚生年金記録に応じて<b>報酬比例部分の約4分の3</b>が支給されます。','<b>妻を亡くした55歳未満の夫</b>には遺族厚生年金が支給されないなど、男女で差があります（制度の盲点）。','子のない30歳未満の妻への遺族厚生年金は<b>5年間の有期</b>です。','40〜65歳の妻には<b>中高齢寡婦加算（年約61万円）</b>が上乗せされる場合があります。','団信（団体信用生命保険）付きの住宅ローンは、万一の際<b>残債がゼロ</b>になり、遺族の住居費負担が大きく軽くなります。','遺族年金は<b>非課税</b>で、所得税・住民税はかかりません。'],
         probes:['ご家族の万一への備えを確認したいのですね。ご家族構成（配偶者・お子さまの人数）を教えていただけますか？','住宅ローンの団信の有無と、いまの貯蓄額もわかると目安が出せます。'],
         concl:'一般的には、<b>遺族年金でカバーされる分を差し引いた不足分だけ</b>を、掛け捨ての保険で備えるのが合理的です。上の「保険は必要？」で、ご入力データから自動計算できます。' },
@@ -4037,7 +4134,8 @@
         '保険の満期金や解約返戻金（契約者＝受取人）は<b>一時所得</b>：（収入−払込保険料−特別控除50万円）×1/2 に課税されるため、実際の税負担は軽めです。',
         '<b>退職金の税金</b>は退職所得控除（勤続20年まで年40万円、超える分は年70万円）を引いた残りの<b>さらに半分</b>にしか課税されない優遇があります。',
         '給与年収2,000万円超、副業の所得20万円超、医療費控除やふるさと納税（6自治体以上）を使う人などは<b>確定申告が必要</b>です。',
-        '大学生年代（19〜22歳）のお子さまのアルバイトは、<b>特定親族特別控除</b>の新設（2025年〜）で<b>年収150万円までは親の控除が満額63万円</b>、188万円まで段階的に控除を受けられるようになりました。'
+        '大学生年代（19〜22歳）のお子さまのアルバイトは、<b>特定親族特別控除</b>の新設（2025年〜）で<b>年収150万円までは親の控除が満額63万円</b>、188万円まで段階的に控除を受けられるようになりました。',
+        '<b>住宅取得資金の贈与非課税</b>：親・祖父母からの住宅資金の贈与は、省エネ等の「質の高い住宅」なら<b>1,000万円まで非課税</b>（一般住宅は500万円）。現行制度は<b>2026年12月31日までの契約分が対象</b>で、延長は税制改正しだいです。'
       ],
       hoken: [
         '<b>生命保険料控除</b>は「一般・介護医療・個人年金」の3枠で、所得税は各枠最大4万円（合計12万円）まで控除できます。',
@@ -4047,7 +4145,7 @@
         '保険料が負担になったら、解約の前に<b>払済保険・延長保険・減額</b>という「保障を残しながら軽くする」方法があります。',
         '死亡保険金の税金は<b>契約者・被保険者・受取人の組み合わせ</b>で変わります：夫契約・夫被保険・妻受取＝相続税（非課税枠あり）、夫契約・妻被保険・夫受取＝所得税、夫契約・妻被保険・子受取＝贈与税（最も不利）。',
         '<b>個人年金保険</b>は「受け取り方」を契約で決められるのが特徴です：<b>5年・10年の確定年金</b>（期間中に本人が亡くなっても遺族が受け取れる）、<b>終身年金</b>（何歳まで生きても一生受け取れる）など。運用利回りではNISAに劣りますが、<b>「長生きするほど受け取りが増える」機能は保険にしかありません</b>。',
-        '<b>積立利率が一生涯固定される終身保険</b>もあります：契約時に決まった利率がその後の市場環境に関係なく生涯変わらないため、<b>相場が下がっても解約返戻金・保険金は約束どおり</b>。「増やす力」より「確実さ」を買う商品で、教育資金や退職後の取り崩し原資など<b>目標額が決まっているお金</b>と相性が良い仕組みです。',
+        '<b>積立利率が一生涯固定される終身保険</b>もあります：契約時に決まった利率がその後の市場環境に関係なく生涯変わらないため、<b>相場が下がっても契約時の利率で計算した解約返戻金・保険金が確保されます</b>。「増やす力」より「確実さ」を買う商品で、教育資金や退職後の取り崩し原資など<b>目標額が決まっているお金</b>と相性が良い仕組みです。ただし<b>早期解約は払込保険料を下回るのが一般的</b>な点にご注意ください。',
         '<b>お金の役割分担</b>：増やす＝NISA・iDeCo、守る＝預金・国債、<b>万一の保障と「約束された受け取り」＝保険</b>。すべて投資にすると暴落時に取り崩すことになり、すべて保険にすると増えにくい——<b>それぞれの得意分野で組み合わせる</b>のが賢い使い方です。'
       ],
       souzoku: [
@@ -4105,9 +4203,9 @@
       fudosan:'仲介手数料|重要事項説明|手付|契約不適合|路線価|公示価格|一物四価|印紙税|解体|取り壊|更地|建て替え|実家|タワマン|タワーマンション|分譲|管理費|修繕積立金|ワンルーム|アパート|サブリース|表面利回り|実質利回り|旧耐震|新耐震|共有名義|家賃保証|一括借り上げ|(おじいちゃん|おばあちゃん|じいちゃん|ばあちゃん|祖父|祖母)の(家|土地|うち)',
       souzoku:'(祖父|祖母|おじいちゃん|おばあちゃん|じいちゃん|ばあちゃん|親|父|母)が(死|亡くな)|遺産分割|形見',
       izoku:'死んだら|死亡したら|亡くなったら|死んじゃったら',
-      hoken:'クーリングオフ|告知義務|払済|延長保険|保護機構|保険料控除|個人年金|終身年金|確定年金|積立利率|長生き',
+      hoken:'クーリングオフ|告知義務|払済|延長保険|保護機構|保険料控除|個人年金|終身年金|確定年金|積立利率|長生き|団信|団体信用',
       shaho:'国民健康保険|任意継続|106万|適用拡大|週20時間|出生後休業|育児時短|労災',
-      jutaku:'フラット35|連帯債務|連帯保証|家を建て|家をたて|新築|注文住宅|一戸建て|一軒家|おうちを買|家がほしい|家が欲しい|賃貸|家賃',
+      jutaku:'フラット35|連帯債務|連帯保証|家を建て|家をたて|新築|注文住宅|一戸建て|一軒家|おうちを買|家がほしい|家が欲しい|賃貸|家賃|減税|長期優良',
       zeikin:'一時所得|退職所得|累進課税|103万|150万|160万|188万|年収の壁|基礎控除|扶養内|バイト|アルバイト|給料から|天引き',
       nenkin:'厚生年金|国民年金|基礎年金|第3号|納付特例|受給資格|在職老齢',
       shigyo:'登記費用|法定相続情報|協議書|法テラス|弁護士費用|住所変更登記|広域交付|助成金',
@@ -4244,11 +4342,11 @@
       ]);
       return `${open}<br><b>いちばん気になるのは、どれに近いですか？</b> 選んでいただければ、ご入力データをもとに安心材料と対策を診断します。`
         + `<div class="chat-cta-wrap">`
-        + `<button class="chat-cta" type="button" data-worry="retire">🏖 老後のお金</button>`
-        + `<button class="chat-cta" type="button" data-worry="edu">🎓 教育費</button>`
-        + `<button class="chat-cta" type="button" data-worry="housing">🏠 住宅ローン</button>`
-        + `<button class="chat-cta" type="button" data-worry="hoken">🛡 万一のとき</button>`
-        + `<button class="chat-cta" type="button" data-worry="overall">💭 全体的に不安</button>`
+        + `<button class="chat-cta" type="button" data-worry="retire"><i class="fa-solid fa-umbrella-beach"></i> 老後のお金</button>`
+        + `<button class="chat-cta" type="button" data-worry="edu"><i class="fa-solid fa-graduation-cap"></i> 教育費</button>`
+        + `<button class="chat-cta" type="button" data-worry="housing"><i class="fa-solid fa-house"></i> 住宅ローン</button>`
+        + `<button class="chat-cta" type="button" data-worry="hoken"><i class="fa-solid fa-shield-halved"></i> 万一のとき</button>`
+        + `<button class="chat-cta" type="button" data-worry="overall"><i class="fa-solid fa-comment-dots"></i> 全体的に不安</button>`
         + `</div>`;
     }
     // 現在の入力から項目別診断データを取得（AI診断と同じ分析エンジンを共用）
@@ -4278,7 +4376,7 @@
         else {
           const both = Math.max(n.h.need, n.w.need);
           concl = both>0
-            ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら月数千円程度から、<b>無理なく備えられる規模</b>です。`
+            ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら比較的少ない保険料から<b>無理なく備えやすい規模</b>です（保険料は年齢・保障額・健康状態で変わります）。`
             : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`;
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`

@@ -916,6 +916,22 @@
                 </ul>
                 <span class="ipn-note">※ いずれも一般的な目安です。地域・仕様・使用状況で変わります。金額は下の比較・入力欄で調整できます。</span>
               </div>
+              <!-- 一条：太陽光の精密モデル入力（kW・蓄電池・地域）。一条選択時のみ表示 -->
+              <div class="ichijo-perf-note hidden" id="ichijo-solar-config">
+                <div class="ipn-title"><i class="fa-solid fa-solar-panel"></i> 太陽光・蓄電池の設定（売電・自家消費を自動計算）</div>
+                <div class="grid3">
+                  <div class="field"><label>太陽光の搭載容量</label><div class="input-unit"><input type="number" id="ichijo-solar-kw" value="12" min="0" max="30" step="0.5"><span class="u">kW</span></div><span class="hint">一条の2024年度平均は約12kW</span></div>
+                  <div class="field"><label>蓄電池の容量</label><div class="input-unit"><input type="number" id="ichijo-battery-kwh" value="7" min="0" max="30" step="0.5"><span class="u">kWh</span></div><span class="hint">0で「なし」。一条標準は7.04kWh</span></div>
+                  <div class="field"><label>地域の日射区分</label>
+                    <div class="seg" id="ichijo-region-seg">
+                      <button type="button" data-icregion="temperate" class="active">温暖地</button>
+                      <button type="button" data-icregion="cold">寒冷地</button>
+                    </div>
+                    <span class="hint">寒冷地は発電やや少なめ・断熱の節約は大きめ</span>
+                  </div>
+                </div>
+                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。上の「前提シナリオ」はこの3つを切り替えるかんたん設定です。</span>
+              </div>
               <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
 
               <div class="grid3">
@@ -1011,12 +1027,12 @@
                 </label>
                 <div class="conditional" id="zeh-fields">
                   <div class="grid2">
-                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">売電＋自家消費の目安。FITは最初の4年が高単価（2026年度）</span></div>
+                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">初年度の売電収入。一条選択時は太陽光の設定から自動計算</span></div>
                     <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額</span></div>
                   </div>
                   <div class="note" style="background:var(--good-pale);color:#2a6b52;">
                     <i class="fa-solid fa-solar-panel" style="color:var(--good);"></i>
-                    <span>売電収入は最初の4年間が満額、5〜10年目は約半分（2026年度FITの二段階単価を簡易反映・自家消費分は下がりません）、11年目以降は卒FIT単価（約45%）で計算。光熱費の削減は物価上昇に合わせて毎年ふくらみます。</span>
+                    <span>売電収入は2026年度FITの単価カーブで計算します（10kW未満＝24円が4年間、10kW以上＝19円が5年間。以降8.3円→卒FIT8円、31年目以降は設備寿命として見込みません）。自家消費と高断熱の節約（光熱費の削減）は物価上昇に合わせて毎年ふくらみます。</span>
                   </div>
                 </div>
               </div>
@@ -1485,7 +1501,7 @@
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
           <!-- 【一条フック】一条向け免責 -->
-          <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価は2026年度FITでは<b>最初の4年が高単価・5年目以降に段階的に下がる二段階制</b>で、<b>11年目以降は卒FIT単価</b>となります。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
+          <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価は2026年度FITの区分（<b>10kW未満＝24円が4年間／10kW以上＝19円が5年間、以降8.3円→卒FIT8円</b>）で計算し、自家消費は<b>買電単価32円の節約として実際の電気代の範囲まで</b>を計上しています。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
           <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金、一条工務店の公表値・実例を反映）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
@@ -1876,20 +1892,67 @@
          - チャットチップ、フッター前提文、SAVE_KEY、共有URL
        ══════════════════════════════════════════════════════════════════ */
     /* ---------- 一条工務店：住宅の性能タイプ／30年比較 ---------- */
-    // 前提シナリオ（控えめ／標準／上振れ）。2026-07の辛口監査で公式公表値・施主実測と突き合わせて再調整済み。
-    // util=光熱費の年差（一条が安い）, solar=太陽光の売電＋自家消費の年額目安（FIT二段階は ichijoSolar30 で反映）,
+    // 前提シナリオ（控えめ／標準／上振れ）＝「かんたん設定」ショートカット。
+    // クリックすると下の太陽光kW・蓄電池・地域がまとめて切り替わる。
     // maint30=外壁・屋根メンテ費の30年差（一条側の設備更新費は含めない＝ic-noteに明記）
     const ICHIJO_PRESET = {
-      low:  { util:3, solar:12, maint30:60  },   // 温暖地・太陽光ひかえめ → 30年計 約334万円
-      std:  { util:6, solar:18, maint30:100 },   // 標準 → 30年計 約566万円
-      high: { util:9, solar:20, maint30:160 },   // 寒冷地・大容量など好条件 → 30年計 約750万円
+      low:  { kw:8,  batt:0, region:'temperate', maint30:60  },   // 控えめ：温暖地・8kW・蓄電池なし
+      std:  { kw:12, batt:7, region:'temperate', maint30:100 },   // 標準：温暖地・12kW（2024年度平均）・蓄電池7kWh
+      high: { kw:15, batt:7, region:'cold',      maint30:160 },   // 上振れ：寒冷地・大容量15kW・蓄電池7kWh
     };
-    // 太陽光の30年収支（2026年度FITの二段階単価を簡易反映：最初の4年満額→5〜10年目約5割→卒FIT後45%×20年）
-    function ichijoSolar30(p){ return p.solar*4 + Math.round(p.solar*0.5)*6 + Math.round(p.solar*0.45)*20; }
+    /* ---------- 太陽光の精密モデル（kW・蓄電池・地域 → 発電・売電・自家消費）----------
+       発電量係数＝温暖地1,150／寒冷地1,050 kWh/kW（一条の高効率パネル前提でやや高め）
+       自家消費率＝30%＋蓄電池kWh×3%（上限60%）。自家消費1kWhの価値＝買電単価32円の節約。
+       売電単価（2026年度FIT・2025年10月〜の新制度）：
+         10kW未満＝24円(1〜4年目)→8.3円(5〜10年目)→卒FIT8円(11年目〜)
+         10kW以上＝19円(1〜5年目)→8.3円(6〜20年目)→8円(21年目〜)　※31年目以降は設備寿命とみなし0
+       誇張防止：自家消費の節約は「その家が実際に払う電気代」を超えないよう上限を設ける
+       　　　　　（一般住宅の光熱費水準24万円の9割−高断熱の削減分。売電と違い節約は電気代の範囲でしか発生しないため） */
+    const ICHIJO_GEN_COEF  = { temperate:1150, cold:1050 };   // 年間発電量 kWh/kW
+    const ICHIJO_BUY_PRICE = 32;                              // 買電単価（円/kWh）＝自家消費の節約価値
+    const ICHIJO_UTIL_SAVE = { temperate:3, cold:6 };         // 高断熱による光熱費削減（万円/年・自家消費とは別）
+    let ichijoRegion = 'temperate';
+    function setIchijoRegion(r){
+      ichijoRegion = (r==='cold') ? 'cold' : 'temperate';
+      const rs = $('ichijo-region-seg');
+      if(rs) [...rs.children].forEach(x=> x.classList.toggle('active', x.dataset.icregion===ichijoRegion));
+    }
+    function ichijoSellPrice(kw, y){   // y＝1始まりの経過年 → 売電単価（円/kWh）
+      return kw < 10 ? (y<=4 ? 24 : (y<=10 ? 8.3 : 8))
+                     : (y<=5 ? 19 : (y<=20 ? 8.3 : 8));
+    }
+    function ichijoSolarModel(){
+      const kw   = Math.max(num('ichijo-solar-kw', 12), 0);
+      const batt = Math.max(num('ichijo-battery-kwh', 7), 0);
+      const gen  = kw * ICHIJO_GEN_COEF[ichijoRegion];                  // 年間発電量（kWh）
+      const selfRate = Math.min(0.30 + batt*0.03, 0.60);                // 蓄電池で自家消費率アップ（上限60%）
+      const selfKwh  = gen * selfRate;
+      const sellKwh  = gen - selfKwh;
+      const utilSave = ICHIJO_UTIL_SAVE[ichijoRegion];
+      const selfRaw  = selfKwh * ICHIJO_BUY_PRICE / 10000;              // 自家消費の節約（万円/年）
+      const selfCap  = Math.max(GEN_UTIL_PER_YEAR*0.9 - utilSave, 0);   // 電気代を超える節約は計上しない
+      const selfMan  = Math.min(selfRaw, selfCap);
+      let sell30 = 0;
+      for(let y=1; y<=30; y++) sell30 += sellKwh * ichijoSellPrice(kw, y) / 10000;
+      const sellY1 = sellKwh * ichijoSellPrice(kw, 1) / 10000;          // 初年度の売電収入（万円）
+      return { kw, batt, gen:Math.round(gen), selfRate,
+               selfKwh:Math.round(selfKwh), sellKwh:Math.round(sellKwh),
+               selfMan, selfCapped:(selfRaw > selfCap), sellY1,
+               sell30:Math.round(sell30), solar30:Math.round(sell30 + selfMan*30),
+               utilSave,
+               initCost: Math.round(kw*15 + (batt>0 ? batt*9 : 0)) };   // 初期費用の目安（万円・公式試算例273.5万/13.5kW+7kWhから按分）
+    }
+    // simulate()の売電逓減へ容量連動のFIT単価カーブを供給（一般住宅の手動ZEH時はnull＝従来動作）
+    function ichijoZehSellFactor(yo){   // yo＝購入からの経過年（0始まり）
+      if(htype !== 'ichijo') return null;
+      if(yo >= 30) return 0;
+      const kw = Math.max(num('ichijo-solar-kw', 12), 0);
+      return ichijoSellPrice(kw, yo+1) / ichijoSellPrice(kw, 1);
+    }
     // 3項目合計の30年差（比較カード・AI診断・チャット個別診断で共有する単一の計算源）
     function ichijoCompareTotal(){
-      const p = ICHIJO_PRESET[ichijoLevel];
-      return p.util*30 + ichijoSolar30(p) + p.maint30;
+      const m = ichijoSolarModel();
+      return m.utilSave*30 + m.solar30 + ICHIJO_PRESET[ichijoLevel].maint30;
     }
     // 比較チャートの一般住宅ベースライン（30年・目安。出典：総務省家計調査の光熱費水準＋窯業サイディングの30年メンテ相場）
     const GEN_UTIL_PER_YEAR = 24;   // 一般住宅の光熱費 月2万円×12＝年24万円の目安
@@ -1917,21 +1980,38 @@
       const b = e.target.closest('button'); if(!b) return;
       ichijoLevel = b.dataset.iclevel;
       [...ichijoLevelSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      const sc = ICHIJO_PRESET[ichijoLevel];   // かんたん設定：太陽光kW・蓄電池・地域もまとめて切替
+      if($('ichijo-solar-kw'))    $('ichijo-solar-kw').value = sc.kw;
+      if($('ichijo-battery-kwh')) $('ichijo-battery-kwh').value = sc.batt;
+      setIchijoRegion(sc.region);
       if(htype==='ichijo') applyHtype();   // 一条選択中はメインの試算値も追従
       recompute();
+    });
+    // 太陽光の詳細入力（kW・蓄電池・地域）→ 変更のたびにZEH値と比較カードを再計算
+    const ichijoRegionSeg = $('ichijo-region-seg');
+    if(ichijoRegionSeg) ichijoRegionSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      setIchijoRegion(b.dataset.icregion);
+      if(htype==='ichijo') applyHtype();
+      recompute();
+    });
+    ['ichijo-solar-kw','ichijo-battery-kwh'].forEach(id=>{
+      const el = $(id);
+      if(el) el.addEventListener('input', ()=>{ if(htype==='ichijo') applyHtype(); recompute(); });
     });
     // 住宅タイプに合わせて、ZEH（太陽光・光熱費削減）の値をメイン試算へ反映
     function applyHtype(){
       const isIchijo = (htype==='ichijo');
       const note = $('ichijo-perf-note'); if(note) note.classList.toggle('hidden', !isIchijo);
+      const cfg  = $('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', !isIchijo);
       if($('zeh-on')){
         if(isIchijo){
-          const p = ICHIJO_PRESET[ichijoLevel];
+          const m = ichijoSolarModel();
           $('zeh-on').checked = true;
           $('zeh-fields').classList.remove('hidden');
-          if(!userEditedZeh){   // 手入力済みの値（実見積など）はプリセットで上書きしない
-            if($('zeh-sell')) $('zeh-sell').value = p.solar;   // 売電＋自家消費の目安
-            if($('zeh-save')) $('zeh-save').value = p.util;    // 高断熱による光熱費削減
+          if(!userEditedZeh){   // 手入力済みの値（実見積など）はモデル値で上書きしない
+            if($('zeh-sell')) $('zeh-sell').value = Math.round(m.sellY1);               // 初年度の売電収入
+            if($('zeh-save')) $('zeh-save').value = Math.round(m.selfMan + m.utilSave); // 自家消費＋高断熱の節約
           }
         } else {
           // 一般住宅はベースライン（太陽光・高断熱の上乗せなし）
@@ -1941,29 +2021,29 @@
       }
     }
     // 「一般住宅 vs 一条」30年比較カードの描画
-    const ICHIJO_SOLAR_INIT_COST = 270;   // 太陽光＋蓄電池の初期費用の目安（万円・公式試算例ベース）
     function renderIchijoCompare(){
       const card = $('ichijo-compare-card'); if(!card) return;
       const show = (houseType==='buy' || houseType==='owned');
       card.style.display = show ? '' : 'none';
       if(!show) return;
-      const p = ICHIJO_PRESET[ichijoLevel];
-      const utilDiff30 = p.util * 30;              // 光熱費：一条が安い総額
-      const solar30    = ichijoSolar30(p);         // 太陽光：2026年度FITの二段階＋卒FIT逓減
-      const maint30    = p.maint30;                // 外壁・屋根メンテ費の30年差
+      const m = ichijoSolarModel();
+      const utilDiff30 = m.utilSave * 30;          // 光熱費：高断熱による削減（地域で年3／6万円・自家消費とは別）
+      const solar30    = m.solar30;                // 太陽光：売電＋自家消費（kW・蓄電池・地域から計算）
+      const maint30    = ICHIJO_PRESET[ichijoLevel].maint30;   // 外壁・屋根メンテ費の30年差
       const total = utilDiff30 + solar30 + maint30;
       // 結論を最初に：合計→月あたり→初期費用差引の順で「自分ごと」の数字に翻訳
       const monthly = (total/360).toFixed(1);
-      const afterInit = total - ICHIJO_SOLAR_INIT_COST;
+      const afterInit = total - m.initCost;
       const initLine = afterInit > 0
-        ? `太陽光・蓄電池の初期費用の目安 約${fmt(ICHIJO_SOLAR_INIT_COST)}万円を差し引いても、30年で約${fmt(afterInit)}万円プラスの計算です。`
-        : `太陽光・蓄電池の初期費用の目安 約${fmt(ICHIJO_SOLAR_INIT_COST)}万円までは届かない前提です（停電時の安心や快適性は金額外のメリットです）。`;
+        ? `太陽光・蓄電池の初期費用の目安 約${fmt(m.initCost)}万円を差し引いても、30年で約${fmt(afterInit)}万円プラスの計算です。`
+        : `太陽光・蓄電池の初期費用の目安 約${fmt(m.initCost)}万円までは届かない前提です（停電時の安心や快適性は金額外のメリットです）。`;
       $('ic-total').innerHTML = `<div class="ict-num">30年で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
         + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${initLine}</div>`;
       // 3項目の内訳バー
+      const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
-        { label:'光熱費',          amt:utilDiff30, sub:'高断熱＋オール電化' },
-        { label:'太陽光の収支',    amt:solar30,    sub:'売電＋自家消費（2026年度FITの二段階単価・卒FIT逓減込み）' },
+        { label:'光熱費',          amt:utilDiff30, sub:`高断熱による削減（${regionLbl}・自家消費の節約は下の太陽光側に計上）` },
+        { label:'太陽光の収支',    amt:solar30,    sub:`売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(Math.round(m.selfMan*30))}万円（${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}）` },
         { label:'メンテナンス費',  amt:maint30,    sub:'外壁・屋根の塗替え不要分（床暖房・換気設備の更新費は含まず）' },
       ];
       const max = Math.max(...rows.map(r=> r.amt), 1);
@@ -1975,10 +2055,14 @@
       ).join('');
       // 一般 vs 一条 の30年ランニングコスト（棒グラフ）
       const genTotal = GEN_UTIL_PER_YEAR*30 + GEN_MAINT_30;
-      const ichTotal = Math.max(genTotal - total, Math.round(genTotal*0.25));   // 一条側が「0円」にならない下限ガード（誇張防止）
+      const ichTotal = Math.max(genTotal - total, 0);
       drawIchijoChart(genTotal, ichTotal);
-      const highNote = (ichijoLevel==='high') ? `「上振れ」は<b>寒冷地・大容量太陽光など好条件がそろった前提</b>のシナリオです。` : '';
-      $('ic-note').innerHTML = `※ ${highNote}光熱費・太陽光・メンテ費は<b>居住地域・仕様・使用状況・FIT制度改定</b>で大きく変わる概算の目安です。売電単価は2026年度FITでは最初の4年が高単価・5年目以降に段階的に下がり、11年目以降は卒FIT単価となります。一般住宅側は<b>総務省家計調査の光熱費水準（月約2万円）と窯業サイディングの30年メンテ相場（約240〜380万円）</b>を目安にしています。全館床暖房・ロスガード90等の<b>一条側の設備更新費（30年で200万円前後の施主試算）</b>と、国の補助金（2026年度はGX志向型で最大110万円等）は、この比較に含めていません。`;
+      const highNote = (ichijoLevel==='high') ? `「上振れ」は<b>寒冷地・大容量太陽光（15kW）など好条件がそろった前提</b>のシナリオです。` : '';
+      const zeroNote = (genTotal - total < genTotal*0.1)
+        ? `この前提では売電・自家消費が光熱費・メンテの差を上回り、<b>30年の実質負担がほぼゼロ（またはプラス）になる計算</b>です。初期費用・設備更新費は別途のため、実際の家計では「大きく軽くなる」とお読みください。` : '';
+      $('ic-note').innerHTML = `※ ${highNote}${zeroNote}光熱費・太陽光・メンテ費は<b>居住地域・仕様・使用状況・FIT制度改定</b>で大きく変わる概算の目安です。`
+        + `売電単価は2026年度FITの区分で計算しています：<b>10kW以上は19円（5年間）→8.3円の事業用扱い</b>、10kW未満は24円が4年間。<b>卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利</b>なため、蓄電池で自家消費率を高める前提です。自家消費の節約は<b>実際の電気代の範囲まで</b>で計上しています。`
+        + `一般住宅側は<b>総務省家計調査の光熱費水準（月約2万円）と窯業サイディングの30年メンテ相場（約240〜380万円）</b>を目安にしています。全館床暖房・ロスガード90等の<b>一条側の設備更新費（30年で200万円前後の施主試算）</b>と、国の補助金（2026年度はGX志向型で最大110万円等）は、この比較に含めていません。`;
     }
     function drawIchijoChart(genTotal, ichTotal){
       const cv = $('ichijoChart'); if(!cv || typeof Chart==='undefined') return;
@@ -2443,7 +2527,9 @@
             if(zeh){
               const yo = Math.max(yearsOwned, 0);
               let sell = 0;
-              if(yo < 10)      sell = zehSell;          // FIT期間：満額
+              const zf = (typeof ichijoZehSellFactor==='function') ? ichijoZehSellFactor(yo) : null;   // 【一条フック】容量連動のFIT単価カーブ（一般住宅時はnull＝従来動作）
+              if(zf != null)   sell = zehSell * zf;
+              else if(yo < 10) sell = zehSell;          // FIT期間：満額
               else if(yo < 30) sell = zehSell * 0.4;    // 卒FIT：約4割
               // 30年目以降は設備寿命とみなし売電なし
               income += sell;                                       // 売電収入
@@ -3939,20 +4025,21 @@
        他のライフプラン用に流用する場合はこのブロックごと削除。
        ══════════════════════════════════════════════════════════════════ */
     DIAG.ichijo = function(){
-      const p = ICHIJO_PRESET[ichijoLevel];
-      const solar30 = ichijoSolar30(p);
+      const m = ichijoSolarModel();
+      const maint30 = ICHIJO_PRESET[ichijoLevel].maint30;
       const total = ichijoCompareTotal();
-      const lvlName = ichijoLevel==='low' ? '控えめ' : (ichijoLevel==='high' ? '上振れ' : '標準');
+      const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const facts = [
-        `前提シナリオ：<b>${lvlName}</b>（結果の「一般住宅と一条工務店の家」カードで切替できます）`,
-        `光熱費の差：年 約${fmt(p.util)}万円 × 30年 ＝ 約<b>${fmt(p.util*30)}万円</b>`,
-        `太陽光の収支：30年で 約<b>${fmt(solar30)}万円</b>（2026年度FITの二段階単価・卒FITの低下を織込み）`,
-        `メンテナンス費の差：30年で 約<b>${fmt(p.maint30)}万円</b>（外壁・屋根の塗替え分。一条側の設備更新費は含まず）`,
+        `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（③住まいの「太陽光・蓄電池の設定」から計算）`,
+        `年間発電量の目安：約<b>${fmt(m.gen)}kWh</b>。うち自家消費${Math.round(m.selfRate*100)}%＝電気代の節約 約${m.selfMan.toFixed(1)}万円/年、売電は初年度 約${m.sellY1.toFixed(1)}万円/年`,
+        `太陽光の30年収支：約<b>${fmt(m.solar30)}万円</b>（売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(Math.round(m.selfMan*30))}万円。2026年度FITの単価カーブで計算）`,
+        `高断熱の光熱費削減：年 約${fmt(m.utilSave)}万円 × 30年 ＝ 約<b>${fmt(m.utilSave*30)}万円</b>（自家消費とは別枠）`,
+        `メンテナンス費の差：30年で 約<b>${fmt(maint30)}万円</b>（外壁・屋根の塗替え分。一条側の設備更新費は含まず）`,
       ];
       const verdict = `試算：この前提では、一般住宅より30年で 約<b>${fmt(total)}万円</b>（月々に直すと約${(total/360).toFixed(1)}万円）負担が軽くなる計算です。`;
       const body = (htype==='ichijo')
-        ? `太陽光・蓄電池の<b>初期費用（目安 約270万円）は別途</b>のため、差し引きでは30年で約${fmt(Math.max(total-270,0))}万円プラスの計算になります。地域・間取り・電気の使い方で大きく変わるため、正確な金額は無料相談で試算できます。`
-        : `いまは「一般的な住宅」を選択中です。③住まいの「住宅の性能タイプ」で<b>一条工務店の家（高性能）</b>を選ぶと、太陽光・光熱費が本体の試算にも反映されます。`;
+        ? `太陽光・蓄電池の<b>初期費用（目安 約${fmt(m.initCost)}万円）は別途</b>のため、差し引きでは30年で約${fmt(Math.max(total-m.initCost,0))}万円プラスの計算になります。卒FIT後は8円で売るより32円の買電を減らす<b>自家消費が有利</b>です。地域・間取り・電気の使い方で大きく変わるため、正確な金額は無料相談で試算できます。`
+        : `いまは「一般的な住宅」を選択中です。③住まいの「住宅の性能タイプ」で<b>一条工務店の家（高性能）</b>を選ぶと、太陽光kW・蓄電池・地域の設定から本体の試算にも反映されます。`;
       return diagBox(facts, 'ok', verdict, body);
     };
     /* ══════ 【一条工務店 専用ロジック② ここまで】 ══════ */
@@ -3967,7 +4054,7 @@
         '<b>気密（C値）</b>：全棟で気密測定を行い、実測平均は<b>約0.59 cm²/㎡</b>。すき間が小さいほど、冷暖房と計画換気がムダなく働きます。',
         '<b>全館床暖房の電気代</b>：関東・関西では冬のピーク月で<b>1.8〜2.5万円程度</b>が目安。「月5万円」といった話は寒冷地・大面積のピーク値で、全国平均ではありません。',
         '<b>光熱費は本当に安い？</b>：電気代単体は高く見えても、ガス代・灯油代が0円のオール電化＋高断熱で、総額では一般住宅より<b>年3〜12万円ほど安くなる傾向</b>です（あくまで目安）。',
-        '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。実測では売電が<b>年16〜22万円</b>の報告が多く、自家消費も含めた経済効果は年20〜30万円相当の報告もあります。売電単価は2026年度FITでは<b>最初の4年が高く5年目以降に下がる二段階</b>のため、自家消費を前提に見るのが安全です。',
+        '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。売電単価は2026年度FITで<b>10kW以上＝19円が5年間→8.3円の事業用区分</b>、10kW未満＝24円が4年間です。<b>卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利</b>なため、蓄電池との組み合わせが定番です。このツールは③住まいで搭載kW・蓄電池・地域を入れると収支を自動計算します。',
         '<b>タイル外壁のメンテ</b>：ハイドロテクトタイルは光触媒で汚れが雨で落ち、<b>再塗装が不要</b>。必要なのは25〜30年目ごろのシーリング打ち替え（<b>足場代込みで約70〜100万円</b>の施主試算もあり幅があります）と洗浄程度が目安です。',
         '<b>一般サイディングとの差</b>：窯業サイディングは約10年ごとに再塗装（1回60〜150万円）。外壁・屋根の塗替え分として、30年で<b>約60〜180万円</b>の差が目安です（一条側の設備更新費は含みません）。',
         '<b>一条側のメンテナンス費</b>：全館床暖房の熱源機・ロスガード90・太陽光パワコン等、設備の30年更新費は<b>施主試算で約270〜390万円</b>。外壁で浮く分とは別にかかるため、この試算では外壁の差だけを比較しています。',
@@ -4549,7 +4636,7 @@
       return {
         v:1, fields,
         house: houseType,
-        htype, ichijoLevel,   // 【一条フック】住宅の性能タイプ・比較レベルを保存
+        htype, ichijoLevel, ichijoRegion,   // 【一条フック】住宅の性能タイプ・比較レベル・日射区分を保存（太陽光kW/蓄電池はfieldsで自動保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
@@ -4581,7 +4668,8 @@
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
       if(s.ichijoLevel && ICHIJO_PRESET[s.ichijoLevel]){ ichijoLevel = s.ichijoLevel; if(ichijoLevelSeg) [...ichijoLevelSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.iclevel===ichijoLevel)); }
-      if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); }
+      if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
+      if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }

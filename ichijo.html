@@ -911,7 +911,7 @@
                   <li><b>超断熱・高気密</b>：i-smart等の主力商品で<b>断熱等級7・UA値0.25</b>が標準（省エネ基準の約3.5倍＝家全体が魔法瓶のイメージ）。<b>全館床暖房</b>で冬の朝も廊下や脱衣所まで寒くなりにくい</li>
                   <li><b>大容量の太陽光発電＋蓄電池</b>（平均搭載 約12kW・2024年度実績）で売電収入と自家消費</li>
                   <li><b>ハイドロテクトタイル外壁</b>（再塗装不要）で、30年の外壁メンテ費を抑えやすい</li>
-                  <li><b>耐震等級3（最高等級）が標準</b>→ 確認資料があれば<b>地震保険が50%割引</b>（「④生活費」の損害保険に反映できます）</li>
+                  <li><b>耐震等級3（最高等級）が標準</b>→ 確認資料があれば<b>地震保険が50%割引</b>（「④生活費」の火災・地震保険に入力すると割引を自動計算）</li>
                   <li>高断熱＋太陽光は、国の<b>GX志向型補助金（2026年度は最大110万円等）</b>の対象になりやすい仕様（要件・予算枠あり）</li>
                 </ul>
                 <span class="ipn-note">※ いずれも一般的な目安です。地域・仕様・使用状況で変わります。金額は下の比較・入力欄で調整できます。</span>
@@ -1092,6 +1092,24 @@
               </div>
               <div id="custom-expenses"></div>
               <button class="btn-add" id="add-expense" type="button"><i class="fa-solid fa-plus"></i> 生活費の項目を追加</button>
+
+              <!-- 火災・地震保険（5年/10年ごとの一括払い）。地震保険は耐震等級3（一条選択時）で50%割引 -->
+              <div class="subgroup" id="kasai-box" style="margin-top:16px;">
+                <div class="subgroup-title"><i class="fa-solid fa-house-fire"></i> 火災・地震保険（一括払い）<span class="tag">持ち家</span></div>
+                <div class="grid3">
+                  <div class="field"><label>支払いサイクル</label>
+                    <div class="seg" id="kasai-cycle-seg">
+                      <button type="button" data-kcycle="5" class="active">5年ごと</button>
+                      <button type="button" data-kcycle="10">10年ごと</button>
+                    </div>
+                    <span class="hint">長期一括契約は年払いより割安です</span>
+                  </div>
+                  <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">地震保険を除く建物・家財の保険料</span></div>
+                  <div class="field"><label>地震保険（同・割引前の総額）</label><div class="input-unit"><input type="number" id="kasai-quake" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">割引前の金額を入力。割引は下で自動計算</span></div>
+                </div>
+                <div class="note" id="kasai-merit" hidden></div>
+                <span class="hint" style="display:block; margin-top:6px;">※ 購入年からサイクルごとに総額を計上します。月々の「損害保険」欄と重複しないようご注意ください。賃貸プランでは計上されません。</span>
+              </div>
             </div>
 
             <div class="subgroup" style="margin-top:16px;">
@@ -1500,6 +1518,7 @@
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
+          <li><b>火災・地震保険</b>：ご入力の5年／10年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動）。地震保険は<b>割引前の金額</b>をご入力ください。耐震等級3（一条工務店の家を選択時）は50%割引で計算します（適用には確認資料が必要）。</li>
           <!-- 【一条フック】一条向け免責 -->
           <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価は2026年度FITの区分（<b>10kW未満＝24円が4年間／10kW以上＝19円が5年間、以降8.3円→卒FIT8円</b>）で計算し、自家消費は<b>買電単価32円の節約として実際の電気代の範囲まで</b>を計上しています。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
           <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金、一条工務店の公表値・実例を反映）。前提は年1回の見直しを想定しています。</li>
@@ -1719,11 +1738,12 @@
     }
 
     /* ---------- 生活費の費目（自由追加） ---------- */
-    function expenseRow(name='', amount=1, years=0){
+    function expenseRow(name='', amount=1, years=0, start=0){
       const div = document.createElement('div');
       div.className = 'row-item expense-row';
       const isYears = (parseInt(years)||0) > 0;
       const yv = isYears ? parseInt(years) : 6;
+      const sv = Math.max(parseInt(start)||0, 0);
       div.dataset.exMode = isYears ? 'years' : 'forever';
       div.innerHTML = `
         <div class="field ex-name-field"><label>費目名</label><input type="text" class="ex-name" placeholder="例：習い事・保育料" value="${name}"></div>
@@ -1731,11 +1751,11 @@
           <div class="input-unit"><input type="number" class="ex-amount" value="${amount}" min="0" step="0.5"><span class="u">万円</span></div>
         </div>
         <button class="btn-del ex-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
-        <div class="field ex-period-field"><label>いつまで</label>
+        <div class="field ex-period-field"><label>期間</label>
           <div class="ex-period-seg">
             <button type="button" class="ex-mode-btn${isYears?'':' active'}" data-mode="forever">ずっと</button>
             <button type="button" class="ex-mode-btn${isYears?' active':''}" data-mode="years">期間を指定</button>
-            <span class="ex-years-wrap"${isYears?'':' hidden'}>あと<input type="number" class="ex-years" value="${yv}" min="1" max="60" step="1">年</span>
+            <span class="ex-years-wrap"${isYears?'':' hidden'}><input type="number" class="ex-start" value="${sv}" min="0" max="60" step="1">年後から<input type="number" class="ex-years" value="${yv}" min="1" max="60" step="1">年間</span>
           </div>
         </div>`;
       div.querySelector('.ex-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
@@ -1755,9 +1775,31 @@
       return [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({
         name: r.querySelector('.ex-name').value,
         amount: parseFloat(r.querySelector('.ex-amount').value)||0,
-        // 期間指定なら「あと○年」、ずっとなら0（simulateで退職まで継続）
-        years: (r.dataset.exMode==='years') ? (parseInt(r.querySelector('.ex-years').value)||0) : 0
+        // 期間指定なら「○年後から○年間」、ずっとなら0（simulateで退職まで継続）
+        years: (r.dataset.exMode==='years') ? (parseInt(r.querySelector('.ex-years').value)||0) : 0,
+        start: (r.dataset.exMode==='years') ? Math.max(parseInt(r.querySelector('.ex-start').value)||0, 0) : 0
       }));
+    }
+    /* ---------- 火災・地震保険（5年/10年ごとの一括払い） ---------- */
+    function kasaiCycle(){ return parseInt(document.querySelector('#kasai-cycle-seg button.active')?.dataset.kcycle)||5; }
+    function setKasaiCycle(c){
+      const seg = $('kasai-cycle-seg'); if(!seg) return;
+      [...seg.children].forEach(x=> x.classList.toggle('active', x.dataset.kcycle===String(c)));
+      document.querySelectorAll('.kasai-cycle-label').forEach(el=> el.textContent = String(c));
+    }
+    // 地震保険の割引メリット表示（1年あたり換算つき）
+    function renderKasaiMerit(){
+      const el = $('kasai-merit'); if(!el) return;
+      const q = num('kasai-quake',0), cyc = kasaiCycle();
+      if(q<=0){ el.hidden = true; return; }
+      el.hidden = false;
+      const isIchijo = (typeof htype!=='undefined' && htype==='ichijo');   // 【一条フック】耐震等級3＝地震保険50%割引の連動
+      const perYear = (q*0.5/cyc).toFixed(1);
+      if(isIchijo){
+        el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--good);"></i><span>耐震等級3（一条工務店の家は標準）の<b>50%割引</b>を適用：地震保険 <b>${fmt(q)}万円 → ${fmt(Math.round(q*0.5*10)/10)}万円</b>（${cyc}年ごと）。<b>1年あたり 約${perYear}万円の割引メリット</b>です（適用には性能評価書等の確認資料が必要）。</span>`;
+      } else {
+        el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--ink-soft);"></i><span>耐震等級3の住宅（一条工務店の家では標準）なら地震保険が<b>50%割引</b>＝この金額なら<b>1年あたり 約${perYear}万円</b>軽くなる計算です。③住まいの「住宅の性能タイプ」で切り替えて比較できます。</span>`;
+      }
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
     const LIVING_IDS = ['e-food','e-water','e-elec','e-gas','e-daily','e-cloth','e-life','e-nonlife','e-car','e-fuel','e-phone','e-net','e-pocket','e-hobby','e-other'];
@@ -1765,7 +1807,7 @@
       const simple = document.querySelector('#exp-seg button.active')?.dataset.exp === 'simple';
       if(simple) return num('e-bulk',0);
       let s = LIVING_IDS.reduce((a,id)=> a + num(id,0), 0);
-      s += readCustomExpenses().reduce((a,x)=> a + x.amount, 0);
+      s += readCustomExpenses().reduce((a,x)=> a + (((x.start||0)>0 && x.years>0) ? 0 : x.amount), 0);   // まだ始まっていない項目（○年後から）は今の合計に入れない
       return s;
     }
     // simulate用：固定の生活費だけ（追加項目は期間指定に対応するため、simulateで年ごとに個別加算する）
@@ -1781,7 +1823,7 @@
       const f = s.fields;
       if(s.expMode === 'simple') return parseFloat(f['e-bulk'])||0;
       let sum = LIVING_IDS.reduce((a,id)=> a + (parseFloat(f[id])||0), 0);
-      (s.expenses||[]).forEach(x=> sum += parseFloat(x.amount)||0);
+      (s.expenses||[]).forEach(x=>{ if((parseInt(x.start)||0)>0 && (parseInt(x.years)||0)>0) return; sum += parseFloat(x.amount)||0; });   // 開始前の項目は除外（readLivingMonthlyと同基準）
       return sum;
     }
     // ④の一番上「毎月の生活費 合計」を更新（下の項目を入力すると自動反映。将来プランでは現状比も表示）
@@ -1942,6 +1984,8 @@
                utilSave,
                initCost: Math.round(kw*15 + (batt>0 ? batt*9 : 0)) };   // 初期費用の目安（万円・公式試算例273.5万/13.5kW+7kWhから按分）
     }
+    // 地震保険の割引率（耐震等級3＝50%）。④の火災・地震保険（simulate）とrenderKasaiMeritが参照
+    function ichijoQuakeDiscount(){ return (htype==='ichijo') ? 0.5 : 1; }
     // simulate()の売電逓減へ容量連動のFIT単価カーブを供給（一般住宅の手動ZEH時はnull＝従来動作）
     function ichijoZehSellFactor(yo){   // yo＝購入からの経過年（0始まり）
       if(htype !== 'ichijo') return null;
@@ -2482,11 +2526,12 @@
         // 生活費（退職後は老後生活費へ。インフレ反映）
         const baseLiving = (hAge < hRetire ? livingAnnual : retireLivingAnnual) * inflF;
         expense += baseLiving;
-        // 追加の生活費項目：退職前のみ、指定「あと○年」まで計上（0＝ずっと＝退職まで）
+        // 追加の生活費項目：退職前のみ。「○年後から○年間」の指定に対応（0＝ずっと＝退職まで）
         if(hAge < hRetire){
           customExpenses.forEach(x=>{
             if(x.amount<=0) return;
-            if(x.years>0 && t >= x.years) return;   // 指定年数を過ぎたら計上しない
+            const st = x.start||0;
+            if(x.years>0 && (t < st || t >= st + x.years)) return;   // 開始前・期間終了後は計上しない
             expense += x.amount*12*inflF;
           });
         }
@@ -2522,6 +2567,16 @@
               }
             }
             expense += (propTax + maint)*Math.pow(1+infl, Math.max(hAge-buyAge,0)); // 維持費はインフレ
+
+            // 火災・地震保険：入力サイクル（5年/10年）ごとに総額を一括計上（物価に連動）
+            const kFire = num('kasai-fire',0), kQuake = num('kasai-quake',0);
+            if(kFire>0 || kQuake>0){
+              const kyo = Math.max(hAge-buyAge, 0);
+              if(kyo % kasaiCycle() === 0){
+                const qRate = (typeof ichijoQuakeDiscount==='function') ? ichijoQuakeDiscount() : 1;   // 【一条フック】耐震等級3＝50%割引
+                expense += (kFire + kQuake*qRate) * Math.pow(1+infl, kyo);
+              }
+            }
 
             // ZEH：売電収入＋自家消費・高断熱による光熱費削減
             if(zeh){
@@ -2752,6 +2807,7 @@
       drawTable(rows);
       drawAssetTable(rows);
       planAfterRecompute(rows);
+      if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       renderIchijoCompare();   // 【一条フック】30年比較カードの更新
     }
 
@@ -3176,7 +3232,7 @@
         if(typeof htype!=='undefined' && htype==='ichijo'){   // 【一条フック】一条選択時の診断
           const ict = (typeof ichijoCompareTotal==='function') ? ichijoCompareTotal() : 0;
           if(ict>0) good.push(`一条工務店の家（高性能）を選択中。光熱費・太陽光・メンテの3項目で、一般住宅より30年で 約${fmt(ict)}万円 負担が軽くなる試算です（結果の比較カード参照・目安）。`);
-          good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。④生活費の損害保険料に反映できます。`);
+          good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。④生活費の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
           con.push(`太陽光・タイル等の初期費用は建物側にかかります。30年の差額と初期費用はセットでご検討ください（無料相談でくわしく試算できます）。`);
         }
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
@@ -3480,6 +3536,11 @@
     $('add-event').addEventListener('click', ()=>{ eventRow(45,'車の買い替え',200); recompute(); });
     $('add-income').addEventListener('click', ()=>{ incomeRow(50,'臨時収入',100); recompute(); });
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
+    if($('kasai-cycle-seg')) $('kasai-cycle-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      setKasaiCycle(b.dataset.kcycle);
+      recompute();
+    });
     $('add-invest').addEventListener('click', ()=>{ investRow('nisa','',0,3,3.0,65); recompute(); });
 
     // ○歳時点カードの年齢入力（結果パネル側なので個別に再計算）
@@ -4639,6 +4700,7 @@
         htype, ichijoLevel, ichijoRegion,   // 【一条フック】住宅の性能タイプ・比較レベル・日射区分を保存（太陽光kW/蓄電池はfieldsで自動保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
+        kasaiCycle: kasaiCycle(),
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
@@ -4646,7 +4708,7 @@
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
-        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0 })),
+        expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
         investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked }))
       };
     }
@@ -4659,7 +4721,7 @@
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||''));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
-      (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0));
+      (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
       (s.investments||[]).forEach(it=>{
         investRow(it.type, it.name, parseFloat(it.lump)||0, parseFloat(it.monthly)||0, parseFloat(it.ret)||0, parseInt(it.end)||65, (it.start!=null && it.start!=='') ? parseInt(it.start) : undefined, it.after||'continue');
         if(it.on===false){ const row=$('invest-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
@@ -4672,6 +4734,7 @@
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
+      if(s.kasaiCycle) setKasaiCycle(s.kasaiCycle);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }
       if(s.loanType && loanTypeSeg){ [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.loantype===s.loanType)); }
       if(s.loanRateType && loanRateTypeSeg){ [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ratetype===s.loanRateType)); }

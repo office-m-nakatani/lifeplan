@@ -907,7 +907,7 @@
                   <button type="button" data-htype="normal" class="active">一般的な住宅</button>
                   <button type="button" data-htype="ichijo">一条工務店の家（高性能）</button>
                 </div>
-                <span class="hint">「一条工務店の家」を選ぶと、太陽光の売電・高断熱による光熱費削減・タイル外壁によるメンテ費軽減を反映し、下に<b>一般住宅との30年比較</b>が表示されます。</span>
+                <span class="hint">「一条工務店の家」を選ぶと、太陽光の売電・高断熱による光熱費削減・タイル外壁によるメンテ費軽減を反映し、下に<b>一般住宅との比較（既定35年）</b>が表示されます。</span>
               </div>
               <div class="ichijo-perf-note hidden" id="ichijo-perf-note">
                 <div class="ipn-title"><i class="fa-solid fa-house-circle-check"></i> 一条工務店の家の標準性能（この設定に反映）</div>
@@ -941,11 +941,9 @@
               <div class="grid3">
                 <div class="field" data-buy-only><label>購入時の夫の年齢</label><div class="input-unit"><input type="number" id="buy-age" value="36" min="20" max="70"><span class="u">歳</span></div></div>
                 <div class="field hidden" data-owned-only><label>購入したときの夫の年齢</label><div class="input-unit"><input type="number" id="owned-age" value="30" min="18" max="70"><span class="u">歳</span></div><span class="hint">現在の年齢以下で入力。減税・ZEHはこの年から計算</span></div>
-                <div class="field"><label>物件価格</label><div class="input-unit"><input type="number" id="house-price" value="4000" min="0" step="100"><span class="u">万円</span></div></div>
-                <div class="field"><label>頭金</label><div class="input-unit"><input type="number" id="down" value="400" min="0" step="50"><span class="u">万円</span></div></div>
-                <div class="field" data-buy-only><label>購入時の諸費用</label><div class="input-unit"><input type="number" id="buy-costs" value="280" min="0" step="10"><span class="u">万円</span></div><span class="hint">登記・ローン事務手数料（借入×2.2%が主流）・印紙・火災保険初回・外構等：目安は物件価格の7〜10%</span></div>
+                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="3600" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みで組む場合はその総額）。頭金は下の欄へ</span></div>
+                <div class="field"><label>頭金（借入と別に用意する現金）</label><div class="input-unit"><input type="number" id="down" value="400" min="0" step="50"><span class="u">万円</span></div></div>
                 <div class="field" data-buy-only><label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="subsidy-on" style="width:auto;"> 購入年に補助金等を見込む</label><div class="input-unit"><input type="number" id="subsidy-amt" value="110" min="0" step="10"><span class="u">万円</span></div><span class="hint">みらいエコ住宅2026のGX志向型110万円等。予算上限で終了のため確定額ではありません（初期は見込まない設定）</span></div>
-                <div class="field"><label>住宅ローン金利</label><div class="input-unit"><input type="number" id="loan-rate" value="0.95" min="0" max="10" step="0.05"><span class="u">％</span></div><span class="hint">ご参考（2026年7月時点）：変動0.8〜1.0%前後・全期間固定（フラット35）約3.1%。実際の適用金利は金融機関にご確認ください</span></div>
                 <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" id="loan-term" value="35" min="1" max="50"><span class="u">年</span></div></div>
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
                 <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
@@ -964,7 +962,13 @@
                   <button type="button" data-ratetype="step5">5年ごと変動</button>
                   <button type="button" data-ratetype="step10">10年ごと変動</button>
                 </div>
-                <div id="loan-rate-fixed-note" class="hint" style="margin-top:10px;">上の「住宅ローン金利」を、全期間に適用します。※初期値0.95%は変動金利の実勢水準です。全期間固定でご検討の場合は3%前後に変更するか、「5年ごと変動」で上昇シナリオもご確認ください。</div>
+                <div id="loan-rate-fixed-note" style="margin-top:10px;">
+                  <div class="field" style="max-width:260px;">
+                    <label>金利（全期間固定で適用）</label>
+                    <div class="input-unit"><input type="number" id="loan-rate" value="0.95" min="0" max="10" step="0.05"><span class="u">％</span></div>
+                    <span class="hint">ご参考（2026年7月時点）：変動0.8〜1.0%前後・全期間固定（フラット35）約3.1%。全期間固定でご検討の場合は3%前後に変更するか、「5年ごと変動」で上昇シナリオもご確認ください。</span>
+                  </div>
+                </div>
                 <div id="loan-rate-variable-wrap" class="hidden" style="margin-top:10px;">
                   <span class="hint">見直し時期ごとの想定金利を入力してください。実際の金利は市場環境により変動するため、あくまで目安としてご活用ください。</span>
                   <div id="rows_step5" class="rate-period-rows hidden"></div>
@@ -1279,11 +1283,11 @@
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <div class="card" id="ichijo-compare-card">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
-          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、30年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
+          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。さらに、浮いたお金を<b>資産運用にまわした場合の差</b>もあわせて表示します。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
           <div class="ic-level">
             <span class="ic-level-label">比較期間：</span>
             <div class="seg" id="ichijo-horizon-seg">
-              <button type="button" data-ichorizon="30" class="active">30年</button>
+              <button type="button" data-ichorizon="35" class="active">35年</button>
               <button type="button" data-ichorizon="end"><span id="ic-horizon-end-label">100歳まで</span></button>
               <button type="button" data-ichorizon="custom">年数を指定</button>
             </div>
@@ -1293,12 +1297,10 @@
           </div>
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
-            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-strict"> 一条側の設備更新費も差し引いて厳しめに見る</label>
             <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="600" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（一般住宅との差・編集可）</span></span>
-            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-invest-on"> この差額を運用に回すと？</label>
-            <span id="ic-invest-ret-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:6px;">想定利回り <input type="number" id="ic-invest-ret" value="3" min="0" max="15" step="0.5" style="width:52px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">%</span>
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-invest-on" checked> 資産運用の効果もあわせて見る</label>
           </div>
-          <div class="ic-invest-result hidden" id="ic-invest-result"></div>
+          <div class="ic-invest-result" id="ic-invest-result"></div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この差額を、わが家の数字で確かめる（無料相談）</button>
           </div>
@@ -2165,21 +2167,6 @@
       const self = m.selfMan * degSum;
       return { sell: Math.round(sell), self: Math.round(self), total: Math.round(sell + self) };
     }
-    // 差額（光熱費・太陽光・メンテ）を年ごとに積み上げ、指定の利回りで複利運用した場合の将来価値。
-    // r=0のときは現金のまま貯めた場合（renderIchijoCompare()のtotal）と一致するよう同じ年割りで計算する
-    function ichijoInvestedTotal(years, retPct){
-      const r = Math.max(retPct, 0)/100;
-      const m = ichijoSolarModel();
-      const strict = !!($('ic-strict') && $('ic-strict').checked);
-      const maintY = ICHIJO_MAINT30/30, equipY = strict ? 330/30 : 0;
-      let bal = 0;
-      for(let y=1; y<=Math.round(years); y++){
-        let solarY = 0;
-        if(y<=30) solarY = m.sellKwh*Math.pow(0.995,y-1)*ichijoSellPrice(m.kw,y)/10000 + m.selfMan*Math.pow(0.995,y-1);
-        bal = bal*(1+r) + (m.utilSave + solarY + maintY - equipY);
-      }
-      return Math.round(bal);
-    }
     // 3項目合計の30年差（AI診断・チャット個別診断で共有する単一の計算源。比較カードは期間切替に応じて別計算）
     function ichijoCompareTotal(){
       const m = ichijoSolarModel();
@@ -2206,14 +2193,17 @@
         if(c && c.style.display!=='none') c.scrollIntoView({behavior:'smooth', block:'start'});
       }
     });
-    // 比較期間（30年 ／ シミュレーション終了年齢まで ／ 年数を指定）
-    let ichijoHorizon = '30';
+    // 比較期間（35年＝返済期間に合わせた既定 ／ シミュレーション終了年齢まで ／ 年数を指定）
+    let ichijoHorizon = '35';
     function ichijoHorizonYears(){
-      if(ichijoHorizon === 'custom') return Math.min(Math.max(Math.round(num('ic-horizon-custom', 20)), 1), 70);
-      if(ichijoHorizon !== 'end') return 30;
-      const endAge  = num('end-age', 100);
-      const baseAge = (houseType==='owned') ? num('owned-age', num('h-age',35)) : num('buy-age', num('h-age',35));
-      return Math.min(Math.max(endAge - baseAge, 10), 70);   // 購入年齢〜終了年齢（10〜70年の範囲でガード）
+      if(ichijoHorizon === 'custom') return Math.min(Math.max(Math.round(num('ic-horizon-custom', 35)), 1), 70);
+      if(ichijoHorizon === 'end'){
+        const endAge  = num('end-age', 100);
+        const baseAge = (houseType==='owned') ? num('owned-age', num('h-age',35)) : num('buy-age', num('h-age',35));
+        return Math.min(Math.max(endAge - baseAge, 10), 70);   // 購入年齢〜終了年齢（10〜70年の範囲でガード）
+      }
+      const n = parseInt(ichijoHorizon, 10);   // 固定期間プリセット（既定35年）
+      return isNaN(n) ? 35 : Math.min(Math.max(n, 1), 70);
     }
     function updateIchijoHorizonLabel(){
       const el = $('ic-horizon-end-label');
@@ -2261,22 +2251,19 @@
         }
       }
     }
-    // 「一般住宅 vs 一条」30年比較カードの描画
-    function renderIchijoCompare(){
+    // 「一般住宅 vs 一条」比較カードの描画。simRows/noInvRows＝運用あり/なしのシミュレーション結果（recomputeから受け取る）
+    function renderIchijoCompare(simRows, noInvRows){
       const card = $('ichijo-compare-card'); if(!card) return;
       const show = (houseType==='buy' || houseType==='owned');
       card.style.display = show ? '' : 'none';
       if(!show) return;
       const m = ichijoSolarModel();
-      const years = ichijoHorizonYears();                      // 比較期間：30年 または シミュレーション終了年齢まで
+      const years = ichijoHorizonYears();                      // 比較期間：35年 ／ 終了年齢まで ／ 年数を指定
       updateIchijoHorizonLabel();
       const sol = ichijoSolarSum(m, years);                    // 太陽光：パネル寿命を考慮し31年目以降は見込まない
       const utilDiffN = m.utilSave * years;                    // 光熱費：高断熱による削減（期間に比例）
       const maintN    = Math.round(ICHIJO_MAINT30 * years / 30);   // 外壁メンテ差：再塗装周期に応じて期間に比例した概算
-      const strict = !!($('ic-strict') && $('ic-strict').checked);       // 両面提示：一条側の設備更新費も差し引く厳しめ表示
-      const EQUIPN = Math.round(330 * years / 30);             // 一条側の設備更新費（施主試算270〜390万円/30年の中央値を期間比例）
-      const totalRaw = utilDiffN + sol.total + maintN;         // 3項目の差
-      const total = strict ? (totalRaw - EQUIPN) : totalRaw;
+      const total = utilDiffN + sol.total + maintN;            // 住宅の差（3項目の合計）
       // 結論を最初に：合計→月あたり→初期費用・建物価格差まで差し引いた「正味」の順で翻訳
       const horizonLbl = (ichijoHorizon==='end') ? `${num('end-age',100)}歳まで（${years}年）` : `${years}年`;
       const monthly = (total/(years*12)).toFixed(1);
@@ -2285,34 +2272,43 @@
       const fairLine = afterAll > 0
         ? `さらに太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで差し引いても、<b>${horizonLbl}で約${fmt(afterAll)}万円プラス</b>の計算です。`
         : `太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで含めると、${horizonLbl}では<b>おおむね相殺（差し引き約${fmt(Math.abs(afterAll))}万円のマイナス）</b>の計算です。快適性・耐震・停電時の安心は金額外の価値としてご検討ください。`;
-      const strictLine = strict ? `<b>一条側の設備更新費 約${fmt(EQUIPN)}万円を差し引いた厳しめの試算です。</b>` : '';
       $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
-        + `<div class="ict-sub">${strictLine}この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${fairLine}</div>`;
-      // 差額を運用に回した場合（浮いたお金を現金のまま vs 想定利回りで複利運用した場合の比較）
+        + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${fairLine}</div>`;
+      // 住宅の差 と 運用の差 を一目で（運用の差＝ライフプランで⑤資産運用をした場合と、しなかった＝預金のままの場合の総資産差）
       const investBox = $('ic-invest-result');
       if(investBox){
         const investOn = !!($('ic-invest-on') && $('ic-invest-on').checked);
         investBox.classList.toggle('hidden', !investOn);
         if(investOn){
-          const retPct = Math.max(num('ic-invest-ret', 3), 0);
-          const investedTotal = ichijoInvestedTotal(years, retPct);
-          const investGain = investedTotal - total;
-          const retCaution = retPct > 5 ? '長期の世界株式の平均（年5%前後）を上回る想定のため、控えめな利回りでも確認しておくと安心です。' : '';
-          investBox.innerHTML = `<div class="ic-invest-row"><span>現金のまま貯めた場合</span><b>約${fmt(total)}万円</b></div>`
-            + `<div class="ic-invest-row highlight"><span>年率${retPct}%で運用した場合（一条の家＋資産運用）</span><b>約${fmt(investedTotal)}万円</b></div>`
-            + `<div class="ic-invest-sub">運用の効果だけで約${fmt(investGain)}万円の上乗せ（複利・${horizonLbl}の試算）。${retCaution}あくまで一定の利回りを前提にした計算で、実際の運用成果を保証するものではありません。</div>`;
+          // 期間末（購入年齢＋比較年数）の時点で、運用あり／なしの総資産を比べる
+          let investDiff = 0, hasSim = false;
+          if(simRows && simRows.length && noInvRows && noInvRows.length){
+            const baseAge = (houseType==='owned') ? num('owned-age', num('h-age',35)) : num('buy-age', num('h-age',35));
+            const targetAge = Math.round(baseAge + years);
+            const netAt = (arr)=>{ const r = arr.find(x=> x.hAge===targetAge) || arr[arr.length-1]; return r.net; };
+            investDiff = Math.round(netAt(simRows) - netAt(noInvRows));
+            hasSim = true;
+          }
+          const investLine = hasSim
+            ? (investDiff > 0
+                ? `<div class="ic-invest-row highlight"><span>運用の差（資産運用あり − なし）</span><b>＋約${fmt(investDiff)}万円</b></div>`
+                  + `<div class="ic-invest-sub"><b>住宅の差</b>は一条の高性能で毎年の光熱費などが軽くなる分、<b>運用の差</b>は「⑤ 貯蓄・資産運用」を続けた場合と、運用せず預金のままの場合の、${horizonLbl}時点の総資産の差です。一条で浮いたお金も家計にまわせば、この運用の力がさらに働きます（⑤の想定利回り・積立額による複利のため、実際の運用成果を保証するものではありません）。</div>`
+                : `<div class="ic-invest-row"><span>運用の差（資産運用あり − なし）</span><b>約${fmt(investDiff)}万円</b></div>`
+                  + `<div class="ic-invest-sub">いまは「⑤ 貯蓄・資産運用」に運用商品が設定されていないため、運用による差はほとんど出ていません。左の⑤で毎月の積立を設定すると、資産運用ありとなしの総資産の差がここに表示されます。</div>`)
+            : `<div class="ic-invest-sub">「⑤ 貯蓄・資産運用」を設定すると、資産運用ありとなしの総資産の差がここに表示されます。</div>`;
+          investBox.innerHTML = `<div class="ic-invest-row"><span>住宅の差（一条の高性能で浮くお金・${horizonLbl}）</span><b>約${fmt(total)}万円</b></div>`
+            + investLine;
         } else {
           investBox.innerHTML = '';
         }
       }
-      // 内訳バー（厳しめON時は一条側の設備更新費をマイナス行で明示＝両面提示）
+      // 内訳バー（光熱費・太陽光・メンテの3項目）
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
         { label:'光熱費',          amt:utilDiffN, sub:`高断熱による削減（${regionLbl}・自家消費の節約は下の太陽光側に計上）` },
         { label:'太陽光の収支',    amt:sol.total, sub:`売電 約${fmt(sol.sell)}万円＋自家消費 約${fmt(sol.self)}万円（${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}・パネル劣化 年0.5%込み${years>30 ? '・31年目以降は寿命として見込まず' : ''}）` },
         { label:'メンテナンス費',  amt:maintN,    sub:'外壁・屋根の塗替え不要分（設備の更新費は別枠＝下の注記参照）' },
       ];
-      if(strict) rows.push({ label:'設備更新費', amt:EQUIPN, neg:true, sub:'一条側の負担（床暖房熱源機・ロスガード90・パワコン等：施主試算270〜390万円/30年の中央値を期間比例）' });
       const max = Math.max(...rows.map(r=> r.amt), 1);
       $('ic-bars').innerHTML = rows.map(r=>
         `<div class="ic-row"><span class="ic-rlabel">${r.label}</span>`
@@ -2325,13 +2321,13 @@
       const ichTotal = Math.max(genTotal - total, 0);
       drawIchijoChart(genTotal, ichTotal);
       const zeroNote = (genTotal - total < genTotal*0.1)
-        ? `この前提では売電・自家消費が3項目の差を上回り、<b>実質負担がほぼゼロになる計算</b>です。初期費用・設備更新費・建物価格差は別途のため、上の「厳しめに見る」や建物価格差の欄もあわせてご覧ください。` : '';
+        ? `この前提では売電・自家消費が3項目の差を上回り、<b>実質負担がほぼゼロになる計算</b>です。初期費用・設備更新費・建物価格差は別途のため、上の建物価格差の欄もあわせてご覧ください。` : '';
       $('ic-note').innerHTML = `※ ${zeroNote}いずれも<b>居住地域・仕様・使用状況・制度改定</b>で大きく変わる概算の目安です。<br>`
         + `・<b>比較期間</b>：「${num('end-age',100)}歳まで」は購入年齢からシミュレーション終了年齢までの${ichijoHorizon==='end' ? years : Math.min(Math.max(num('end-age',100)-((houseType==='owned')?num('owned-age',35):num('buy-age',36)),10),70)}年間です。太陽光はパネル寿命を考慮し31年目以降の売電・自家消費を見込まず、外壁メンテ差・設備更新費は再塗装・交換の周期に応じて期間に比例した概算です。<br>`
         + `・<b>太陽光</b>：2026年度FITの区分（10kW以上＝19円が5年間→8.3円の事業用扱い／10kW未満＝24円が4年間）で計算し、<b>パネルの経年劣化（年0.5%）を織り込み済み</b>。卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利です。10kW以上は発電量の30%以上の自家消費が制度の要件で、地域により出力制御で売電が数%目減りする場合があり、売電収入は雑所得の申告対象になることがあります。<br>`
         + `・<b>自家消費の節約</b>は実際の電気代の8割程度を上限に計上しています（基本料金や夜間の買電は残るため）。<br>`
         + `・<b>出典</b>：一般住宅の光熱費は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
-        + `・<b>比較に含めないもの</b>：一条側の設備更新費（約270〜390万円の施主試算）も、一般住宅側の給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。「設備更新費も差し引いて厳しめに見る」で一条側の分を差し引いた表示に切り替えられます。<br>`
+        + `・<b>比較に含めないもの</b>：一条側の設備更新費（約270〜390万円の施主試算）も、一般住宅側の給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。<br>`
         + `<span style="color:var(--ink-soft);">一条工務店非公式・Office-M（生命保険募集人）試算</span>`;
     }
     function drawIchijoChart(genTotal, ichTotal){
@@ -2366,15 +2362,9 @@
       openReserve();
       const t = $('rv-topic'); if(t) t.value = '一条工務店の家の資金計画';
     });
-    // 厳しめ表示トグル・建物価格差の変更 → 再計算
-    if($('ic-strict')) $('ic-strict').addEventListener('change', recompute);
+    // 建物価格差の変更・「資産運用の効果もあわせて見る」トグル → 再計算
     if($('ic-price-gap')) $('ic-price-gap').addEventListener('input', recompute);
-    // 「差額を運用に回すと？」トグル・想定利回りの変更 → 再計算
-    if($('ic-invest-on')) $('ic-invest-on').addEventListener('change', ()=>{
-      const w = $('ic-invest-ret-wrap'); if(w) w.classList.toggle('hidden', !$('ic-invest-on').checked);
-      recompute();
-    });
-    if($('ic-invest-ret')) $('ic-invest-ret').addEventListener('input', recompute);
+    if($('ic-invest-on')) $('ic-invest-on').addEventListener('change', recompute);
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
@@ -2492,7 +2482,7 @@
       return rows;
     }
     function buildLoanSchedule(){
-      const principal = Math.max(num('house-price',0)-num('down',0), 0);
+      const principal = Math.max(num('house-price',0), 0);   // house-price＝住宅ローン総額（借入額そのもの・頭金は別枠の現金）
       const term = num('loan-term',35);
       const totalMonths = Math.max(0, Math.round(term*12));
       const bonusPay = num('loan-bonus-pay',0);
@@ -2704,10 +2694,10 @@
       // 住居
       const rent = num('rent',0);
       const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
-      const price = num('house-price',0), down = num('down',0);
+      const price = num('house-price',0), down = num('down',0);   // price＝住宅ローン総額（借入額）
       const loanTerm = num('loan-term',35);
       const propTax = num('prop-tax',0), maint = num('maint',0);
-      const principal = Math.max(price - down, 0);
+      const principal = Math.max(price, 0);   // 借入額そのもの（頭金は下のdownThisYearで購入年の現金支出として計上）
       const loanSchedule = buildLoanSchedule();   // 固定/変動金利・ボーナス払いを反映した月次返済スケジュール
 
       // ○歳での一括返済オプション（残債は自動計算。手入力があれば優先）
@@ -2778,7 +2768,7 @@
           expense += rent*12*inflF;
         } else {
           if(houseType==='buy' && hAge===buyAge){
-            downThisYear = down + num('buy-costs',0);   // 頭金＋購入時の諸費用（登記・ローン手数料・外構等）
+            downThisYear = down;   // 購入年に用意する頭金（現金支出。諸費用は住宅ローン総額に含める前提）
             if($('subsidy-on') && $('subsidy-on').checked) income += num('subsidy-amt',0);   // 補助金（初期OFF・見込む場合のみ計上）
             eventList.push({label:'マイホーム購入', type:'family'});
           }
@@ -2941,7 +2931,7 @@
       const el = $('loan-monthly-result'); if(!el) return;
       if(houseType==='rent'){ el.textContent = '賃貸のため対象外です。'; return; }
       const schedule = buildLoanSchedule();
-      if(!schedule.rows.length){ el.textContent = '物件価格・頭金・返済期間をご確認ください。'; return; }
+      if(!schedule.rows.length){ el.textContent = '住宅ローン総額・返済期間をご確認ください。'; return; }
       const type = loanRateType();
       const repayType = loanRepayType();
       const bonusPay = num('loan-bonus-pay',0);
@@ -3048,7 +3038,7 @@
       drawAssetTable(rows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
-      renderIchijoCompare();   // 【一条フック】30年比較カードの更新
+      renderIchijoCompare(rows, noInvRows);   // 【一条フック】比較カード（住宅の差＋運用あり/なしの差）の更新
     }
 
     /* ============================================================
@@ -5064,7 +5054,7 @@
       Object.entries(s.fields||{}).forEach(([id,val])=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
-      if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '30'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); }   // 【一条フック】比較期間の復元（旧保存のichijoLevelは無視）
+      if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }

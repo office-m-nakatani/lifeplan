@@ -269,7 +269,7 @@
     .btn-add:hover{ background:var(--blue-pale2); }
 
     /* 運用商品の行（種類＋名称＋4項目） */
-    .row-item.invest-row{ display:block; }
+    .row-item.invest-row, .row-item.ins-row{ display:block; }
     .ir-head{ display:flex; gap:8px; align-items:center; margin-bottom:12px; }
     .ir-head .iv-type{ flex:1 1 auto; max-width:240px; }
     .ir-head .iv-name{ flex:1 1 110px; min-width:0; }
@@ -1195,6 +1195,45 @@
           </div>
         </div>
 
+        <!-- ⑦ 加入中の保険（死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。単身は診断対象外のため非表示 -->
+        <div class="acc" data-acc data-couple-only>
+          <button class="acc-head" type="button">
+            <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
+            <span class="acc-title"><b>⑦ 加入中の保険（任意）</b><span>いま入っている死亡保障を診断に反映</span></span>
+            <i class="fa-solid fa-chevron-down acc-chev"></i>
+          </button>
+          <div class="acc-body">
+            <div class="field">
+              <label>入力方法</label>
+              <div class="seg" id="hoken-mode-seg">
+                <button type="button" data-hokenmode="detail" class="active">保険ごとに入力</button>
+                <button type="button" data-hokenmode="simple">まとめて入力</button>
+              </div>
+            </div>
+
+            <!-- 保険ごとに入力 -->
+            <div class="conditional" data-hoken-panel="detail">
+              <div id="ins-list"></div>
+              <button class="btn-add" id="add-ins" type="button"><i class="fa-solid fa-plus"></i> 加入中の保険を追加</button>
+              <div class="note">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>保険証券や「ご契約内容のお知らせ」の<strong>死亡保険金額</strong>を転記してください。<strong>収入保障保険（家族収入保障・逓減定期）</strong>は「年金月額」と「何歳まで受け取れるか」を入力すると、<strong>残り期間分の総額に換算</strong>して計算します（受取総額は年々減っていく保険です）。医療保険・がん保険など死亡保障のないものは対象外です。</span>
+              </div>
+            </div>
+
+            <!-- まとめて入力（証券が手元にない・詳細が分からない場合） -->
+            <div class="conditional hidden" data-hoken-panel="simple">
+              <div class="grid2">
+                <div class="field"><label>夫の死亡保障の合計</label><div class="input-unit"><input type="number" id="ins-total-h" value="0" min="0" step="100"><span class="u">万円</span></div></div>
+                <div class="field"><label>妻の死亡保障の合計</label><div class="input-unit"><input type="number" id="ins-total-w" value="0" min="0" step="100"><span class="u">万円</span></div></div>
+              </div>
+              <span class="hint">加入中の保険の死亡保険金額をざっくり合計してください。収入保障保険は「月額×12か月×残り年数」で総額の目安に（例：月10万円×残り20年＝2,400万円）</span>
+            </div>
+
+            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄（項目ごとに入力の場合）で家計に反映されます。ここに入力した保障額は、AI診断「万が一の備え」の必要保障額の計算に使います。</span>
+          </div>
+        </div>
+
       </div><!-- /input-panel -->
 
       <!-- ===================== 結果パネル ===================== -->
@@ -1941,6 +1980,91 @@
         };
       });
     }
+
+    /* ---------- 加入中の保険（死亡保障）：AI診断の必要保障額から差し引く ---------- */
+    function insRow(who='h', type='shunyu', name='', amount=0, monthly=0, endAge=65){
+      const div = document.createElement('div');
+      div.className = 'row-item ins-row';
+      const ow = (v,l)=> `<option value="${v}"${who===v?' selected':''}>${l}</option>`;
+      const ot = (v,l)=> `<option value="${v}"${type===v?' selected':''}>${l}</option>`;
+      div.innerHTML = `
+        <div class="ir-head">
+          <input type="checkbox" class="iv-on" checked title="この保険を計算に反映">
+          <select class="ins-who" style="flex:0 0 84px;">${ow('h','夫')}${ow('w','妻')}</select>
+          <select class="iv-type ins-type">
+            ${ot('shunyu','収入保障保険（家族収入・逓減）')}${ot('teiki','定期保険')}${ot('shushin','終身保険')}${ot('other','養老・共済・その他')}
+          </select>
+          <input type="text" class="iv-name ins-name hidden" placeholder="保険の名前・メモ" value="${esc(name)}">
+          <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+        <div class="ir-grid">
+          <div class="field" data-ins-field="amount"><label>死亡保険金</label><div class="input-unit"><input type="number" class="ins-amount" value="${amount}" min="0" step="100"><span class="u">万円</span></div></div>
+          <div class="field" data-ins-field="monthly"><label>年金月額</label><div class="input-unit"><input type="number" class="ins-monthly" value="${monthly}" min="0" step="1"><span class="u">万円</span></div></div>
+          <div class="field" data-ins-field="end"><label class="ins-end-label">受取は何歳まで</label><div class="input-unit"><input type="number" class="ins-end" value="${endAge}" min="0" max="110"><span class="u">歳</span></div></div>
+        </div>`;
+      const typeSel = div.querySelector('.ins-type'), nameInp = div.querySelector('.ins-name');
+      const updateFields = ()=>{
+        const t = typeSel.value;
+        div.querySelector('[data-ins-field="amount"]').classList.toggle('hidden', t==='shunyu');
+        div.querySelector('[data-ins-field="monthly"]').classList.toggle('hidden', t!=='shunyu');
+        div.querySelector('[data-ins-field="end"]').classList.toggle('hidden', t==='shushin');
+        div.querySelector('.ins-end-label').textContent = (t==='shunyu') ? '受取は何歳まで' : '保障は何歳まで';
+        nameInp.classList.toggle('hidden', t!=='other');
+      };
+      updateFields();
+      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
+      typeSel.addEventListener('change', ()=>{ updateFields(); recompute(); });
+      div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
+      $('ins-list').appendChild(div);
+    }
+    function readInsurances(){
+      const list = $('ins-list'); if(!list) return [];
+      return [...list.querySelectorAll('.ins-row')]
+        .filter(r=> r.querySelector('.iv-on').checked)
+        .map(r=>({
+          who: r.querySelector('.ins-who').value,
+          type: r.querySelector('.ins-type').value,
+          name: r.querySelector('.ins-name').value,
+          amount: Math.max(parseFloat(r.querySelector('.ins-amount').value)||0, 0),
+          monthly: Math.max(parseFloat(r.querySelector('.ins-monthly').value)||0, 0),
+          end: parseInt(r.querySelector('.ins-end').value)||0
+        }));
+    }
+    function hokenMode(){ return document.querySelector('#hoken-mode-seg button.active')?.dataset.hokenmode || 'detail'; }
+    function setHokenMode(m){
+      const seg = $('hoken-mode-seg'); if(!seg) return;
+      [...seg.children].forEach(x=> x.classList.toggle('active', x.dataset.hokenmode===m));
+      document.querySelectorAll('[data-hoken-panel]').forEach(p=> p.classList.toggle('hidden', p.dataset.hokenPanel!==m));
+    }
+    /* who='h'|'w' に掛かっている死亡保障の現時点の総額（万円）。
+       収入保障保険は「月額×12か月×満了までの残り年数」で総額換算（受取総額が年々減る保険の現在値）。
+       定期・養老等は満了歳まで、終身は常時カウント。まとめて入力時は合計欄をそのまま使う */
+    function insCoverFor(who){
+      const age = (who==='h') ? num('h-age',35) : num('w-age',33);
+      if(hokenMode()==='simple'){
+        return { total: Math.round(Math.max(num(who==='h' ? 'ins-total-h' : 'ins-total-w', 0), 0)), hasIncome:false, simple:true };
+      }
+      let total = 0, hasIncome = false;
+      readInsurances().filter(x=> x.who===who).forEach(x=>{
+        if(x.type==='shunyu'){
+          const yrs = Math.max((x.end||65) - age, 0);
+          if(yrs>0 && x.monthly>0){ total += x.monthly*12*yrs; hasIncome = true; }
+        } else if(x.type==='shushin'){
+          total += x.amount;
+        } else {
+          if(x.end<=0 || age < x.end) total += x.amount;   // 満了歳の入力がなければ有効とみなす
+        }
+      });
+      return { total: Math.round(total), hasIncome, simple:false };
+    }
+    const hokenModeSeg = $('hoken-mode-seg');
+    if(hokenModeSeg) hokenModeSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      setHokenMode(b.dataset.hokenmode);
+      recompute();
+    });
+    if($('add-ins')) $('add-ins').addEventListener('click', ()=>{ insRow(); recompute(); });
+    ['ins-total-h','ins-total-w'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', recompute); });
 
     /* ---------- 住まいセグメント切替 ---------- */
     let houseType = 'rent';
@@ -3271,24 +3395,51 @@
       } else {
         const n = insuranceNeed(); const nh = n.h, nw = n.w;
         const both = Math.max(nh.need, nw.need);
+        const hasIns = (nh.ins>0 || nw.ins>0);
         const tone = both>0 ? 'warn' : 'ok';
-        // 「不足額＝いま追加で備えるべき生命保険の金額」を、内訳つきで分かりやすく表示
+        // 「不足額＝いま追加で備えるべき生命保険の金額」を、内訳つきで分かりやすく表示（加入中の保険も差し引く）
         const needLine = (name, r)=>{
           const res = r.need>0
             ? `<b class="cmp-diff-down">追加で必要な保障 約${fmt(r.need)}万円</b>`
-            : `<b class="cmp-diff-up">追加の保障は不要（今の備えで足ります）</b>`;
-          return `● <b>${esc(name)}に万一のとき</b>：必要資金 約${fmt(r.spend)}万円 − いまの備え 約${fmt(r.cover)}万円 ＝ ${res}`;
+            : (r.ins>=r.rawNeed && r.rawNeed>0
+                ? `<b class="cmp-diff-up">加入中の保険でカバーできる計算</b>`
+                : `<b class="cmp-diff-up">追加の保障は不要という計算結果</b>`);
+          const insPart = r.ins>0 ? ` − 加入中の保険 約${fmt(r.ins)}万円` : '';
+          return `● <b>${esc(name)}に万一のとき</b>：必要資金 約${fmt(r.spend)}万円 − いまの備え 約${fmt(r.cover)}万円${insPart} ＝ ${res}`;
         };
-        const sum = `「必要保障額」とは、万一のときに<b>足りなくなるお金（不足額）</b>のこと。将来かかるお金から、いまの備え（遺族年金＋遺された方の収入＋いまの資産）を差し引いた、<b>今から生命保険で備えるべき金額</b>です。<br>`
-          + needLine(hNameH(), nh) + `<br>` + needLine(wNameH(), nw);
+        const sum = `「必要保障額」とは、万一のときに<b>足りなくなるお金（不足額）</b>のこと。将来かかるお金から、いまの備え（遺族年金＋遺された方の収入＋いまの資産${hasIns?'＋加入中の保険':''}）を差し引いた、<b>今から備えたい保障額のめやす</b>です（生命保険のほか、貯蓄などで備える方法もあります）。<br>`
+          + needLine(hNameH(), nh) + `<br>` + needLine(wNameH(), nw)
+          + (hasIns ? `` : `<br><span style="font-size:.85em; color:var(--ink-soft);">※ すでに死亡保障にご加入の場合は「⑦ 加入中の保険」に入力すると、差し引いた不足額で診断します。</span>`);
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
-        if(both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
-        if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足。掛け捨ての収入保障保険で、比較的少ない保険料から備えやすい規模です（保険料は年齢・保障額・健康状態で変わります）。`);
-        if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足。共働きでは妻側の備えも重要です。`);
+        if(hasIns && (nh.rawNeed>0 || nw.rawNeed>0) && nh.ins>=nh.rawNeed && nw.ins>=nw.rawNeed) good.push(`加入中の保険（${esc(hNameH())} 約${fmt(nh.ins)}万円／${esc(wNameH())} 約${fmt(nw.ins)}万円）で、計算上の必要保障額をカバーできる計算です。`);
+        if(nh.insHasIncome || nw.insHasIncome) good.push(`収入保障保険（家族収入・逓減型）は、お子さまの成長とともに必要保障額が小さくなる考え方に沿った形の保険です（受取総額は年々減っていきます。診断では満了までの残り期間分に換算しています）。`);
+        if(!hasIns && both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
+        if(nh.need>0) con.push(`<b>${esc(hNameH())}に万一</b>のとき 約${fmt(nh.need)}万円 不足${nh.ins>0?`（必要保障額 約${fmt(nh.rawNeed)}万円のうち加入中の保険 約${fmt(nh.ins)}万円を差し引いた残り）`:''}。収入保障保険など掛け捨て型の保険や貯蓄で備える方法があります（保険料は年齢・保障額・健康状態で変わります）。`);
+        if(nw.need>0) con.push(`<b>${esc(wNameH())}に万一</b>のとき 約${fmt(nw.need)}万円 不足${nw.ins>0?`（加入中の保険 約${fmt(nw.ins)}万円を差し引いた残り）`:''}。共働きでは妻側の備えも重要です。`);
+        // 収入バランス別の「働き続けられるか」懸念（計算は遺された方が今と同じ収入を維持する前提のため）
+        if(p.children.length && p.hNet>0 && p.wNet>0){
+          const share = p.hNet/(p.hNet+p.wNet);
+          if(share>=0.4 && share<=0.6){
+            con.push(`共働きで収入がほぼ半々（${esc(hNameH())} ${fmt(p.hNet)}万円：${esc(wNameH())} ${fmt(p.wNet)}万円）のため、<b>どちらに万一があっても世帯の手取りがほぼ半減</b>します。上の計算は、遺された方が<b>今と同じ働き方を続けられる前提</b>です。お子さまの送迎・急な看病を一人で担いながら同じ収入を維持できるか——難しそうな場合は、働き方をセーブする分の収入減も見込んで、計算より厚めの保障を検討する考え方があります。`);
+          } else {
+            const majorIsH = share>0.6;
+            const major = majorIsH ? hNameH() : wNameH(), minor = majorIsH ? wNameH() : hNameH();
+            const majorNet = majorIsH ? p.hNet : p.wNet;
+            const rh = Math.round(share*10);
+            con.push(`収入の比率は約${rh}：${10-rh}。<b>${esc(minor)}に万一のときの計算上の不足は小さく見えますが</b>、遺された${esc(major)}がお子さまを見ながら<b>今と同じ働き方（手取り 年約${fmt(majorNet)}万円）を続けられるか</b>が前提になります。残業や出張を減らせば世帯の柱の収入自体が下がるため、収入の少ない${esc(minor)}側の保障も「ゼロでよい」とは限りません。`);
+          }
+        }
+        if(p.children.length && (p.hNet<=0 || p.wNet<=0) && !p.single){
+          const stay = p.hNet<=0 ? hNameH() : wNameH();
+          const work = p.hNet<=0 ? wNameH() : hNameH();
+          con.push(`${esc(stay)}は現在収入がありませんが、万一の際は家事・育児を${esc(work)}が一人で担うことになり、<b>外部サービスの費用（計算では末子12歳まで年30万円目安）や、働き方の制約による収入減</b>が起こり得ます。収入がない方の保障も「不要」とは限りません。`);
+        }
         if(houseType!=='rent' && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときは<b>ローンがそのまま残ります</b>。`);
         if(nw.pensionKosei===0 && p.children.length) con.push(`${esc(wNameH())}死亡時、55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。`);
+        const overMax = Math.max(nh.over, nw.over);
+        if(overMax>=300) con.push(`加入中の保険が、計算上の必要保障額を約${fmt(overMax)}万円上回っています。保障の重複や保険料の負担が家計を圧迫していないか、確認する余地があります（必要額は前提により変わるため、余裕をどこまで持つかはご意向次第です）。`);
         if(!con.length) con.push(`貯蓄が育つほど必要な保障は小さくなります。過剰な保険がないか、定期的に見直しましょう。`);
         cats.push({ key:'hoken', label:'万が一の備え', label2:'万が一の<br>備え', icon:'fa-shield-heart', color:'#e2849a', tone, sum, good, concern:con });
       }
@@ -3890,8 +4041,14 @@
       const workYears = Math.max(0, Math.min(yrs, surRetire - surAge));
       const income = surNet * workYears;
       const cover = pension + income + p.assetsNow;
-      const need = Math.max(0, Math.round((spend - cover)/100)*100);  // 100万円単位に丸め
-      return { deceased, survivorIsWife, need, yrs,
+      // 必要保障額（公的保障・収入・資産を差し引いた本来の必要額）と、加入中の保険を差し引いた不足額を分けて持つ
+      const rawNeed = Math.max(0, Math.round((spend - cover)/100)*100);          // 100万円単位に丸め
+      const insInfo = insCoverFor(deceased);                                     // 亡くなった方に掛かっている死亡保障
+      const ins = insInfo.total;
+      const need = Math.max(0, Math.round((spend - cover - ins)/100)*100);       // 追加で備える不足額
+      const over = Math.max(0, ins - rawNeed);                                   // 必要額を上回っている分（見直し余地の目安）
+      return { deceased, survivorIsWife, need, rawNeed, ins, over,
+               insHasIncome: insInfo.hasIncome, insSimple: insInfo.simple, yrs,
                spend:Math.round(spend), living:Math.round(living+childcare), childcare:Math.round(childcare),
                edu:Math.round(edu), housing:Math.round(housing),
                loanBal:Math.round(loanBal), loanErased:Math.round(loanErased), loanRemain:Math.round(loanRemain),
@@ -3952,31 +4109,41 @@
           const pensionLine = `<b>遺族年金 約${fmt(r.pensionYear)}万円/年</b>（遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}）× ${r.yrs}年 ＝ 約${fmt(r.pension)}万円`
             + (r.deceased==='w' && r.pensionKosei===0 ? `<br><span style="color:#bf5656">※ 妻が亡くなった場合、55歳未満の夫には<b>遺族厚生年金が支給されません</b>（制度の盲点）。夫死亡時より保障が手薄になりやすい点に注意です。</span>` : '');
           const coverLine = `<b>用意できる資金 約${fmt(r.cover)}万円</b>＝ 遺族年金 約${fmt(r.pension)}＋${esc(survivorName)}の収入 約${fmt(r.income)}（${r.workYears}年分）＋いまの資産 ${fmt(r.assets)}`;
+          const workNote = (r.income>0 && r.p.children.length)
+            ? `<br><span style="font-size:.82em; color:var(--ink-soft);">※ ${esc(survivorName)}が現在の収入（年 約${fmt(r.surNet)}万円）を${r.workYears}年間維持できる前提の計算です。お子さまを見ながら働き方をセーブする場合、その収入減の分だけ必要額は増えます。</span>` : '';
+          const insLine = r.ins>0
+            ? `<br><b>加入中の死亡保障 約${fmt(r.ins)}万円</b>${r.insHasIncome?'（収入保障保険は満了までの残り期間分に換算）':''}` : '';
           const resultLine = r.need>0
             ? `→ <b class="cmp-diff-down">不足 約${fmt(r.need)}万円</b>＝ この分を死亡保障で備える方法があります（必要額は前提が変わると増減します）。`
-            : `→ <b class="cmp-diff-up">不足なし</b>。公的保障と資産でカバーできる計算です。`;
+            : (r.ins>=r.rawNeed && r.rawNeed>0
+                ? `→ <b class="cmp-diff-up">不足なし</b>。必要保障額 約${fmt(r.rawNeed)}万円は、加入中の保険でカバーできる計算です。`
+                : `→ <b class="cmp-diff-up">不足なし</b>。公的保障と資産でカバーできる計算です。`);
           return `<div style="margin:8px 0;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;">`
             + `<b>■ ${esc(deceasedName)}に万一のとき（${esc(survivorName)}が遺される）</b><br>`
-            + spendLine + `<br>` + pensionLine + `<br>` + coverLine + `<br>` + resultLine + `</div>`;
+            + spendLine + `<br>` + pensionLine + `<br>` + coverLine + workNote + insLine + `<br>` + resultLine + `</div>`;
         };
 
         const facts = [ famFact(p),
           `世帯の手取り収入：年 約<b>${fmt(p.hNet + p.wNet)}万円</b>（夫 ${fmt(p.hNet)}／妻 ${fmt(p.wNet)}）`,
           `いまの金融資産：<b>${fmt(p.assetsNow)}万円</b>（預貯金 ${fmt(p.cashNow)}＋運用 ${fmt(p.investNow)}）` ];
+        if(n.h.ins>0 || n.w.ins>0) facts.push(`加入中の死亡保障：${esc(hNameH())} 約<b>${fmt(n.h.ins)}万円</b>／${esc(wNameH())} 約<b>${fmt(n.w.ins)}万円</b>${(n.h.insHasIncome||n.w.insHasIncome)?'（収入保障保険は残り期間分に換算）':''}`);
         if(p.children.length) facts.push(`今後の教育費：合計 約<b>${fmt(p.eduRemain)}万円</b>`);
         facts.push(houseType==='rent' ? `住まい：賃貸（家賃 月${fmt(num('rent',0))}万円）` : `住まい：持ち家・${loanTypeLbl}`);
 
         const both = Math.max(n.h.need, n.w.need);
+        const hasIns = (n.h.ins>0 || n.w.ins>0);
         const verdictCls = both>0 ? 'warn' : 'ok';
         const verdict = both>0
-          ? `診断：追加で備える保障の目安（不足額）は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>と計算されます。（必要資金から、いまの備えを差し引いた金額。前提が変わると増減します）`
-          : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできる結果です。</b>現在のご入力条件では、追加の死亡保障は必須ではないと考えられます。`;
+          ? `診断：追加で備える保障の目安（不足額）は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円</b>／<b>${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>と計算されます。（必要資金から、いまの備え${hasIns?'と加入中の保険':''}を差し引いた金額。前提が変わると増減します）`
+          : (hasIns
+              ? `診断：計算上、<b>どちらに万一があっても公的保障＋資産＋加入中の保険でカバーできる結果です。</b>保障が重複して保険料を払いすぎていないかも、あわせて確認すると安心です。`
+              : `診断：計算上、<b>どちらに万一があっても公的保障＋資産でカバーできる結果です。</b>現在のご入力条件では、追加の死亡保障は必須ではないと考えられます。`);
 
         const body = `<b>【計算のしくみ】</b> 必要保障額＝（遺された家族の生活費＋教育費＋住居費）−（遺族年金＋遺された方の収入＋いまの資産）。`
           + detail(n.h, hNameH(), wNameH())
           + detail(n.w, wNameH(), hNameH())
           + (both>0
-              ? `不足分は<b>掛け捨ての収入保障保険</b>で比較的割安に確保しやすい形です（保険料は年齢・保障額・健康状態で変わります）。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
+              ? `不足分は<b>収入保障保険など掛け捨て型の保険</b>で比較的割安に確保しやすい形です（貯蓄で備える方法もあります。保険料は年齢・保障額・健康状態で変わります）。お子さまの独立やローン完済の節目で保障を減らしていくのがコツです。`
               : `死亡保障は最小限にし、<b>医療・就業不能への備え</b>や資産形成に回す考え方が一般的です。なお保険には掛け捨てだけでなく、<b>個人年金（5年・10年・終身で受け取る）や積立利率が生涯固定の終身保険</b>のように「貯めながら備える」使い方もあります（貯蓄型は早期解約では払込保険料を下回るのが一般的です）。最終的な要否は、ご意向やご家族の状況とあわせてご確認ください。`)
           + (houseType!=='rent' && loanType()==='solo-h'
               ? `<br><br><b>ご注意：</b>いまは夫の単独ローン（夫が団信）のため、<b>妻に万一のときはローンがそのまま残ります</b>。妻側にも一定の死亡保障を持つか、ペアローンで妻側にも団信を付けるか、多角的にご検討ください。`
@@ -4669,8 +4836,10 @@
         else {
           const both = Math.max(n.h.need, n.w.need);
           concl = both>0
-            ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>。掛け捨てなら比較的少ない保険料から<b>無理なく備えやすい規模</b>です（保険料は年齢・保障額・健康状態で変わります）。`
-            : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`;
+            ? `いま追加で備える目安は、<b>${esc(hNameH())}に万一＝約${fmt(n.h.need)}万円／${esc(wNameH())}に万一＝約${fmt(n.w.need)}万円</b>${(n.h.ins>0||n.w.ins>0)?'（加入中の保険を差し引いた不足分）':''}。掛け捨て型なら比較的少ない保険料から<b>備えやすい規模</b>です（保険料は年齢・保障額・健康状態で変わります。※不足額は前提が変わると増減する概算です）。`
+            : ((n.h.ins>0||n.w.ins>0)
+                ? `計算上、<b>公的保障と加入中の保険でカバーできる結果です</b>。保障が重複して保険料を払いすぎていないか、定期的な確認がおすすめです。`
+                : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`);
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`
           + `どんな保障をどう組むかは、ご家庭ごとに最適解が異なります。<b>数字の裏付けを一緒に確認する</b>のが、いちばんの安心につながります。` + CTA_HTML;
@@ -4863,7 +5032,9 @@
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
-        investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked }))
+        investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked })),
+        hokenMode: hokenMode(),
+        insurances: [...$('ins-list').querySelectorAll('.ins-row')].map(r=>({ who:r.querySelector('.ins-who').value, type:r.querySelector('.ins-type').value, name:r.querySelector('.ins-name').value, amount:r.querySelector('.ins-amount').value, monthly:r.querySelector('.ins-monthly').value, end:r.querySelector('.ins-end').value, on:r.querySelector('.iv-on').checked }))
       };
     }
 
@@ -4872,6 +5043,10 @@
       if(!s) return;
       adviceVariant = {};   // 読み込んだお客様ごとにAI診断の言い回しを変える
       childrenList.innerHTML=''; eventsList.innerHTML=''; incomeEventsList.innerHTML=''; $('custom-expenses').innerHTML=''; $('invest-list').innerHTML='';
+      if($('ins-list')) $('ins-list').innerHTML='';
+      // 旧保存データ（⑦追加前）読込時に、前のお客様の保険入力が残らないようリセット（新しい保存はこの後のfields復元で上書きされる）
+      if($('ins-total-h')) $('ins-total-h').value = 0;
+      if($('ins-total-w')) $('ins-total-w').value = 0;
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||''));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
@@ -4880,6 +5055,12 @@
         investRow(it.type, it.name, parseFloat(it.lump)||0, parseFloat(it.monthly)||0, parseFloat(it.ret)||0, parseInt(it.end)||65, (it.start!=null && it.start!=='') ? parseInt(it.start) : undefined, it.after||'continue');
         if(it.on===false){ const row=$('invest-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
       });
+      (s.insurances||[]).forEach(it=>{
+        const endV = (it.end==='' || it.end==null) ? '' : (parseInt(it.end)||0);   // 満了歳の空欄（無期限扱い）を保存後もそのまま保持
+        insRow(it.who||'h', it.type||'shunyu', it.name||'', parseFloat(it.amount)||0, parseFloat(it.monthly)||0, endV);
+        if(it.on===false){ const row=$('ins-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
+      });
+      setHokenMode(s.hokenMode||'detail');   // 旧保存データはモード情報なし＝既定に戻す
       Object.entries(s.fields||{}).forEach(([id,val])=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）

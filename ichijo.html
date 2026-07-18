@@ -930,7 +930,7 @@
                     <span class="hint">寒冷地は発電やや少なめ・断熱の節約は大きめ</span>
                   </div>
                 </div>
-                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。上の「前提シナリオ」はこの3つを切り替えるかんたん設定です。</span>
+                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。初期値は一条の平均搭載量（12kW）と標準蓄電池（7kWh）＝一般的な水準です。</span>
               </div>
               <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
 
@@ -1235,20 +1235,18 @@
 
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <div class="card" id="ichijo-compare-card">
-          <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（30年のランニングコスト比較）</div>
-          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでからの30年で差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を比べます。</p>
+          <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
+          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、30年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
           <div class="ic-level">
-            <span class="ic-level-label">前提シナリオ：</span>
-            <div class="seg" id="ichijo-level-seg">
-              <button type="button" data-iclevel="low">控えめ</button>
-              <button type="button" data-iclevel="std" class="active">標準</button>
-              <button type="button" data-iclevel="high">上振れ</button>
+            <span class="ic-level-label">比較期間：</span>
+            <div class="seg" id="ichijo-horizon-seg">
+              <button type="button" data-ichorizon="30" class="active">30年</button>
+              <button type="button" data-ichorizon="end"><span id="ic-horizon-end-label">100歳まで</span></button>
             </div>
-            <span id="ic-custom-badge" hidden style="font-size:.74rem; color:var(--ink-soft); border:1px solid var(--line); border-radius:999px; padding:2px 9px;">カスタム設定</span>
           </div>
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
-            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-strict"> 設備更新費（約330万円）も差し引いて厳しめに見る</label>
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-strict"> 一条側の設備更新費も差し引いて厳しめに見る</label>
             <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="600" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（一般住宅との差・編集可）</span></span>
           </div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
@@ -1961,20 +1959,15 @@
        他のライフプラン用に流用する場合：このブロック＋下記フックを削除すれば素のライフプランに戻る。
        ＜ベース側に入れたフック（検索用タグ【一条フック】）＞
          - recompute() 末尾の renderIchijoCompare();
-         - collectState() の htype, ichijoLevel
-         - applyState() の htype/ichijoLevel 復元
+         - collectState() の htype, ichijoRegion, ichijoHorizon
+         - applyState() の htype/ichijoRegion/ichijoHorizon 復元
          - TOPIC_ORDER 先頭の 'ichijo'、KB の ichijo トピック
          - チャットチップ、フッター前提文、SAVE_KEY、共有URL
        ══════════════════════════════════════════════════════════════════ */
     /* ---------- 一条工務店：住宅の性能タイプ／30年比較 ---------- */
-    // 前提シナリオ（控えめ／標準／上振れ）＝「かんたん設定」ショートカット。
-    // クリックすると下の太陽光kW・蓄電池・地域がまとめて切り替わる。
-    // maint30=外壁・屋根メンテ費の30年差（一条側の設備更新費は含めない＝ic-noteに明記）
-    const ICHIJO_PRESET = {
-      low:  { kw:8,  batt:0, maint30:60  },   // 控えめ：8kW・蓄電池なし
-      std:  { kw:12, batt:7, maint30:100 },   // 標準：12kW（2024年度平均）・蓄電池7kWh
-      high: { kw:15, batt:7, maint30:160 },   // 上振れ：大容量15kW・蓄電池7kWh（地域はお住まいの選択のまま動かさない）
-    };
+    // 前提は「一般的な数値」に一本化（控えめ／上振れのシナリオ切替は廃止）。
+    // 太陽光12kW（一条の2024年度平均）・蓄電池7kWh（標準品）は入力欄の初期値として設定済み。
+    const ICHIJO_MAINT30 = 100;   // 外壁・屋根メンテ費の30年差（一般サイディング相場との比較・一般的な数値。一条側の設備更新費は含めない＝ic-noteに明記）
     /* ---------- 太陽光の精密モデル（kW・蓄電池・地域 → 発電・売電・自家消費）----------
        発電量係数＝温暖地1,150／寒冷地1,050 kWh/kW（一条の高効率パネル前提でやや高め）
        自家消費率＝30%＋蓄電池kWh×3%（上限60%）。自家消費1kWhの価値＝買電単価32円の節約。
@@ -2027,17 +2020,25 @@
       const kw = Math.max(num('ichijo-solar-kw', 12), 0);
       return (ichijoSellPrice(kw, yo+1) / ichijoSellPrice(kw, 1)) * Math.pow(0.995, yo);   // 単価カーブ×パネル劣化0.5%/年
     }
-    // 3項目合計の30年差（比較カード・AI診断・チャット個別診断で共有する単一の計算源）
+    // 任意期間の太陽光収支（パネル寿命を考慮し31年目以降は見込まない・劣化0.5%/年込み）
+    function ichijoSolarSum(m, years){
+      const n = Math.min(Math.max(Math.round(years), 1), 30);
+      let sell = 0;
+      for(let y=1; y<=n; y++) sell += m.sellKwh * Math.pow(0.995, y-1) * ichijoSellPrice(m.kw, y) / 10000;
+      const degSum = (1 - Math.pow(0.995, n)) / 0.005;
+      const self = m.selfMan * degSum;
+      return { sell: Math.round(sell), self: Math.round(self), total: Math.round(sell + self) };
+    }
+    // 3項目合計の30年差（AI診断・チャット個別診断で共有する単一の計算源。比較カードは期間切替に応じて別計算）
     function ichijoCompareTotal(){
       const m = ichijoSolarModel();
-      return m.utilSave*30 + m.solar30 + ICHIJO_PRESET[ichijoLevel].maint30;
+      return m.utilSave*30 + m.solar30 + ICHIJO_MAINT30;
     }
     // 比較チャートの一般住宅ベースライン（30年・目安。出典：総務省家計調査の光熱費水準＋窯業サイディングの30年メンテ相場）
     const GEN_UTIL_PER_YEAR = 20;   // 一般住宅の光熱費：総務省家計調査2025（二人以上世帯）の電気・ガス等 月約1.63万円＋オール電化置換分＝月約1.7万円相当（水道は含めない）
     const GEN_MAINT_30 = 300;       // 一般住宅の30年メンテ費 目安（相場240〜380万円の中央値近辺）
     const ICHIJO_DEGRADE_SUM30 = 27.93;   // パネル経年劣化 年0.5%（0.995^0+…+0.995^29）の30年合計係数
     let htype = 'normal';
-    let ichijoLevel = 'std';
     let ichijoChart = null;
     let userEditedZeh = false;      // 商談中に手入力した実見積の値をプリセットで巻き戻さないためのフラグ
     ['zeh-sell','zeh-save'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedZeh = true; }); });
@@ -2054,28 +2055,25 @@
         if(c && c.style.display!=='none') c.scrollIntoView({behavior:'smooth', block:'start'});
       }
     });
-    const ichijoLevelSeg = $('ichijo-level-seg');
-    if(ichijoLevelSeg) ichijoLevelSeg.addEventListener('click', (e)=>{
+    // 比較期間（30年 ／ シミュレーション終了年齢まで）
+    let ichijoHorizon = '30';
+    function ichijoHorizonYears(){
+      if(ichijoHorizon !== 'end') return 30;
+      const endAge  = num('end-age', 100);
+      const baseAge = (houseType==='owned') ? num('owned-age', num('h-age',35)) : num('buy-age', num('h-age',35));
+      return Math.min(Math.max(endAge - baseAge, 10), 70);   // 購入年齢〜終了年齢（10〜70年の範囲でガード）
+    }
+    function updateIchijoHorizonLabel(){
+      const el = $('ic-horizon-end-label');
+      if(el) el.textContent = `${num('end-age',100)}歳まで`;
+    }
+    const ichijoHorizonSeg = $('ichijo-horizon-seg');
+    if(ichijoHorizonSeg) ichijoHorizonSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
-      ichijoLevel = b.dataset.iclevel;
-      [...ichijoLevelSeg.children].forEach(x=> x.classList.toggle('active', x===b));
-      const sc = ICHIJO_PRESET[ichijoLevel];   // かんたん設定：太陽光kW・蓄電池をまとめて切替（地域は顧客の居住地なので動かさない）
-      if($('ichijo-solar-kw'))    $('ichijo-solar-kw').value = sc.kw;
-      if($('ichijo-battery-kwh')) $('ichijo-battery-kwh').value = sc.batt;
-      const badge = $('ic-custom-badge'); if(badge) badge.hidden = true;
-      if(htype==='ichijo') applyHtype();   // 一条選択中はメインの試算値も追従
+      ichijoHorizon = b.dataset.ichorizon;
+      [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x===b));
       recompute();
     });
-    // 手動入力がプリセットと食い違ったら「カスタム設定」表示（前提ラベルの嘘を防ぐ）
-    function syncIchijoLevelSeg(){
-      const seg = $('ichijo-level-seg'); if(!seg) return;
-      const kw = num('ichijo-solar-kw',12), batt = num('ichijo-battery-kwh',7);
-      let hit = null;
-      Object.entries(ICHIJO_PRESET).forEach(([k,p])=>{ if(p.kw===kw && p.batt===batt) hit=k; });
-      [...seg.children].forEach(x=> x.classList.toggle('active', hit!==null && x.dataset.iclevel===hit));
-      if(hit) ichijoLevel = hit;
-      const badge = $('ic-custom-badge'); if(badge) badge.hidden = (hit!==null);
-    }
     // 太陽光の詳細入力（kW・蓄電池・地域）→ 変更のたびにZEH値と比較カードを再計算
     const ichijoRegionSeg = $('ichijo-region-seg');
     if(ichijoRegionSeg) ichijoRegionSeg.addEventListener('click', (e)=>{
@@ -2086,7 +2084,7 @@
     });
     ['ichijo-solar-kw','ichijo-battery-kwh'].forEach(id=>{
       const el = $(id);
-      if(el) el.addEventListener('input', ()=>{ syncIchijoLevelSeg(); if(htype==='ichijo') applyHtype(); recompute(); });
+      if(el) el.addEventListener('input', ()=>{ if(htype==='ichijo') applyHtype(); recompute(); });
     });
     // 住宅タイプに合わせて、ZEH（太陽光・光熱費削減）の値をメイン試算へ反映
     function applyHtype(){
@@ -2116,31 +2114,34 @@
       card.style.display = show ? '' : 'none';
       if(!show) return;
       const m = ichijoSolarModel();
-      const utilDiff30 = m.utilSave * 30;          // 光熱費：高断熱による削減（地域で年3／6万円・自家消費とは別）
-      const solar30    = m.solar30;                // 太陽光：売電＋自家消費（kW・蓄電池・地域から計算・劣化込み）
-      const maint30    = ICHIJO_PRESET[ichijoLevel].maint30;   // 外壁・屋根メンテ費の30年差
+      const years = ichijoHorizonYears();                      // 比較期間：30年 または シミュレーション終了年齢まで
+      updateIchijoHorizonLabel();
+      const sol = ichijoSolarSum(m, years);                    // 太陽光：パネル寿命を考慮し31年目以降は見込まない
+      const utilDiffN = m.utilSave * years;                    // 光熱費：高断熱による削減（期間に比例）
+      const maintN    = Math.round(ICHIJO_MAINT30 * years / 30);   // 外壁メンテ差：再塗装周期に応じて期間に比例した概算
       const strict = !!($('ic-strict') && $('ic-strict').checked);       // 両面提示：一条側の設備更新費も差し引く厳しめ表示
-      const EQUIP30 = 330;                                               // 一条側の設備更新費（施主試算270〜390万円の中央値）
-      const total3 = utilDiff30 + solar30 + maint30;                     // 3項目の差
-      const total = strict ? (total3 - EQUIP30) : total3;
+      const EQUIPN = Math.round(330 * years / 30);             // 一条側の設備更新費（施主試算270〜390万円/30年の中央値を期間比例）
+      const totalRaw = utilDiffN + sol.total + maintN;         // 3項目の差
+      const total = strict ? (totalRaw - EQUIPN) : totalRaw;
       // 結論を最初に：合計→月あたり→初期費用・建物価格差まで差し引いた「正味」の順で翻訳
-      const monthly = (total/360).toFixed(1);
+      const horizonLbl = (ichijoHorizon==='end') ? `${num('end-age',100)}歳まで（${years}年）` : `${years}年`;
+      const monthly = (total/(years*12)).toFixed(1);
       const gap = Math.max(num('ic-price-gap', 600), 0);                 // 一般住宅との建物価格差（編集可）
       const afterAll = total - m.initCost - gap;
       const fairLine = afterAll > 0
-        ? `さらに太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで差し引いても、<b>30年で約${fmt(afterAll)}万円プラス</b>の計算です。`
-        : `太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで含めると、30年では<b>おおむね相殺（差し引き約${fmt(Math.abs(afterAll))}万円のマイナス）</b>の計算です。快適性・耐震・停電時の安心は金額外の価値としてご検討ください。`;
-      const strictLine = strict ? `<b>一条側の設備更新費 約${fmt(EQUIP30)}万円を差し引いた厳しめの試算です。</b>` : '';
-      $('ic-total').innerHTML = `<div class="ict-num">30年で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
+        ? `さらに太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで差し引いても、<b>${horizonLbl}で約${fmt(afterAll)}万円プラス</b>の計算です。`
+        : `太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで含めると、${horizonLbl}では<b>おおむね相殺（差し引き約${fmt(Math.abs(afterAll))}万円のマイナス）</b>の計算です。快適性・耐震・停電時の安心は金額外の価値としてご検討ください。`;
+      const strictLine = strict ? `<b>一条側の設備更新費 約${fmt(EQUIPN)}万円を差し引いた厳しめの試算です。</b>` : '';
+      $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
         + `<div class="ict-sub">${strictLine}この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${fairLine}</div>`;
       // 内訳バー（厳しめON時は一条側の設備更新費をマイナス行で明示＝両面提示）
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
-        { label:'光熱費',          amt:utilDiff30, sub:`高断熱による削減（${regionLbl}・自家消費の節約は下の太陽光側に計上）` },
-        { label:'太陽光の収支',    amt:solar30,    sub:`売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(m.self30)}万円（${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}・パネル劣化 年0.5%込み）` },
-        { label:'メンテナンス費',  amt:maint30,    sub:'外壁・屋根の塗替え不要分（設備の更新費は別枠＝下の注記参照）' },
+        { label:'光熱費',          amt:utilDiffN, sub:`高断熱による削減（${regionLbl}・自家消費の節約は下の太陽光側に計上）` },
+        { label:'太陽光の収支',    amt:sol.total, sub:`売電 約${fmt(sol.sell)}万円＋自家消費 約${fmt(sol.self)}万円（${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}・パネル劣化 年0.5%込み${years>30 ? '・31年目以降は寿命として見込まず' : ''}）` },
+        { label:'メンテナンス費',  amt:maintN,    sub:'外壁・屋根の塗替え不要分（設備の更新費は別枠＝下の注記参照）' },
       ];
-      if(strict) rows.push({ label:'設備更新費', amt:EQUIP30, neg:true, sub:'一条側の負担（床暖房熱源機・ロスガード90・パワコン等：施主試算270〜390万円の中央値）' });
+      if(strict) rows.push({ label:'設備更新費', amt:EQUIPN, neg:true, sub:'一条側の負担（床暖房熱源機・ロスガード90・パワコン等：施主試算270〜390万円/30年の中央値を期間比例）' });
       const max = Math.max(...rows.map(r=> r.amt), 1);
       $('ic-bars').innerHTML = rows.map(r=>
         `<div class="ic-row"><span class="ic-rlabel">${r.label}</span>`
@@ -2148,14 +2149,14 @@
         + `<span class="ic-amt"${r.neg?' style="color:#a3722f;"':''}>${r.neg?'−':'＋'}${fmt(r.amt)}万円</span></div>`
         + `<div style="grid-column:1 / -1; font-size:.72rem; color:var(--ink-soft); margin-top:-4px;">${r.sub}</div>`
       ).join('');
-      // 一般 vs 一条 の棒グラフ（3項目比較。厳しめON時は一条側に設備更新費が乗る）
-      const genTotal = GEN_UTIL_PER_YEAR*30 + GEN_MAINT_30;
+      // 一般 vs 一条 の棒グラフ（3項目比較・選択中の期間。厳しめON時は一条側に設備更新費が乗る）
+      const genTotal = Math.round(GEN_UTIL_PER_YEAR*years + GEN_MAINT_30*years/30);
       const ichTotal = Math.max(genTotal - total, 0);
       drawIchijoChart(genTotal, ichTotal);
-      const highNote = (ichijoLevel==='high') ? `「上振れ」は<b>大容量太陽光（15kW）など好条件がそろった前提</b>のシナリオです。` : '';
       const zeroNote = (genTotal - total < genTotal*0.1)
         ? `この前提では売電・自家消費が3項目の差を上回り、<b>実質負担がほぼゼロになる計算</b>です。初期費用・設備更新費・建物価格差は別途のため、上の「厳しめに見る」や建物価格差の欄もあわせてご覧ください。` : '';
-      $('ic-note').innerHTML = `※ ${highNote}${zeroNote}いずれも<b>居住地域・仕様・使用状況・制度改定</b>で大きく変わる概算の目安です。<br>`
+      $('ic-note').innerHTML = `※ ${zeroNote}いずれも<b>居住地域・仕様・使用状況・制度改定</b>で大きく変わる概算の目安です。<br>`
+        + `・<b>比較期間</b>：「${num('end-age',100)}歳まで」は購入年齢からシミュレーション終了年齢までの${ichijoHorizon==='end' ? years : Math.min(Math.max(num('end-age',100)-((houseType==='owned')?num('owned-age',35):num('buy-age',36)),10),70)}年間です。太陽光はパネル寿命を考慮し31年目以降の売電・自家消費を見込まず、外壁メンテ差・設備更新費は再塗装・交換の周期に応じて期間に比例した概算です。<br>`
         + `・<b>太陽光</b>：2026年度FITの区分（10kW以上＝19円が5年間→8.3円の事業用扱い／10kW未満＝24円が4年間）で計算し、<b>パネルの経年劣化（年0.5%）を織り込み済み</b>。卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利です。10kW以上は発電量の30%以上の自家消費が制度の要件で、地域により出力制御で売電が数%目減りする場合があり、売電収入は雑所得の申告対象になることがあります。<br>`
         + `・<b>自家消費の節約</b>は実際の電気代の8割程度を上限に計上しています（基本料金や夜間の買電は残るため）。<br>`
         + `・<b>出典</b>：一般住宅の光熱費は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
@@ -2168,7 +2169,7 @@
       ichijoChart = new Chart(cv.getContext('2d'), {
         type:'bar',
         data:{ labels:['一般住宅','一条工務店の家'], datasets:[{
-          label:'30年のランニングコスト（光熱費＋メンテ−売電）',
+          label:'ランニングコスト（光熱費＋外壁メンテ−太陽光・選択中の期間）',
           data:[Math.round(genTotal), Math.round(ichTotal)],
           backgroundColor:['#b9c4cf','#3f9d7a'], borderRadius:8, barPercentage:0.6
         }]},
@@ -4175,7 +4176,7 @@
        ══════════════════════════════════════════════════════════════════ */
     DIAG.ichijo = function(){
       const m = ichijoSolarModel();
-      const maint30 = ICHIJO_PRESET[ichijoLevel].maint30;
+      const maint30 = ICHIJO_MAINT30;
       const total = ichijoCompareTotal();
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const facts = [
@@ -4796,7 +4797,7 @@
       return {
         v:1, fields,
         house: houseType,
-        htype, ichijoLevel, ichijoRegion,   // 【一条フック】住宅の性能タイプ・比較レベル・日射区分を保存（太陽光kW/蓄電池はfieldsで自動保存）
+        htype, ichijoRegion, ichijoHorizon,   // 【一条フック】住宅の性能タイプ・日射区分・比較期間を保存（太陽光kW/蓄電池はfieldsで自動保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         kasaiCycle: kasaiCycle(),
@@ -4829,7 +4830,7 @@
       Object.entries(s.fields||{}).forEach(([id,val])=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
-      if(s.ichijoLevel && ICHIJO_PRESET[s.ichijoLevel]){ ichijoLevel = s.ichijoLevel; if(ichijoLevelSeg) [...ichijoLevelSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.iclevel===ichijoLevel)); }
+      if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '30'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); }   // 【一条フック】比較期間の復元（旧保存のichijoLevelは無視）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }

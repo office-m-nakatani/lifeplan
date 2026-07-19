@@ -197,7 +197,7 @@
         <p class="muted" id="empty-hint" style="text-align:center; padding:18px 0;">まだ顧客がいません。「新規顧客」から登録するか、ライフプランツールで保存すると自動でここに追加されます。</p>
       </div>
 
-      <div class="note"><i class="fa-solid fa-shield-halved"></i> 顧客情報はこの端末のブラウザ内（localStorage / IndexedDB）にのみ保存され、外部には送信されません。<b>共有PCでの利用は避け、「バックアップ」で定期的にJSON保存</b>してください（ブラウザのデータ削除で消えます）。添付ファイルはバックアップに含まれないため、原本は別途保管してください。</div>
+      <div class="note"><i class="fa-solid fa-shield-halved"></i> 顧客情報はこの端末のブラウザ内（localStorage / IndexedDB）にのみ保存され、外部には送信されません。<b>共有PCでの利用は避け、「バックアップ」で定期的にJSON保存</b>してください（ブラウザのデータ削除で消えます）。添付ファイルもバックアップJSONに含まれます（ファイルが多いと生成に少し時間がかかります）。</div>
     </div>
   </main>
 
@@ -348,6 +348,9 @@ function fileAdd(rec){ return new Promise((res,rej)=>{ const tx=db.transaction('
 function fileList(custId){ return new Promise((res)=>{ const out=[]; const tx=db.transaction('files','readonly'); const ix=tx.objectStore('files').index('cust'); ix.openCursor(IDBKeyRange.only(custId)).onsuccess=e=>{ const c=e.target.result; if(c){ const {blob,...meta}=c.value; out.push(meta); c.continue(); } else res(out.sort((a,b)=>b.t-a.t)); }; }); }
 function fileGet(id){ return new Promise((res)=>{ db.transaction('files','readonly').objectStore('files').get(id).onsuccess=e=>res(e.target.result); }); }
 function fileDel(id){ return new Promise((res)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').delete(id); tx.oncomplete=res; }); }
+function fileGetAllRaw(){ return new Promise((res)=>{ const out=[]; const tx=db.transaction('files','readonly'); tx.objectStore('files').openCursor().onsuccess=e=>{ const c=e.target.result; if(c){ out.push(c.value); c.continue(); } else res(out); }; }); }
+function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(r.error); r.readAsDataURL(blob); }); }
+function b64ToBlob(b64, type){ const bin=atob(b64); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr], {type: type||'application/octet-stream'}); }
 
 /* ---------- ライフプラン保存データの横断スキャン ---------- */
 const LP_TOOLS = [
@@ -660,11 +663,23 @@ async function renderFiles(){
   $('file-list').querySelectorAll('.f-del').forEach(b=> b.onclick=async ()=>{ if(confirm('この添付を削除しますか？')){ await fileDel(b.dataset.id); renderFiles(); } });
 }
 
-/* ---------- バックアップ／復元 ---------- */
-$('btn-export').onclick = ()=>{
-  const blob = new Blob([JSON.stringify({ v:1, user, exportedAt:new Date().toISOString(), data:store }, null, 1)], {type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download = `omcrm_backup_${user}_${today()}.json`; a.click();
+/* ---------- バックアップ／復元（添付ファイル込み） ---------- */
+$('btn-export').onclick = async ()=>{
+  $('btn-export').disabled = true;
+  try{
+    const custIds = new Set(Object.keys(store.customers));
+    const all = await fileGetAllRaw();
+    const mine = all.filter(f=> custIds.has(f.custId));
+    const files = [];
+    for(const f of mine){
+      const blob = f.blob.type ? f.blob : new Blob([f.blob], { type: f.type || 'application/octet-stream' });
+      files.push({ id:f.id, custId:f.custId, name:f.name, type:f.type, size:f.size, t:f.t, logId:f.logId, dataB64: await blobToB64(blob) });
+    }
+    const blob = new Blob([JSON.stringify({ v:2, user, exportedAt:new Date().toISOString(), data:store, files }, null, 1)], {type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download = `omcrm_backup_${user}_${today()}.json`; a.click();
+  }catch(e){ alert('バックアップの作成に失敗しました。'); }
+  $('btn-export').disabled = false;
 };
 $('btn-import').onclick = ()=>{
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
@@ -672,9 +687,14 @@ $('btn-import').onclick = ()=>{
     try{
       const j = JSON.parse(await e.target.files[0].text());
       if(!j.data || !j.data.customers) throw 0;
-      if(!confirm(`バックアップ（${Object.keys(j.data.customers).length}名・${j.exportedAt?j.exportedAt.slice(0,10):'日付不明'}）を読み込みます。現在のデータに追加・上書きされます。よろしいですか？`)) return;
-      Object.assign(store.customers, j.data.customers); save(); render();
-      alert('復元しました。');
+      const fileCount = Array.isArray(j.files) ? j.files.length : 0;
+      if(!confirm(`バックアップ（${Object.keys(j.data.customers).length}名・添付${fileCount}件・${j.exportedAt?j.exportedAt.slice(0,10):'日付不明'}）を読み込みます。現在のデータに追加・上書きされます。よろしいですか？`)) return;
+      Object.assign(store.customers, j.data.customers); save();
+      for(const f of (j.files||[])){
+        try{ await fileAdd({ id:f.id, custId:f.custId, name:f.name, type:f.type, size:f.size, t:f.t, logId:f.logId, blob:b64ToBlob(f.dataB64, f.type) }); }catch(e){}
+      }
+      render();
+      alert(`復元しました${fileCount?`（添付${fileCount}件を含む）`:''}。`);
     }catch(err){ alert('読み込めませんでした。バックアップファイルをご確認ください。'); }
   };
   inp.click();

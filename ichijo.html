@@ -169,7 +169,7 @@
 
     /* サブグループ（夫・妻など） */
     .subgroup{ background:var(--bg-soft); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px 16px; margin-top:14px; }
-    .subgroup-title{ font-size:.9rem; font-weight:700; color:var(--blue-deep); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .subgroup-title{ font-size:.9rem; font-weight:700; color:var(--blue-deep); display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px; }
     .subgroup-title.spouse{ color:#c2729a; }
     .subgroup-title .tag{ font-size:.7rem; background:var(--blue-pale); color:var(--blue-deep); padding:2px 9px; border-radius:999px; font-weight:700; }
     .subgroup-title.spouse .tag{ background:#fbe7f0; color:#c2729a; }
@@ -178,6 +178,7 @@
     .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; }
     .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 14px; }
     @media(max-width:560px){ .grid3{ grid-template-columns:1fr 1fr; } }
+    @media(max-width:480px){ #kasai-box .grid2{ grid-template-columns:1fr; } }
     .field{ display:flex; flex-direction:column; gap:5px; min-width:0; }
     .field label{ font-size:.85rem; font-weight:500; color:var(--ink); }
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
@@ -270,9 +271,9 @@
 
     /* 運用商品の行（種類＋名称＋4項目） */
     .row-item.invest-row, .row-item.ins-row{ display:block; }
-    .ir-head{ display:flex; gap:8px; align-items:center; margin-bottom:12px; }
-    .ir-head .iv-type{ flex:1 1 auto; max-width:240px; }
-    .ir-head .iv-name{ flex:1 1 110px; min-width:0; }
+    .ir-head{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+    .ir-head .iv-type{ flex:1 1 150px; max-width:240px; }
+    .ir-head .iv-name{ flex:1 1 130px; min-width:120px; }
     .ir-head .btn-del{ margin-left:auto; flex:0 0 auto; }
     .ir-head select, .ir-head input{
       width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px;
@@ -585,7 +586,7 @@
     .diff-plus{ color:#2f7cb5; font-weight:800; }
     .diff-minus{ color:#d05a6e; font-weight:800; }
     .kpi-diff{ min-height:1.05em; font-size:.8rem; margin-top:2px; }
-    .fdiff{ margin-left:7px; font-size:.72rem; white-space:nowrap; }
+    .fdiff{ display:block; margin-top:3px; font-size:.72rem; font-weight:700; white-space:nowrap; }
     .cmp2-placeholder{ font-size:.84rem; color:var(--ink-soft); background:var(--bg-soft); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
     /* ④生活費：トータル表示（下の項目の合計が自動反映される） */
     .living-total{
@@ -597,6 +598,11 @@
     .living-total .lt-value{ font-size:1rem; color:var(--ink); }
     .living-total .lt-value b{ font-size:1.45rem; color:var(--blue-deep); font-weight:900; }
     .living-total .lt-diff{ margin-left:8px; font-size:.8rem; }
+    #ins-total-box .lt-value{ display:flex; flex-wrap:wrap; gap:4px 20px; }
+    #ins-total-box .ins-sum-item{ white-space:nowrap; }
+    #ins-total-box .lt-diff{ white-space:nowrap; }
+    #ins-total-box .diff-plus{ color:#1f5f92; }
+    #ins-total-box .diff-minus{ color:#b83c52; }
     #plan-effect{ margin-bottom:12px; }
     #compare-card2{ border:2px solid var(--blue-pale2); }
 
@@ -625,10 +631,6 @@
     .ic-total .ict-num{ font-size:1.9rem; font-weight:800; color:#2c7a52; line-height:1.2; }
     .ic-total .ict-sub{ font-size:.82rem; color:var(--ink-soft); }
     .ic-note{ font-size:.8rem; color:var(--ink-soft); line-height:1.7; }
-    .ic-invest-result{ margin:-2px 0 12px; padding:12px 14px; border-radius:12px; background:#fdf8ee; border:1.5px solid #efdba9; }
-    .ic-invest-row{ display:flex; justify-content:space-between; gap:10px; font-size:.86rem; padding:3px 0; }
-    .ic-invest-row.highlight{ font-weight:800; color:#a3722f; }
-    .ic-invest-sub{ font-size:.76rem; color:var(--ink-soft); margin-top:4px; line-height:1.6; }
     @media(max-width:560px){ .ic-row{ grid-template-columns:88px 1fr auto; font-size:.8rem; } }
     /* ══════ 【一条工務店 専用スタイル ここまで】 ══════ */
 
@@ -941,9 +943,8 @@
               <div class="grid3">
                 <div class="field" data-buy-only><label>購入時の夫の年齢</label><div class="input-unit"><input type="number" id="buy-age" value="36" min="20" max="70"><span class="u">歳</span></div></div>
                 <div class="field hidden" data-owned-only><label>購入したときの夫の年齢</label><div class="input-unit"><input type="number" id="owned-age" value="30" min="18" max="70"><span class="u">歳</span></div><span class="hint">現在の年齢以下で入力。減税・ZEHはこの年から計算</span></div>
-                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="3600" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みで組む場合はその総額）。頭金は下の欄へ</span></div>
-                <div class="field"><label>頭金（借入と別に用意する現金）</label><div class="input-unit"><input type="number" id="down" value="400" min="0" step="50"><span class="u">万円</span></div></div>
-                <div class="field" data-buy-only><label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="subsidy-on" style="width:auto;"> 購入年に補助金等を見込む</label><div class="input-unit"><input type="number" id="subsidy-amt" value="110" min="0" step="10"><span class="u">万円</span></div><span class="hint">みらいエコ住宅2026のGX志向型110万円等。予算上限で終了のため確定額ではありません（初期は見込まない設定）</span></div>
+                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="5000" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みで組む場合はその総額）。頭金は下の欄へ</span></div>
+                <div class="field"><label>頭金（借入と別に用意する現金）</label><div class="input-unit"><input type="number" id="down" value="500" min="0" step="50"><span class="u">万円</span></div><span class="hint">※ この金額はローン総額から差し引きません。購入時に用意する別途の現金です（左の欄には実際の借入額を入力）</span></div>
                 <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" id="loan-term" value="35" min="1" max="50"><span class="u">年</span></div></div>
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
                 <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
@@ -1108,14 +1109,14 @@
                 <div class="subgroup-title"><i class="fa-solid fa-house-fire"></i> 火災・地震保険（持ち家）
                   <button type="button" class="btn btn-ghost btn-sm no-print" id="kasai-preset" style="margin-left:auto;"><i class="fa-solid fa-wand-magic-sparkles"></i> 戸建の目安を入れる</button>
                 </div>
-                <div class="grid3">
-                  <div class="field"><label>支払いサイクル</label>
-                    <div class="seg" id="kasai-cycle-seg">
-                      <button type="button" data-kcycle="1">1年ごと</button>
-                      <button type="button" data-kcycle="5" class="active">5年ごと</button>
-                    </div>
-                    <span class="hint">現行制度では火災・地震保険とも契約は最長5年（2022年10月改定）。5年一括は年払いより割安です</span>
+                <div class="field" style="max-width:340px;"><label>支払いサイクル</label>
+                  <div class="seg" id="kasai-cycle-seg">
+                    <button type="button" data-kcycle="1">1年ごと</button>
+                    <button type="button" data-kcycle="5" class="active">5年ごと</button>
                   </div>
+                  <span class="hint">現行制度では火災・地震保険とも契約は最長5年（2022年10月改定）。5年一括は年払いより割安です</span>
+                </div>
+                <div class="grid2" style="margin-top:12px; align-items:start;">
                   <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">地震保険を除く建物・家財の保険料。一条の家は省令準耐火（T構造）標準のため、非耐火（H構造）の概ね半分程度になる例が多い目安です<!-- 【一条フック】T構造 --></span></div>
                   <div class="field"><label>地震保険（同期間の総額）</label><div class="input-unit"><input type="number" id="kasai-quake" value="0" min="0" step="1"><span class="u">万円</span></div>
                     <div class="seg" id="kasai-qmode-seg" style="margin-top:6px;">
@@ -1126,7 +1127,7 @@
                   </div>
                 </div>
                 <div class="note" id="kasai-merit" hidden></div>
-                <span class="hint" style="display:block; margin-top:6px;">※ 購入年からサイクルごとに総額を計上します。上の月々「損害保険」欄は自動車・傷害保険などにお使いください（火災・地震はこの欄と重複しないように）。賃貸プランでは計上されません。</span>
+                <span class="hint" style="display:block; margin-top:10px;">※ 購入年からサイクルごとに総額を計上します。上の月々「損害保険」欄は自動車・傷害保険などにお使いください（火災・地震はこの欄と重複しないように）。賃貸プランでは計上されません。</span>
               </div>
             </div>
 
@@ -1203,10 +1204,22 @@
         <div class="acc" data-acc data-couple-only>
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
-            <span class="acc-title"><b>⑦ 加入中の保険（任意）</b><span>いま入っている死亡保障を診断に反映</span></span>
+            <span class="acc-title"><b>⑦ 加入中の保険</b><span>いま入っている死亡保障を診断に反映</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
+            <!-- 死亡保障の合計（現状⇔将来で今の保障額と提案の保障額を比較。将来プランでは現状比の増減を表示）-->
+            <div class="living-total" id="ins-total-box" style="background:#fbeef4; border-color:#e2a6c4;">
+              <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
+              <span class="lt-value">
+                <span class="ins-sum-item">夫 <b id="ins-sum-h">0</b> 万円<span class="lt-diff" id="ins-diff-h"></span></span>
+                <span class="ins-sum-item">妻 <b id="ins-sum-w">0</b> 万円<span class="lt-diff" id="ins-diff-w"></span></span>
+              </span>
+            </div>
+            <div class="note" style="margin-bottom:12px;">
+              <i class="fa-solid fa-scale-balanced"></i>
+              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。<b>この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+            </div>
             <div class="field">
               <label>入力方法</label>
               <div class="seg" id="hoken-mode-seg">
@@ -1283,7 +1296,7 @@
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <div class="card" id="ichijo-compare-card">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
-          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。さらに、浮いたお金を<b>資産運用にまわした場合の差</b>もあわせて表示します。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
+          <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
           <div class="ic-level">
             <span class="ic-level-label">比較期間：</span>
             <div class="seg" id="ichijo-horizon-seg">
@@ -1298,9 +1311,7 @@
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
             <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="600" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（一般住宅との差・編集可）</span></span>
-            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="ic-invest-on" checked> 資産運用の効果もあわせて見る</label>
           </div>
-          <div class="ic-invest-result" id="ic-invest-result"></div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この差額を、わが家の数字で確かめる（無料相談）</button>
           </div>
@@ -1996,7 +2007,7 @@
           <select class="iv-type ins-type">
             ${ot('shunyu','収入保障保険（家族収入・逓減）')}${ot('teiki','定期保険')}${ot('shushin','終身保険')}${ot('other','養老・共済・その他')}
           </select>
-          <input type="text" class="iv-name ins-name hidden" placeholder="保険の名前・メモ" value="${esc(name)}">
+          <input type="text" class="iv-name ins-name" placeholder="保険の名前・メモ（任意）" value="${esc(name)}">
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="ir-grid">
@@ -2004,14 +2015,13 @@
           <div class="field" data-ins-field="monthly"><label>年金月額</label><div class="input-unit"><input type="number" class="ins-monthly" value="${monthly}" min="0" step="1"><span class="u">万円</span></div></div>
           <div class="field" data-ins-field="end"><label class="ins-end-label">受取は何歳まで</label><div class="input-unit"><input type="number" class="ins-end" value="${endAge}" min="0" max="110"><span class="u">歳</span></div></div>
         </div>`;
-      const typeSel = div.querySelector('.ins-type'), nameInp = div.querySelector('.ins-name');
+      const typeSel = div.querySelector('.ins-type');
       const updateFields = ()=>{
         const t = typeSel.value;
         div.querySelector('[data-ins-field="amount"]').classList.toggle('hidden', t==='shunyu');
         div.querySelector('[data-ins-field="monthly"]').classList.toggle('hidden', t!=='shunyu');
         div.querySelector('[data-ins-field="end"]').classList.toggle('hidden', t==='shushin');
         div.querySelector('.ins-end-label').textContent = (t==='shunyu') ? '受取は何歳まで' : '保障は何歳まで';
-        nameInp.classList.toggle('hidden', t!=='other');
       };
       updateFields();
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
@@ -2059,6 +2069,47 @@
       });
       return { total: Math.round(total), hasIncome, simple:false };
     }
+    // 保存済みプラン（現状）の who の死亡保障合計を、DOMを使わずに計算する（将来プランでの差額表示用・insCoverForと同基準）
+    function insCoverFromState(s, who){
+      if(!s) return null;
+      const f = s.fields || {};
+      const mode = s.hokenMode || 'detail';
+      if(mode==='simple') return Math.round(Math.max(parseFloat(f[who==='h'?'ins-total-h':'ins-total-w'])||0, 0));
+      const age = parseFloat(f[who==='h'?'h-age':'w-age']) || (who==='h'?35:33);
+      let total = 0;
+      (s.insurances||[]).forEach(x=>{
+        if(x.on===false || x.who!==who) return;
+        const type = x.type||'shunyu';
+        const amount = Math.max(parseFloat(x.amount)||0, 0);
+        const monthly = Math.max(parseFloat(x.monthly)||0, 0);
+        const end = parseInt(x.end)||0;
+        if(type==='shunyu'){ const yrs=Math.max((end||65)-age,0); if(yrs>0 && monthly>0) total += monthly*12*yrs; }
+        else if(type==='shushin'){ total += amount; }
+        else { if(end<=0 || age<end) total += amount; }
+      });
+      return Math.round(total);
+    }
+    // ⑦の一番上「死亡保障の合計」を更新（将来プランでは現状比の増減を表示。基本生活費の合計と同じ考え方）
+    function updateInsTotal(){
+      const hEl = $('ins-sum-h'), wEl = $('ins-sum-w'); if(!hEl || !wEl) return;
+      const ch = insCoverFor('h').total, cw = insCoverFor('w').total;
+      hEl.textContent = fmt(ch); wEl.textContent = fmt(cw);
+      const setDiff = (id, cur, who)=>{
+        const el = $(id); if(!el) return;
+        if(typeof PLANS!=='undefined' && PLANS.active==='mirai' && PLANS.genjo.state){
+          const base = insCoverFromState(PLANS.genjo.state, who);
+          if(base!=null && Math.round(cur-base)!==0){
+            const d = Math.round(cur-base);
+            el.innerHTML = d>0 ? `<span class="diff-plus">現状比 ＋${fmt(d)}万円（増）</span>`
+                                : `<span class="diff-minus">現状比 −${fmt(Math.abs(d))}万円（減）</span>`;
+            return;
+          }
+        }
+        el.innerHTML = '';
+      };
+      setDiff('ins-diff-h', ch, 'h');
+      setDiff('ins-diff-w', cw, 'w');
+    }
     const hokenModeSeg = $('hoken-mode-seg');
     if(hokenModeSeg) hokenModeSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
@@ -2092,8 +2143,7 @@
     /* ══════════════════════════════════════════════════════════════════
        【一条工務店 専用ロジック ここから】
        ・住宅の性能タイプ（一般／一条）切替、ZEHプリセット反映
-       ・一般住宅 vs 一条の家 比較（内訳バー・合計・棒グラフ、期間は30年／終了年齢まで／年数を指定）
-       ・差額を運用した場合の複利試算（現金のまま vs 想定利回りで運用、ic-invest-on）
+       ・一般住宅 vs 一条の家 比較（内訳バー・合計・棒グラフ、期間は35年／終了年齢まで／年数を指定）
        他のライフプラン用に流用する場合：このブロック＋下記フックを削除すれば素のライフプランに戻る。
        ＜ベース側に入れたフック（検索用タグ【一条フック】）＞
          - recompute() 末尾の renderIchijoCompare();
@@ -2180,6 +2230,9 @@
     let ichijoChart = null;
     let userEditedZeh = false;      // 商談中に手入力した実見積の値をプリセットで巻き戻さないためのフラグ
     ['zeh-sell','zeh-save'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedZeh = true; }); });
+    const ICHIJO_MAINT_DEFAULT = 6, GEN_MAINT_DEFAULT = 15;   // 年間の修繕・管理費 既定：一条＝タイル外壁で塗替え不要のため控えめ／一般＝相場
+    let userEditedMaint = false;    // 修繕・管理（年）を手入力したら住宅タイプ切替で上書きしない
+    if($('maint')) $('maint').addEventListener('input', ()=>{ userEditedMaint = true; });
 
     const htypeSeg = $('htype-seg');
     if(htypeSeg) htypeSeg.addEventListener('click', (e)=>{
@@ -2235,6 +2288,8 @@
       const isIchijo = (htype==='ichijo');
       const note = $('ichijo-perf-note'); if(note) note.classList.toggle('hidden', !isIchijo);
       const cfg  = $('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', !isIchijo);
+      // 年間修繕費の既定：一条はタイル外壁で塗替え不要のため控えめ（手入力があれば尊重）
+      if($('maint') && !userEditedMaint) $('maint').value = isIchijo ? ICHIJO_MAINT_DEFAULT : GEN_MAINT_DEFAULT;
       if($('zeh-on')){
         if(isIchijo){
           const m = ichijoSolarModel();
@@ -2251,8 +2306,8 @@
         }
       }
     }
-    // 「一般住宅 vs 一条」比較カードの描画。simRows/noInvRows＝運用あり/なしのシミュレーション結果（recomputeから受け取る）
-    function renderIchijoCompare(simRows, noInvRows){
+    // 「一般住宅 vs 一条」比較カードの描画（住宅パート専用：光熱費・太陽光・メンテの3項目の差）
+    function renderIchijoCompare(){
       const card = $('ichijo-compare-card'); if(!card) return;
       const show = (houseType==='buy' || houseType==='owned');
       card.style.display = show ? '' : 'none';
@@ -2274,34 +2329,6 @@
         : `太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで含めると、${horizonLbl}では<b>おおむね相殺（差し引き約${fmt(Math.abs(afterAll))}万円のマイナス）</b>の計算です。快適性・耐震・停電時の安心は金額外の価値としてご検討ください。`;
       $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
         + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${fairLine}</div>`;
-      // 住宅の差 と 運用の差 を一目で（運用の差＝ライフプランで⑤資産運用をした場合と、しなかった＝預金のままの場合の総資産差）
-      const investBox = $('ic-invest-result');
-      if(investBox){
-        const investOn = !!($('ic-invest-on') && $('ic-invest-on').checked);
-        investBox.classList.toggle('hidden', !investOn);
-        if(investOn){
-          // 期間末（購入年齢＋比較年数）の時点で、運用あり／なしの総資産を比べる
-          let investDiff = 0, hasSim = false;
-          if(simRows && simRows.length && noInvRows && noInvRows.length){
-            const baseAge = (houseType==='owned') ? num('owned-age', num('h-age',35)) : num('buy-age', num('h-age',35));
-            const targetAge = Math.round(baseAge + years);
-            const netAt = (arr)=>{ const r = arr.find(x=> x.hAge===targetAge) || arr[arr.length-1]; return r.net; };
-            investDiff = Math.round(netAt(simRows) - netAt(noInvRows));
-            hasSim = true;
-          }
-          const investLine = hasSim
-            ? (investDiff > 0
-                ? `<div class="ic-invest-row highlight"><span>運用の差（資産運用あり − なし）</span><b>＋約${fmt(investDiff)}万円</b></div>`
-                  + `<div class="ic-invest-sub"><b>住宅の差</b>は一条の高性能で毎年の光熱費などが軽くなる分、<b>運用の差</b>は「⑤ 貯蓄・資産運用」を続けた場合と、運用せず預金のままの場合の、${horizonLbl}時点の総資産の差です。一条で浮いたお金も家計にまわせば、この運用の力がさらに働きます（⑤の想定利回り・積立額による複利のため、実際の運用成果を保証するものではありません）。</div>`
-                : `<div class="ic-invest-row"><span>運用の差（資産運用あり − なし）</span><b>約${fmt(investDiff)}万円</b></div>`
-                  + `<div class="ic-invest-sub">いまは「⑤ 貯蓄・資産運用」に運用商品が設定されていないため、運用による差はほとんど出ていません。左の⑤で毎月の積立を設定すると、資産運用ありとなしの総資産の差がここに表示されます。</div>`)
-            : `<div class="ic-invest-sub">「⑤ 貯蓄・資産運用」を設定すると、資産運用ありとなしの総資産の差がここに表示されます。</div>`;
-          investBox.innerHTML = `<div class="ic-invest-row"><span>住宅の差（一条の高性能で浮くお金・${horizonLbl}）</span><b>約${fmt(total)}万円</b></div>`
-            + investLine;
-        } else {
-          investBox.innerHTML = '';
-        }
-      }
       // 内訳バー（光熱費・太陽光・メンテの3項目）
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
@@ -2362,9 +2389,8 @@
       openReserve();
       const t = $('rv-topic'); if(t) t.value = '一条工務店の家の資金計画';
     });
-    // 建物価格差の変更・「資産運用の効果もあわせて見る」トグル → 再計算
+    // 建物価格差の変更 → 再計算
     if($('ic-price-gap')) $('ic-price-gap').addEventListener('input', recompute);
-    if($('ic-invest-on')) $('ic-invest-on').addEventListener('change', recompute);
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
@@ -2769,7 +2795,6 @@
         } else {
           if(houseType==='buy' && hAge===buyAge){
             downThisYear = down;   // 購入年に用意する頭金（現金支出。諸費用は住宅ローン総額に含める前提）
-            if($('subsidy-on') && $('subsidy-on').checked) income += num('subsidy-amt',0);   // 補助金（初期OFF・見込む場合のみ計上）
             eventList.push({label:'マイホーム購入', type:'family'});
           }
           if(owns){
@@ -2967,6 +2992,7 @@
       updateLoanBalanceHint();
       updateMonthlyPayDisplay();
       updateLivingTotal();
+      if(typeof updateInsTotal==='function') updateInsTotal();   // 【一条フック】死亡保障の合計＋現状比
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       const { rows, hRetire, hAge0, endAge } = simulate();
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
@@ -3038,7 +3064,7 @@
       drawAssetTable(rows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
-      renderIchijoCompare(rows, noInvRows);   // 【一条フック】比較カード（住宅の差＋運用あり/なしの差）の更新
+      renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
     }
 
     /* ============================================================
@@ -3112,9 +3138,11 @@
         span.className = 'fdiff ' + (d>0 ? 'diff-plus' : 'diff-minus');
         // 単位（万円・％・歳など）は入力欄の隣にある単位表示から取得して付ける
         const unit = el.closest('.input-unit')?.querySelector('.u')?.textContent || '';
-        span.textContent = (d>0?'＋':'−') + (Math.round(Math.abs(d)*100)/100).toLocaleString('ja-JP') + unit;
-        const label = el.closest('.field')?.querySelector('label');
-        if(label) label.appendChild(span);
+        span.textContent = '現状比 ' + (d>0?'＋':'−') + (Math.round(Math.abs(d)*100)/100).toLocaleString('ja-JP') + unit;
+        // ラベルではなく入力欄の直下に置く（ラベルが2行に折り返して入力欄の高さがずれるのを防ぐ）
+        const iu = el.closest('.input-unit');
+        if(iu) iu.insertAdjacentElement('afterend', span);
+        else (el.closest('.field')?.querySelector('label') || el).appendChild(span);
       });
     }
 
@@ -3461,7 +3489,7 @@
           concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
-        const price=num('house-price',0),down=num('down',0);
+        const down=num('down',0);
         const schedule = buildLoanSchedule();
         const principal = schedule.principal;
         const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
@@ -3476,7 +3504,7 @@
         const finishAge = buyA + term;
         const willLump = loanPayoffMode()==='lumpsum';
         const tone = ratio>25 ? 'warn' : 'ok';
-        const sum = `物件 ${fmt(price)}万円・借入 ${fmt(principal)}万円、毎月の返済は 約<b>${fmt(mPay)}万円</b>（返済負担率 約<b>${ratio}%</b>）です。`
+        const sum = `借入 ${fmt(principal)}万円・頭金 ${fmt(down)}万円（購入価格 約${fmt(principal+down)}万円）、毎月の返済は 約<b>${fmt(mPay)}万円</b>（返済負担率 約<b>${ratio}%</b>）です。`
           + (balAt>0.5
               ? `${payAge}歳時点のローン残高は 約<b>${fmt(balAt)}万円</b> の見込みです（完済予定 ${finishAge}歳）。`
               : `完済予定は${finishAge}歳で、${payAge}歳時点にローンは残らない見込みです。`);
@@ -4225,7 +4253,7 @@
             'warn', `診断：生涯の家賃負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
             `左の「③住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`);
         }
-        const price = num('house-price',0), down = num('down',0);
+        const down = num('down',0);
         const schedule = buildLoanSchedule();
         const principal = schedule.principal;
         const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
@@ -4241,7 +4269,7 @@
         const finishAge = buyA + term;
         const willLump = loanPayoffMode()==='lumpsum';
         const facts = [ famFact(p),
-          `物件 ${fmt(price)}万円／頭金 ${fmt(down)}万円 → 借入 <b>${fmt(principal)}万円</b>`,
+          `借入 <b>${fmt(principal)}万円</b>／頭金 ${fmt(down)}万円（購入価格 約${fmt(principal+down)}万円）`,
           `毎月の返済（当初）：約<b>${fmt(mPay)}万円</b>（${rateLabel}・${term}年）`,
           `返済負担率：手取り収入の <b>約${ratio}%</b>（安心の目安は20〜25%以内）`,
           balAt>0.5 ? `${payAge}歳時点のローン残高：約<b>${fmt(balAt)}万円</b>（完済予定 ${finishAge}歳）` : `完済予定 ${finishAge}歳 → ${payAge}歳時点にローンは残りません` ];
@@ -4283,7 +4311,7 @@
         const facts = [ famFact(p),
           `法定相続人：<b>${Math.max(heirs,1)}人</b>${heirs>0?`（${p.single?'':'配偶者'}${p.children.length?`${p.single?'':'＋'}お子さま${p.children.length}人`:''}）`:''} → 基礎控除 <b>${fmt(base)}万円</b>`,
           `金融資産のピーク：約<b>${fmt(peakRow.net)}万円</b>（${peakRow.hAge}歳時点）${houseType!=='rent' ? '＋ご自宅の評価額' : ''}` ];
-        if(peakRow.net + (houseType!=='rent' ? num('house-price',0)*0.7 : 0) <= base){
+        if(peakRow.net + (houseType!=='rent' ? (num('house-price',0)+num('down',0))*0.7 : 0) <= base){   // 住宅ローン総額＋頭金≒購入価格の7割を自宅評価額の目安に
           return diagBox(facts, 'ok',
             `診断：試算上は<b>基礎控除の範囲内</b>で、相続税はかからない見込みです。`,
             `相続税より大切なのは<b>分け方（遺産分割）</b>の準備です。遺言書があると手続きがスムーズで、争い防止にも役立ちます。`);
@@ -5057,6 +5085,7 @@
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
+      userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更でmaint・ZEHを自動上書きしない
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
       if(s.kasaiCycle) setKasaiCycle(s.kasaiCycle);

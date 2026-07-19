@@ -373,7 +373,7 @@
     /* ヒーロー（タイトル＋操作ボタン） */
     .hero-inner{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
     .hero-text{ flex:1 1 360px; min-width:0; }
-    .hero-actions-top{ display:flex; gap:10px; flex:0 0 auto; }
+    .hero-actions-top{ display:flex; flex-wrap:wrap; gap:10px; flex:0 1 auto; }
 
     .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-soft); padding:18px 18px; }
     .card-title{ font-size:1rem; font-weight:700; display:flex; align-items:center; gap:9px; margin-bottom:6px; }
@@ -405,7 +405,7 @@
     .switch input::after{ content:""; position:absolute; width:17px; height:17px; background:#fff; border-radius:50%; top:2px; left:2px; transition:left .2s; }
     .switch input:checked::after{ left:19px; }
 
-    .table-scroll{ border-radius:12px; border:1px solid var(--line); }
+    .table-scroll{ border-radius:12px; border:1px solid var(--line); overflow-x:auto; -webkit-overflow-scrolling:touch; }
     table.cf{ width:100%; border-collapse:collapse; font-size:.76rem; table-layout:fixed; }
     table.cf th, table.cf td{ padding:7px 5px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; }
     /* スクロールしてもヘッダーが見えるよう固定（ヘッダー高さ64pxの下に貼り付け） */
@@ -508,6 +508,7 @@
     .diag-checklist li{ padding:4px 0; font-size:.84rem; line-height:1.55; }
     .diag-checklist li.ok{ color:#2f7d61; }
     .diag-checklist li.warn{ color:#a4711f; }
+    .diag-checklist li i{ margin-right:5px; width:1em; text-align:center; }
 
     /* AI診断：総括＋項目別の詳しい診断 */
     .adv-summary{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:14px; margin-bottom:12px; border:1.5px solid var(--line); background:var(--bg-soft); }
@@ -4417,14 +4418,14 @@
         const invNames = p.invs.map(v=>v.name);
         const hasIdeco = invNames.some(n=> /ideco|イデコ|確定拠出/i.test(n));
         const checklist = [
-          `<li class="ok">☑ ふるさと納税：上限 約${furu}万円まで実質2,000円で利用可能</li>`,
+          `<li class="ok"><i class="fa-solid fa-square-check"></i>ふるさと納税：上限 約${furu}万円まで実質2,000円で利用可能</li>`,
           hasIdeco
-            ? `<li class="ok">☑ iDeCo：すでに活用中</li>`
-            : `<li class="warn">☐ iDeCo：未活用（月2.3万円の掛金で年 約${idecoSave}万円の節税余地）</li>`,
+            ? `<li class="ok"><i class="fa-solid fa-square-check"></i>iDeCo：すでに活用中</li>`
+            : `<li class="warn"><i class="fa-regular fa-square"></i>iDeCo：未活用（月2.3万円の掛金で年 約${idecoSave}万円の節税余地）</li>`,
           houseType!=='rent'
-            ? `<li class="ok">☑ 住宅ローン控除：適用中（シミュレーションに反映済み）</li>`
-            : `<li class="warn">☐ 住宅ローン控除：賃貸のため対象外</li>`,
-          `<li class="warn">☐ 医療費控除・生命保険料控除：世帯の医療費が年10万円超、または生命保険に加入していれば対象になり得ます（要確認）</li>`
+            ? `<li class="ok"><i class="fa-solid fa-square-check"></i>住宅ローン控除：適用中（シミュレーションに反映済み）</li>`
+            : `<li class="warn"><i class="fa-regular fa-square"></i>住宅ローン控除：賃貸のため対象外</li>`,
+          `<li class="warn"><i class="fa-regular fa-square"></i>医療費控除・生命保険料控除：世帯の医療費が年10万円超、または生命保険に加入していれば対象になり得ます（要確認）</li>`
         ].join('');
         const facts = [ famFact(p),
           `${esc(hNameH())}の年収（額面）：<b>${fmt(gross)}万円</b> → 想定税率 約${Math.round(rate*100)}%（所得税＋住民税）`,

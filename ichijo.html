@@ -179,12 +179,15 @@
     .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 14px; }
     @media(max-width:560px){ .grid3{ grid-template-columns:1fr 1fr; } }
     @media(max-width:480px){ #kasai-box .grid2{ grid-template-columns:1fr; } }
+    @media(max-width:560px){ .pension-grid{ grid-template-columns:1fr; } }   /* 年金プリセットのボタンが潰れないよう1列に */
     .field{ display:flex; flex-direction:column; gap:5px; min-width:0; }
     .field label{ font-size:.85rem; font-weight:500; color:var(--ink); }
     /* グリッド内の入力欄の縦位置を揃える：ラベルを2行分確保し、下揃えで入力欄に密着させる（1行ラベルは上側に余白が入るだけで、行内の入力欄の高さ・上端が揃う） */
-    .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
-    @media(max-width:560px){ .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:3.9rem; } }
+    .grid2 > .field > label, .grid3 > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
+    .ir-grid > .field > label{ min-height:1.2em; }   /* ⑤運用・⑦保険の行はラベルが短く折り返さないため、余白を予約しない */
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
+    /* 折り返しの見た目調整：最終行が数文字だけになる折り返しをブラウザに自動回避させる（非対応ブラウザでは無視され従来どおり） */
+    .field label, .hint, .note span, .ipn-note, .cr-quote, .ic-lead, .acc-title span, .ict-sub, .diag-note, .seg button{ text-wrap:pretty; }
     .input-unit{ position:relative; display:flex; align-items:center; }
     .input-unit input, .field input, .field select{
       width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px;
@@ -295,6 +298,11 @@
     .ev-wife{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; color:#c2729a; }
     .event-row > .field.ev-every-field{ position:relative; }
     .event-row > .field.ev-every-field > .hint{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; }
+    /* モバイルでは行が2列に組み替わり吊り下げヒントが下のラベルに重なるため、通常フローに戻す */
+    @media(max-width:560px){
+      .ev-wife, .event-row > .field.ev-every-field > .hint{ position:static; margin-top:2px; white-space:normal; }
+      .row-item.event-row, .row-item.income-row{ padding-bottom:12px; }
+    }
     .row-item.income-row{ grid-template-columns:0.9fr 1.3fr 0.9fr auto; padding-bottom:26px; }
     .income-row > .field.ev-age-field{ position:relative; }
     .ir-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
@@ -747,10 +755,12 @@
       .no-print, .jump-result, .hero-actions-top, .btn-add, .btn-del,
       .acc-chev, #chat-card, #open-asset-modal{ display:none !important; }
       .wrap{ max-width:none; padding:0; }
+      .pdf-mode .wrap{ width:auto; max-width:190mm; padding:0; }   /* A4印字幅に合わせる（960px固定はhtml2canvas用に温存） */
       .layout{ display:block !important; }                    /* 1カラムで出力 */
       .results{ position:static !important; margin-top:14px; }
       .acc-body{ display:block !important; }                  /* たたんだ入力欄もPDFに含める */
-      .acc, .card, .kpi, .verdict, .row-item{ break-inside:avoid; box-shadow:none !important; }
+      .acc, .card{ box-shadow:none !important; }              /* 1ページ超のセクションは改ページ許可（大きな空白ページを防ぐ） */
+      .kpi, .verdict, .row-item{ break-inside:avoid; box-shadow:none !important; }
       .table-section{ box-shadow:none !important; }
       .table-scroll{ overflow:visible !important; }
       table.cf thead{ display:table-header-group; }           /* 各ページにヘッダーを繰り返す */
@@ -759,6 +769,11 @@
       table.cf{ font-size:8pt; }
       .hero{ padding:0 0 8px; }
       a[href]:after{ content:""; }                            /* URLの余分な表示を抑制 */
+      /* 背景色を落とす設定のブラウザでも判定・表頭・選択状態が読めるように色を強制 */
+      .verdict, .seg button.active, table.cf thead th, table.cf tr.milestone,
+      .adv-summary, .plan-tabs button.active, .living-total, .ict-num{
+        -webkit-print-color-adjust:exact; print-color-adjust:exact;
+      }
     }
   </style>
 </head>
@@ -772,10 +787,10 @@
         <p class="lead">「買えるか」ではなく<b>「買った後も幸せか」</b>を数字で。まず「現状プラン」に今の家計を、「将来プラン」で一条工務店の家を選ぶと、<b>高性能住宅による光熱費・売電・メンテ費の差</b>が、その場で青と赤の数字で見えます。 <span style="font-size:.76rem; color:var(--ink-soft);">（一条工務店非公式・FP事務所の独自試算）</span></p>
       </div>
       <div class="hero-actions-top no-print">
-        <button class="btn btn-primary btn-sm" id="btn-try-ichijo"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す</button><!-- 【一条フック】1クリックで購入＋一条を選択し比較カードへ -->
-        <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
+        <button class="btn btn-yellow" id="btn-try-ichijo" style="font-size:1.02rem; padding:13px 26px;"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す（1クリックで比較）</button><!-- 【一条フック】現状プランを保持したまま将来プランで購入＋一条を選択し比較カードへ -->
+        <button class="btn btn-ghost btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <button class="btn btn-ghost btn-sm" id="btn-print"><i class="fa-solid fa-print"></i> 印刷</button>
-        <button class="btn btn-yellow btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
+        <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div>
     </div>
   </section>
@@ -934,28 +949,28 @@
               <div class="ichijo-perf-note hidden" id="ichijo-solar-config">
                 <div class="ipn-title"><i class="fa-solid fa-solar-panel"></i> 太陽光・蓄電池の設定（売電・自家消費を自動計算）</div>
                 <div class="grid3">
-                  <div class="field"><label>太陽光の搭載容量</label><div class="input-unit"><input type="number" id="ichijo-solar-kw" value="12" min="0" max="30" step="0.5"><span class="u">kW</span></div><span class="hint">一条の2024年度平均は約12kW。発電量は南向き・日照良好の目安（東西面や日陰では1〜3割下がることがあります）</span></div>
+                  <div class="field"><label>太陽光の搭載容量</label><div class="input-unit"><input type="number" id="ichijo-solar-kw" value="12" min="0" max="30" step="0.5"><span class="u">kW</span></div><span class="hint">2024年度の一条平均は約12kW（南向き・日照良好の目安）</span></div>
                   <div class="field"><label>蓄電池の容量</label><div class="input-unit"><input type="number" id="ichijo-battery-kwh" value="7" min="0" max="30" step="0.5"><span class="u">kWh</span></div><span class="hint">0で「なし」。一条標準は7.04kWh</span></div>
                   <div class="field"><label>地域の日射区分</label>
                     <div class="seg" id="ichijo-region-seg">
                       <button type="button" data-icregion="temperate" class="active">温暖地</button>
                       <button type="button" data-icregion="cold">寒冷地</button>
                     </div>
-                    <span class="hint">寒冷地は発電やや少なめ・断熱の節約は大きめ</span>
+                    <span class="hint">寒冷地＝発電少なめ・断熱の節約大きめ</span>
                   </div>
                 </div>
-                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。初期値は一条の平均搭載量（12kW）と標準蓄電池（7kWh）＝一般的な水準です。</span>
+                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。初期値は一条の平均搭載量（12kW）と標準蓄電池（7kWh）＝一般的な水準です。東西面や日陰の屋根では発電が1〜3割下がることがあります。</span>
               </div>
               <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
 
               <div class="grid3">
                 <div class="field" data-buy-only><label>購入時の夫の年齢</label><div class="input-unit"><input type="number" id="buy-age" value="36" min="20" max="70"><span class="u">歳</span></div></div>
                 <div class="field hidden" data-owned-only><label>購入したときの夫の年齢</label><div class="input-unit"><input type="number" id="owned-age" value="30" min="18" max="70"><span class="u">歳</span></div><span class="hint">現在の年齢以下で入力。減税・ZEHはこの年から計算</span></div>
-                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="5000" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みで組む場合はその総額）。頭金は下の欄へ</span></div>
-                <div class="field"><label>頭金（借入と別に用意する現金）</label><div class="input-unit"><input type="number" id="down" value="500" min="0" step="50"><span class="u">万円</span></div><span class="hint">※ この金額はローン総額から差し引きません。購入時に用意する別途の現金です（左の欄には実際の借入額を入力）</span></div>
+                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="5000" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みならその総額）</span></div>
+                <div class="field"><label>頭金（別途の現金）</label><div class="input-unit"><input type="number" id="down" value="500" min="0" step="50"><span class="u">万円</span></div><span class="hint">ローン総額からは差し引きません（購入時に別途用意する現金）</span></div>
                 <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" id="loan-term" value="35" min="1" max="50"><span class="u">年</span></div></div>
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
-                <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
+                <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">修繕積立・管理費の年額</span></div>
               </div>
 
               <!-- 返済方法（元利均等／元金均等）＋ 金利タイプ（固定／変動）-->
@@ -975,7 +990,7 @@
                   <div class="field" style="max-width:260px;">
                     <label>金利（全期間固定で適用）</label>
                     <div class="input-unit"><input type="number" id="loan-rate" value="0.95" min="0" max="10" step="0.05"><span class="u">％</span></div>
-                    <span class="hint">ご参考（2026年7月時点）：変動0.8〜1.0%前後・全期間固定（フラット35）約3.1%。全期間固定でご検討の場合は3%前後に変更するか、「5年ごと変動」で上昇シナリオもご確認ください。</span>
+                    <span class="hint">参考（2026年7月）：変動 0.8〜1.0%前後／全期間固定（フラット35）約3.1%</span>
                   </div>
                 </div>
                 <div id="loan-rate-variable-wrap" class="hidden" style="margin-top:10px;">
@@ -989,7 +1004,7 @@
               <div class="loan-monthly-box">
                 <div class="lp-title"><i class="fa-solid fa-calculator"></i> 毎月のローン返済額（自動計算）</div>
                 <div class="field" style="max-width:340px;">
-                  <label>ボーナス月の加算返済（1回あたり・年2回）</label>
+                  <label>ボーナス月の加算返済（1回分）</label>
                   <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
                   <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
                 </div>
@@ -1100,7 +1115,7 @@
                 <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>損害保険（自動車・傷害など）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
+                <div class="field"><label>損害保険（自動車・傷害）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
                 <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
@@ -1125,7 +1140,7 @@
                   <span class="hint">現行制度では火災・地震保険とも契約は最長5年（2022年10月改定）。5年一括は年払いより割安です</span>
                 </div>
                 <div class="grid2" style="margin-top:12px; align-items:start;">
-                  <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">地震保険を除く建物・家財の保険料。一条の家は省令準耐火（T構造）標準のため、非耐火（H構造）の概ね半分程度になる例が多い目安です<!-- 【一条フック】T構造 --></span></div>
+                  <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">建物・家財の保険料（地震保険は右へ）。一条はT構造（省令準耐火）標準で、H構造の半分程度が目安<!-- 【一条フック】T構造 --></span></div>
                   <div class="field"><label>地震保険（同期間の総額）</label><div class="input-unit"><input type="number" id="kasai-quake" value="0" min="0" step="1"><span class="u">万円</span></div>
                     <div class="seg" id="kasai-qmode-seg" style="margin-top:6px;">
                       <button type="button" data-qmode="pre" class="active">割引前の金額</button>
@@ -1176,7 +1191,7 @@
             </div>
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
-              <div class="grid2">
+              <div class="grid2 pension-grid">
                 <div class="field"><label>受給開始（夫の年齢）</label><div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div></div>
                 <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">「ねんきん定期便」の見込額があれば最優先で入力を。目安は下のボタンから選べます</span>
                   <div class="pen-presets">
@@ -1212,7 +1227,7 @@
         <div class="acc" data-acc data-couple-only>
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
-            <span class="acc-title"><b>⑦ 加入中の保険</b><span>いま入っている死亡保障を診断に反映</span></span>
+            <span class="acc-title"><b>⑦ 加入中の保険</b><span>今の死亡保障を診断に反映</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1221,9 +1236,13 @@
               <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
               <span class="lt-value" id="ins-sum-value"></span>
             </div>
-            <div class="note" style="margin-bottom:12px;">
+            <div class="note" style="margin-bottom:8px;">
               <i class="fa-solid fa-scale-balanced"></i>
-              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。<b>この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
+            </div>
+            <div class="note" style="margin-bottom:12px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
             </div>
             <div class="field">
               <label>入力方法</label>
@@ -1252,7 +1271,7 @@
               <span class="hint">加入中の保険の死亡保険金額をざっくり合計してください。収入保障保険は「月額×12か月×残り年数」で総額の目安に（例：月10万円×残り20年＝2,400万円）</span>
             </div>
 
-            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄（項目ごとに入力の場合）で家計に反映されます。ここに入力した保障額は、AI診断「万が一の備え」の必要保障額の計算に使います。</span>
+            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄で家計に反映。ここで入力した保障額は、AI診断「万が一の備え」の計算に使います。</span>
           </div>
         </div>
 
@@ -1285,6 +1304,15 @@
           </div>
         </div>
 
+        <!-- 総合判定（KPIの直下＝結論を最初に見せる）-->
+        <div class="verdict good" id="verdict">
+          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <b id="verdict-title">計算中…</b>
+            <span id="verdict-text"></span>
+          </div>
+        </div>
+
         <!-- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）-->
         <div class="card">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
@@ -1299,6 +1327,11 @@
         </div>
 
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
+        <!-- 賃貸選択時のプレースホルダー：看板機能（一条比較）の存在を予告し、1クリックで発火できるようにする -->
+        <div class="card no-print" id="ichijo-cta-placeholder" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
+          <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「一条の家で試す」を押すと、<b>一般住宅と一条工務店の家のランニングコストの差</b>がここに表示されます。</p>
+          <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す（1クリックで比較）</button>
+        </div>
         <div class="card" id="ichijo-compare-card">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
           <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
@@ -1326,15 +1359,6 @@
           <div class="ic-note" id="ic-note"></div>
         </div>
         <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
-
-        <!-- 総合判定（金融資産の推移の下に配置）-->
-        <div class="verdict good" id="verdict">
-          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
-          <div>
-            <b id="verdict-title">計算中…</b>
-            <span id="verdict-text"></span>
-          </div>
-        </div>
 
         <!-- 収支グラフ -->
         <div class="card">
@@ -1365,6 +1389,10 @@
             <button class="chat-chip" type="button" data-q="一条の家は30年でいくら差が出る？"><i class="fa-solid fa-scale-balanced"></i> 30年でいくら差？</button>
             <button class="chat-chip" type="button" data-q="メンテナンス費はどう違う？"><i class="fa-solid fa-screwdriver-wrench"></i> メンテ費はどう違う？</button>
             <button class="chat-chip" type="button" data-q="補助金や減税はありますか？"><i class="fa-solid fa-coins"></i> 補助金・減税は？</button>
+            <button class="chat-chip" type="button" data-q="一条工務店の坪単価はどのくらい？"><i class="fa-solid fa-yen-sign"></i> 坪単価は？</button>
+            <button class="chat-chip" type="button" data-q="保証は何年ですか？"><i class="fa-solid fa-file-shield"></i> 保証は何年？</button>
+            <button class="chat-chip" type="button" data-q="C値って何ですか？"><i class="fa-solid fa-wind"></i> C値って何？</button>
+            <button class="chat-chip" type="button" data-q="冬は乾燥する？夏は暑い？"><i class="fa-solid fa-temperature-half"></i> 乾燥・夏の暑さは？</button>
             <button class="chat-chip" type="button" data-q="団信だけで大丈夫？"><i class="fa-solid fa-shield-halved"></i> 団信だけで大丈夫？</button>
             <button class="chat-chip" type="button" data-q="老後資金は足りる？"><i class="fa-solid fa-umbrella-beach"></i> 老後資金は足りる？</button>
             <button class="chat-chip" type="button" data-q="NISAは始めるべき？"><i class="fa-solid fa-chart-line"></i> NISAは始めるべき？</button>
@@ -1756,7 +1784,7 @@
       const div = document.createElement('div');
       div.className = 'row-item event-row';
       div.innerHTML = `
-        <div class="field ev-age-field"><label>夫の年齢（開始）</label>
+        <div class="field ev-age-field"><label>開始年齢（夫）</label>
           <div class="input-unit"><input type="number" class="ev-age" value="${age}" min="20" max="110"><span class="u">歳</span></div>
           <span class="hint ev-wife"></span>
         </div>
@@ -2367,6 +2395,7 @@
       const card = $('ichijo-compare-card'); if(!card) return;
       const show = (houseType==='buy' || houseType==='owned');
       card.style.display = show ? '' : 'none';
+      const ph = $('ichijo-cta-placeholder'); if(ph) ph.style.display = show ? 'none' : '';   // 賃貸時は「試す」誘導を表示
       if(!show) return;
       const m = ichijoSolarModel();
       const years = ichijoHorizonYears();                      // 比較期間：35年 ／ 終了年齢まで ／ 年数を指定
@@ -2428,17 +2457,24 @@
           scales:{ x:{ ticks:{ callback:(v)=> v+'万' } }, y:{ grid:{ display:false } } } }
       });
     }
-    // ヒーロー「一条の家で試す」＝1クリックで「これから購入」＋「一条工務店の家」を選び比較カードへ
-    const tryIchijoBtn = $('btn-try-ichijo');
-    if(tryIchijoBtn) tryIchijoBtn.addEventListener('click', ()=>{
+    // ヒーロー「一条の家で試す」＝現状プランは今の住まいのまま保持し、将来プランに切り替えてから
+    // 「これから購入」＋「一条工務店の家」を選ぶ（→「現状と将来をくらべる」に差額が出る）。③住まいも開いて前提を見せる
+    function tryIchijo(){
+      if(typeof PLANS!=='undefined' && PLANS.active==='genjo' && typeof switchPlan==='function') switchPlan('mirai');
       const hs = document.getElementById('house-seg');
       const buyBtn = hs && hs.querySelector('[data-house="buy"]');
       if(buyBtn && !buyBtn.classList.contains('active')) buyBtn.click();
       const ib = htypeSeg && htypeSeg.querySelector('[data-htype="ichijo"]');
       if(ib && !ib.classList.contains('active')) ib.click();
+      const acc3 = hs && hs.closest('.acc');
+      if(acc3 && !acc3.classList.contains('open')) acc3.querySelector('.acc-head')?.click();
       const c = $('ichijo-compare-card');
       if(c) setTimeout(()=> c.scrollIntoView({behavior:'smooth', block:'start'}), 200);
-    });
+    }
+    const tryIchijoBtn = $('btn-try-ichijo');
+    if(tryIchijoBtn) tryIchijoBtn.addEventListener('click', tryIchijo);
+    const tryIchijoBtn2 = $('btn-try-ichijo2');
+    if(tryIchijoBtn2) tryIchijoBtn2.addEventListener('click', tryIchijo);
     // 比較カードのCTA → 無料相談（相談内容を一条の資金計画に自動セット）
     const icReserveBtn = $('ic-reserve');
     if(icReserveBtn) icReserveBtn.addEventListener('click', ()=>{
@@ -2484,9 +2520,13 @@
       if(type==='step5') buildLoanRatePeriodRows('step5');
       if(type==='step10') buildLoanRatePeriodRows('step10');
     }
+    // 金利の既定値を金利タイプに連動（固定=フラット35実勢3.1%／変動=0.95%。手入力があれば上書きしない）
+    let userEditedRate = false;
+    if($('loan-rate')) $('loan-rate').addEventListener('input', ()=>{ userEditedRate = true; });
     if(loanRateTypeSeg) loanRateTypeSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
       [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      if(!userEditedRate && $('loan-rate')) $('loan-rate').value = (b.dataset.ratetype==='fixed') ? 3.1 : 0.95;
       updateLoanRateUI(); recompute();
     });
     // 返済期間を変えたら、期間ごとの金利欄の年数区切りも作り直す
@@ -2753,8 +2793,8 @@
       const wn = grossToNet(num('w-income',0));
       const hEl = $('h-net'), wEl = $('w-net');
       const perMonth = (v)=> (Math.round(v/12*10)/10); // 月額（小数1桁）
-      if(hEl) hEl.textContent = '手取り目安：約' + perMonth(hn) + '万円／月';
-      if(wEl) wEl.textContent = '手取り目安：約' + perMonth(wn) + '万円／月';
+      if(hEl) hEl.textContent = '手取り 約' + perMonth(hn) + '万円/月';
+      if(wEl) wEl.textContent = '手取り 約' + perMonth(wn) + '万円/月';
     }
 
     /* ============================================================
@@ -3975,13 +4015,13 @@
         res.appendChild(d);
       }
       document.body.classList.add('pdf-mode');
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(ichijoChart) ichijoChart.resize(); }catch(e){}
     }
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
       removePdfExtras();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(ichijoChart) ichijoChart.resize(); }catch(e){}
     }
 
     // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力
@@ -4516,29 +4556,42 @@
     /* FP1級・税理士レベルの知識ベース。説明文を毎回ランダムに組み合わせ、100通り以上の回答を生成 */
     const KB = {
       // 【一条フック】一条工務店トピック（他ライフプランに流用時はこのトピックを削除）
-      ichijo:{ label:'一条工務店の家', re:/一条|いちじょう|ｉ-?ｓｍａｒｔ|i-?smart|アイスマート|アイ・スマート|グランセゾン|グラン・セゾン|グランスマート|グラン・スマート|アイキューブ|i-?cube|ハグミー|hugme|床暖房|全館|ロスガード|うるケア|さらぽか|ハイドロテクト|タイル外壁|高性能住宅|高気密|高断熱|ua値|c値|断熱等級|樹脂サッシ|太陽光|蓄電池|売電|zeh|ゼッチ|オール電化|坪単価|注文住宅|一条ルール|(?<!連帯)保証|アフター|点検|乾燥|加湿|耐水害|免震|2倍耐震|二倍耐震|ギネス|メンテ|補助金|gx|耐火|構造級別/i,
+      ichijo:{ label:'一条工務店の家', re:/一条|いちじょう|ｉ-?ｓｍａｒｔ|i-?smart|アイスマート|アイ・スマート|グランセゾン|グラン・セゾン|グランスマート|グラン・スマート|アイキューブ|i-?cube|ハグミー|hugme|アイスマイル|i-?smile|床暖房|床暖|全館|ロスガード|うるケア|さらぽか|ハイドロテクト|タイル外壁|高性能住宅|気密|高断熱|断熱材|ua値|ｕａ値|c値|ｃ値|q値|ｑ値|熱損失|断熱等級|樹脂サッシ|トリプルガラス|太陽光|蓄電池|売電|zeh|ｚｅｈ|ゼッチ|オール電化|坪単価|注文住宅|一条ルール|(?<!連帯)保証|アフター|点検|乾燥|加湿|耐水害|免震|2倍耐震|二倍耐震|２倍耐震|ギネス|メンテ|補助金|gx|耐火|構造級別|光熱費|電気代|ガス代|冷暖房|暖房費|電気料金|耐震|地震に強|震度|許容応力度|値引|値切|紹介制度|紹介で|キャンペーン|夏|暑い|暑く|冷房|エアコン|暖かい|あったか|涼し|他社|積水|セキスイ|住友林業|住林|ヘーベル|タマホーム|ミサワ|スウェーデンハウス|ハウスメーカー|工場|フィリピン|工期|着工|引き?渡し|納期|完成まで|展示場|モデルハウス|宿泊体験|体験棟|体験会|デメリット|欠点|後悔|評判|口コミ|停電|結露|シロアリ|白蟻|防蟻|換気|熱交換|防音|網戸|カーテン|ハニカム/i,
         facts:['<b>一条工務店</b>は「家は、性能。」を掲げるハウスメーカーで、断熱・気密・耐震・太陽光を標準仕様で高水準に揃えています。<b>ギネス世界記録3項目</b>（注文住宅の年間販売数・太陽光搭載住宅数・工業化住宅工場の規模）を5年連続で認定されています。',
         '<b>価格の目安</b>：本体の坪単価はおおよそ<b>75〜85万円</b>、オプション込みの実勢は<b>平均約92万円/坪</b>（施主アンケート・62〜112万円と幅あり）。太陽光・全館床暖房・タイル外壁・耐震等級3など標準装備込みでの価格です。',
-        '<b>断熱性能（UA値）</b>：i-smart等の主力商品は<b>断熱等級7・UA値約0.25 W/㎡K</b>が標準（省エネ基準＝6地域0.87の約3.5倍。建築地・プランにより異なる場合あり）。家全体が魔法瓶のイメージで、冬の朝も廊下や脱衣所が寒くなりにくい住まいです。',
-        '<b>気密（C値）</b>：全棟で気密測定を行い、実測平均は<b>約0.59 cm²/㎡</b>。すき間が小さいほど、冷暖房と計画換気がムダなく働きます。',
+        '<b>断熱性能（UA値・ua値）とは</b>：壁・窓・屋根から逃げる熱の平均値で、小さいほど高断熱です。i-smart等の主力商品は<b>断熱等級7（最高等級）・UA値約0.25 W/㎡K</b>が標準（ZEH基準0.6の半分以下しか熱を逃がさない水準。建築地・プランで異なる場合あり）。家全体が魔法瓶のイメージで、冬の朝も廊下や脱衣所が寒くなりにくい住まいです。',
+        '<b>気密（C値・c値）とは</b>：家全体の「すき間」の合計面積を床面積で割った数値で、小さいほど気密が高い家です。一条は<b>全棟で気密測定</b>を行い、実測平均は<b>約0.59 cm²/㎡</b>（社内基準0.7以下・超えたら補修してから引き渡し）。かつての国の基準は5.0だったので約8分の1のすき間ですが、現在の省エネ基準にはC値の規定自体がない点も含め、実測で示しているのが特長です。',
         '<b>全館床暖房の電気代</b>：関東・関西では冬のピーク月で<b>1.8〜2.5万円程度</b>が目安。「月5万円」といった話は寒冷地・大面積のピーク値で、全国平均ではありません。',
         '<b>光熱費は本当に安い？</b>：電気代単体は高く見えても、ガス代・灯油代が0円のオール電化＋高断熱で、総額では一般住宅より<b>年3〜12万円ほど安くなる傾向</b>です（あくまで目安）。',
         '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。売電単価は2026年度FITで<b>10kW以上＝19円が5年間→8.3円の事業用区分</b>、10kW未満＝24円が4年間です。<b>卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利</b>なため、蓄電池との組み合わせが定番です。このツールは③住まいで搭載kW・蓄電池・地域を入れると収支を自動計算します。',
         '<b>タイル外壁のメンテ</b>：ハイドロテクトタイルは光触媒で汚れが雨で落ち、<b>再塗装が不要</b>。必要なのは25〜30年目ごろのシーリング打ち替え（<b>足場代込みで約70〜100万円</b>の施主試算もあり幅があります）と洗浄程度が目安です。',
         '<b>一般サイディングとの差</b>：窯業サイディングは約10年ごとに再塗装（1回60〜150万円）。外壁・屋根の塗替え分として、30年で<b>約60〜180万円</b>の差が目安です（一条側の設備更新費は含みません）。',
         '<b>一条側のメンテナンス費</b>：全館床暖房の熱源機・ロスガード90・太陽光パワコン等、設備の30年更新費は<b>施主試算で約270〜390万円</b>。外壁で浮く分とは別にかかるため、この試算では外壁の差だけを比較しています。',
-        '<b>蓄電池</b>：標準は容量<b>7.04kWh</b>のリン酸鉄リチウム電池。寿命は<b>約12,000サイクル</b>（一般的な蓄電池の約2倍）で、停電時は最大5.5kVAまで給電できます。',
-        '<b>耐震</b>：主力商品は<b>耐震等級3（最高等級）が標準</b>で、全棟で許容応力度計算を実施。i-smart等は建築基準法の2倍の強さの<b>「2倍耐震」</b>も選べます。<b>地震保険50%割引</b>の適用には、性能評価書などの確認資料が必要です。',
-        '<b>窓</b>：防犯ツインLow-Eトリプル樹脂サッシが標準（窓のU値<b>0.8 W/㎡K</b>＝開き窓の代表値・窓種で異なる。ハニカムシェード併用で0.6）。第1種の熱交換換気<b>「ロスガード90」</b>（温度交換効率最大90%）で、換気しても熱を逃がしにくい設計です。',
+        '<b>停電のときは？（蓄電池）</b>：標準は容量<b>7.04kWh</b>のリン酸鉄リチウム電池。寿命は<b>約12,000サイクル</b>（一般的な蓄電池の約2倍）で、<b>停電時は最大5.5kVAまで給電</b>でき、太陽光と合わせて日中の発電＋夜の放電で災害時も電気を使い続けやすい構成です。',
+        '<b>地震に強い家です（耐震等級3）</b>：主力商品は<b>耐震等級3（最高等級・消防署と同レベル）が標準</b>で、全棟で許容応力度計算を実施。壁・床・天井を一体化した<b>ツインモノコック構造</b>が地震の力を面全体で受け止め、実物大の振動実験を40年以上重ねています。建築基準法の2倍の強さの<b>「2倍耐震」</b>も選べます。<b>地震保険50%割引</b>の適用には、性能評価書などの確認資料が必要です。',
+        '<b>窓と換気システム</b>：窓は防犯ツインLow-Eトリプル樹脂サッシが標準（窓のU値<b>0.8 W/㎡K</b>＝一般的なアルミペアガラスの約6倍熱を通しにくい。ハニカムシェード併用で0.6）。24時間換気システムは第1種熱交換の<b>「ロスガード90」</b>（温度交換効率最大90%）で、換気しても熱を逃がしにくく、外の冷気がそのまま入らない設計です。フィルター清掃・交換などの維持費は別途かかります。',
         '<b>健康面</b>：室温を保ちやすい高断熱住宅は<b>ヒートショック対策</b>にも役立ちます。断熱改修で起床時血圧が平均で下がったという調査や、WHOが冬の室温18℃以上を推奨している知見があります。',
-        '<b>保証・点検</b>：構造・防水は<b>最長30年保証</b>です。延長には無料点検・無償のシロアリ予防工事と、防水等で<b>必要と判断されたメンテナンス工事（無償または有償。施主情報では数十万円〜規模の例も）の実施が条件</b>です。24時間サポートとアプリ「i-サポ」があります。',
+        '<b>保証は何年？アフターサービスは？</b>：構造・防水は<b>最長30年保証</b>です（初期保証は構造10年・防水15年で、30年への延長には10・15・20年目の点検と<b>指定の有償メンテナンス工事の実施が条件</b>。100万円以上を想定しておくと安心です）。<b>シロアリ予防工事は10年目・20年目とも無償</b>で防蟻保証30年。アフターサポートは24時間365日受付＋アプリ「i-サポ」（不具合の写真を送るだけで依頼可）。設備類の保証は床暖房・ロスガード・太陽光10年、壁紙・建具2年程度と短めです。',
         '<b>設計の自由度</b>：性能を全棟で保つための規格化（いわゆる<b>一条ルール</b>）があり、総二階が基本・窓のサイズや位置に規格・大開口に制限など、間取りの自由度は他社より狭めです。デザインの希望が強い方は事前の確認がおすすめです。',
-        '<b>冬の乾燥</b>：高気密高断熱＋床暖房の冬は室内が乾きやすく（湿度30%台の報告も）、<b>加湿器の併用が定番</b>です。湿度を保つ換気「うるケア」や、夏向けの「さらぽか空調」という選択肢もあります。',
+        '<b>乾燥する？</b>：はい、冬は乾燥しやすいです。高気密高断熱＋床暖房の冬は湿度30〜35%前後（時期により20%台）まで下がる報告が多く、<b>加湿器の併用や部屋干しが定番</b>です。換気に自動給水の加湿を組み込む<b>「うるケア」</b>（電気代目安 月約300円・給水の手間なし）という選択肢もありますが、真冬はうるケアだけでは足りず加湿器を足したという声もあります。',
         '<b>全館さらぽか空調</b>：デシカント方式で<b>夏の湿度を約50%に保つ</b>オプション（坪約2万円・<b>後付け不可</b>）。8月の除湿コスト試算は約1.1万円です。真夏の猛暑日はエアコン併用が前提になるとの施主報告が多く、体感の好みも分かれるため、宿泊体験棟での確認がおすすめです。',
         '<b>災害への備え</b>：床上浸水を防ぐ<b>耐水害住宅</b>（水深約1mまで対応・2020年自社調べで世界初）や<b>免震</b>も選べます。実大の耐震実験は40年以上・業界最多クラスの実績です。',
-        '<b>商品ラインナップ</b>：主力は<b>グラン・スマート／i-smart</b>（断熱等級7標準）。<b>グラン・セゾン</b>はデザイン重視の木質感、規格住宅<b>HUGme</b>は本体1,490万円〜・100プラン（断熱等級6）で、性能と予算のバランスで選べます。',
+        '<b>商品ラインナップ</b>：主力は<b>グラン・スマート（グランスマート）／i-smart（アイスマート）</b>（断熱等級7標準・坪80万円台前半が目安）。<b>グラン・セゾン（グランセゾン）</b>はデザイン重視の木質感、<b>i-cube（アイキューブ）</b>は坪70万円台半ば。規格住宅<b>HUGme（ハグミー）</b>は本体1,490万円〜・100プラン（断熱等級6・床暖房はオプション）、<b>i-smile（アイスマイル）</b>は約4,000プランの規格型で、性能と予算のバランスで選べます（価格は改定が多く最新は見積もりで確認）。',
         '<b>補助金・減税</b>：高断熱＋太陽光の新築は、国の「みらいエコ住宅2026」の<b>GX志向型補助（110万円・寒冷地125万円）</b>の要件と相性の良い仕様です（予算枠・着工時期の条件あり・最新の受付状況は要確認）。<b>住宅ローン減税もZEH水準以上は借入限度額が優遇</b>されます。',
-        '<b>火災保険が割安になりやすい構造</b>：一条の家は<b>省令準耐火構造が標準</b>のため、火災保険は<b>T構造（耐火系）の料率</b>が適用され、非耐火（H構造）の概ね半分程度になる例が多い目安です。お見積り時に構造級別をご確認ください。'],
+        '<b>火災保険が割安になりやすい構造</b>：一条の家は<b>省令準耐火構造が標準</b>のため、火災保険は<b>T構造（耐火系）の料率</b>が適用され、非耐火（H構造）の概ね半分程度になる例が多い目安です。お見積り時に構造級別をご確認ください。',
+        '<b>Q値（q値・熱損失係数）とは</b>：家全体から逃げる熱を床面積あたりで表す指標で、UA値と違い<b>換気で逃げる熱まで含めて</b>評価します。一条の主力商品はQ値<b>約0.51 W/㎡K</b>（公称）で、旧・省エネ基準の家（温暖地で2.7相当）の5倍以上熱を逃がしにくい計算です。現在の公的基準はUA値が主流ですが、実際の暖房効率にはQ値（換気込み）の視点も参考になります。',
+        '<b>夏は暑い？</b>：高断熱の家は魔法瓶と同じで<b>夏の熱気も入れにくい</b>ため、エアコン1〜2台の全館冷房で家中を涼しく保つ住まい方が定番です。ただし日射を入れると熱がこもるため、<b>標準のハニカムシェード（遮熱タイプ）を東・西の窓で日中閉める</b>のがコツ。湿度を約50%に保つ「さらぽか空調」（オプション・後付け不可）という選択肢もありますが、猛暑日はエアコン併用が現実的という施主の声が多めです。',
+        '<b>冬の床暖房の使い方・電気代</b>：全館床暖房は立ち上がりに半日〜数日かかるため、<b>11月頃から春までつけっぱなしが基本</b>（こまめなON/OFFはかえって不経済）。施主の実測では<b>冬の暖房込み電気代は月8,000〜15,000円程度</b>の報告が中心です（地域・広さ・料金プランで変動）。設定は26〜28℃で室温22〜23℃前後が定番。冷房は床暖房の熱源機を兼用する<b>RAYエアコン</b>が付きますが、寝室など個別の部屋には市販エアコンを足す方が多いです。',
+        '<b>値引きはできる？</b>：一条工務店は<b>営業交渉による値引きを原則行わない「均一価格」方針</b>です（交渉の上手下手で価格が変わらない公平さが理由）。代わりに公式の制度として、<b>知人・オーナーからの紹介で約20〜35万円相当のオプション特典</b>、2親等以内の親族がオーナーなら本体1.5%割引、勤務先が提携企業なら2〜3%割引などがあります。<b>紹介制度は初回の展示場来場・個人情報登録の前に手続きが必要</b>な点だけご注意ください。',
+        '<b>他社との比較のコツ</b>：カタログの坪単価だけでなく、(1)<b>UA値・C値が実測か</b>（一条はC値を全棟実測。大手他社は非公表が多い）、(2)<b>標準仕様に何が含まれるか</b>（太陽光・床暖房・タイル外壁込みかどうか）、(3)<b>保証延長の条件</b>、(4)<b>住んでからの30年コスト</b>——の4軸で並べると違いが見えます。断熱・気密の数値では一条が頭一つ抜けるという評価が一般的ですが、鉄骨系他社には大開口・設計自由度など別の強みがあり、優先順位次第です。',
+        '<b>工場生産（品質のひみつ）</b>：一条はグループのフィリピン自社工場で壁パネル・断熱材・窓・キッチンなど部材の大半を内製し、<b>工場生産率は約80%</b>。現場の職人さんの腕に左右されにくく、性能のバラつきを抑えられるのが強みです（「最大の工業化住宅工場」でギネス認定）。',
+        '<b>着工待ち・入居までの期間</b>：人気のため<b>契約から着工まで数か月〜1年近く待つ</b>時期があり、着工から引き渡しは4〜6か月程度。全体では契約から入居まで1年〜1年半を見込むのが現実的です。入学・転勤など入居時期が決まっている方は、<b>逆算して早めに動く</b>のがおすすめです（仮住まい費用も資金計画に）。',
+        '<b>デメリットも正直に</b>：①間取り・窓の自由度が狭め（一条ルール）②外観が似やすい③標準が充実しているぶん坪単価は安くない④人気で着工待ちがある⑤冬は乾燥しやすい——が代表的です。それぞれ「規格化ゆえの性能保証」「HUGme等で予算調整」「加湿器で対策」など裏返しの利点・対策とセットで検討するのがおすすめです。',
+        '<b>展示場・宿泊体験</b>：全国の展示場のほか<b>宿泊体験棟に無料で泊まれる</b>のが名物で、床暖房の暖かさや静かさを一晩体感できます（宿泊しても契約義務はありません）。冬または夏に体験すると、性能の違いがいちばん分かりやすいです。週末は予約が埋まりやすいので早めの予約がおすすめです。',
+        '<b>結露はしない？</b>：トリプル樹脂サッシ＋熱交換換気のため、<b>窓の結露は起きにくい</b>という報告が大半です（加湿しすぎた場合や北側の窓は除く）。壁の中の結露（内部結露）についても、湿気を通しにくい断熱材の採用で性能低下が起こりにくい設計です。',
+        '<b>断熱材は何を使っている？</b>：i-smart等は<b>高性能ウレタンフォームの「外内ダブル断熱」（外50mm＋内140mm＝計190mm）</b>で、グラスウールの約2倍の断熱性能。湿気を通しにくく水に強いため壁内結露にも強い素材です。グラン・セゾン等の在来工法系は「EPS1号相当」（発泡スチロール系）で、商品により断熱材が異なります。',
+        '<b>音・防音は？</b>：高気密＋トリプルサッシで<b>外の音（車・雨音）はかなり静か</b>という声が多い一方、家の中は静かなぶん<b>家族の生活音が響きやすい</b>という指摘も定番です。吹き抜けは2階へ音が届きやすいため、寝室と生活空間の間に収納を挟むなどの間取りの工夫が有効です。',
+        '<b>網戸・カーテンは別途</b>：意外な盲点として<b>網戸はオプション</b>（35坪で約10万円目安・後付けは割高）、<b>カーテンレールも本体工事に含まれません</b>。ハニカムシェード標準のためカーテンなしで暮らす方もいますが、寝室・脱衣所は目隠しが欲しくなったという声が多く、最初に決めておくのがおすすめです。'],
         probes:['一条工務店の家をご検討中なのですね。いま特に気になっているのは、光熱費・太陽光・メンテ費・建築費のどれでしょうか？','ご予算のイメージ（総額）や、土地はお決まりかどうかも教えていただけると、資金計画がより具体的になります。'],
         concl:'一条工務店の家は、建物価格だけでなく<b>「住んでからの30年」で光熱費・売電・メンテ費に差が出る</b>のが特長です。上の「一般住宅と一条工務店の家（30年比較）」で、ご家庭の数字での違いをご確認いただけます。金額はいずれも目安のため、正確な資金計画は無料相談で承ります。' },
       nisa:{ label:'NISA', re:/nisa|ニーサ|つみたて|積立/i,
@@ -4782,6 +4835,7 @@
        「やさしく」「中学生にもわかるように」等の質問で、専門用語の前にまずこれを出す */
     const EASY_RE = /中学生|小学生|高校生でも|子ども(にも|でも)|子供(にも|でも)|やさしく|わかりやすく|分かりやすく|かんたんに|簡単に|ひとことで|一言で/;
     const EASY_INTRO = {
+      ichijo:'一条工務店の家をひとことで言うと、「魔法瓶みたいに冬あったかく夏すずしくて、屋根の太陽光がおこづかいも稼いでくれる家」です。建てるときの値段は安くありませんが、住んでからの電気代やお手入れ代で差が縮まっていきます。',   // 【一条フック】
       nisa:'NISA（ニーサ）をひとことで言うと、「投資でもうかったお金に税金がかからない、国がつくった特別な箱」です。ふつうは利益の約2割が税金で引かれますが、NISAの箱の中なら引かれません。',
       ideco:'iDeCo（イデコ）をひとことで言うと、「自分でつみたてる、もうひとつの年金」です。老後まで引き出せないかわりに、税金がぐっと安くなるごほうびがあります。',
       hoken:'保険をひとことで言うと、「めったに起きないけれど、起きたらお金が足りなくなる出来事に、みんなで少しずつお金を出し合って備えるしくみ」です。',
@@ -4876,7 +4930,11 @@
       // ただし「年収の壁」「〜とは」「違い」など知識を尋ねる質問は、個別診断より知識ベースの回答を優先する
       const KNOWLEDGE_Q = /壁|103万|106万|130万|150万|160万|188万|とは|って何|ってなに|違い/;
       if(topic && DIAG[topic] && NECESSITY.test(q) && !KNOWLEDGE_Q.test(q)){
-        return { html: DIAG[topic](), known:true, personal:false, diag:true, topic };
+        // 【一条フック】ichijoの個別診断（30年差の試算）は試算系の質問だけに限定。
+        // 「坪単価はいくら？」「保証にお金はかかる？」等の知識質問が太陽光試算に乗っ取られるのを防ぎ、知識ベースの回答へ流す
+        if(topic!=='ichijo' || /30年|35年|何年で|差が|差は|の差|太陽光|蓄電池|売電|光熱費|電気代|得|トク|とく|元が取れ|回収/.test(q)){
+          return { html: DIAG[topic](), known:true, personal:false, diag:true, topic };
+        }
       }
       if(topic) return { html: genAnswer(topic, q), known:true, personal:true, topic };
       if(NECESSITY.test(q)){
@@ -4975,6 +5033,7 @@
     const CONFUSED = /わからない|分からない|わかりません|判らない|むずかし|難しい|困った|困っています|困る|不安|心配|迷って|迷います|どうすれば|どうしたら|どうすべき|自信がない|大丈夫でしょうか|助けて|相談したい|専門家/;
     function sendChat(q){
       q=(q||'').trim(); if(!q) return;
+      try{ q = q.normalize('NFKC'); }catch(e){}   // 全角英数（Ｃ値・ＮＩＳＡ等）を半角へ正規化し、トピック判定・ファクト一致のとりこぼしを防ぐ
       chatTurns++;
       addMsg('user', esc(q));
       $('chat-text').value='';
@@ -5164,7 +5223,9 @@
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
-      userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更でmaint・ZEHを自動上書きしない
+      userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない
+      // 金利はカスタム値（既定の0.95でも3.1でもない値）のときだけ保護。既定値なら金利タイプ切替との連動を生かす
+      userEditedRate = (()=>{ const v = parseFloat($('loan-rate')?.value); return isFinite(v) && v!==0.95 && v!==3.1; })();
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
       if(s.kasaiCycle) setKasaiCycle(s.kasaiCycle);

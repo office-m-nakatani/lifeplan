@@ -813,7 +813,7 @@
             <div class="subgroup">
               <div class="subgroup-title"><span class="tag">夫</span></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><input type="text" id="h-name" placeholder="夫"></div>
+                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="h-name" placeholder="夫"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="h-age" value="35" min="18" max="70"><span class="u">歳</span></div></div>
                 <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="h-income" value="550" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="h-net">手取り目安：—</span></div>
                 <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="h-raise" value="1.0" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
@@ -825,7 +825,7 @@
             <div class="subgroup" id="wife-section">
               <div class="subgroup-title spouse"><span class="tag">妻</span></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><input type="text" id="w-name" placeholder="妻"></div>
+                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" placeholder="妻"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="w-age" value="33" min="18" max="70"><span class="u">歳</span></div></div>
                 <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
                 <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
@@ -1214,10 +1214,7 @@
             <!-- 死亡保障の合計（現状⇔将来で今の保障額と提案の保障額を比較。将来プランでは現状比の増減を表示）-->
             <div class="living-total" id="ins-total-box" style="background:#fbeef4; border-color:#e2a6c4;">
               <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
-              <span class="lt-value">
-                <span class="ins-sum-item">夫 <b id="ins-sum-h">0</b> 万円<span class="lt-diff" id="ins-diff-h"></span></span>
-                <span class="ins-sum-item">妻 <b id="ins-sum-w">0</b> 万円<span class="lt-diff" id="ins-diff-w"></span></span>
-              </span>
+              <span class="lt-value" id="ins-sum-value"></span>
             </div>
             <div class="note" style="margin-bottom:12px;">
               <i class="fa-solid fa-scale-balanced"></i>
@@ -2001,12 +1998,12 @@
     function insRow(who='h', type='shunyu', name='', amount=0, monthly=0, endAge=65){
       const div = document.createElement('div');
       div.className = 'row-item ins-row';
-      const ow = (v,l)=> `<option value="${v}"${who===v?' selected':''}>${l}</option>`;
+      const whoOpts = insWhoMembers().map(m=> `<option value="${m.key}"${who===m.key?' selected':''}>${esc(m.label)}</option>`).join('');
       const ot = (v,l)=> `<option value="${v}"${type===v?' selected':''}>${l}</option>`;
       div.innerHTML = `
         <div class="ir-head">
           <input type="checkbox" class="iv-on" checked title="この保険を計算に反映">
-          <select class="ins-who" style="flex:0 0 84px;">${ow('h','夫')}${ow('w','妻')}</select>
+          <select class="ins-who" style="flex:0 1 130px; min-width:96px;">${whoOpts}</select>
           <select class="iv-type ins-type">
             ${ot('shunyu','収入保障保険（家族収入・逓減）')}${ot('teiki','定期保険')}${ot('shushin','終身保険')}${ot('other','養老・共済・その他')}
           </select>
@@ -2072,16 +2069,44 @@
       });
       return { total: Math.round(total), hasIncome, simple:false };
     }
-    // 保存済みプラン（現状）の who の死亡保障合計を、DOMを使わずに計算する（将来プランでの差額表示用・insCoverForと同基準）
-    function insCoverFromState(s, who){
+    // 保険の被保険者に選べる家族：夫・妻＋お子さま全員（keyは h / w / c0,c1… 、labelはお名前＋様/君）
+    function insWhoMembers(){
+      const arr = [{ key:'h', label: hNameH() }, { key:'w', label: wNameH() }];
+      readChildren().forEach((c,i)=> arr.push({ key:'c'+i, label: c.name }));
+      return arr;
+    }
+    // key に対応する現在の年齢（収入保障の残年数計算に使う）
+    function insAgeForKey(key){
+      if(key==='h') return num('h-age',35);
+      if(key==='w') return num('w-age',33);
+      const ch = readChildren()[parseInt(key.slice(1))||0];
+      return ch ? ch.age : 0;
+    }
+    // key（h/w/cN）に掛かっている死亡保障の現時点の総額（万円）。収入保障は月額×12×満了までの残り年数で換算
+    function insCoverForKey(key){
+      if((key==='h'||key==='w') && hokenMode()==='simple') return Math.round(Math.max(num(key==='h'?'ins-total-h':'ins-total-w', 0), 0));
+      const age = insAgeForKey(key);
+      let total = 0;
+      readInsurances().filter(x=> x.who===key).forEach(x=>{
+        if(x.type==='shunyu'){ const yrs = Math.max((x.end||65) - age, 0); if(yrs>0 && x.monthly>0) total += x.monthly*12*yrs; }
+        else if(x.type==='shushin'){ total += x.amount; }
+        else { if(x.end<=0 || age < x.end) total += x.amount; }
+      });
+      return Math.round(total);
+    }
+    // 保存済みプラン（現状）の key の死亡保障合計を、DOMを使わずに計算する（将来プランでの差額表示用・同基準）
+    function insCoverFromState(s, key){
       if(!s) return null;
       const f = s.fields || {};
       const mode = s.hokenMode || 'detail';
-      if(mode==='simple') return Math.round(Math.max(parseFloat(f[who==='h'?'ins-total-h':'ins-total-w'])||0, 0));
-      const age = parseFloat(f[who==='h'?'h-age':'w-age']) || (who==='h'?35:33);
+      if((key==='h'||key==='w') && mode==='simple') return Math.round(Math.max(parseFloat(f[key==='h'?'ins-total-h':'ins-total-w'])||0, 0));
+      let age;
+      if(key==='h') age = parseFloat(f['h-age'])||35;
+      else if(key==='w') age = parseFloat(f['w-age'])||33;
+      else { const ch=(s.children||[])[parseInt(key.slice(1))||0]; age = ch ? (parseInt(ch.age)||0) : 0; }
       let total = 0;
       (s.insurances||[]).forEach(x=>{
-        if(x.on===false || x.who!==who) return;
+        if(x.on===false || x.who!==key) return;
         const type = x.type||'shunyu';
         const amount = Math.max(parseFloat(x.amount)||0, 0);
         const monthly = Math.max(parseFloat(x.monthly)||0, 0);
@@ -2092,26 +2117,39 @@
       });
       return Math.round(total);
     }
-    // ⑦の一番上「死亡保障の合計」を更新（将来プランでは現状比の増減を表示。基本生活費の合計と同じ考え方）
+    // 保険行の被保険者プルダウンを、現在の家族構成（夫・妻・お子さま）に合わせて作り直す（選択中の値は保持）
+    function refreshInsWhoOptions(){
+      const list = $('ins-list'); if(!list) return;
+      const members = insWhoMembers();
+      list.querySelectorAll('.ins-who').forEach(sel=>{
+        const cur = sel.value || 'h';
+        const keep = members.some(m=> m.key===cur) ? cur : 'h';
+        sel.innerHTML = members.map(m=> `<option value="${m.key}"${m.key===keep?' selected':''}>${esc(m.label)}</option>`).join('');
+        sel.value = keep;
+      });
+    }
+    // ⑦の一番上「死亡保障の合計」を更新（家族ごとに表示。将来プランでは現状比の増減を表示。基本生活費の合計と同じ考え方）
     function updateInsTotal(){
-      const hEl = $('ins-sum-h'), wEl = $('ins-sum-w'); if(!hEl || !wEl) return;
-      const ch = insCoverFor('h').total, cw = insCoverFor('w').total;
-      hEl.textContent = fmt(ch); wEl.textContent = fmt(cw);
-      const setDiff = (id, cur, who)=>{
-        const el = $(id); if(!el) return;
-        if(typeof PLANS!=='undefined' && PLANS.active==='mirai' && PLANS.genjo.state){
-          const base = insCoverFromState(PLANS.genjo.state, who);
-          if(base!=null && Math.round(cur-base)!==0){
-            const d = Math.round(cur-base);
-            el.innerHTML = d>0 ? `<span class="diff-plus">現状比 ＋${fmt(d)}万円（増）</span>`
-                                : `<span class="diff-minus">現状比 −${fmt(Math.abs(d))}万円（減）</span>`;
-            return;
+      refreshInsWhoOptions();
+      const box = $('ins-sum-value'); if(!box) return;
+      const base = (typeof PLANS!=='undefined' && PLANS.active==='mirai' && PLANS.genjo.state) ? PLANS.genjo.state : null;
+      let html = '';
+      insWhoMembers().forEach(m=>{
+        const cur = insCoverForKey(m.key);
+        const isSpouse = (m.key==='h' || m.key==='w');
+        if(!isSpouse && cur<=0) return;                       // お子さまは保障があるときだけ表示
+        let diff = '';
+        if(base){
+          const prev = insCoverFromState(base, m.key);
+          if(prev!=null && Math.round(cur-prev)!==0){
+            const d = Math.round(cur-prev);
+            diff = d>0 ? ` <span class="lt-diff diff-plus">現状比 ＋${fmt(d)}万円（増）</span>`
+                        : ` <span class="lt-diff diff-minus">現状比 −${fmt(Math.abs(d))}万円（減）</span>`;
           }
         }
-        el.innerHTML = '';
-      };
-      setDiff('ins-diff-h', ch, 'h');
-      setDiff('ins-diff-w', cw, 'w');
+        html += `<span class="ins-sum-item">${esc(m.label)} <b>${fmt(cur)}</b> 万円${diff}</span>`;
+      });
+      box.innerHTML = html;
     }
     const hokenModeSeg = $('hoken-mode-seg');
     if(hokenModeSeg) hokenModeSeg.addEventListener('click', (e)=>{
@@ -3106,6 +3144,7 @@
       PLANS[PLANS.active].sum = planSummary(rows);
       renderKpiDiffs(rows);
       renderFieldDiffs();
+      renderInvestDiffs();
       renderPlanEffect();
       drawCompareChart();
     }
@@ -3146,6 +3185,28 @@
         const iu = el.closest('.input-unit');
         if(iu) iu.insertAdjacentElement('afterend', span);
         else (el.closest('.field')?.querySelector('label') || el).appendChild(span);
+      });
+    }
+
+    // ⑤資産運用：将来プランで、各運用商品の「まとまった資金・毎月の積立」に現状比の増減バッジを付ける（生活費と同じ見せ方）
+    function renderInvestDiffs(){
+      const list = $('invest-list'); if(!list) return;
+      list.querySelectorAll('.iv-fdiff').forEach(el=> el.remove());
+      if(PLANS.active!=='mirai' || !PLANS.genjo.state) return;
+      const baseInv = PLANS.genjo.state.investments || [];
+      [...list.querySelectorAll('.invest-row')].forEach((row, i)=>{
+        const base = baseInv[i]; if(!base) return;   // 現状に対応する行が無い（新規追加）行は対象外
+        [['iv-lump','lump'],['iv-monthly','monthly']].forEach(([cls,key])=>{
+          const inp = row.querySelector('.'+cls); if(!inp) return;
+          const cur = parseFloat(inp.value)||0, prev = parseFloat(base[key])||0;
+          if(cur===prev) return;
+          const d = cur - prev;
+          const span = document.createElement('span');
+          span.className = 'fdiff iv-fdiff ' + (d>0 ? 'diff-plus' : 'diff-minus');
+          span.textContent = '現状比 ' + (d>0?'＋':'−') + fmt(Math.abs(d)) + '万円';
+          const iu = inp.closest('.input-unit');
+          if(iu) iu.insertAdjacentElement('afterend', span); else inp.insertAdjacentElement('afterend', span);
+        });
       });
     }
 

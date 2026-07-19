@@ -181,6 +181,9 @@
     @media(max-width:480px){ #kasai-box .grid2{ grid-template-columns:1fr; } }
     .field{ display:flex; flex-direction:column; gap:5px; min-width:0; }
     .field label{ font-size:.85rem; font-weight:500; color:var(--ink); }
+    /* グリッド内の入力欄の縦位置を揃える：ラベルを2行分確保し、下揃えで入力欄に密着させる（1行ラベルは上側に余白が入るだけで、行内の入力欄の高さ・上端が揃う） */
+    .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
+    @media(max-width:560px){ .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:3.9rem; } }
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
     .input-unit{ position:relative; display:flex; align-items:center; }
     .input-unit input, .field input, .field select{

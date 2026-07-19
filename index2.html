@@ -4920,6 +4920,27 @@
       showSaveView('login');
     });
 
+    // 保存・上書き時に、顧客管理（crm.html）の台帳へも自動反映（同名顧客が無ければ「商談中」で作成しリンク追加）
+    function omcrmSync(name){
+      try{
+        if(!currentUser || !name) return;
+        const key = 'omcrm_v1__' + currentUser;
+        let s; try{ s = JSON.parse(localStorage.getItem(key)||'{"customers":{}}'); }catch(e){ s = { customers:{} }; }
+        if(!s.customers) s.customers = {};
+        let c = Object.values(s.customers).find(x=> x && x.name === name);
+        if(!c){
+          c = { id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, status:'nego',
+                createdAt:Date.now(), actions:[], proposals:[], contracts:[], lifeplans:[] };
+          s.customers[c.id] = c;
+        }
+        c.lifeplans = c.lifeplans || [];
+        const hit = c.lifeplans.find(l=> l && l.tool==='ライフプラン②' && l.acct===currentUser && l.name===name);
+        if(hit) hit.t = Date.now(); else c.lifeplans.push({ tool:'ライフプラン②', file:'index2.html', acct:currentUser, name, t:Date.now() });
+        c.updatedAt = Date.now();
+        localStorage.setItem(key, JSON.stringify(s));
+      }catch(e){}
+    }
+
     // 新規保存
     $('save-do').addEventListener('click', ()=>{
       const name = ($('save-name').value||'').trim();
@@ -4927,7 +4948,7 @@
       const o = getSaves();
       if(o[name] && !confirm(`「${name}」は既に保存されています。上書きしますか？`)) return;
       o[name] = { t: Date.now(), plans: collectPlans(), by: currentUser };
-      if(putSaves(o)){ $('save-name').value=''; setCurrentSave(name); renderSaveList(); alert(`「${name}」を保存しました。`); }
+      if(putSaves(o)){ $('save-name').value=''; setCurrentSave(name); renderSaveList(); omcrmSync(name); alert(`「${name}」を保存しました（顧客管理にも反映）。`); }
     });
 
     // 上書き保存（読み込み中の資料を更新）
@@ -4935,7 +4956,7 @@
       if(!currentSaveName){ alert('先に下の一覧から資料を読み込んでください。'); return; }
       const o = getSaves();
       o[currentSaveName] = { t: Date.now(), plans: collectPlans(), by: currentUser };
-      if(putSaves(o)){ renderSaveList(); alert(`「${currentSaveName}」を上書き保存しました。`); }
+      if(putSaves(o)){ renderSaveList(); omcrmSync(currentSaveName); alert(`「${currentSaveName}」を上書き保存しました（顧客管理にも反映）。`); }
     });
 
     /* ============================================================

@@ -254,6 +254,11 @@
           <div style="display:flex; align-items:end;"><button class="btn btn-gold btn-sm" id="log-add" style="width:100%; justify-content:center;"><i class="fa-solid fa-plus"></i> メモを追加</button></div>
         </div>
         <div style="margin-top:8px;"><textarea id="log-text" rows="3" placeholder="商談内容・お客様の反応・宿題など"></textarea></div>
+        <div style="margin-top:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <label style="margin:0; color:var(--blue); font-weight:700; cursor:pointer;"><i class="fa-solid fa-paperclip"></i> このメモにPDF・資料を添付
+            <input type="file" id="log-file" multiple style="display:none;"></label>
+          <span class="muted" id="log-file-names"></span>
+        </div>
         <div class="sec-title"><i class="fa-solid fa-clock-rotate-left"></i> 履歴（新しい順）</div>
         <div id="log-list"></div>
       </div>
@@ -468,6 +473,7 @@ function openDetail(id){
   $('c-next-date').value=(cur.next&&cur.next.date)||''; $('c-next-text').value=(cur.next&&cur.next.text)||'';
   $('c-intent').value=cur.intent||''; $('c-memo').value=cur.memo||'';
   $('log-date').value=today();
+  pendingLogFiles=[]; $('log-file-names').textContent=''; if($('log-file')) $('log-file').value='';
   switchTab('basic'); renderLogs(); renderIns(); renderLp(); renderFiles();
   $('detail-bg').classList.remove('hidden');
 }
@@ -495,20 +501,35 @@ $('c-del').onclick = async ()=>{
 };
 
 /* ---------- 商談メモ ---------- */
-$('log-add').onclick = ()=>{
-  const text=($('log-text').value||'').trim(); if(!text){ alert('内容を入力してください。'); return; }
+$('log-add').onclick = async ()=>{
+  const text=($('log-text').value||'').trim();
+  if(!text && !pendingLogFiles.length){ alert('内容を入力するか、資料を添付してください。'); return; }
   cur.actions = cur.actions||[];
-  cur.actions.unshift({ d:$('log-date').value||today(), type:$('log-type').value, text });
+  const logId = 'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  cur.actions.unshift({ id:logId, d:$('log-date').value||today(), type:$('log-type').value, text });
+  if(pendingLogFiles.length) await storeFiles(pendingLogFiles, logId);
+  pendingLogFiles=[]; $('log-file-names').textContent=''; $('log-file').value='';
   cur.updatedAt=Date.now(); save(); $('log-text').value=''; renderLogs(); render();
 };
-function renderLogs(){
+async function renderLogs(){
   const list=cur.actions||[];
-  $('log-list').innerHTML = list.length ? list.map((a,i)=>
-    `<div class="item-row"><div class="ir-head"><b>${esc(a.d)}</b><span class="chip">${esc(a.type)}</span>
+  if(!list.length){ $('log-list').innerHTML='<p class="muted">まだ商談メモがありません。</p>'; return; }
+  const allFiles = await fileList(cur.id);
+  $('log-list').innerHTML = list.map((a,i)=>{
+    const atts = a.id ? allFiles.filter(f=> f.logId===a.id) : [];
+    const attHtml = atts.map(f=> `<a href="javascript:void(0)" class="log-att" data-id="${f.id}" style="display:inline-flex; gap:4px; align-items:center; margin:3px 8px 0 0; font-size:.8rem;"><i class="fa-solid ${fileIco(f)}"></i> ${esc(f.name)}</a>`).join('');
+    return `<div class="item-row"><div class="ir-head"><b>${esc(a.d)}</b><span class="chip">${esc(a.type)}</span>
+     ${atts.length? `<span class="chip"><i class="fa-solid fa-paperclip"></i> ${atts.length}</span>`:''}
      <button class="ir-del" data-i="${i}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>
-     <div class="ir-body">${esc(a.text)}</div></div>`).join('')
-    : '<p class="muted">まだ商談メモがありません。</p>';
-  $('log-list').querySelectorAll('.ir-del').forEach(b=> b.onclick=()=>{ cur.actions.splice(+b.dataset.i,1); cur.updatedAt=Date.now(); save(); renderLogs(); render(); });
+     ${a.text? `<div class="ir-body">${esc(a.text)}</div>`:''}
+     ${attHtml? `<div style="margin-top:5px;">${attHtml}</div>`:''}</div>`;
+  }).join('');
+  $('log-list').querySelectorAll('.log-att').forEach(b=> b.onclick=()=> openStored(b.dataset.id));
+  $('log-list').querySelectorAll('.ir-del').forEach(b=> b.onclick=async ()=>{
+    const a=cur.actions[+b.dataset.i];
+    if(a && a.id){ const fs=(await fileList(cur.id)).filter(f=>f.logId===a.id); for(const f of fs) await fileDel(f.id); }
+    cur.actions.splice(+b.dataset.i,1); cur.updatedAt=Date.now(); save(); renderLogs(); render();
+  });
 }
 
 /* ---------- 保険（提案・契約） ---------- */
@@ -583,29 +604,59 @@ function renderLp(){
 }
 
 /* ---------- 添付ファイル ---------- */
-$('file-input').addEventListener('change', async e=>{
-  for(const f of e.target.files){
+// 選択されたファイルをIndexedDBへ保存（logId指定で商談メモに紐付け）。保存できた件数を返す
+async function storeFiles(files, logId){
+  let n=0;
+  for(const f of files){
     if(f.size > 25*1024*1024){ alert(`「${f.name}」は25MBを超えるため保存できません。`); continue; }
-    await fileAdd({ id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), custId:cur.id, name:f.name, type:f.type, size:f.size, t:Date.now(), blob:f });
+    const rec = { id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), custId:cur.id, name:f.name, type:f.type, size:f.size, t:Date.now(), blob:f };
+    if(logId) rec.logId = logId;
+    await fileAdd(rec); n++;
   }
-  e.target.value=''; renderFiles();
+  return n;
+}
+$('file-input').addEventListener('change', async e=>{
+  await storeFiles(e.target.files); e.target.value=''; renderFiles();
 });
-async function renderFiles(){
-  const list = await fileList(cur.id);
-  const ico = n => /pdf$/i.test(n)?'fa-file-pdf':/pptx?$/i.test(n)?'fa-file-powerpoint':/docx?$/i.test(n)?'fa-file-word':/xlsx?$/i.test(n)?'fa-file-excel':/(png|jpe?g|gif)$/i.test(n)?'fa-file-image':'fa-file';
-  $('file-list').innerHTML = list.length ? list.map(f=>
-    `<div class="item-row"><div class="ir-head"><i class="fa-solid ${ico(f.name)}" style="color:var(--blue);"></i> <b>${esc(f.name)}</b>
+// 商談メモに添付するファイルの一時選択（メモ追加時にまとめて保存）
+let pendingLogFiles = [];
+$('log-file').addEventListener('change', e=>{
+  pendingLogFiles = [...e.target.files];
+  $('log-file-names').textContent = pendingLogFiles.length ? `${pendingLogFiles.map(f=>f.name).join('、')} を添付予定` : '';
+});
+// MIME→拡張子。名前に拡張子が無い添付でも、開く/ダウンロード時に正しい拡張子を補う（OSがアプリを特定できるように）
+const MIME_EXT = { 'application/pdf':'pdf','image/png':'png','image/jpeg':'jpg','image/gif':'gif','image/webp':'webp','image/heic':'heic','image/svg+xml':'svg',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':'pptx','application/vnd.ms-powerpoint':'ppt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'docx','application/msword':'doc',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'xlsx','application/vnd.ms-excel':'xls',
+  'text/plain':'txt','text/csv':'csv','application/zip':'zip' };
+const extOf = n => { const m=/\.([A-Za-z0-9]{1,5})$/.exec(n||''); return m ? m[1].toLowerCase() : ''; };
+const fileExt = rec => extOf(rec.name) || MIME_EXT[rec.type] || '';
+const dlName = rec => { const e=extOf(rec.name); if(e) return rec.name; const m=MIME_EXT[rec.type]; return m ? rec.name+'.'+m : rec.name; };
+const viewable = rec => { const e=fileExt(rec); return /^(pdf|png|jpg|jpeg|gif|webp|svg|txt)$/.test(e) || /^(image\/|application\/pdf|text\/plain)/.test(rec.type||''); };
+const fileIco = rec => { const e=fileExt(rec); return e==='pdf'?'fa-file-pdf':/pptx?/.test(e)?'fa-file-powerpoint':/docx?/.test(e)?'fa-file-word':/xlsx?|csv/.test(e)?'fa-file-excel':/png|jpe?g|gif|webp|svg|heic/.test(e)?'fa-file-image':'fa-file'; };
+// blobを開く（PDF・画像・テキストは新規タブ表示、それ以外は正しい拡張子でダウンロード）
+async function openStored(id){
+  const rec = await fileGet(id); if(!rec) return;
+  const blob = rec.blob.type ? rec.blob : new Blob([rec.blob], { type: rec.type || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  if(viewable(rec)){
+    window.open(url, '_blank');
+  } else {
+    const a=document.createElement('a'); a.href=url; a.download=dlName(rec); document.body.appendChild(a); a.click(); a.remove();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+function fileRowHtml(f){
+  return `<div class="item-row"><div class="ir-head"><i class="fa-solid ${fileIco(f)}" style="color:var(--blue);"></i> <b>${esc(f.name)}</b>
      <span class="ir-meta">${(f.size/1024/1024).toFixed(2)}MB・${dstr(f.t)}</span>
      <button class="btn btn-line btn-sm f-open" data-id="${f.id}" style="margin-left:auto;"><i class="fa-solid fa-eye"></i> 開く</button>
-     <button class="ir-del f-del" data-id="${f.id}"><i class="fa-solid fa-trash-can"></i></button></div></div>`).join('')
-    : '<p class="muted">まだ添付がありません。</p>';
-  $('file-list').querySelectorAll('.f-open').forEach(b=> b.onclick=async ()=>{
-    const rec = await fileGet(b.dataset.id); if(!rec) return;
-    const url = URL.createObjectURL(rec.blob);
-    const a=document.createElement('a'); a.href=url; a.target='_blank'; a.download=rec.name;
-    if(/pdf|image/.test(rec.type)) a.removeAttribute('download');   // PDF/画像はブラウザで開く・他はダウンロード
-    a.click(); setTimeout(()=>URL.revokeObjectURL(url), 60000);
-  });
+     <button class="ir-del f-del" data-id="${f.id}"><i class="fa-solid fa-trash-can"></i></button></div></div>`;
+}
+async function renderFiles(){
+  const list = (await fileList(cur.id)).filter(f=> !f.logId);   // 商談メモ添付（logId付き）は除き、一般の添付のみ
+  $('file-list').innerHTML = list.length ? list.map(fileRowHtml).join('') : '<p class="muted">まだ添付がありません。</p>';
+  $('file-list').querySelectorAll('.f-open').forEach(b=> b.onclick=()=> openStored(b.dataset.id));
   $('file-list').querySelectorAll('.f-del').forEach(b=> b.onclick=async ()=>{ if(confirm('この添付を削除しますか？')){ await fileDel(b.dataset.id); renderFiles(); } });
 }
 

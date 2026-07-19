@@ -300,9 +300,11 @@
 
     /* お子さまの行（年齢＋小〜高＋進学先＋通学形態＋相場） */
     .row-item.child-row{ display:block; }
-    .cr-head{ display:flex; align-items:center; margin-bottom:10px; }
+    .cr-head{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px; }
     .cr-title{ font-weight:700; font-size:.9rem; color:var(--blue-deep); display:flex; align-items:center; gap:7px; }
-    .cr-head .btn-del{ margin-left:auto; flex:0 0 auto; }
+    .cr-honorific-seg{ margin-left:auto; padding:2px; }
+    .cr-honorific-seg button{ padding:5px 12px; font-size:.78rem; }
+    .cr-head .btn-del{ flex:0 0 auto; }
     .cr-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; align-items:end; }
     .cr-grid.cr-bot{ margin-top:10px; }
     @media(min-width:560px){
@@ -1638,8 +1640,8 @@
     /* 文章内で名前を呼ぶときは敬称「様」を付ける（お名前が未入力の「夫」「妻」はそのまま） */
     const hNameH = ()=>{ const n=(document.getElementById('h-name')?.value||'').trim(); return n ? n+'様' : '夫'; };
     const wNameH = ()=>{ const n=(document.getElementById('w-name')?.value||'').trim(); return n ? n+'様' : '妻'; };
-    // お子さまのお名前：入力があれば「君」を自動付与（すでに君・ちゃん・さん等が付いていれば付けない）。未入力は「子1」等
-    const cNameH = (nm, i)=>{ nm=(nm||'').trim(); if(!nm) return '子'+((i||0)+1); return /(君|くん|ちゃん|チャン|さん|サン|様|ちゃま)$/.test(nm) ? nm : nm+'君'; };
+    // お子さまのお名前：入力があれば敬称（君／ちゃん・行ごとに選択）を自動付与（すでに君・ちゃん・さん等が付いていれば付けない）。未入力は「子1」等
+    const cNameH = (nm, i, honorific)=>{ nm=(nm||'').trim(); if(!nm) return '子'+((i||0)+1); return /(君|くん|ちゃん|チャン|さん|サン|様|ちゃま)$/.test(nm) ? nm : nm+(honorific||'君'); };
 
     /* 運用商品の種類ごとの色（項目別テーブルで色分け） */
     const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a', other:'#5b6b7d' };
@@ -1681,13 +1683,17 @@
     const eventsList = $('events-list');
     const incomeEventsList = $('income-events-list');
 
-    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name=''){
+    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', honorific='君'){
       const div = document.createElement('div');
       div.className = 'row-item child-row';
       const highOpts = Object.entries(HIGHED).map(([v,o])=> `<option value="${v}"${v===highEd?' selected':''}>${o.label}</option>`).join('');
       div.innerHTML = `
         <div class="cr-head">
           <span class="cr-title"><i class="fa-solid fa-child-reaching"></i> お子さま</span>
+          <div class="seg cr-honorific-seg" title="お名前の後につける敬称">
+            <button type="button" data-honorific="君"${honorific!=='ちゃん'?' class="active"':''}>君</button>
+            <button type="button" data-honorific="ちゃん"${honorific==='ちゃん'?' class="active"':''}>ちゃん</button>
+          </div>
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="cr-grid cr-top">
@@ -1712,6 +1718,11 @@
         <p class="cr-quote"></p>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); renumberChildPlaceholders(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', ()=>{ updateChildQuote(div); recompute(); }));
+      div.querySelector('.cr-honorific-seg').addEventListener('click', (e)=>{
+        const b = e.target.closest('button'); if(!b) return;
+        [...div.querySelectorAll('.cr-honorific-seg button')].forEach(x=> x.classList.toggle('active', x===b));
+        recompute();
+      });
       childrenList.appendChild(div);
       renumberChildPlaceholders();
       updateChildQuote(div);
@@ -1776,7 +1787,7 @@
 
     function readChildren(){
       return [...childrenList.querySelectorAll('.row-item')].map((r,i)=>({
-        name: cNameH(r.querySelector('.ch-name').value, i),
+        name: cNameH(r.querySelector('.ch-name').value, i, r.querySelector('.cr-honorific-seg button.active')?.dataset.honorific),
         age: parseInt(r.querySelector('.ch-age').value)||0,
         k12: r.querySelector('.ch-k12').value,
         highEd: r.querySelector('.ch-highed').value,
@@ -5110,7 +5121,7 @@
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
         loanRepayType: loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri',
-        children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value })),
+        children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, honorific:r.querySelector('.cr-honorific-seg button.active')?.dataset.honorific||'君' })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
@@ -5129,7 +5140,7 @@
       // 旧保存データ（⑦追加前）読込時に、前のお客様の保険入力が残らないようリセット（新しい保存はこの後のfields復元で上書きされる）
       if($('ins-total-h')) $('ins-total-h').value = 0;
       if($('ins-total-w')) $('ins-total-w').value = 0;
-      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||''));
+      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.honorific||'君'));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));

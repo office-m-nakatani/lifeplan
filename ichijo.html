@@ -1379,22 +1379,40 @@
           </div>
           <div id="ivd-table"></div>
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:8px;">※ <b>⑤で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+          <details class="ic-fold">
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る（クリックで開閉）</summary>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>⑤で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+          </details>
         </div>
 
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
         <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
-          <p class="hint" style="display:block; margin-bottom:8px;">⑦で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額の推移です。団信の分は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、その年齢時点の保障額で計算します。</p>
+          <p class="hint" style="display:block; margin-bottom:8px;">⑦で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
             <input type="number" id="hkd-age" placeholder="今" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
             <span class="hint" style="margin:0;">（<span id="hkd-hname">夫</span>の年齢で指定・空欄＝いまの年齢）</span>
           </div>
+          <div class="hkd-dan no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
+            <span>団信（住宅ローン）の前提：</span>
+            <div class="seg" id="hkd-dan-seg">
+              <button type="button" data-hkddan="continue" class="active">返済を続ける</button>
+              <button type="button" data-hkddan="payoff">○歳で完済とみなす</button>
+            </div>
+            <span id="hkd-dan-age-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:4px;">
+              <input type="number" id="hkd-dan-age" value="60" min="20" max="100" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳で完済（以降は団信0）
+            </span>
+          </div>
           <div id="hkd-table"></div>
           <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
           <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+          <details class="ic-fold">
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る（クリックで開閉）</summary>
+            <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
+            <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+          </details>
         </div>
 
         <!-- 収支グラフ -->
@@ -3047,10 +3065,10 @@
           // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上）
           if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; principalByItem[i] += inv.lump; }
           balances[i] = balances[i]*(1+ret);
-          // 積立は「開始年齢〜終了年齢」の間だけ加算
-          if(hAge>=inv.start && hAge<inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
-          // 終了後「使う」：終了年齢で残高を預貯金へ移す（運用資産→0、生活費等に使える）
-          if(inv.after==='use' && hAge===inv.endAge && balances[i]>0){
+          // 積立は「開始年齢〜終了年齢」の間だけ加算（終了年齢まで含む＝「○歳まで積み立てる」）
+          if(hAge>=inv.start && hAge<=inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
+          // 終了後「使う」：積立満了の翌年に残高を預貯金へ移す（満了年までは運用資産として表・グラフに残す）
+          if(inv.after==='use' && hAge===inv.endAge+1 && balances[i]>0){
             cash += balances[i];
             eventList.push({label: inv.name+'を使う', type:'family'});
             balances[i] = 0; principalByItem[i] = 0;
@@ -3480,11 +3498,15 @@
       if($('hkd-hname')) $('hkd-hname').textContent = hNameH();
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
       if(diffCardPlaceholder(tbl, box, g, m)){ segEl.innerHTML=''; return; }
+      // 団信の前提：「返済を続ける」＝実際のローン残高どおり ／ 「○歳で完済とみなす」＝その年齢以降は団信0
+      const danPayoff = hkdDanMode()==='payoff';
+      const danAge = num('hkd-dan-age', 60);
       // ⑦保険＋団信（h/wのみ）の合計。お子さまは保障がある場合だけ表に出す
       const totalOf = (row, key)=>{
         if(!row) return null;
         const ins = (row.ins && typeof row.ins[key]==='number') ? row.ins[key] : 0;
-        const ds = (key==='h') ? (row.ds ? row.ds.h : 0) : (key==='w') ? (row.ds ? row.ds.w : 0) : 0;
+        let ds = (key==='h') ? (row.ds ? row.ds.h : 0) : (key==='w') ? (row.ds ? row.ds.w : 0) : 0;
+        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ
         return { total: Math.round(ins+ds), ins: Math.round(ins), ds: Math.round(ds) };
       };
       const members = insWhoMembers().filter(mm=>{
@@ -3537,6 +3559,8 @@
         }
       }});
     }
+    // 団信の前提トグル（返済を続ける／○歳で完済とみなす）。表示専用＝家計の資金繰り（③のローン返済）は変えない
+    function hkdDanMode(){ return document.querySelector('#hkd-dan-seg button.active')?.dataset.hkddan || 'continue'; }
     if($('ivd-age')) $('ivd-age').addEventListener('input', renderInvestDiffCard);
     if($('hkd-age')) $('hkd-age').addEventListener('input', renderHokenDiffCard);
     if($('hkd-member-seg')) $('hkd-member-seg').addEventListener('click', (e)=>{
@@ -3544,6 +3568,13 @@
       hkdMemberKey = b.dataset.hkdm;
       renderHokenDiffCard();
     });
+    if($('hkd-dan-seg')) $('hkd-dan-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      [...$('hkd-dan-seg').children].forEach(x=> x.classList.toggle('active', x===b));
+      const wrap = $('hkd-dan-age-wrap'); if(wrap) wrap.classList.toggle('hidden', b.dataset.hkddan!=='payoff');
+      renderHokenDiffCard();
+    });
+    if($('hkd-dan-age')) $('hkd-dan-age').addEventListener('input', renderHokenDiffCard);
 
     // 資産推移グラフに重ねる「現状プラン」の点線（将来プラン表示中のみ）
     function planGhost(){
@@ -4249,14 +4280,14 @@
         res.appendChild(d);
       }
       document.body.classList.add('pdf-mode');
-      const icf = $('ic-fold'); if(icf){ icf.dataset.wasOpen = icf.open ? '1' : ''; icf.open = true; }   // 前提・出典はPDF/印刷では全文表示
+      document.querySelectorAll('details.ic-fold').forEach(d=>{ d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });   // 前提・出典はPDF/印刷では全文表示
       try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(ichijoChart) ichijoChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
       removePdfExtras();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
-      const icf = $('ic-fold'); if(icf){ icf.open = icf.dataset.wasOpen === '1'; }
+      document.querySelectorAll('details.ic-fold').forEach(d=>{ d.open = d.dataset.wasOpen === '1'; });
       try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(ichijoChart) ichijoChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
 

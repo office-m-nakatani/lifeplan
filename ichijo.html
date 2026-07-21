@@ -215,7 +215,6 @@
     /* 残債・一括返済オプションのグループ枠（段揃え・見やすさ） */
     .loan-payoff-box{ margin-top:12px; padding:14px 14px 12px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
     .loan-payoff-box .lp-title{ font-size:.85rem; font-weight:700; color:var(--blue-deep); margin-bottom:12px; display:flex; align-items:center; gap:7px; }
-    .loan-payoff-box .grid2{ align-items:end; }
     .loan-payoff-box .lp-seg-field{ margin-top:12px; }
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
@@ -401,6 +400,9 @@
     .card-title{ font-size:1.22rem; font-weight:800; display:flex; align-items:center; gap:10px; margin:-2px -2px 14px; padding-bottom:11px; border-bottom:2px solid var(--blue-pale2); }
     .card-title i{ color:var(--blue); font-size:1.05em; }
     @media(max-width:520px){ .card-title{ font-size:1.08rem; } }
+    /* 長いタイトル（資産運用のくらべ等）が2段に折り返さないよう縮小 */
+    .card-title-long{ font-size:1.02rem; }
+    @media(max-width:520px){ .card-title-long{ font-size:.86rem; } }
     .card-title .toggle{ margin-left:auto; }
     .chart-box{ position:relative; height:260px; margin-top:8px; }
     .chart-box.tall{ height:300px; }
@@ -1395,7 +1397,7 @@
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
         <div class="card" id="invest-diff-card">
-          <div class="card-title"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
+          <div class="card-title card-title-long"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
           <div class="ivd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で比べる？</span>
             <input type="number" id="ivd-age" value="65" min="20" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳

@@ -858,6 +858,11 @@
                 <div class="field"><label>退職予定</label><div class="input-unit"><input type="number" id="w-retire" value="65" min="50" max="80"><span class="u">歳</span></div></div>
                 <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="w-bonus" value="300" min="0" step="50"><span class="u">万円</span></div></div>
               </div>
+              <label class="wife-worklife-toggle" style="display:flex; align-items:center; gap:9px; margin-top:10px; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; font-weight:600; font-size:.9rem;">
+                <input type="checkbox" id="wife-worklife" style="width:18px; height:18px; flex:0 0 auto;">
+                <span>奥様の働き方を変える予定（育休の延長・時短・専業など）</span>
+              </label>
+              <span class="hint" style="display:block; margin-top:4px;">チェックすると、右上の総資産で「現状比のマイナス（減った額）」を表示しません。働き方は、お金だけで測るものではありません。</span>
             </div>
 
             <div class="note">
@@ -3059,16 +3064,19 @@
 
         // 積立・運用（商品ごとに利回り・積立・終了年齢を適用）
         let contribution = 0;
+        // 今年、積立に回せるお金＝前年までの預貯金＋今年の手取り−支出−頭金。これを超えては積み立てない
+        // （払えない額の積立を計上して預貯金を無限にマイナスにしない＝現実的な積立額にする）
+        let contribBudget = cash + income - expense - downThisYear;
         for(let i=0; i<invs.length; i++){
           const inv = invs[i];
           let ret = (returnOverride!=null) ? returnOverride : inv.ret/100;
           // 終了後「運用を止める」：終了年齢以降は利回り0（成長しない）
           if(inv.after==='stop' && hAge>=inv.endAge) ret = 0;
-          // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上）
-          if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; principalByItem[i] += inv.lump; }
+          // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上・払える範囲まで）
+          if(inv.start>hAge0 && hAge===inv.start){ const l = Math.max(0, Math.min(inv.lump, contribBudget)); balances[i] += l; contribution += l; principalByItem[i] += l; contribBudget -= l; }
           const grow = balances[i]*ret; balances[i] += grow; investGainCum += grow;   // この年の運用益を累計に加算
-          // 積立は「開始年齢〜終了年齢」の間だけ加算（終了年齢まで含む＝「○歳まで積み立てる」）
-          if(hAge>=inv.start && hAge<=inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
+          // 積立は「開始年齢〜終了年齢」の間だけ加算（終了年齢まで含む＝「○歳まで積み立てる」・払える範囲まで）
+          if(hAge>=inv.start && hAge<=inv.endAge){ const c = inv.monthly*12; const cAmt = Math.max(0, Math.min(c, contribBudget)); balances[i] += cAmt; contribution += cAmt; principalByItem[i] += cAmt; contribBudget -= cAmt; }
           // 終了後「使う」：積立満了の翌年に残高を預貯金へ移す（満了年までは運用資産として表・グラフに残す）
           if(inv.after==='use' && hAge===inv.endAge+1 && balances[i]>0){
             cash += balances[i];
@@ -3081,15 +3089,18 @@
         const cashflow = income - expense - contribution - downThisYear;
         cash += cashflow;
 
-        // 預貯金がマイナスなら運用資産を取り崩す（各商品から按分）
+        // 預貯金がマイナスなら運用資産を取り崩す。ただし「運用期間中（積立終了前）」の商品は取り崩さない。
+        // 取り崩せるのは満了した（運用期間が終わった）商品だけ＝ユーザー方針「運用期間中は取り崩さない・期間が終わったら取り崩す」
         let draw = 0;
-        let investTotal = balances.reduce((a,b)=> a+b, 0);
-        if(cash < 0 && investTotal > 0){
-          draw = Math.min(investTotal, -cash);
-          const ratio = draw/investTotal;
-          for(let i=0; i<balances.length; i++){ balances[i] -= balances[i]*ratio; principalByItem[i] -= principalByItem[i]*ratio; }
-          cash += draw; investTotal -= draw;
+        let drawableTotal = 0;
+        for(let i=0; i<balances.length; i++){ if(hAge > invs[i].endAge && balances[i] > 0) drawableTotal += balances[i]; }
+        if(cash < 0 && drawableTotal > 0){
+          draw = Math.min(drawableTotal, -cash);
+          const ratio = draw/drawableTotal;
+          for(let i=0; i<balances.length; i++){ if(hAge > invs[i].endAge && balances[i] > 0){ balances[i] -= balances[i]*ratio; principalByItem[i] -= principalByItem[i]*ratio; } }
+          cash += draw;
         }
+        let investTotal = balances.reduce((a,b)=> a+b, 0);
         const invest = investTotal;
         const net = cash + invest;
         // 年間収支＝金融資産合計の前年差（運用成長を含み、取り崩し・将来一括投入・「使う」等の内部移動は相殺）。表の合計増減と必ず一致する
@@ -3194,11 +3205,13 @@
       const retireRow = rows.find(r=> r.hAge===hRetire) || rows[rows.length-1];
       const noInvRetire = noInvRows.find(r=> r.hAge===hRetire) || noInvRows[noInvRows.length-1];
       const benefit = retireRow.net - noInvRetire.net; // 運用効果（退職時・名目）
-      let peak = rows[0], min = rows[0], depletion = null;
+      let peak = rows[0], min = rows[0], depletion = null, cashShort = null;
       rows.forEach(r=>{
         if(r.net > peak.net) peak = r;
         if(r.net < min.net) min = r;
-        if(depletion===null && r.net < 0) depletion = r;
+        if(depletion===null && r.net < 0) depletion = r;   // 総資産（運用資産込み）も底をつく＝本当の資金ショート
+        // 運用期間中は取り崩さない前提のため、総資産はプラスでも現金（預貯金）が不足する期間を別に検知
+        if(cashShort===null && r.cash < 0) cashShort = r;
       });
       const endRow = rows[rows.length-1];
 
@@ -3226,6 +3239,12 @@
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
         $('verdict-title').textContent = '要対策：資金がショートします';
         $('verdict-text').innerHTML = `このままだと <b>${hNameH()}${depletion.hAge}歳（${depletion.year}年）</b> ごろに金融資産が底をつく見込みです。下のアドバイスをご覧ください。`;
+      } else if(cashShort){
+        // 総資産（運用資産込み）はプラスでも、運用を取り崩さない前提だと現金（預貯金）が不足する期間がある
+        v.classList.add('warn');
+        v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+        $('verdict-title').textContent = '注意：現金（預貯金）が不足する期間があります';
+        $('verdict-text').innerHTML = `総資産（運用資産を含む）は保てますが、<b>運用期間中は取り崩さない前提</b>だと <b>${hNameH()}${cashShort.hAge}歳（${cashShort.year}年）</b> ごろに<b>現金（預貯金）が足りなくなります</b>。この期間だけ運用の一部を取り崩すか、収入・支出・積立額の見直しをご検討ください。`;
       } else if(min.net < reserve6m){
         v.classList.add('warn');
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
@@ -3346,7 +3365,9 @@
       const cur1 = rows.find(r=> r.hAge===a1) || rows[rows.length-1];
       const cur2 = rows.find(r=> r.hAge===a2) || rows[rows.length-1];
       const b1 = sumAt(base,a1), b2 = sumAt(base,a2);
-      const put = (id, d)=>{ const el=$(id); if(el) el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
+      // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）を表示しない（プラスは表示）。単身世帯では無効
+      const hideNegDiff = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
+      const put = (id, d)=>{ const el=$(id); if(!el) return; if(hideNegDiff && d < 0){ el.innerHTML=''; return; } el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
       put('kpi-diff-1',  cur1.net - b1.net);
       put('kpi-diff-r1', cur1.net/cur1.inflF - b1.net/b1.inflF);
       put('kpi-diff-2',  cur2.net - b2.net);
@@ -3478,16 +3499,14 @@
       if(diffCardPlaceholder(tbl, box, g, m)) return;
       const a = Math.round(num('ivd-age',65));
       const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
-      const gv = ga ? (ga.iv||0) : 0, mv = ma ? (ma.iv||0) : 0;
       // 指定年齢が試算範囲外のときは、実際に表示している年齢（端に寄せた年齢）をラベルに使う
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
-      // 指定年齢時点の運用資産／その年齢までの累計運用益／生涯の累計運用益（生涯 ≧ 指定年齢まで になる）
+      // その年齢までの累計運用益／生涯の累計運用益（生涯 ≧ 指定年齢まで になる）
       const gGainAge = ga ? (ga.gainCum||0) : 0, mGainAge = ma ? (ma.gainCum||0) : 0;
       const gGain = g.gainTotal||0, mGain = m.gainTotal||0;
       tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
-        <tr><td>${aEff}歳時点の運用資産</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
         <tr><td>${aEff}歳までに生んだ利益（累計）</td><td>${fmt(gGainAge)}</td><td><b>${fmt(mGainAge)}</b></td><td>${diffHTML(mGainAge-gGainAge,'')||'±0'}</td></tr>
         <tr><td>生涯で生んだ利益（累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
       </tbody></table></div>${untouchedNote()}${clampNote}

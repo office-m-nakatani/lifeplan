@@ -2935,6 +2935,7 @@
 
       const rows = [];
       let prevNet = cash + balances.reduce((a,b)=> a+b, 0);   // 前年の金融資産合計（初期＝預貯金＋初期残高）
+      let investGainCum = 0;   // 運用益の生涯累計（毎年の成長分を合算。取り崩して使った分の利益も取りこぼさない）
       const span = endAge - hAge0;
 
       for(let t=0; t<=span; t++){
@@ -3065,7 +3066,7 @@
           if(inv.after==='stop' && hAge>=inv.endAge) ret = 0;
           // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上）
           if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; principalByItem[i] += inv.lump; }
-          balances[i] = balances[i]*(1+ret);
+          const grow = balances[i]*ret; balances[i] += grow; investGainCum += grow;   // この年の運用益を累計に加算
           // 積立は「開始年齢〜終了年齢」の間だけ加算（終了年齢まで含む＝「○歳まで積み立てる」）
           if(hAge>=inv.start && hAge<=inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
           // 終了後「使う」：積立満了の翌年に残高を預貯金へ移す（満了年までは運用資産として表・グラフに残す）
@@ -3103,6 +3104,7 @@
           cash, invest, net, inflF, draw,
           investByItem: balances.slice(),   // 運用商品ごとの残高（項目別テーブル用）
           principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
+          investGainCum,   // 運用益の生涯累計（その年までの合計）
           milestone: (hAge===hRetire || hAge===pensionAge || (houseType==='buy'&&hAge===buyAge))
         });
       }
@@ -3295,21 +3297,9 @@
         });
         return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), ins, ds:{h:dsH, w:dsW} };
       });
-      // 運用益の累計（トータルでいくら利益が生じたか）＝各商品の満期残高−投じた元本の合計。
-      // 資産表の「運用益」と同じ考え方で、取り崩して現金化した分の利益も取りこぼさずに合算する
-      let gain = 0, principal = 0, finalVal = 0;
-      const invs = readInvestments();
-      invs.forEach((it,i)=>{
-        const endRow = rows.find(r=> r.hAge===it.endAge) || rows[rows.length-1];
-        const fv = endRow.investByItem[i]||0;
-        const startA = Math.max(it.start || rows[0].hAge, rows[0].hAge);
-        const years = Math.max(Math.min(it.endAge, rows[rows.length-1].hAge) - startA, 0);
-        const prin = it.lump + it.monthly*12*years;
-        gain += Math.max(fv - prin, 0); principal += prin; finalVal += fv;
-      });
-      out.gainTotal = Math.round(gain);            // 運用で生んだ利益の累計
-      out.principalTotal = Math.round(principal);  // 投じた元本の累計（参考）
-      out.investFinalTotal = Math.round(finalVal); // 満期時点の運用資産合計（参考）
+      // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
+      // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
+      out.gainTotal = rows.length ? Math.round(rows[rows.length-1].investGainCum||0) : 0;
       return out;
     }
     function sumAt(sum, age){
@@ -3499,7 +3489,7 @@
         <tr><td>${aEff}歳時点の運用資産</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
         <tr><td>運用で生んだ利益（生涯の累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
       </tbody></table></div>${untouchedNote()}${clampNote}
-      <p class="hint" style="margin-top:4px;">「運用で生んだ利益（生涯の累計）」は、積み立てた元本を差し引いて、運用で増えた分だけを生涯で合計した金額です（取り崩して使った分の利益も含みます）。</p>`;
+      <p class="hint" style="margin-top:4px;">「運用で生んだ利益（生涯の累計）」は、積み立てた元本を差し引いて、運用で増えた分だけをシミュレーション終了年齢までの生涯で合計した金額です（途中で取り崩して使った分の利益も含みます）。<b>ご入力の想定利回りが続いた場合の試算</b>で、成果を保証するものではありません。</p>`;
       // 5歳きざみの棒グラフ（現状＝灰・将来＝緑。「現状と将来をくらべる」と同じ見せ方）
       const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
       const ages=[]; for(let x=Math.ceil(first/5)*5; x<=last; x+=5) ages.push(x);

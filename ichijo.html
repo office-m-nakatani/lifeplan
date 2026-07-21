@@ -384,8 +384,9 @@
     .hero-actions-top{ display:flex; flex-wrap:wrap; gap:10px; flex:0 1 auto; }
 
     .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-soft); padding:18px 18px; }
-    .card-title{ font-size:1rem; font-weight:700; display:flex; align-items:center; gap:9px; margin-bottom:6px; }
-    .card-title i{ color:var(--blue); }
+    .card-title{ font-size:1.22rem; font-weight:800; display:flex; align-items:center; gap:10px; margin:-2px -2px 14px; padding-bottom:11px; border-bottom:2px solid var(--blue-pale2); }
+    .card-title i{ color:var(--blue); font-size:1.05em; }
+    @media(max-width:520px){ .card-title{ font-size:1.08rem; } }
     .card-title .toggle{ margin-left:auto; }
     .chart-box{ position:relative; height:260px; margin-top:8px; }
     .chart-box.tall{ height:300px; }
@@ -1363,7 +1364,7 @@
           <div class="chart-box"><canvas id="ichijoChart"></canvas></div>
           <div class="ic-bars" id="ic-bars" style="margin-top:12px;"></div>
           <details class="ic-fold" id="ic-fold">
-            <summary><i class="fa-solid fa-circle-info"></i> 計算の前提・出典を見る（クリックで開閉）</summary>
+            <summary><i class="fa-solid fa-circle-info"></i> 計算の前提・出典を見る</summary>
             <div class="ic-note" id="ic-note"></div>
           </details>
         </div>
@@ -1380,7 +1381,7 @@
           <div id="ivd-table"></div>
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
-            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る（クリックで開閉）</summary>
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
             <p class="hint" style="display:block; margin-top:8px;">※ <b>⑤で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
           </details>
         </div>
@@ -1408,9 +1409,10 @@
           <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
           <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
           <details class="ic-fold">
-            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る（クリックで開閉）</summary>
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
             <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
+            <p class="hint" style="display:block; margin-top:8px;">表の<b>「最終」</b>は①でご入力の<b>シミュレーション終了年齢</b>時点の保障額です（団信の完済年齢とは別の設定です）。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
         </div>
@@ -3462,9 +3464,17 @@
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
-      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>運用資産（万円）</th><th>現状のまま</th><th>将来プラン</th><th>差</th></tr></thead><tbody>
-        <tr><td>${aEff}歳時点</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
-      </tbody></table></div>${clampNote}`;
+      // 「現状と将来をくらべる」と同じ見せ方＝指定年齢時点＋最終（シミュレーション終了時点）の2行を常に表示
+      const gEnd = g[g.length-1], mEnd = m[m.length-1];
+      const gEndV = gEnd.iv||0, mEndV = mEnd.iv||0;
+      // 現状・将来でシミュレーション終了年齢（①の入力）が異なる場合、最終行は別々の年齢を比較していることを明示する
+      const endDiffers = gEnd.hAge !== mEnd.hAge;
+      const endLabel = endDiffers ? `最終（現状${gEnd.hAge}歳／将来${mEnd.hAge}歳）` : `最終（${mEnd.hAge}歳）`;
+      const endNote = endDiffers ? `<p class="hint" style="margin-top:4px;">※ シミュレーション終了年齢が現状・将来で異なるため、「最終」行は別々の年齢時点を比較しています。</p>` : '';
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
+        <tr><td>${aEff}歳時点の運用資産</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
+        <tr><td>${endLabel}の運用資産</td><td>${fmt(gEndV)}</td><td><b>${fmt(mEndV)}</b></td><td>${diffHTML(mEndV-gEndV,'')||'±0'}</td></tr>
+      </tbody></table></div>${clampNote}${endNote}`;
       // 5歳きざみの棒グラフ（現状＝灰・将来＝緑。「現状と将来をくらべる」と同じ見せ方）
       const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
       const ages=[]; for(let x=Math.ceil(first/5)*5; x<=last; x+=5) ages.push(x);
@@ -3521,15 +3531,28 @@
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
       const cell = (t)=> t==null ? '—' : `${fmt(t.total)}${t.ds>0 ? `<br><small style="color:var(--ink-soft);">うち団信 ${fmt(t.ds)}</small>` : ''}`;
+      // 「現状と将来をくらべる」と同じ見せ方＝指定年齢時点＋最終（シミュレーション終了時点）の2行を被保険者ごとに表示
+      const gLast = g[g.length-1], mLast = m[m.length-1];
+      // 現状・将来でシミュレーション終了年齢（①の入力）が異なる場合、最終行は別々の年齢を比較していることを明示する
+      const endDiffers = gLast.hAge !== mLast.hAge;
+      let hasZeroFinal = false;
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
         const personAge = aEff + hkdAgeOffset(mm.key);
         const d = (gt&&mt) ? diffHTML(mt.total-gt.total,'') : '';
-        return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>`;
+        const gtEnd = totalOf(gLast, mm.key), mtEnd = totalOf(mLast, mm.key);
+        const gAgeEnd = gLast.hAge + hkdAgeOffset(mm.key), mAgeEnd = mLast.hAge + hkdAgeOffset(mm.key);
+        const endLabel = endDiffers ? `最終（現状${gAgeEnd}歳／将来${mAgeEnd}歳）` : `最終（${mAgeEnd}歳）`;
+        const dEnd = (gtEnd&&mtEnd) ? diffHTML(mtEnd.total-gtEnd.total,'') : '';
+        if((gtEnd && gtEnd.total===0) || (mtEnd && mtEnd.total===0)) hasZeroFinal = true;
+        return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>
+          <tr><td>${esc(mm.label)}・${endLabel}</td><td>${cell(gtEnd)}</td><td><b>${cell(mtEnd)}</b></td><td>${dEnd||'±0'}</td></tr>`;
       }).join('');
+      const endNote = endDiffers ? `<p class="hint" style="margin-top:4px;">※ シミュレーション終了年齢が現状・将来で異なるため、「最終」行は別々の年齢時点を比較しています。</p>` : '';
+      const zeroNote = hasZeroFinal ? `<p class="hint" style="margin-top:4px;">※「最終」の保障額が0円になっているのは、多くの場合<b>保険の満了年齢を過ぎた</b>ためです（保障が途中で消えたわけではありません）。保障の十分性は、上のAI診断「万が一の備え」の必要保障額でご確認ください。</p>` : '';
       const simpleNote = (hokenMode()==='simple' || PLANS.genjo.state?.hokenMode==='simple' || PLANS.mirai.state?.hokenMode==='simple')
         ? `<p class="hint" style="margin-top:4px;">※「まとめて入力」のプランは満了時期がわからないため、年齢による保障の変化（満了・逓減）は反映されません（保険ごとに入力すると正確になります）。</p>` : '';
-      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>${aEff}歳時点の死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${clampNote}${simpleNote}`;
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${clampNote}${endNote}${zeroNote}${simpleNote}`;
       // 被保険者の切替セグメント（下のグラフ用）
       if(!members.some(mm=> mm.key===hkdMemberKey)) hkdMemberKey = 'h';
       segEl.innerHTML = members.map(mm=> `<button type="button" data-hkdm="${mm.key}"${mm.key===hkdMemberKey?' class="active"':''}>${esc(mm.label)}</button>`).join('');

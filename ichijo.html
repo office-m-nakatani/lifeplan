@@ -647,6 +647,14 @@
     .ic-total{ text-align:center; padding:14px; border-radius:12px; background:#f1f9f4; border:1.5px solid #cfe6d8; margin-bottom:12px; }
     .ic-total .ict-num{ font-size:1.9rem; font-weight:800; color:#2c7a52; line-height:1.2; }
     .ic-total .ict-sub{ font-size:.82rem; color:var(--ink-soft); }
+    /* 現状⇔将来の差額を、一条比較カードと同じ「大きな見出し数字」で見せる（資産運用のくらべ・死亡保障額カード用）。符号でプラス＝青／マイナス＝赤（本ツール共通の差額配色） */
+    .diff-total{ text-align:center; padding:14px; border-radius:12px; background:var(--bg-soft); border:1.5px solid var(--line); margin-bottom:12px; }
+    .diff-total .dt-num{ font-size:1.9rem; font-weight:800; line-height:1.2; }
+    .diff-total .dt-num.plus{ color:#2f7cb5; }
+    .diff-total .dt-num.minus{ color:#d05a6e; }
+    .diff-total .dt-num.zero{ color:var(--ink-soft); }
+    .diff-total .dt-sub{ font-size:.82rem; color:var(--ink-soft); margin-top:4px; }
+    @media(max-width:520px){ .diff-total .dt-num{ font-size:1.5rem; } }
     .ic-note{ font-size:.8rem; color:var(--ink-soft); line-height:1.7; }
     /* 前提・出典の折りたたみ（長文注記はクリックで開く。PDF/印刷時はJSで自動展開） */
     .ic-fold{ margin-top:10px; }
@@ -1378,6 +1386,7 @@
             <input type="number" id="ivd-age" value="65" min="20" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
             <span class="hint" style="margin:0;">（<span id="ivd-hname">夫</span>の年齢で指定）</span>
           </div>
+          <div class="diff-total" id="ivd-total"></div>
           <div id="ivd-table"></div>
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
@@ -1405,6 +1414,7 @@
               <input type="number" id="hkd-dan-age" value="60" min="20" max="100" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳で完済（以降は団信0）
             </span>
           </div>
+          <div class="diff-total" id="hkd-total"></div>
           <div id="hkd-table"></div>
           <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
           <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
@@ -3437,26 +3447,34 @@
     }
     // 新形式のsum（iv/ins/dsを含む）かどうか。古い保存データのsumはfalse
     const sumHasExtra = (sum)=> !!(sum && sum.length && typeof sum[0].iv==='number');
-    // 両プランのsumが揃っていない／古い形式のときの案内文（共通）
-    function diffCardPlaceholder(tbl, box, g, m){
+    // 両プランのsumが揃っていない／古い形式のときの案内文（共通）。totalElは大きな見出し数字（省略可）
+    function diffCardPlaceholder(tbl, box, g, m, totalEl){
       if(!g || !m){
         tbl.innerHTML = `<p class="cmp2-placeholder">上の「<b>将来プラン</b>」タブに切り替えて数字を変えると、ここに現状との比較（何歳時点でも確認できます）が表示されます。</p>`;
-        box.style.display='none'; return true;
+        box.style.display='none'; if(totalEl) totalEl.innerHTML=''; return true;
       }
       if(!sumHasExtra(g) || !sumHasExtra(m)){
         tbl.innerHTML = `<p class="cmp2-placeholder">保存データを読み込んだ直後は、上の「現状プラン」「将来プラン」のタブをそれぞれ一度ひらくと、ここに表示されます。</p>`;
-        box.style.display='none'; return true;
+        box.style.display='none'; if(totalEl) totalEl.innerHTML=''; return true;
       }
       box.style.display='';
       return false;
     }
+    // 差額を「一条比較カード」と同じ大きな見出し数字で見せる（プラス＝青／マイナス＝赤／±0＝グレー、本ツール共通の差額配色）
+    function renderDiffTotal(el, diff, labelPlus, labelMinus, labelZero, subText){
+      if(!el) return;
+      const d = Math.round(diff);
+      const cls = d>0 ? 'plus' : (d<0 ? 'minus' : 'zero');
+      const label = d>0 ? labelPlus : (d<0 ? labelMinus : labelZero);
+      el.innerHTML = `<div class="dt-num ${cls}">${label}</div><div class="dt-sub">${subText}</div>`;
+    }
     let investDiffChart = null;
     function renderInvestDiffCard(){
       const card = $('invest-diff-card'); if(!card) return;
-      const tbl = $('ivd-table'), box = card.querySelector('.chart-box');
+      const tbl = $('ivd-table'), box = card.querySelector('.chart-box'), totalEl = $('ivd-total');
       if($('ivd-hname')) $('ivd-hname').textContent = hNameH();
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
-      if(diffCardPlaceholder(tbl, box, g, m)) return;
+      if(diffCardPlaceholder(tbl, box, g, m, totalEl)) return;
       const a = Math.round(num('ivd-age',65));
       const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
       const gv = ga ? (ga.iv||0) : 0, mv = ma ? (ma.iv||0) : 0;
@@ -3464,6 +3482,12 @@
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
+      // 大きな見出し数字：一条比較カードと同じ見せ方で、指定年齢時点の差を一目で
+      renderDiffTotal(totalEl, mv-gv,
+        `${aEff}歳時点で 約${fmt(Math.abs(mv-gv))}万円 増える見込み<span style="font-size:1rem;">（試算）</span>`,
+        `${aEff}歳時点で 約${fmt(Math.abs(mv-gv))}万円 減る見込み<span style="font-size:1rem;">（試算）</span>`,
+        `${aEff}歳時点で 現状とほぼ同じ見込み`,
+        '現状のまま続けた場合との比較です。運用の成果は保証されるものではなく、万一の保障を減らす判断材料として単独で用いないでください（下の表・グラフで他の年齢時点もご確認いただけます）。');
       // 「現状と将来をくらべる」と同じ見せ方＝指定年齢時点＋最終（シミュレーション終了時点）の2行を常に表示
       const gEnd = g[g.length-1], mEnd = m[m.length-1];
       const gEndV = gEnd.iv||0, mEndV = mEnd.iv||0;
@@ -3504,10 +3528,10 @@
     }
     function renderHokenDiffCard(){
       const card = $('hoken-diff-card'); if(!card) return;
-      const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box');
+      const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box'), totalEl = $('hkd-total');
       if($('hkd-hname')) $('hkd-hname').textContent = hNameH();
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
-      if(diffCardPlaceholder(tbl, box, g, m)){ segEl.innerHTML=''; return; }
+      if(diffCardPlaceholder(tbl, box, g, m, totalEl)){ segEl.innerHTML=''; return; }
       // 団信の前提：「返済を続ける」＝実際のローン残高どおり ／ 「○歳で完済とみなす」＝その年齢以降は団信0
       const danPayoff = hkdDanMode()==='payoff';
       const danAge = num('hkd-dan-age', 60);
@@ -3535,9 +3559,10 @@
       const gLast = g[g.length-1], mLast = m[m.length-1];
       // 現状・将来でシミュレーション終了年齢（①の入力）が異なる場合、最終行は別々の年齢を比較していることを明示する
       const endDiffers = gLast.hAge !== mLast.hAge;
-      let hasZeroFinal = false;
+      let hasZeroFinal = false, gHouseholdAtAge = 0, mHouseholdAtAge = 0;
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
+        gHouseholdAtAge += gt ? gt.total : 0; mHouseholdAtAge += mt ? mt.total : 0;
         const personAge = aEff + hkdAgeOffset(mm.key);
         const d = (gt&&mt) ? diffHTML(mt.total-gt.total,'') : '';
         const gtEnd = totalOf(gLast, mm.key), mtEnd = totalOf(mLast, mm.key);
@@ -3548,6 +3573,13 @@
         return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>
           <tr><td>${esc(mm.label)}・${endLabel}</td><td>${cell(gtEnd)}</td><td><b>${cell(mtEnd)}</b></td><td>${dEnd||'±0'}</td></tr>`;
       }).join('');
+      // 大きな見出し数字：一条比較カードと同じ見せ方で、指定年齢時点の世帯合計の差を一目で
+      const hDiff = mHouseholdAtAge - gHouseholdAtAge;
+      renderDiffTotal(totalEl, hDiff,
+        `${aEff}歳時点で 世帯の死亡保障が 約${fmt(Math.abs(hDiff))}万円 増える見込み<span style="font-size:1rem;">（試算）</span>`,
+        `${aEff}歳時点で 世帯の死亡保障が 約${fmt(Math.abs(hDiff))}万円 減る見込み<span style="font-size:1rem;">（試算）</span>`,
+        `${aEff}歳時点で 世帯の死亡保障はほぼ変わらない見込み`,
+        '⑦の保険＋団信の世帯合計です（下の表でご家族お一人おひとりの内訳もご確認いただけます）。');
       const endNote = endDiffers ? `<p class="hint" style="margin-top:4px;">※ シミュレーション終了年齢が現状・将来で異なるため、「最終」行は別々の年齢時点を比較しています。</p>` : '';
       const zeroNote = hasZeroFinal ? `<p class="hint" style="margin-top:4px;">※「最終」の保障額が0円になっているのは、多くの場合<b>保険の満了年齢を過ぎた</b>ためです（保障が途中で消えたわけではありません）。保障の十分性は、上のAI診断「万が一の備え」の必要保障額でご確認ください。</p>` : '';
       const simpleNote = (hokenMode()==='simple' || PLANS.genjo.state?.hokenMode==='simple' || PLANS.mirai.state?.hokenMode==='simple')

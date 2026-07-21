@@ -3295,7 +3295,7 @@
             ins[mm.key] = (simple || cAge==null) ? 0 : insCoverAtAge(insList, mm.key, cAge);
           }
         });
-        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), ins, ds:{h:dsH, w:dsW} };
+        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
       });
       // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
       // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
@@ -3483,13 +3483,15 @@
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
-      // 指定年齢時点の運用資産＋「運用で生んだ利益（累計）」＝トータルでいくら利益が出たか
+      // 指定年齢時点の運用資産／その年齢までの累計運用益／生涯の累計運用益（生涯 ≧ 指定年齢まで になる）
+      const gGainAge = ga ? (ga.gainCum||0) : 0, mGainAge = ma ? (ma.gainCum||0) : 0;
       const gGain = g.gainTotal||0, mGain = m.gainTotal||0;
       tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
         <tr><td>${aEff}歳時点の運用資産</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
-        <tr><td>運用で生んだ利益（生涯の累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
+        <tr><td>${aEff}歳までに生んだ利益（累計）</td><td>${fmt(gGainAge)}</td><td><b>${fmt(mGainAge)}</b></td><td>${diffHTML(mGainAge-gGainAge,'')||'±0'}</td></tr>
+        <tr><td>生涯で生んだ利益（累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
       </tbody></table></div>${untouchedNote()}${clampNote}
-      <p class="hint" style="margin-top:4px;">「運用で生んだ利益（生涯の累計）」は、積み立てた元本を差し引いて、運用で増えた分だけをシミュレーション終了年齢までの生涯で合計した金額です（途中で取り崩して使った分の利益も含みます）。<b>ご入力の想定利回りが続いた場合の試算</b>で、成果を保証するものではありません。</p>`;
+      <p class="hint" style="margin-top:4px;">「生んだ利益（累計）」は、積み立てた元本を差し引いて、運用で増えた分だけを合計した金額です（途中で取り崩して使った分の利益も含みます）。上段は<b>指定した年齢まで</b>、下段は<b>シミュレーション終了年齢までの生涯</b>の累計なので、生涯のほうが大きくなります。<b>ご入力の想定利回りが続いた場合の試算</b>で、成果を保証するものではありません。</p>`;
       // 5歳きざみの棒グラフ（現状＝灰・将来＝緑。「現状と将来をくらべる」と同じ見せ方）
       const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
       const ages=[]; for(let x=Math.ceil(first/5)*5; x<=last; x+=5) ages.push(x);

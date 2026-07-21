@@ -647,14 +647,6 @@
     .ic-total{ text-align:center; padding:14px; border-radius:12px; background:#f1f9f4; border:1.5px solid #cfe6d8; margin-bottom:12px; }
     .ic-total .ict-num{ font-size:1.9rem; font-weight:800; color:#2c7a52; line-height:1.2; }
     .ic-total .ict-sub{ font-size:.82rem; color:var(--ink-soft); }
-    /* 現状⇔将来の差額を、一条比較カードと同じ「大きな見出し数字」で見せる（資産運用のくらべ・死亡保障額カード用）。符号でプラス＝青／マイナス＝赤（本ツール共通の差額配色） */
-    .diff-total{ text-align:center; padding:14px; border-radius:12px; background:var(--bg-soft); border:1.5px solid var(--line); margin-bottom:12px; }
-    .diff-total .dt-num{ font-size:1.9rem; font-weight:800; line-height:1.2; }
-    .diff-total .dt-num.plus{ color:#2f7cb5; }
-    .diff-total .dt-num.minus{ color:#d05a6e; }
-    .diff-total .dt-num.zero{ color:var(--ink-soft); }
-    .diff-total .dt-sub{ font-size:.82rem; color:var(--ink-soft); margin-top:4px; }
-    @media(max-width:520px){ .diff-total .dt-num{ font-size:1.5rem; } }
     .ic-note{ font-size:.8rem; color:var(--ink-soft); line-height:1.7; }
     /* 前提・出典の折りたたみ（長文注記はクリックで開く。PDF/印刷時はJSで自動展開） */
     .ic-fold{ margin-top:10px; }
@@ -1386,7 +1378,6 @@
             <input type="number" id="ivd-age" value="65" min="20" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
             <span class="hint" style="margin:0;">（<span id="ivd-hname">夫</span>の年齢で指定）</span>
           </div>
-          <div class="diff-total" id="ivd-total"></div>
           <div id="ivd-table"></div>
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
@@ -1414,7 +1405,6 @@
               <input type="number" id="hkd-dan-age" value="60" min="20" max="100" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳で完済（以降は団信0）
             </span>
           </div>
-          <div class="diff-total" id="hkd-total"></div>
           <div id="hkd-table"></div>
           <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
           <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
@@ -1422,7 +1412,6 @@
             <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
             <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
-            <p class="hint" style="display:block; margin-top:8px;">表の<b>「最終」</b>は①でご入力の<b>シミュレーション終了年齢</b>時点の保障額です（団信の完済年齢とは別の設定です）。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
         </div>
@@ -3266,6 +3255,10 @@
        ============================================================ */
     const PLANS = { active:'genjo', genjo:{ state:null, sum:null }, mirai:{ state:null, sum:null } };
     const PLAN_LABEL = { genjo:'現状プラン', mirai:'将来プラン' };
+    // 将来プランを一度でも作り始めた（＝現状と別物にした）か。falseの間は将来＝現状のコピーとして自動追従させ、
+    // 現状タブのままでも比較カードが「往復なし」で出せるようにする
+    let miraiTouched = false;
+    let _refreshingSum = false;   // 裏でもう一方のプランを集計中の再帰ガード
 
     // プランの計算結果を、比較に必要な最小限の形で記録する
     // 総資産(net)に加え、運用資産の時価(iv)・⑦保険の死亡保障(ins)・団信でゼロになる残債(ds)も年ごとに記録。
@@ -3284,7 +3277,7 @@
       const payoffAge = num('loan-payoff-age',65);
       const willPayoff = !!schedule && loanPayoffMode()==='lumpsum' && schedule.principal>0 && (payoffAge-buyAge) < num('loan-term',35);
       const shareH = loanShareOf('h'), shareW = single ? 0 : loanShareOf('w');
-      return rows.map(r=>{
+      const out = rows.map(r=>{
         let dsH=0, dsW=0;
         if(schedule && r.hAge>=buyAge){
           const bal = (willPayoff && r.hAge>=payoffAge) ? 0 : loanBalanceAt(schedule, r.hAge-buyAge);
@@ -3302,6 +3295,22 @@
         });
         return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), ins, ds:{h:dsH, w:dsW} };
       });
+      // 運用益の累計（トータルでいくら利益が生じたか）＝各商品の満期残高−投じた元本の合計。
+      // 資産表の「運用益」と同じ考え方で、取り崩して現金化した分の利益も取りこぼさずに合算する
+      let gain = 0, principal = 0, finalVal = 0;
+      const invs = readInvestments();
+      invs.forEach((it,i)=>{
+        const endRow = rows.find(r=> r.hAge===it.endAge) || rows[rows.length-1];
+        const fv = endRow.investByItem[i]||0;
+        const startA = Math.max(it.start || rows[0].hAge, rows[0].hAge);
+        const years = Math.max(Math.min(it.endAge, rows[rows.length-1].hAge) - startA, 0);
+        const prin = it.lump + it.monthly*12*years;
+        gain += Math.max(fv - prin, 0); principal += prin; finalVal += fv;
+      });
+      out.gainTotal = Math.round(gain);            // 運用で生んだ利益の累計
+      out.principalTotal = Math.round(principal);  // 投じた元本の累計（参考）
+      out.investFinalTotal = Math.round(finalVal); // 満期時点の運用資産合計（参考）
+      return out;
     }
     function sumAt(sum, age){
       if(!sum || !sum.length) return null;
@@ -3323,6 +3332,12 @@
     // recomputeのたびに：表示中プランの結果を記録し、差額表示・比較カードを更新
     function planAfterRecompute(rows){
       PLANS[PLANS.active].sum = planSummary(rows);
+      // 将来プランをまだ作っていない間は、現状の内容を将来プランへ自動コピーしておく。
+      // これで「将来タブを一度も開いていなくても」比較カードが（差＝±0で）表示され、往復が不要になる
+      if(PLANS.active==='genjo' && !miraiTouched && !_refreshingSum){
+        PLANS.mirai.state = collectState();
+        PLANS.mirai.sum = PLANS.genjo.sum;
+      }
       renderKpiDiffs(rows);
       renderFieldDiffs();
       renderInvestDiffs();
@@ -3447,34 +3462,30 @@
     }
     // 新形式のsum（iv/ins/dsを含む）かどうか。古い保存データのsumはfalse
     const sumHasExtra = (sum)=> !!(sum && sum.length && typeof sum[0].iv==='number');
-    // 両プランのsumが揃っていない／古い形式のときの案内文（共通）。totalElは大きな見出し数字（省略可）
-    function diffCardPlaceholder(tbl, box, g, m, totalEl){
+    // 両プランのsumが揃っていない／古い形式のときの案内文（共通）
+    function diffCardPlaceholder(tbl, box, g, m){
       if(!g || !m){
         tbl.innerHTML = `<p class="cmp2-placeholder">上の「<b>将来プラン</b>」タブに切り替えて数字を変えると、ここに現状との比較（何歳時点でも確認できます）が表示されます。</p>`;
-        box.style.display='none'; if(totalEl) totalEl.innerHTML=''; return true;
+        box.style.display='none'; return true;
       }
       if(!sumHasExtra(g) || !sumHasExtra(m)){
-        tbl.innerHTML = `<p class="cmp2-placeholder">保存データを読み込んだ直後は、上の「現状プラン」「将来プラン」のタブをそれぞれ一度ひらくと、ここに表示されます。</p>`;
-        box.style.display='none'; if(totalEl) totalEl.innerHTML=''; return true;
+        tbl.innerHTML = `<p class="cmp2-placeholder">保存データを読み込んだ直後です。数字を一度変えると、ここに比較が表示されます。</p>`;
+        box.style.display='none'; return true;
       }
       box.style.display='';
       return false;
     }
-    // 差額を「一条比較カード」と同じ大きな見出し数字で見せる（プラス＝青／マイナス＝赤／±0＝グレー、本ツール共通の差額配色）
-    function renderDiffTotal(el, diff, labelPlus, labelMinus, labelZero, subText){
-      if(!el) return;
-      const d = Math.round(diff);
-      const cls = d>0 ? 'plus' : (d<0 ? 'minus' : 'zero');
-      const label = d>0 ? labelPlus : (d<0 ? labelMinus : labelZero);
-      el.innerHTML = `<div class="dt-num ${cls}">${label}</div><div class="dt-sub">${subText}</div>`;
-    }
     let investDiffChart = null;
+    // 将来プランをまだ作っていない（現状のコピーのまま）ときに、比較カードの上に出す案内
+    function untouchedNote(){
+      return miraiTouched ? '' : `<p class="hint" style="margin-top:4px;">※ いまは「将来プラン」が現状と同じ内容です。上の<b>「将来プラン」タブ</b>で保険・積立・住まいなどの数字を変えると、ここに差が表示されます。</p>`;
+    }
     function renderInvestDiffCard(){
       const card = $('invest-diff-card'); if(!card) return;
-      const tbl = $('ivd-table'), box = card.querySelector('.chart-box'), totalEl = $('ivd-total');
+      const tbl = $('ivd-table'), box = card.querySelector('.chart-box');
       if($('ivd-hname')) $('ivd-hname').textContent = hNameH();
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
-      if(diffCardPlaceholder(tbl, box, g, m, totalEl)) return;
+      if(diffCardPlaceholder(tbl, box, g, m)) return;
       const a = Math.round(num('ivd-age',65));
       const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
       const gv = ga ? (ga.iv||0) : 0, mv = ma ? (ma.iv||0) : 0;
@@ -3482,23 +3493,13 @@
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
-      // 大きな見出し数字：一条比較カードと同じ見せ方で、指定年齢時点の差を一目で
-      renderDiffTotal(totalEl, mv-gv,
-        `${aEff}歳時点で 約${fmt(Math.abs(mv-gv))}万円 増える見込み<span style="font-size:1rem;">（試算）</span>`,
-        `${aEff}歳時点で 約${fmt(Math.abs(mv-gv))}万円 減る見込み<span style="font-size:1rem;">（試算）</span>`,
-        `${aEff}歳時点で 現状とほぼ同じ見込み`,
-        '現状のまま続けた場合との比較です。運用の成果は保証されるものではなく、万一の保障を減らす判断材料として単独で用いないでください（下の表・グラフで他の年齢時点もご確認いただけます）。');
-      // 「現状と将来をくらべる」と同じ見せ方＝指定年齢時点＋最終（シミュレーション終了時点）の2行を常に表示
-      const gEnd = g[g.length-1], mEnd = m[m.length-1];
-      const gEndV = gEnd.iv||0, mEndV = mEnd.iv||0;
-      // 現状・将来でシミュレーション終了年齢（①の入力）が異なる場合、最終行は別々の年齢を比較していることを明示する
-      const endDiffers = gEnd.hAge !== mEnd.hAge;
-      const endLabel = endDiffers ? `最終（現状${gEnd.hAge}歳／将来${mEnd.hAge}歳）` : `最終（${mEnd.hAge}歳）`;
-      const endNote = endDiffers ? `<p class="hint" style="margin-top:4px;">※ シミュレーション終了年齢が現状・将来で異なるため、「最終」行は別々の年齢時点を比較しています。</p>` : '';
+      // 指定年齢時点の運用資産＋「運用で生んだ利益（累計）」＝トータルでいくら利益が出たか
+      const gGain = g.gainTotal||0, mGain = m.gainTotal||0;
       tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
         <tr><td>${aEff}歳時点の運用資産</td><td>${fmt(gv)}</td><td><b>${fmt(mv)}</b></td><td>${diffHTML(mv-gv,'')||'±0'}</td></tr>
-        <tr><td>${endLabel}の運用資産</td><td>${fmt(gEndV)}</td><td><b>${fmt(mEndV)}</b></td><td>${diffHTML(mEndV-gEndV,'')||'±0'}</td></tr>
-      </tbody></table></div>${clampNote}${endNote}`;
+        <tr><td>運用で生んだ利益（生涯の累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
+      </tbody></table></div>${untouchedNote()}${clampNote}
+      <p class="hint" style="margin-top:4px;">「運用で生んだ利益（生涯の累計）」は、積み立てた元本を差し引いて、運用で増えた分だけを生涯で合計した金額です（取り崩して使った分の利益も含みます）。</p>`;
       // 5歳きざみの棒グラフ（現状＝灰・将来＝緑。「現状と将来をくらべる」と同じ見せ方）
       const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
       const ages=[]; for(let x=Math.ceil(first/5)*5; x<=last; x+=5) ages.push(x);
@@ -3528,10 +3529,10 @@
     }
     function renderHokenDiffCard(){
       const card = $('hoken-diff-card'); if(!card) return;
-      const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box'), totalEl = $('hkd-total');
+      const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box');
       if($('hkd-hname')) $('hkd-hname').textContent = hNameH();
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
-      if(diffCardPlaceholder(tbl, box, g, m, totalEl)){ segEl.innerHTML=''; return; }
+      if(diffCardPlaceholder(tbl, box, g, m)){ segEl.innerHTML=''; return; }
       // 団信の前提：「返済を続ける」＝実際のローン残高どおり ／ 「○歳で完済とみなす」＝その年齢以降は団信0
       const danPayoff = hkdDanMode()==='payoff';
       const danAge = num('hkd-dan-age', 60);
@@ -3555,36 +3556,16 @@
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
       const cell = (t)=> t==null ? '—' : `${fmt(t.total)}${t.ds>0 ? `<br><small style="color:var(--ink-soft);">うち団信 ${fmt(t.ds)}</small>` : ''}`;
-      // 「現状と将来をくらべる」と同じ見せ方＝指定年齢時点＋最終（シミュレーション終了時点）の2行を被保険者ごとに表示
-      const gLast = g[g.length-1], mLast = m[m.length-1];
-      // 現状・将来でシミュレーション終了年齢（①の入力）が異なる場合、最終行は別々の年齢を比較していることを明示する
-      const endDiffers = gLast.hAge !== mLast.hAge;
-      let hasZeroFinal = false, gHouseholdAtAge = 0, mHouseholdAtAge = 0;
+      // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
-        gHouseholdAtAge += gt ? gt.total : 0; mHouseholdAtAge += mt ? mt.total : 0;
         const personAge = aEff + hkdAgeOffset(mm.key);
         const d = (gt&&mt) ? diffHTML(mt.total-gt.total,'') : '';
-        const gtEnd = totalOf(gLast, mm.key), mtEnd = totalOf(mLast, mm.key);
-        const gAgeEnd = gLast.hAge + hkdAgeOffset(mm.key), mAgeEnd = mLast.hAge + hkdAgeOffset(mm.key);
-        const endLabel = endDiffers ? `最終（現状${gAgeEnd}歳／将来${mAgeEnd}歳）` : `最終（${mAgeEnd}歳）`;
-        const dEnd = (gtEnd&&mtEnd) ? diffHTML(mtEnd.total-gtEnd.total,'') : '';
-        if((gtEnd && gtEnd.total===0) || (mtEnd && mtEnd.total===0)) hasZeroFinal = true;
-        return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>
-          <tr><td>${esc(mm.label)}・${endLabel}</td><td>${cell(gtEnd)}</td><td><b>${cell(mtEnd)}</b></td><td>${dEnd||'±0'}</td></tr>`;
+        return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>`;
       }).join('');
-      // 大きな見出し数字：一条比較カードと同じ見せ方で、指定年齢時点の世帯合計の差を一目で
-      const hDiff = mHouseholdAtAge - gHouseholdAtAge;
-      renderDiffTotal(totalEl, hDiff,
-        `${aEff}歳時点で 世帯の死亡保障が 約${fmt(Math.abs(hDiff))}万円 増える見込み<span style="font-size:1rem;">（試算）</span>`,
-        `${aEff}歳時点で 世帯の死亡保障が 約${fmt(Math.abs(hDiff))}万円 減る見込み<span style="font-size:1rem;">（試算）</span>`,
-        `${aEff}歳時点で 世帯の死亡保障はほぼ変わらない見込み`,
-        '⑦の保険＋団信の世帯合計です（下の表でご家族お一人おひとりの内訳もご確認いただけます）。');
-      const endNote = endDiffers ? `<p class="hint" style="margin-top:4px;">※ シミュレーション終了年齢が現状・将来で異なるため、「最終」行は別々の年齢時点を比較しています。</p>` : '';
-      const zeroNote = hasZeroFinal ? `<p class="hint" style="margin-top:4px;">※「最終」の保障額が0円になっているのは、多くの場合<b>保険の満了年齢を過ぎた</b>ためです（保障が途中で消えたわけではありません）。保障の十分性は、上のAI診断「万が一の備え」の必要保障額でご確認ください。</p>` : '';
       const simpleNote = (hokenMode()==='simple' || PLANS.genjo.state?.hokenMode==='simple' || PLANS.mirai.state?.hokenMode==='simple')
         ? `<p class="hint" style="margin-top:4px;">※「まとめて入力」のプランは満了時期がわからないため、年齢による保障の変化（満了・逓減）は反映されません（保険ごとに入力すると正確になります）。</p>` : '';
-      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${clampNote}${endNote}${zeroNote}${simpleNote}`;
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>${aEff}歳時点の死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${untouchedNote()}${clampNote}${simpleNote}`;
       // 被保険者の切替セグメント（下のグラフ用）
       if(!members.some(mm=> mm.key===hkdMemberKey)) hkdMemberKey = 'h';
       segEl.innerHTML = members.map(mm=> `<button type="button" data-hkdm="${mm.key}"${mm.key===hkdMemberKey?' class="active"':''}>${esc(mm.label)}</button>`).join('');
@@ -3651,6 +3632,7 @@
     function switchPlan(p){
       if(p===PLANS.active || !PLANS[p]) return;
       PLANS[PLANS.active].state = collectState();
+      if(p==='mirai') miraiTouched = true;   // 将来タブを開いた＝ここから将来は現状と独立（自動追従を止める）
       if(!PLANS[p].state){
         // 初回の切り替え：現状の内容をコピーして将来プランのたたき台にする
         PLANS[p].state = PLANS[PLANS.active].state;
@@ -3659,6 +3641,22 @@
       PLANS.active = p;
       updatePlanTabs();
       applyState(PLANS[p].state);
+    }
+    // 表示していないプランのsumを、その保存stateから作り直す（古い形式の保存データを読み込んだ直後などに、
+    // 両タブを開かなくても比較カードを出せるようにする）。裏で一時的にstateを復元→集計→元に戻す
+    function refreshInactiveSum(){
+      if(_refreshingSum) return;
+      const other = PLANS.active==='genjo' ? 'mirai' : 'genjo';
+      if(!PLANS[other].state){ return; }
+      _refreshingSum = true;
+      const activeState = collectState();
+      try{
+        applyState(PLANS[other].state, true);   // 再計算を呼ばずにDOMだけ差し替え
+        PLANS[other].sum = planSummary(simulate().rows);
+      }catch(e){}
+      applyState(activeState, true);             // 表示中プランに戻す
+      _refreshingSum = false;
+      recompute();                               // 両プランのsumがそろった状態で全体を再描画
     }
     if($('plan-tabs')) $('plan-tabs').addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(b) switchPlan(b.dataset.plan);
@@ -3677,13 +3675,16 @@
         PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
         PLANS.mirai = { state: pl.mirai && pl.mirai.state || null, sum: pl.mirai && pl.mirai.sum || null };
         PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
+        miraiTouched = !!(PLANS.mirai.state);   // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従
         updatePlanTabs();
         if(PLANS[PLANS.active].state) applyState(PLANS[PLANS.active].state);
+        refreshInactiveSum();                   // 読込直後から両タブを開かずに比較を表示（古い形式のsumも作り直す）
       } else if(saved && saved.state){
         // 旧形式（ツール①の保存データ）：現状プランとして読み込む
         PLANS.genjo = { state: saved.state, sum:null };
         PLANS.mirai = { state:null, sum:null };
         PLANS.active = 'genjo';
+        miraiTouched = false;
         updatePlanTabs();
         applyState(saved.state);
       }
@@ -5516,8 +5517,9 @@
       };
     }
 
-    // 保存内容を画面に復元する
-    function applyState(s){
+    // 保存内容を画面に復元する。skipRecompute=true のときは再計算・再描画を呼ばない
+    // （裏でもう一方のプランを一時的に復元して集計するときに使う＝画面のちらつき・再帰を防ぐ）
+    function applyState(s, skipRecompute){
       if(!s) return;
       adviceVariant = {};   // 読み込んだお客様ごとにAI診断の言い回しを変える
       childrenList.innerHTML=''; eventsList.innerHTML=''; incomeEventsList.innerHTML=''; $('custom-expenses').innerHTML=''; $('invest-list').innerHTML='';
@@ -5561,7 +5563,7 @@
       Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id.startsWith('rate_step')){ const el=$(id); if(el) el.value=val; } });
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();
       if($('zeh-fields')) $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked);
-      recompute();
+      if(!skipRecompute) recompute();
     }
 
     // 保存データはログイン中アカウントごとに別々のキーで管理（アカウント間で分離）

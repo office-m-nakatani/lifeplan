@@ -1392,8 +1392,8 @@
           <p class="hint" style="display:block; margin-bottom:8px;">⑦で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
-            <input type="number" id="hkd-age" placeholder="今" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
-            <span class="hint" style="margin:0;">（<span id="hkd-hname">夫</span>の年齢で指定・空欄＝いまの年齢）</span>
+            <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
+            <span class="hint" style="margin:0;">（<span id="hkd-hname">夫</span>の年齢で指定・空欄＝住宅ローンがある年齢を自動表示）</span>
           </div>
           <div class="hkd-dan no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>団信（住宅ローン）の前提：</span>
@@ -3519,6 +3519,19 @@
       const ch = readChildren()[parseInt(key.slice(1))||0];
       return ch ? ch.age - num('h-age',35) : 0;
     }
+    // 死亡保障の表の初期表示年齢＝住宅ローン（団信）が有効になる年齢。現状・将来のうち、これから購入するプランの
+    // 購入年齢の最大（両方のローンが立ち上がった後）を使う。持ち家・賃貸のみなら現在の年齢
+    function hokenDefaultAge(){
+      const curAge = num('h-age',35);
+      let best = curAge;
+      // 表示中プラン：ライブDOMから（これから購入なら購入年齢）
+      if(houseType==='buy'){ const ba = num('buy-age', curAge); if(ba>best) best = ba; }
+      // もう一方のプラン：保存stateから
+      const other = PLANS.active==='genjo' ? 'mirai' : 'genjo';
+      const s = PLANS[other] && PLANS[other].state;
+      if(s && s.house==='buy'){ const ba = parseInt((s.fields||{})['buy-age']); if(isFinite(ba) && ba>best) best = ba; }
+      return best;
+    }
     function renderHokenDiffCard(){
       const card = $('hoken-diff-card'); if(!card) return;
       const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box');
@@ -3541,7 +3554,8 @@
         if(mm.key==='h') return true;
         return [g,m].some(s=> s.some(r=> r.ins && (r.ins[mm.key]||0)>0));
       });
-      const a = Math.round(num('hkd-age', num('h-age',35)));
+      // 年齢の空欄時は、住宅ローン（団信）が有効になる購入後の年齢を初期表示にする（現状が0のまま見えないのを防ぐ）
+      const a = Math.round(num('hkd-age', hokenDefaultAge()));
       const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
       // 指定年齢が試算範囲外のときは、実際に表示している年齢（端に寄せた年齢）をラベルに使う
       const aEff = ga ? ga.hAge : a;

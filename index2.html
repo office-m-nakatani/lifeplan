@@ -2,13 +2,9 @@
 <!--
   ============================================================================
   ライフプラン・シミュレーター②（現状⇔将来の比較）
-  ・2026-07-19：一条工務店版（ichijo.html）で追加された汎用機能を取り込んだ大型バージョンアップ。
-      追加＝⑦加入中の保険（必要保障額に反映・現状比）／④火災・地震保険の一括払い欄・生活費項目の開始年指定／
-            購入時諸費用・補助金欄・ローン控除の性能別上限（ZEH連動）・金利実勢ヒント／
-            手取りの令和7年度改正反映／保険コンプラ全面対応（断定排除・不利益事実併記・手数料開示）／
-            入力欄の高さ均一化・名前の様/君付け強化 ほか
-  ・一条工務店特化の機能（住宅タイプ切替・30年比較カード・一条チャット）はこのファイルには含まれない
-    （一条版は ichijo.html ＝別ファイルとして併存。相互のバグ修正は手で反映する）
+  ・ご夫婦の「現状プラン」と「将来プラン」を並べて、家計・資産・保障を数字で見える化。
+  ・自己完結の単一HTML（CSS/JSインライン＋CDNは Chart.js / Noto Sans JP / Font Awesome のみ）。
+  ・費用ゼロ（有料API・バックエンド無し）。AIチャットはHTML内蔵のルールベース。
   ============================================================================
 -->
 <html lang="ja">
@@ -16,7 +12,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ご夫婦のライフプランシミュレーター② | 現状と将来をくらべる</title>
-  <meta name="description" content="30代のご夫婦のための、やさしいライフプランシミュレーター。住宅・教育・老後・保険・資産運用までまとめて見える化できます。" />
+  <meta name="description" content="ご夫婦の「現状プラン」と「将来プラン」を並べて、家計・資産・保障・税金を数字で見える化するFP事務所（Office-M）の試算ツール。教育費・住宅・老後・保険・NISA/iDeCoまで、将来のお金の流れをシミュレーションします。" />
 
   <!-- HPとしての体裁：ファビコン（ブラウザのタブに出るアイコン）・テーマ色・将来のアプリ追加にも対応 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234a9fd4'/><path d='M32 12 C20 21 20 41 32 52 C44 41 44 21 32 12 Z' fill='%23ffd166'/><path d='M32 20 L32 48' stroke='%234a9fd4' stroke-width='3' stroke-linecap='round'/></svg>" />
@@ -108,7 +104,7 @@
       text-decoration:none; white-space:nowrap;
     }
     .btn:active{ transform:translateY(1px); }
-    .btn-primary{ background:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(74,159,212,.35); }
+    .btn-primary{ background:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(74,159,212,.32); }
     .btn-primary:hover{ background:var(--blue-deep); }
     .btn-yellow{ background:var(--yellow); color:#5a4a12; box-shadow:0 6px 16px rgba(227,169,72,.38); }
     .btn-yellow:hover{ background:var(--yellow-soft); }
@@ -177,23 +173,28 @@
     .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 14px; }
     @media(max-width:560px){ .grid3{ grid-template-columns:1fr 1fr; } }
     @media(max-width:480px){ #kasai-box .grid2{ grid-template-columns:1fr; } }
+    @media(max-width:560px){ .pension-grid{ grid-template-columns:1fr; } }   /* 年金プリセットのボタンが潰れないよう1列に */
     .field{ display:flex; flex-direction:column; gap:5px; min-width:0; }
     .field label{ font-size:.85rem; font-weight:500; color:var(--ink); }
     /* グリッド内の入力欄の縦位置を揃える：ラベルを2行分確保し、下揃えで入力欄に密着させる（1行ラベルは上側に余白が入るだけで、行内の入力欄の高さ・上端が揃う） */
-    .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
-    @media(max-width:560px){ .grid2 > .field > label, .grid3 > .field > label, .ir-grid > .field > label{ min-height:3.9rem; } }
+    .grid2 > .field > label, .grid3 > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
+    .ir-grid > .field > label{ min-height:1.2em; }   /* ⑤運用・⑦保険の行はラベルが短く折り返さないため、余白を予約しない */
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
+    /* 折り返しの見た目調整：最終行が数文字だけになる折り返しをブラウザに自動回避させる（非対応ブラウザでは無視され従来どおり） */
+    .field label, .hint, .note span, .ipn-note, .cr-quote, .ic-lead, .acc-title span, .ict-sub, .diag-note, .seg button{ text-wrap:pretty; }
     .input-unit{ position:relative; display:flex; align-items:center; }
     .input-unit input, .field input, .field select{
       width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px;
       font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; transition:border .15s, box-shadow .15s;
     }
     .input-unit input{ padding-right:46px; text-align:right; }
+    /* お名前欄：数字の右寄せではなく中央寄せ。様/君/ちゃんのサフィックス手前スペースの中央に表示 */
+    .input-unit > input.name-ctr{ text-align:center; padding-right:52px; }
     .input-unit .u{
       position:absolute; right:12px; font-size:.8rem; color:var(--ink-soft); pointer-events:none; font-weight:500;
     }
     .field input:focus, .field select:focus, .input-unit input:focus{
-      outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.16);
+      outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18);
     }
     input[type="range"]{ accent-color:var(--blue); }
     select{ appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6b7d' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 13px center; padding-right:34px; }
@@ -208,7 +209,6 @@
     /* 残債・一括返済オプションのグループ枠（段揃え・見やすさ） */
     .loan-payoff-box{ margin-top:12px; padding:14px 14px 12px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
     .loan-payoff-box .lp-title{ font-size:.85rem; font-weight:700; color:var(--blue-deep); margin-bottom:12px; display:flex; align-items:center; gap:7px; }
-    .loan-payoff-box .grid2{ align-items:end; }
     .loan-payoff-box .lp-seg-field{ margin-top:12px; }
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
@@ -255,6 +255,20 @@
     .ex-years-wrap{ display:inline-flex; align-items:center; gap:6px; font-size:.88rem; color:var(--ink); white-space:nowrap; }
     .ex-years-wrap[hidden]{ display:none !important; }
     .ex-years-wrap input{ width:60px; text-align:center; padding:8px 6px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; font-size:.92rem; }
+    /* 妻の働き方：期間ごとの年収（1段目＝働く期間・全幅、2段目＝年収＋削除） */
+    .row-item.wife-work-row{
+      grid-template-columns:1fr auto;
+      grid-template-areas:"wwage wwage" "wwamount wwdel";
+      row-gap:12px;
+    }
+    .wife-work-row .ww-age-field{ grid-area:wwage; }
+    .wife-work-row .ww-amount-field{ grid-area:wwamount; }
+    .wife-work-row .ww-del{ grid-area:wwdel; }
+    .ww-age-range{ display:flex; align-items:center; gap:8px; }
+    .ww-age-range input{ width:72px; text-align:center; padding:11px 8px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; }
+    .ww-age-range input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
+    .ww-age-range .ww-u{ font-size:.85rem; color:var(--ink-soft); font-weight:500; }
+    .ww-age-range .ww-tilde{ color:var(--ink-soft); padding:0 2px; }
     @media(max-width:560px){
       .row-item, .row-item.event-row, .row-item.income-row{ grid-template-columns:1fr 1fr; }
       .row-item.expense-row{ grid-template-columns:1fr auto; grid-template-areas:"exname exname" "examount exdel" "experiod experiod"; }
@@ -280,7 +294,7 @@
       width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px;
       font-family:inherit; font-size:.92rem; color:var(--ink); background:#fff;
     }
-    .ir-head select:focus, .ir-head input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.16); }
+    .ir-head select:focus, .ir-head input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
     .ir-head input.iv-on{ width:19px; height:19px; flex:0 0 auto; padding:0; accent-color:var(--good); cursor:pointer; }
     /* チェックボックス付きラベル */
     .chk-label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
@@ -291,6 +305,11 @@
     .ev-wife{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; color:#c2729a; }
     .event-row > .field.ev-every-field{ position:relative; }
     .event-row > .field.ev-every-field > .hint{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; }
+    /* モバイルでは行が2列に組み替わり吊り下げヒントが下のラベルに重なるため、通常フローに戻す */
+    @media(max-width:560px){
+      .ev-wife, .event-row > .field.ev-every-field > .hint{ position:static; margin-top:2px; white-space:normal; }
+      .row-item.event-row, .row-item.income-row{ padding-bottom:12px; }
+    }
     .row-item.income-row{ grid-template-columns:0.9fr 1.3fr 0.9fr auto; padding-bottom:26px; }
     .income-row > .field.ev-age-field{ position:relative; }
     .ir-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
@@ -300,8 +319,8 @@
     .row-item.child-row{ display:block; }
     .cr-head{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px; }
     .cr-title{ font-weight:700; font-size:.9rem; color:var(--blue-deep); display:flex; align-items:center; gap:7px; }
-    .cr-honorific-seg{ margin-left:auto; padding:2px; }
-    .cr-honorific-seg button{ padding:5px 12px; font-size:.78rem; }
+    .cr-gender-seg{ margin-left:auto; padding:2px; }
+    .cr-gender-seg button{ padding:5px 12px; font-size:.78rem; }
     .cr-head .btn-del{ flex:0 0 auto; }
     .cr-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; align-items:end; }
     .cr-grid.cr-bot{ margin-top:10px; }
@@ -364,7 +383,7 @@
     .kpi .k-value{ font-size:1.7rem; }
     .kpi .k-label{ flex-wrap:wrap; }
     .age-input{ width:68px; padding:3px 8px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; font-size:.95rem; font-weight:700; text-align:center; color:var(--blue-deep); background:#fff; }
-    .age-input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.16); }
+    .age-input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
 
     /* ヒーロー（タイトル＋操作ボタン） */
     .hero-inner{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
@@ -372,8 +391,12 @@
     .hero-actions-top{ display:flex; flex-wrap:wrap; gap:10px; flex:0 1 auto; }
 
     .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-soft); padding:18px 18px; }
-    .card-title{ font-size:1rem; font-weight:700; display:flex; align-items:center; gap:9px; margin-bottom:6px; }
-    .card-title i{ color:var(--blue); }
+    .card-title{ font-size:1.22rem; font-weight:800; display:flex; align-items:center; gap:10px; margin:-2px -2px 14px; padding-bottom:11px; border-bottom:2px solid var(--blue-pale2); }
+    .card-title i{ color:var(--blue); font-size:1.05em; }
+    @media(max-width:520px){ .card-title{ font-size:1.08rem; } }
+    /* 長いタイトル（資産運用のくらべ等）が2段に折り返さないよう縮小 */
+    .card-title-long{ font-size:1.02rem; }
+    @media(max-width:520px){ .card-title-long{ font-size:.86rem; } }
     .card-title .toggle{ margin-left:auto; }
     .chart-box{ position:relative; height:260px; margin-top:8px; }
     .chart-box.tall{ height:300px; }
@@ -454,7 +477,7 @@
     .req{ color:var(--bad); }
     .btn-full{ width:100%; margin-top:6px; }
     .field textarea{ width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; resize:vertical; }
-    .field textarea:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.16); }
+    .field textarea:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
 
     /* なんでも相談チャット */
     .chat-hint{ font-size:.82rem; color:var(--ink-soft); margin:2px 0 10px; line-height:1.6; }
@@ -482,7 +505,7 @@
     .chat-cta:hover{ background:var(--yellow-soft); }
     .chat-input{ display:flex; gap:8px; margin-top:12px; }
     .chat-input input{ flex:1; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.95rem; }
-    .chat-input input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.16); }
+    .chat-input input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
     /* 思考中（タイピング）アニメーション */
     .typing{ display:inline-flex; gap:5px; padding:2px 0; }
     .typing span{ width:7px; height:7px; border-radius:50%; background:var(--ink-soft); display:inline-block; animation:typingDot 1s infinite; }
@@ -610,6 +633,13 @@
     #plan-effect{ margin-bottom:12px; }
     #compare-card2{ border:2px solid var(--blue-pale2); }
 
+    /* 太陽光の詳細入力ノート（ZEH欄内）＆ 資産推移の表示期間切替UI */
+    .ichijo-perf-note{ margin-top:14px; padding:14px 16px; border:1.5px solid var(--blue-pale2); background:var(--blue-pale); border-radius:12px; }
+    .ichijo-perf-note .ipn-title{ font-weight:800; color:var(--blue-deep); font-size:.92rem; margin-bottom:8px; }
+    .ichijo-perf-note ul{ margin:0 0 6px 18px; display:flex; flex-direction:column; gap:5px; font-size:.85rem; color:var(--ink); }
+    .ichijo-perf-note .ipn-note{ font-size:.76rem; color:var(--ink-soft); }
+    .ic-level{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+    .ic-level-label{ font-size:.82rem; font-weight:700; color:var(--ink-soft); }
 
     @media(max-width:560px){
       .plan-tabs{ width:100%; }
@@ -716,10 +746,12 @@
       .no-print, .jump-result, .hero-actions-top, .btn-add, .btn-del,
       .acc-chev, #chat-card, #open-asset-modal{ display:none !important; }
       .wrap{ max-width:none; padding:0; }
+      .pdf-mode .wrap{ width:auto; max-width:190mm; padding:0; }   /* A4印字幅に合わせる（960px固定はhtml2canvas用に温存） */
       .layout{ display:block !important; }                    /* 1カラムで出力 */
       .results{ position:static !important; margin-top:14px; }
       .acc-body{ display:block !important; }                  /* たたんだ入力欄もPDFに含める */
-      .acc, .card, .kpi, .verdict, .row-item{ break-inside:avoid; box-shadow:none !important; }
+      .acc, .card{ box-shadow:none !important; }              /* 1ページ超のセクションは改ページ許可（大きな空白ページを防ぐ） */
+      .kpi, .verdict, .row-item{ break-inside:avoid; box-shadow:none !important; }
       .table-section{ box-shadow:none !important; }
       .table-scroll{ overflow:visible !important; }
       table.cf thead{ display:table-header-group; }           /* 各ページにヘッダーを繰り返す */
@@ -728,6 +760,11 @@
       table.cf{ font-size:8pt; }
       .hero{ padding:0 0 8px; }
       a[href]:after{ content:""; }                            /* URLの余分な表示を抑制 */
+      /* 背景色を落とす設定のブラウザでも判定・表頭・選択状態が読めるように色を強制 */
+      .verdict, .seg button.active, table.cf thead th, table.cf tr.milestone,
+      .adv-summary, .plan-tabs button.active, .living-total, .ict-num{
+        -webkit-print-color-adjust:exact; print-color-adjust:exact;
+      }
     }
   </style>
 </head>
@@ -743,7 +780,7 @@
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <button class="btn btn-ghost btn-sm" id="btn-print"><i class="fa-solid fa-print"></i> 印刷</button>
-        <button class="btn btn-yellow btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
+        <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div>
     </div>
   </section>
@@ -786,7 +823,7 @@
             <div class="subgroup">
               <div class="subgroup-title"><span class="tag">夫</span></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="h-name" placeholder="夫"><span class="u">様</span></div></div>
+                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="h-name" class="name-ctr" placeholder="夫"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="h-age" value="35" min="18" max="70"><span class="u">歳</span></div></div>
                 <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="h-income" value="550" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="h-net">手取り目安：—</span></div>
                 <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="h-raise" value="1.0" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
@@ -798,12 +835,21 @@
             <div class="subgroup" id="wife-section">
               <div class="subgroup-title spouse"><span class="tag">妻</span></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" placeholder="妻"><span class="u">様</span></div></div>
+                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" class="name-ctr" placeholder="妻"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="w-age" value="33" min="18" max="70"><span class="u">歳</span></div></div>
-                <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
-                <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
+                <div class="field w-flat-income"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
+                <div class="field w-flat-income"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
                 <div class="field"><label>退職予定</label><div class="input-unit"><input type="number" id="w-retire" value="65" min="50" max="80"><span class="u">歳</span></div></div>
                 <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="w-bonus" value="300" min="0" step="50"><span class="u">万円</span></div></div>
+              </div>
+              <label class="wife-worklife-toggle" style="display:flex; align-items:center; gap:9px; margin-top:10px; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; font-weight:600; font-size:.9rem;">
+                <input type="checkbox" id="wife-worklife" style="width:18px; height:18px; flex:0 0 auto;">
+                <span>奥様の働き方を変える予定（育休の延長・時短・専業など）</span>
+              </label>
+              <div id="wife-worklife-panel" class="hidden" style="margin-top:8px;">
+                <p class="hint" style="margin:2px 0 8px;">働き方に合わせて、<b>期間ごとの年収（額面）</b>を入力してください。入力した期間以外は収入なし（育休・専業など）として計算します。ここで入れた収入は<b>現状プラン・将来プランの両方に同じように反映</b>し、現状比の減額としては表示しません。</p>
+                <div id="wife-worklife-rows"></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="wife-worklife-add" style="margin-top:2px;"><i class="fa-solid fa-plus"></i> 期間を追加</button>
               </div>
             </div>
 
@@ -882,11 +928,11 @@
               <div class="grid3">
                 <div class="field" data-buy-only><label>購入時の夫の年齢</label><div class="input-unit"><input type="number" id="buy-age" value="36" min="20" max="70"><span class="u">歳</span></div></div>
                 <div class="field hidden" data-owned-only><label>購入したときの夫の年齢</label><div class="input-unit"><input type="number" id="owned-age" value="30" min="18" max="70"><span class="u">歳</span></div><span class="hint">現在の年齢以下で入力。減税・ZEHはこの年から計算</span></div>
-                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="5000" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みで組む場合はその総額）。頭金は下の欄へ</span></div>
-                <div class="field"><label>頭金（借入と別に用意する現金）</label><div class="input-unit"><input type="number" id="down" value="500" min="0" step="50"><span class="u">万円</span></div><span class="hint">※ この金額はローン総額から差し引きません。購入時に用意する別途の現金です（左の欄には実際の借入額を入力）</span></div>
+                <div class="field"><label>住宅ローン総額（借入額）</label><div class="input-unit"><input type="number" id="house-price" value="5000" min="0" step="100"><span class="u">万円</span></div><span class="hint">銀行から借りる金額（諸費用込みならその総額）</span></div>
+                <div class="field"><label>頭金（別途の現金）</label><div class="input-unit"><input type="number" id="down" value="500" min="0" step="50"><span class="u">万円</span></div><span class="hint">ローン総額からは差し引きません（購入時に別途用意する現金）</span></div>
                 <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" id="loan-term" value="35" min="1" max="50"><span class="u">年</span></div></div>
                 <div class="field"><label>固定資産税（年）</label><div class="input-unit"><input type="number" id="prop-tax" value="12" min="0" step="1"><span class="u">万円</span></div></div>
-                <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">戸建は修繕積立、マンションは管理費＋修繕</span></div>
+                <div class="field"><label>修繕・管理（年）</label><div class="input-unit"><input type="number" id="maint" value="15" min="0" step="1"><span class="u">万円</span></div><span class="hint">修繕積立・管理費の年額</span></div>
               </div>
 
               <!-- 返済方法（元利均等／元金均等）＋ 金利タイプ（固定／変動）-->
@@ -906,7 +952,7 @@
                   <div class="field" style="max-width:260px;">
                     <label>金利（全期間固定で適用）</label>
                     <div class="input-unit"><input type="number" id="loan-rate" value="0.95" min="0" max="10" step="0.05"><span class="u">％</span></div>
-                    <span class="hint">ご参考（2026年7月時点）：変動0.8〜1.0%前後・全期間固定（フラット35）約3.1%。全期間固定でご検討の場合は3%前後に変更するか、「5年ごと変動」で上昇シナリオもご確認ください。</span>
+                    <span class="hint">参考（2026年7月）：変動 0.8〜1.0%前後／全期間固定（フラット35）約3.1%</span>
                   </div>
                 </div>
                 <div id="loan-rate-variable-wrap" class="hidden" style="margin-top:10px;">
@@ -920,7 +966,7 @@
               <div class="loan-monthly-box">
                 <div class="lp-title"><i class="fa-solid fa-calculator"></i> 毎月のローン返済額（自動計算）</div>
                 <div class="field" style="max-width:340px;">
-                  <label>ボーナス月の加算返済（1回あたり・年2回）</label>
+                  <label>ボーナス月の加算返済（1回分）</label>
                   <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
                   <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
                 </div>
@@ -977,8 +1023,24 @@
                 </label>
                 <div class="conditional" id="zeh-fields">
                   <div class="grid2">
-                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">余った電気の売却。FIT期間(10年)は満額、以後約4割で計算</span></div>
+                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">初年度の売電収入。下の「太陽光・蓄電池の詳細設定」に容量を入れると自動計算されます</span></div>
                     <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額</span></div>
+                  </div>
+                  <!-- 太陽光の精密モデル入力（kW・蓄電池・地域）→ 上の「売電収入」「光熱費の削減」を自動計算（任意） -->
+                  <div class="ichijo-perf-note" id="ichijo-solar-config">
+                    <div class="ipn-title"><i class="fa-solid fa-solar-panel"></i> 太陽光・蓄電池の詳細設定（入れると売電・自家消費を自動計算）</div>
+                    <div class="grid3">
+                      <div class="field"><label>太陽光の搭載容量</label><div class="input-unit"><input type="number" id="ichijo-solar-kw" value="0" min="0" max="30" step="0.5"><span class="u">kW</span></div><span class="hint">0なら自動計算しません（上の欄に直接入力）。一般的な戸建は4〜6kW前後</span></div>
+                      <div class="field"><label>蓄電池の容量</label><div class="input-unit"><input type="number" id="ichijo-battery-kwh" value="0" min="0" max="30" step="0.5"><span class="u">kWh</span></div><span class="hint">0で「なし」。蓄電池があるほど自家消費（買う電気の節約）が増えます</span></div>
+                      <div class="field"><label>地域の日射区分</label>
+                        <div class="seg" id="ichijo-region-seg">
+                          <button type="button" data-icregion="temperate" class="active">温暖地</button>
+                          <button type="button" data-icregion="cold">寒冷地</button>
+                        </div>
+                        <span class="hint">寒冷地＝発電少なめ・断熱の節約大きめ</span>
+                      </div>
+                    </div>
+                    <span class="ipn-note">※ 搭載容量を入れると、2026年度FITの単価カーブとパネル劣化（年0.5%）・蓄電池による自家消費の増加を織り込み、上の「売電収入」「光熱費の削減」を自動で埋めます。東西面や日陰の屋根では発電が1〜3割下がることがあります。手入力した値は上書きしません。</span>
                   </div>
                   <div class="note" style="background:var(--good-pale);color:#2a6b52;">
                     <i class="fa-solid fa-solar-panel" style="color:var(--good);"></i>
@@ -1031,7 +1093,7 @@
                 <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>損害保険（自動車・傷害など）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
+                <div class="field"><label>損害保険（自動車・傷害）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
                 <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
@@ -1043,7 +1105,7 @@
               <div id="custom-expenses"></div>
               <button class="btn-add" id="add-expense" type="button"><i class="fa-solid fa-plus"></i> 生活費の項目を追加</button>
 
-              <!-- 火災・地震保険（1年/5年ごとの一括払い）。地震保険は「割引前」入力なら新築の建築年割引10%で計上（耐震等級3なら50%割引の案内をメリット欄に表示） -->
+              <!-- 火災・地震保険（1年/5年ごとの一括払い）。地震保険は割引前入力＝建築年割引10%、耐震等級3の住宅は50%割引の対象 -->
               <div class="subgroup" id="kasai-box" style="margin-top:16px;">
                 <div class="subgroup-title"><i class="fa-solid fa-house-fire"></i> 火災・地震保険（持ち家）
                   <button type="button" class="btn btn-ghost btn-sm no-print" id="kasai-preset" style="margin-left:auto;"><i class="fa-solid fa-wand-magic-sparkles"></i> 戸建の目安を入れる</button>
@@ -1056,7 +1118,7 @@
                   <span class="hint">現行制度では火災・地震保険とも契約は最長5年（2022年10月改定）。5年一括は年払いより割安です</span>
                 </div>
                 <div class="grid2" style="margin-top:12px; align-items:start;">
-                  <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">地震保険を除く建物・家財の保険料。省令準耐火（T構造）の住宅は、非耐火（H構造）の概ね半分程度になる例が多い目安です</span></div>
+                  <div class="field"><label>火災保険（<span class="kasai-cycle-label">5</span>年分の総額）</label><div class="input-unit"><input type="number" id="kasai-fire" value="0" min="0" step="1"><span class="u">万円</span></div><span class="hint">建物・家財の保険料（地震保険は右へ）。省令準耐火構造ならT構造（耐火系）の料率で、非耐火（H構造）の半分程度が目安です</span></div>
                   <div class="field"><label>地震保険（同期間の総額）</label><div class="input-unit"><input type="number" id="kasai-quake" value="0" min="0" step="1"><span class="u">万円</span></div>
                     <div class="seg" id="kasai-qmode-seg" style="margin-top:6px;">
                       <button type="button" data-qmode="pre" class="active">割引前の金額</button>
@@ -1107,7 +1169,7 @@
             </div>
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
-              <div class="grid2">
+              <div class="grid2 pension-grid">
                 <div class="field"><label>受給開始（夫の年齢）</label><div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div></div>
                 <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">「ねんきん定期便」の見込額があれば最優先で入力を。目安は下のボタンから選べます</span>
                   <div class="pen-presets">
@@ -1143,7 +1205,7 @@
         <div class="acc" data-acc data-couple-only>
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
-            <span class="acc-title"><b>⑦ 加入中の保険</b><span>いま入っている死亡保障を診断に反映</span></span>
+            <span class="acc-title"><b>⑦ 加入中の保険</b><span>今の死亡保障を診断に反映</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1152,9 +1214,13 @@
               <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
               <span class="lt-value" id="ins-sum-value"></span>
             </div>
-            <div class="note" style="margin-bottom:12px;">
+            <div class="note" style="margin-bottom:8px;">
               <i class="fa-solid fa-scale-balanced"></i>
-              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。<b>この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、結果の「万一のときの死亡保障額」カードでご覧いただけます。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
+            </div>
+            <div class="note" style="margin-bottom:12px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
             </div>
             <div class="field">
               <label>入力方法</label>
@@ -1170,7 +1236,7 @@
               <button class="btn-add" id="add-ins" type="button"><i class="fa-solid fa-plus"></i> 加入中の保険を追加</button>
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>保険証券や「ご契約内容のお知らせ」の<strong>死亡保険金額</strong>を転記してください。<strong>収入保障保険（家族収入保障・逓減定期）</strong>は「年金月額」と「何歳まで受け取れるか」を入力すると、<strong>残り期間分の総額に換算</strong>して計算します（受取総額は年々減っていく保険です）。医療保険・がん保険など死亡保障のないものは対象外です。</span>
+                <span>保険証券や「ご契約内容のお知らせ」の<strong>死亡保険金額</strong>を転記してください。<strong>収入保障保険（家族収入保障・逓減定期）</strong>は「年金月額」と「何歳まで受け取れるか」を入力すると、<strong>残り期間分の総額に換算</strong>して計算します（受取総額は年々減っていく保険です）。医療保険・がん保険など死亡保障のないものは対象外です。<br><strong>終身保険</strong>は「今後の予定」で<strong>一生涯続けるか、途中で解約して現金化する予定か</strong>を選べます。「途中で解約する予定」を選ぶと、指定した年齢まで死亡保障に数え、それ以降は保障から外して計算します（年齢が未入力のときは一生涯として計算。解約返戻金は資産推移に自動計上しません）。満了歳のある保険（定期・養老など）は<strong>その年齢まで保障あり</strong>として計算します（例：60歳までなら61歳で保障ゼロ）。収入保障保険は残り年数分の換算のため、受取満了の年齢では0になります。</span>
               </div>
             </div>
 
@@ -1183,7 +1249,7 @@
               <span class="hint">加入中の保険の死亡保険金額をざっくり合計してください。収入保障保険は「月額×12か月×残り年数」で総額の目安に（例：月10万円×残り20年＝2,400万円）</span>
             </div>
 
-            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄（項目ごとに入力の場合）で家計に反映されます。ここに入力した保障額は、AI診断「万が一の備え」の必要保障額の計算に使います。</span>
+            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄で家計に反映。ここで入力した保障額は、AI診断「万が一の備え」の計算に使います。</span>
           </div>
         </div>
 
@@ -1216,9 +1282,29 @@
           </div>
         </div>
 
+        <!-- 総合判定（KPIの直下＝結論を最初に見せる）-->
+        <div class="verdict good" id="verdict">
+          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <b id="verdict-title">計算中…</b>
+            <span id="verdict-text"></span>
+          </div>
+        </div>
+
         <!-- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）-->
         <div class="card">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
+          <div class="ic-level no-print">
+            <span class="ic-level-label">表示期間：</span>
+            <div class="seg" id="ichijo-horizon-seg">
+              <button type="button" data-ichorizon="end" class="active"><span id="ic-horizon-end-label">100歳まで</span></button>
+              <button type="button" data-ichorizon="35">35年</button>
+              <button type="button" data-ichorizon="custom">年数を指定</button>
+            </div>
+            <span id="ic-horizon-custom-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:6px;">
+              <input type="number" id="ic-horizon-custom" value="35" min="1" max="80" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">年間
+            </span>
+          </div>
           <div class="chart-box tall"><canvas id="assetChart"></canvas></div>
         </div>
 
@@ -1227,16 +1313,54 @@
           <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
           <div id="plan-effect"></div>
           <div class="chart-box"><canvas id="compareChart"></canvas></div>
+          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、下の「万一のときの死亡保障額」もあわせてご確認ください。</p>
         </div>
 
 
-        <!-- 総合判定（金融資産の推移の下に配置）-->
-        <div class="verdict good" id="verdict">
-          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
-          <div>
-            <b id="verdict-title">計算中…</b>
-            <span id="verdict-text"></span>
+        <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
+        <div class="card" id="invest-diff-card">
+          <div class="card-title card-title-long"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
+          <div class="ivd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
+            <span>何歳時点で比べる？</span>
+            <input type="number" id="ivd-age" value="65" min="20" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
+            <span class="hint" style="margin:0;">（<span id="ivd-hname">夫</span>の年齢で指定）</span>
           </div>
+          <div id="ivd-table"></div>
+          <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
+          <details class="ic-fold">
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>⑤で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+          </details>
+        </div>
+
+        <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
+        <div class="card" id="hoken-diff-card">
+          <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
+          <p class="hint" style="display:block; margin-bottom:8px;">⑦で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
+          <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
+            <span>何歳時点で見る？</span>
+            <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
+            <span class="hint" style="margin:0;">（<span id="hkd-hname">夫</span>の年齢で指定・空欄＝住宅ローンがある年齢を自動表示）</span>
+          </div>
+          <div class="hkd-dan no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
+            <span>団信（住宅ローン）の前提：</span>
+            <div class="seg" id="hkd-dan-seg">
+              <button type="button" data-hkddan="continue" class="active">返済を続ける</button>
+              <button type="button" data-hkddan="payoff">○歳で完済とみなす</button>
+            </div>
+            <span id="hkd-dan-age-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:4px;">
+              <input type="number" id="hkd-dan-age" value="60" min="20" max="100" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳で完済（以降は団信0）
+            </span>
+          </div>
+          <div id="hkd-table"></div>
+          <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
+          <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
+          <details class="ic-fold">
+            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
+            <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
+            <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+          </details>
         </div>
 
         <!-- 収支グラフ -->
@@ -1498,11 +1622,11 @@
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
-          <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前」を選ぶと新築の建築年割引10%で計上します（耐震等級3の住宅は50%割引の対象。適用には性能評価書等の確認資料が必要なため、割引後の金額が分かる場合は「割引適用済み」でご入力ください）。</li>
+          <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、割引前入力＝新築の建築年割引10%で計算します（耐震等級3の住宅は50%割引の対象。適用には性能評価書等の確認資料が必要なため、割引後の金額が分かる場合は「割引適用済み」でご入力ください）。</li>
           <li><b>住宅ローン控除</b>：2026年入居の性能別上限を簡易反映しています（ZEHチェックON＝ZEH水準31.5万円／OFF＝省エネ基準適合21万円。認定住宅は35万円・子育て世帯優遇あり）。控除額は納税額（所得税＋住民税の一部）が上限のため、<b>全額を使いきれない場合があります</b>（本試算は上限まで控除できた前提）。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
-          <li><b>ZEH（太陽光）の売電・光熱費削減</b>：ご入力の年額をもとにした<b>概算の目安</b>です。売電収入はFIT期間（購入後10年）は満額、11〜30年目は約4割（卒FIT）、31年目以降は設備寿命とみなし計上しません。居住地域・電力料金・FIT制度改定・使用状況で大きく変わります。太陽光等の<b>初期費用は物件価格に含めてご検討ください</b>。個別の見積り・実額を保証するものではありません。</li>
+          <li><b>太陽光の試算</b>：ZEH欄の「太陽光・蓄電池の詳細設定」に搭載容量を入れると、2026年度FITの区分（<b>10kW未満＝24円が4年間／10kW以上＝19円が5年間、以降8.3円→卒FIT8円</b>）とパネル経年劣化（年0.5%）・蓄電池による自家消費の増加を織り込み、売電収入・光熱費削減を概算します。自家消費は<b>買電単価32円の節約として実際の電気代の範囲まで</b>を計上しています。個別の見積り・実額を保証するものではありません。</li>
           <li><b>火災保険・地震保険の記載</b>は制度の一般的な説明であり、特定の損害保険商品の募集・推奨を目的とするものではありません。損害保険の詳細は取扱代理店・保険会社にご確認ください。税制・社会保険の記載も概要であり、<b>詳細は最新の制度をご確認ください</b>。</li>
-          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、令和7年度の手取り改正を反映）。前提は年1回の見直しを想定しています。</li>
+          <li><b>制度・知識の最終更新：2026年7月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金を反映）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
       <p style="margin-bottom:6px;">本サイトは、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</p>
@@ -1581,21 +1705,21 @@
     const eventsList = $('events-list');
     const incomeEventsList = $('income-events-list');
 
-    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', honorific='君'){
+    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', gender='boy'){
       const div = document.createElement('div');
       div.className = 'row-item child-row';
       const highOpts = Object.entries(HIGHED).map(([v,o])=> `<option value="${v}"${v===highEd?' selected':''}>${o.label}</option>`).join('');
       div.innerHTML = `
         <div class="cr-head">
           <span class="cr-title"><i class="fa-solid fa-child-reaching"></i> お子さま</span>
-          <div class="seg cr-honorific-seg" title="お名前の後につける敬称">
-            <button type="button" data-honorific="君"${honorific!=='ちゃん'?' class="active"':''}>君</button>
-            <button type="button" data-honorific="ちゃん"${honorific==='ちゃん'?' class="active"':''}>ちゃん</button>
+          <div class="seg cr-gender-seg" title="お子さまの性別（お名前に君／ちゃんを付けます）">
+            <button type="button" data-gender="boy"${gender!=='girl'?' class="active"':''}>男の子</button>
+            <button type="button" data-gender="girl"${gender==='girl'?' class="active"':''}>女の子</button>
           </div>
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="cr-grid cr-top">
-          <div class="field"><label>お名前</label><input type="text" class="ch-name" placeholder="お子さま" value="${(name||'').replace(/"/g,'&quot;')}"></div>
+          <div class="field"><label>お名前</label><div class="input-unit"><input type="text" class="ch-name name-ctr" placeholder="お子さま" value="${(name||'').replace(/"/g,'&quot;')}"><span class="u ch-suffix">${gender==='girl'?'ちゃん':'君'}</span></div></div>
           <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" class="ch-age" value="${age}" min="0" max="30"><span class="u">歳</span></div></div>
           <div class="field"><label>小〜高</label>
             <select class="ch-k12">
@@ -1616,9 +1740,10 @@
         <p class="cr-quote"></p>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); renumberChildPlaceholders(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', ()=>{ updateChildQuote(div); recompute(); }));
-      div.querySelector('.cr-honorific-seg').addEventListener('click', (e)=>{
+      div.querySelector('.cr-gender-seg').addEventListener('click', (e)=>{
         const b = e.target.closest('button'); if(!b) return;
-        [...div.querySelectorAll('.cr-honorific-seg button')].forEach(x=> x.classList.toggle('active', x===b));
+        [...div.querySelectorAll('.cr-gender-seg button')].forEach(x=> x.classList.toggle('active', x===b));
+        const suffix = div.querySelector('.ch-suffix'); if(suffix) suffix.textContent = (b.dataset.gender==='girl') ? 'ちゃん' : '君';   // お名前欄の敬称サフィックスを性別に連動
         recompute();
       });
       childrenList.appendChild(div);
@@ -1650,7 +1775,7 @@
       const div = document.createElement('div');
       div.className = 'row-item event-row';
       div.innerHTML = `
-        <div class="field ev-age-field"><label>夫の年齢（開始）</label>
+        <div class="field ev-age-field"><label>開始年齢（夫）</label>
           <div class="input-unit"><input type="number" class="ev-age" value="${age}" min="20" max="110"><span class="u">歳</span></div>
           <span class="hint ev-wife"></span>
         </div>
@@ -1685,7 +1810,7 @@
 
     function readChildren(){
       return [...childrenList.querySelectorAll('.row-item')].map((r,i)=>({
-        name: cNameH(r.querySelector('.ch-name').value, i, r.querySelector('.cr-honorific-seg button.active')?.dataset.honorific),
+        name: cNameH(r.querySelector('.ch-name').value, i, (r.querySelector('.cr-gender-seg button.active')?.dataset.gender==='girl') ? 'ちゃん' : '君'),
         age: parseInt(r.querySelector('.ch-age').value)||0,
         k12: r.querySelector('.ch-k12').value,
         highEd: r.querySelector('.ch-highed').value,
@@ -1725,6 +1850,83 @@
         label: r.querySelector('.ie-label').value || '臨時収入',
         amount: parseFloat(r.querySelector('.ie-amount').value)||0
       }));
+    }
+
+    /* ---------- 妻の働き方：期間ごとの年収（額面）。ONのとき、現状・将来の両プランで妻の収入をこの表で決める ---------- */
+    function wifeWorkRow(from=33, to=40, amount=0){
+      const rows = $('wife-worklife-rows'); if(!rows) return null;
+      const div = document.createElement('div');
+      div.className = 'row-item wife-work-row';
+      div.innerHTML = `
+        <div class="field ww-age-field"><label>${wNameH()}が働く期間（${wNameH()}の年齢）</label>
+          <div class="ww-age-range">
+            <input type="number" class="ww-from" value="${from}" min="18" max="90"><span class="ww-u">歳</span>
+            <span class="ww-tilde">〜</span>
+            <input type="number" class="ww-to" value="${to}" min="18" max="90"><span class="ww-u">歳</span>
+          </div>
+        </div>
+        <div class="field ww-amount-field"><label>年収（額面）</label>
+          <div class="input-unit"><input type="number" class="ww-amount" value="${amount}" min="0" step="10"><span class="u">万円</span></div>
+          <span class="hint ww-net"></span>
+        </div>
+        <button class="btn-del ww-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>`;
+      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); onWifeWorkChange(); });
+      div.querySelectorAll('input').forEach(el=> el.addEventListener('input', onWifeWorkChange));
+      rows.appendChild(div);
+      updateWifeWorkNet(div);
+      return div;
+    }
+    function updateWifeWorkNet(div){
+      const amt = parseFloat(div.querySelector('.ww-amount').value)||0;
+      const el = div.querySelector('.ww-net'); if(!el) return;
+      el.textContent = amt>0 ? ('手取り 約'+(Math.round(grossToNet(amt)/12*10)/10)+'万円/月') : '無収入（育休・専業など）';
+    }
+    function readWifeWork(){
+      const rows = $('wife-worklife-rows'); if(!rows) return [];
+      return [...rows.querySelectorAll('.wife-work-row')].map(r=>({
+        from: parseInt(r.querySelector('.ww-from').value)||0,
+        to: parseInt(r.querySelector('.ww-to').value)||0,
+        amount: parseFloat(r.querySelector('.ww-amount').value)||0
+      })).filter(x=> x.from>0 && x.to>=x.from);
+    }
+    function wifeWorkAmountAt(wAge){
+      for(const r of readWifeWork()){ if(wAge>=r.from && wAge<=r.to) return r.amount; }
+      return 0;
+    }
+    // ONかつ夫婦世帯のときだけ有効。simulateやバッジ表示の判定に使う
+    function wifeWorklifeOn(){ return !isSingle() && $('wife-worklife') && $('wife-worklife').checked; }
+    function toggleWifeWorklife(){
+      const on = wifeWorklifeOn();
+      const panel = $('wife-worklife-panel'); if(panel) panel.classList.toggle('hidden', !on);
+      document.querySelectorAll('.w-flat-income').forEach(el=> el.classList.toggle('hidden', on));
+      const rows = $('wife-worklife-rows');
+      if(on && rows && !rows.children.length){
+        // 初回ON：いまの年収を初期値に、退職予定までの1行を用意
+        const w0=num('w-age',33), wr=num('w-retire',65), wi=num('w-income',300);
+        wifeWorkRow(w0, Math.max(wr-1,w0), wi);
+      }
+    }
+    function onWifeWorkChange(){
+      // 隠している w-income を「現在の妻の年齢の収入」に合わせる（保険分析・手取り表示など既存機能の整合のため）
+      if(wifeWorklifeOn()){
+        if($('w-income')) $('w-income').value = wifeWorkAmountAt(num('w-age',33));
+        if($('w-raise')) $('w-raise').value = 0;
+        const rows = $('wife-worklife-rows');
+        if(rows) [...rows.querySelectorAll('.wife-work-row')].forEach(updateWifeWorkNet);
+      }
+      updateNetDisplay();
+      recompute();
+      refreshInactiveSum();   // 現状プランの妻収入も同じ表に合わせ直す（現状比の差を作らない）
+    }
+    // 保存データ／共有リンクから復元するとき、妻の働き方（ON/OFF・期間表）を戻す
+    function restoreWifeWork(st){
+      if($('wife-worklife')) $('wife-worklife').checked = !!(st && st.wifeWorklife);
+      const rows = $('wife-worklife-rows');
+      if(rows){
+        rows.innerHTML='';
+        (st && st.wifeSchedule || []).forEach(r=> wifeWorkRow(parseInt(r.from)||0, parseInt(r.to)||0, parseFloat(r.amount)||0));
+      }
+      toggleWifeWorklife();
     }
 
     /* ---------- 生活費の費目（自由追加） ---------- */
@@ -1899,7 +2101,7 @@
     }
 
     /* ---------- 加入中の保険（死亡保障）：AI診断の必要保障額から差し引く ---------- */
-    function insRow(who='h', type='shunyu', name='', amount=0, monthly=0, endAge=65){
+    function insRow(who='h', type='shunyu', name='', amount=0, monthly=0, endAge=65, keep='keep'){
       const div = document.createElement('div');
       div.className = 'row-item ins-row';
       const whoOpts = insWhoMembers().map(m=> `<option value="${m.key}"${who===m.key?' selected':''}>${esc(m.label)}</option>`).join('');
@@ -1917,20 +2119,33 @@
         <div class="ir-grid">
           <div class="field" data-ins-field="amount"><label>死亡保険金</label><div class="input-unit"><input type="number" class="ins-amount" value="${amount}" min="0" step="100"><span class="u">万円</span></div></div>
           <div class="field" data-ins-field="monthly"><label>年金月額</label><div class="input-unit"><input type="number" class="ins-monthly" value="${monthly}" min="0" step="1"><span class="u">万円</span></div></div>
+          <div class="field" data-ins-field="keep"><label>今後の予定</label><select class="ins-keep">
+            <option value="keep"${keep!=='surrender'?' selected':''}>一生涯続ける</option>
+            <option value="surrender"${keep==='surrender'?' selected':''}>途中で解約する予定</option>
+          </select></div>
           <div class="field" data-ins-field="end"><label class="ins-end-label">受取は何歳まで</label><div class="input-unit"><input type="number" class="ins-end" value="${endAge}" min="0" max="110"><span class="u">歳</span></div></div>
         </div>`;
       const typeSel = div.querySelector('.ins-type');
+      const keepSel = div.querySelector('.ins-keep');
       const updateFields = ()=>{
         const t = typeSel.value;
         div.querySelector('[data-ins-field="amount"]').classList.toggle('hidden', t==='shunyu');
         div.querySelector('[data-ins-field="monthly"]').classList.toggle('hidden', t!=='shunyu');
-        div.querySelector('[data-ins-field="end"]').classList.toggle('hidden', t==='shushin');
-        div.querySelector('.ins-end-label').textContent = (t==='shunyu') ? '受取は何歳まで' : '保障は何歳まで';
+        // 終身保険のみ「続ける／解約予定」を選べる。解約予定のときだけ「何歳まで続ける」を表示
+        div.querySelector('[data-ins-field="keep"]').classList.toggle('hidden', t!=='shushin');
+        div.querySelector('[data-ins-field="end"]').classList.toggle('hidden', t==='shushin' && keepSel.value!=='surrender');
+        div.querySelector('.ins-end-label').textContent = (t==='shunyu') ? '受取は何歳まで' : (t==='shushin' ? '何歳まで続ける' : '保障は何歳まで');
       };
       updateFields();
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       typeSel.addEventListener('change', ()=>{ updateFields(); recompute(); });
-      div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
+      keepSel.addEventListener('change', ()=>{
+        // 解約予定年齢が未入力だと一生涯扱いのままになるため、選択時に既定の65歳を明示する
+        const endInp = div.querySelector('.ins-end');
+        if(keepSel.value==='surrender' && !(parseInt(endInp.value)>0)) endInp.value = 65;
+        updateFields(); recompute();
+      });
+      div.querySelectorAll('input,select').forEach(el=>{ if(el===typeSel || el===keepSel) return; el.addEventListener('input', recompute); });
       $('ins-list').appendChild(div);
     }
     function readInsurances(){
@@ -1943,7 +2158,8 @@
           name: r.querySelector('.ins-name').value,
           amount: Math.max(parseFloat(r.querySelector('.ins-amount').value)||0, 0),
           monthly: Math.max(parseFloat(r.querySelector('.ins-monthly').value)||0, 0),
-          end: parseInt(r.querySelector('.ins-end').value)||0
+          end: parseInt(r.querySelector('.ins-end').value)||0,
+          keep: r.querySelector('.ins-keep') ? r.querySelector('.ins-keep').value : 'keep'
         }));
     }
     function hokenMode(){ return document.querySelector('#hoken-mode-seg button.active')?.dataset.hokenmode || 'detail'; }
@@ -1952,26 +2168,37 @@
       [...seg.children].forEach(x=> x.classList.toggle('active', x.dataset.hokenmode===m));
       document.querySelectorAll('[data-hoken-panel]').forEach(p=> p.classList.toggle('hidden', p.dataset.hokenPanel!==m));
     }
+    /* 保険リスト（readInsurancesの形式）から、被保険者keyの「その年齢時点」の死亡保障総額（万円）を計算。
+       ・収入保障＝月額×12×満了までの残り年数（受取総額が年々減る）
+       ・定期・養老等＝満了歳まで（その年齢を含む。例：60歳までなら61歳で保障ゼロ）・空欄は無期限扱い
+       ・終身＝ずっと。ただし「途中で解約する予定」は指定年齢まで（解約後は死亡保障から外す） */
+    function insCoverAtAge(list, key, personAge){
+      let total = 0;
+      (list||[]).forEach(x=>{
+        if(x.who!==key) return;
+        if(x.type==='shunyu'){
+          const yrs = Math.max((x.end||65) - personAge, 0);
+          if(yrs>0 && x.monthly>0) total += x.monthly*12*yrs;
+        } else if(x.type==='shushin'){
+          if(x.keep==='surrender' && x.end>0){ if(personAge <= x.end) total += x.amount; }
+          else total += x.amount;
+        } else {
+          if(x.end<=0 || personAge <= x.end) total += x.amount;
+        }
+      });
+      return Math.round(total);
+    }
     /* who='h'|'w' に掛かっている死亡保障の現時点の総額（万円）。
        収入保障保険は「月額×12か月×満了までの残り年数」で総額換算（受取総額が年々減る保険の現在値）。
-       定期・養老等は満了歳まで、終身は常時カウント。まとめて入力時は合計欄をそのまま使う */
+       定期・養老等は満了歳まで、終身は解約予定を考慮。まとめて入力時は合計欄をそのまま使う */
     function insCoverFor(who){
       const age = (who==='h') ? num('h-age',35) : num('w-age',33);
       if(hokenMode()==='simple'){
         return { total: Math.round(Math.max(num(who==='h' ? 'ins-total-h' : 'ins-total-w', 0), 0)), hasIncome:false, simple:true };
       }
-      let total = 0, hasIncome = false;
-      readInsurances().filter(x=> x.who===who).forEach(x=>{
-        if(x.type==='shunyu'){
-          const yrs = Math.max((x.end||65) - age, 0);
-          if(yrs>0 && x.monthly>0){ total += x.monthly*12*yrs; hasIncome = true; }
-        } else if(x.type==='shushin'){
-          total += x.amount;
-        } else {
-          if(x.end<=0 || age < x.end) total += x.amount;   // 満了歳の入力がなければ有効とみなす
-        }
-      });
-      return { total: Math.round(total), hasIncome, simple:false };
+      const list = readInsurances().filter(x=> x.who===who);
+      const hasIncome = list.some(x=> x.type==='shunyu' && x.monthly>0 && Math.max((x.end||65)-age,0)>0);
+      return { total: insCoverAtAge(list, who, age), hasIncome, simple:false };
     }
     // 保険の被保険者に選べる家族：夫・妻＋お子さま全員（keyは h / w / c0,c1… 、labelはお名前＋様/君）
     function insWhoMembers(){
@@ -1988,38 +2215,27 @@
     }
     // key（h/w/cN）に掛かっている死亡保障の現時点の総額（万円）。収入保障は月額×12×満了までの残り年数で換算
     function insCoverForKey(key){
-      if((key==='h'||key==='w') && hokenMode()==='simple') return Math.round(Math.max(num(key==='h'?'ins-total-h':'ins-total-w', 0), 0));
-      const age = insAgeForKey(key);
-      let total = 0;
-      readInsurances().filter(x=> x.who===key).forEach(x=>{
-        if(x.type==='shunyu'){ const yrs = Math.max((x.end||65) - age, 0); if(yrs>0 && x.monthly>0) total += x.monthly*12*yrs; }
-        else if(x.type==='shushin'){ total += x.amount; }
-        else { if(x.end<=0 || age < x.end) total += x.amount; }
-      });
-      return Math.round(total);
+      // まとめて入力では詳細行を一切使わない（非表示の詳細行からお子さまの保障を拾わない）
+      if(hokenMode()==='simple') return (key==='h'||key==='w') ? Math.round(Math.max(num(key==='h'?'ins-total-h':'ins-total-w', 0), 0)) : 0;
+      return insCoverAtAge(readInsurances(), key, insAgeForKey(key));
     }
     // 保存済みプラン（現状）の key の死亡保障合計を、DOMを使わずに計算する（将来プランでの差額表示用・同基準）
     function insCoverFromState(s, key){
       if(!s) return null;
       const f = s.fields || {};
       const mode = s.hokenMode || 'detail';
-      if((key==='h'||key==='w') && mode==='simple') return Math.round(Math.max(parseFloat(f[key==='h'?'ins-total-h':'ins-total-w'])||0, 0));
+      if(mode==='simple') return (key==='h'||key==='w') ? Math.round(Math.max(parseFloat(f[key==='h'?'ins-total-h':'ins-total-w'])||0, 0)) : 0;   // まとめて入力では詳細行を使わない（insCoverForKeyと同基準）
       let age;
       if(key==='h') age = parseFloat(f['h-age'])||35;
       else if(key==='w') age = parseFloat(f['w-age'])||33;
       else { const ch=(s.children||[])[parseInt(key.slice(1))||0]; age = ch ? (parseInt(ch.age)||0) : 0; }
-      let total = 0;
-      (s.insurances||[]).forEach(x=>{
-        if(x.on===false || x.who!==key) return;
-        const type = x.type||'shunyu';
-        const amount = Math.max(parseFloat(x.amount)||0, 0);
-        const monthly = Math.max(parseFloat(x.monthly)||0, 0);
-        const end = parseInt(x.end)||0;
-        if(type==='shunyu'){ const yrs=Math.max((end||65)-age,0); if(yrs>0 && monthly>0) total += monthly*12*yrs; }
-        else if(type==='shushin'){ total += amount; }
-        else { if(end<=0 || age<end) total += amount; }
-      });
-      return Math.round(total);
+      const list = (s.insurances||[]).filter(x=> x.on!==false).map(x=>({
+        who: x.who, type: x.type||'shunyu', keep: x.keep||'keep',
+        amount: Math.max(parseFloat(x.amount)||0, 0),
+        monthly: Math.max(parseFloat(x.monthly)||0, 0),
+        end: parseInt(x.end)||0
+      }));
+      return insCoverAtAge(list, key, age);
     }
     // 保険行の被保険者プルダウンを、現在の家族構成（夫・妻・お子さま）に合わせて作り直す（選択中の値は保持）
     function refreshInsWhoOptions(){
@@ -2085,6 +2301,100 @@
       if(typeof updateLoanRateUI==='function') updateLoanRateUI();
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       太陽光の精密モデル ＆ 資産推移の表示期間切替（汎用）
+       ・太陽光（kW・蓄電池・地域）→ 発電・売電・自家消費 を計算し、ZEHの「売電収入」「光熱費の削減」へ自動反映
+       ・資産推移の表・グラフの「表示期間」を 35年 ／ 終了年齢まで ／ 年数を指定 で切替
+       ══════════════════════════════════════════════════════════════════ */
+    /* ---------- 太陽光の精密モデル（kW・蓄電池・地域 → 発電・売電・自家消費）----------
+       発電量係数＝温暖地1,150／寒冷地1,050 kWh/kW。自家消費率＝30%＋蓄電池kWh×3%（上限60%）。
+       自家消費1kWhの価値＝買電単価32円の節約。売電単価は2026年度FIT（10kW未満24円→8.3円→8円／10kW以上19円→8.3円→8円）。
+       誇張防止：自家消費の節約は実際の電気代（水準の8割）を超えないよう上限を設ける。 */
+    const ICHIJO_GEN_COEF  = { temperate:1150, cold:1050 };   // 年間発電量 kWh/kW
+    const ICHIJO_BUY_PRICE = 32;                              // 買電単価（円/kWh）＝自家消費の節約価値
+    const ICHIJO_UTIL_SAVE = { temperate:3, cold:6 };         // 高断熱等による光熱費削減（万円/年・自家消費とは別）
+    const GEN_UTIL_PER_YEAR = 20;                             // 一般的な世帯の光熱費水準（万円/年・自家消費節約の上限計算に使用）
+    const ICHIJO_DEGRADE_SUM30 = 27.93;                       // パネル経年劣化 年0.5%（0.995^0+…+0.995^29）の30年合計係数
+    let ichijoRegion = 'temperate';
+    function setIchijoRegion(r){
+      ichijoRegion = (r==='cold') ? 'cold' : 'temperate';
+      const rs = $('ichijo-region-seg');
+      if(rs) [...rs.children].forEach(x=> x.classList.toggle('active', x.dataset.icregion===ichijoRegion));
+    }
+    function ichijoSellPrice(kw, y){   // y＝1始まりの経過年 → 売電単価（円/kWh）
+      return kw < 10 ? (y<=4 ? 24 : (y<=10 ? 8.3 : 8))
+                     : (y<=5 ? 19 : (y<=20 ? 8.3 : 8));
+    }
+    function ichijoSolarModel(){
+      const kw   = Math.max(num('ichijo-solar-kw', 0), 0);
+      const batt = Math.max(num('ichijo-battery-kwh', 0), 0);
+      const gen  = kw * ICHIJO_GEN_COEF[ichijoRegion];                  // 年間発電量（kWh）
+      const selfRate = Math.min(0.30 + batt*0.03, 0.60);               // 蓄電池で自家消費率アップ（上限60%）
+      const selfKwh  = gen * selfRate;
+      const sellKwh  = gen - selfKwh;
+      const utilSave = ICHIJO_UTIL_SAVE[ichijoRegion];
+      const selfRaw  = selfKwh * ICHIJO_BUY_PRICE / 10000;             // 自家消費の節約（万円/年・初年度）
+      const selfCap  = Math.max(GEN_UTIL_PER_YEAR*0.8 - utilSave, 0);  // 実際の電気代の8割程度を上限
+      const selfMan  = Math.min(selfRaw, selfCap);
+      let sell30 = 0;
+      for(let y=1; y<=30; y++) sell30 += sellKwh * Math.pow(0.995, y-1) * ichijoSellPrice(kw, y) / 10000;   // パネル劣化 年0.5%込み
+      const sellY1 = sellKwh * ichijoSellPrice(kw, 1) / 10000;         // 初年度の売電収入（万円）
+      const self30 = Math.round(selfMan * ICHIJO_DEGRADE_SUM30);       // 自家消費の30年合計（劣化込み）
+      return { kw, batt, gen:Math.round(gen), selfRate,
+               selfKwh:Math.round(selfKwh), sellKwh:Math.round(sellKwh),
+               selfMan, self30, selfCapped:(selfRaw > selfCap), sellY1,
+               sell30:Math.round(sell30), solar30:Math.round(sell30) + self30, utilSave,
+               initCost: Math.round(40 + kw*12 + (batt>0 ? batt*9 : 0)) };
+    }
+    // 太陽光の詳細入力 → ZEHの「売電収入」「光熱費の削減」へ自動反映（実見積など手入力した値は尊重）
+    let userEditedZeh = false;
+    ['zeh-sell','zeh-save'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedZeh = true; }); });
+    function applySolarToZeh(){
+      if(!$('zeh-on') || !$('zeh-on').checked) return;   // ZEH（太陽光）がONのときだけ自動計算
+      if(userEditedZeh) return;                          // 手入力済みの値は上書きしない
+      const m = ichijoSolarModel();
+      if($('zeh-sell')) $('zeh-sell').value = Math.round(m.sellY1);               // 初年度の売電収入
+      if($('zeh-save')) $('zeh-save').value = Math.round(m.selfMan + m.utilSave); // 自家消費＋高断熱の節約
+    }
+    // 太陽光の詳細入力欄（kW・蓄電池・地域）の表示は ZEH（太陽光）ON に連動
+    function updateSolarConfigVisibility(){
+      const cfg = $('ichijo-solar-config');
+      if(cfg) cfg.classList.toggle('hidden', !($('zeh-on') && $('zeh-on').checked));
+    }
+    const ichijoRegionSeg = $('ichijo-region-seg');
+    if(ichijoRegionSeg) ichijoRegionSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      setIchijoRegion(b.dataset.icregion);
+      applySolarToZeh(); recompute();
+    });
+    ['ichijo-solar-kw','ichijo-battery-kwh'].forEach(id=>{
+      const el = $(id);
+      if(el) el.addEventListener('input', ()=>{ applySolarToZeh(); recompute(); });
+    });
+
+    /* ---------- 資産推移の「表示期間」切替（35年 ／ シミュレーション終了年齢まで ／ 年数を指定）----------
+       既定＝終了年齢まで（全期間）。切り替えると資産推移の表とグラフの表示年数だけを絞り込む（計算自体は変えない）。 */
+    let ichijoHorizon = 'end';
+    function ichijoHorizonYears(){
+      if(ichijoHorizon === 'custom') return Math.min(Math.max(Math.round(num('ic-horizon-custom', 35)), 1), 80);
+      if(ichijoHorizon === '35') return 35;
+      const endAge  = num('end-age', 100);
+      const baseAge = num('h-age', 35);
+      return Math.min(Math.max(endAge - baseAge, 1), 85);   // 現在の年齢〜終了年齢
+    }
+    function updateIchijoHorizonLabel(){
+      const el = $('ic-horizon-end-label');
+      if(el) el.textContent = `${num('end-age',100)}歳まで`;
+    }
+    const ichijoHorizonSeg = $('ichijo-horizon-seg');
+    if(ichijoHorizonSeg) ichijoHorizonSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      ichijoHorizon = b.dataset.ichorizon;
+      [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      const cw = $('ic-horizon-custom-wrap'); if(cw) cw.classList.toggle('hidden', ichijoHorizon!=='custom');
+      recompute();
+    });
+    if($('ic-horizon-custom')) $('ic-horizon-custom').addEventListener('input', ()=>{ if(ichijoHorizon==='custom') recompute(); });
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
     const loanRateTypeSeg = $('loan-ratetype-seg');
@@ -2121,9 +2431,13 @@
       if(type==='step5') buildLoanRatePeriodRows('step5');
       if(type==='step10') buildLoanRatePeriodRows('step10');
     }
+    // 金利の既定値を金利タイプに連動（固定=フラット35実勢3.1%／変動=0.95%。手入力があれば上書きしない）
+    let userEditedRate = false;
+    if($('loan-rate')) $('loan-rate').addEventListener('input', ()=>{ userEditedRate = true; });
     if(loanRateTypeSeg) loanRateTypeSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
       [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      if(!userEditedRate && $('loan-rate')) $('loan-rate').value = (b.dataset.ratetype==='fixed') ? 3.1 : 0.95;
       updateLoanRateUI(); recompute();
     });
     // 返済期間を変えたら、期間ごとの金利欄の年数区切りも作り直す
@@ -2390,8 +2704,8 @@
       const wn = grossToNet(num('w-income',0));
       const hEl = $('h-net'), wEl = $('w-net');
       const perMonth = (v)=> (Math.round(v/12*10)/10); // 月額（小数1桁）
-      if(hEl) hEl.textContent = '手取り目安：約' + perMonth(hn) + '万円／月';
-      if(wEl) wEl.textContent = '手取り目安：約' + perMonth(wn) + '万円／月';
+      if(hEl) hEl.textContent = '手取り 約' + perMonth(hn) + '万円/月';
+      if(wEl) wEl.textContent = '手取り 約' + perMonth(wn) + '万円/月';
     }
 
     /* ============================================================
@@ -2449,6 +2763,7 @@
 
       const rows = [];
       let prevNet = cash + balances.reduce((a,b)=> a+b, 0);   // 前年の金融資産合計（初期＝預貯金＋初期残高）
+      let investGainCum = 0;   // 運用益の生涯累計（毎年の成長分を合算。取り崩して使った分の利益も取りこぼさない）
       const span = endAge - hAge0;
 
       for(let t=0; t<=span; t++){
@@ -2459,7 +2774,12 @@
         /* ---- 収入 ---- */
         let income = 0;
         if(hAge < hRetire) income += grossToNet(hIncome0 * Math.pow(1+hRaise, t)); // 額面→手取り
-        if(wAge < wRetire) income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
+        if(wifeWorklifeOn()){
+          const wa = wifeWorkAmountAt(wAge);   // 働き方を変える予定：期間表で妻の年収を決める（範囲外は0＝無収入）
+          if(wa>0) income += grossToNet(wa);
+        } else if(wAge < wRetire){
+          income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
+        }
         if(hAge >= pensionAge) income += pensionAnnual * inflF;    // 年金（夫婦合計・物価スライドを簡易反映）
         if(hAge === hRetire){ income += hBonus; eventList.push({label:hNameH()+' 退職金', type:'family'}); }
         if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wNameH()+' 退職金', type:'family'}); }
@@ -2520,7 +2840,7 @@
               const kyo = Math.max(hAge-buyAge, 0);
               if(kyo % kasaiCycle() === 0){
                 // 割引適用済みの金額を入力した場合は二重割引を避けてそのまま計上
-                const qRate = (kasaiQuakeMode()==='applied') ? 1 : 0.9;   // 割引前入力＝新築の建築年割引10%で計上（等級3の50%割引はメリット欄で案内）
+                const qRate = (kasaiQuakeMode()==='applied') ? 1 : 0.9;   // 割引前入力＝新築の建築年割引10%で計上（耐震等級3の50%割引はメリット欄で案内）
                 expense += (kFire + kQuake*qRate) * Math.pow(1+infl, kyo);
               }
             }
@@ -2529,7 +2849,9 @@
             if(zeh){
               const yo = Math.max(yearsOwned, 0);
               let sell = 0;
-              if(yo < 10)      sell = zehSell;          // FIT期間：満額
+              const zf = null;   // ZEHの売電はsimulate側の汎用逓減（FIT10年満額→以後約4割）で計算
+              if(zf != null)   sell = zehSell * zf;
+              else if(yo < 10) sell = zehSell;          // FIT期間：満額
               else if(yo < 30) sell = zehSell * 0.4;    // 卒FIT：約4割
               // 30年目以降は設備寿命とみなし売電なし
               income += sell;                                       // 売電収入
@@ -2569,18 +2891,21 @@
 
         // 積立・運用（商品ごとに利回り・積立・終了年齢を適用）
         let contribution = 0;
+        // 今年、積立に回せるお金＝前年までの預貯金＋今年の手取り−支出−頭金。これを超えては積み立てない
+        // （払えない額の積立を計上して預貯金を無限にマイナスにしない＝現実的な積立額にする）
+        let contribBudget = cash + income - expense - downThisYear;
         for(let i=0; i<invs.length; i++){
           const inv = invs[i];
           let ret = (returnOverride!=null) ? returnOverride : inv.ret/100;
           // 終了後「運用を止める」：終了年齢以降は利回り0（成長しない）
           if(inv.after==='stop' && hAge>=inv.endAge) ret = 0;
-          // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上）
-          if(inv.start>hAge0 && hAge===inv.start){ balances[i] += inv.lump; contribution += inv.lump; principalByItem[i] += inv.lump; }
-          balances[i] = balances[i]*(1+ret);
-          // 積立は「開始年齢〜終了年齢」の間だけ加算
-          if(hAge>=inv.start && hAge<inv.endAge){ const c = inv.monthly*12; balances[i] += c; contribution += c; principalByItem[i] += c; }
-          // 終了後「使う」：終了年齢で残高を預貯金へ移す（運用資産→0、生活費等に使える）
-          if(inv.after==='use' && hAge===inv.endAge && balances[i]>0){
+          // 将来開始の一括資金は開始年齢に投入（預貯金から移すため積立に計上・払える範囲まで）
+          if(inv.start>hAge0 && hAge===inv.start){ const l = Math.max(0, Math.min(inv.lump, contribBudget)); balances[i] += l; contribution += l; principalByItem[i] += l; contribBudget -= l; }
+          const grow = balances[i]*ret; balances[i] += grow; investGainCum += grow;   // この年の運用益を累計に加算
+          // 積立は「開始年齢〜終了年齢」の間だけ加算（終了年齢まで含む＝「○歳まで積み立てる」・払える範囲まで）
+          if(hAge>=inv.start && hAge<=inv.endAge){ const c = inv.monthly*12; const cAmt = Math.max(0, Math.min(c, contribBudget)); balances[i] += cAmt; contribution += cAmt; principalByItem[i] += cAmt; contribBudget -= cAmt; }
+          // 終了後「使う」：積立満了の翌年に残高を預貯金へ移す（満了年までは運用資産として表・グラフに残す）
+          if(inv.after==='use' && hAge===inv.endAge+1 && balances[i]>0){
             cash += balances[i];
             eventList.push({label: inv.name+'を使う', type:'family'});
             balances[i] = 0; principalByItem[i] = 0;
@@ -2591,15 +2916,18 @@
         const cashflow = income - expense - contribution - downThisYear;
         cash += cashflow;
 
-        // 預貯金がマイナスなら運用資産を取り崩す（各商品から按分）
+        // 預貯金がマイナスなら運用資産を取り崩す。ただし「運用期間中（積立終了前）」の商品は取り崩さない。
+        // 取り崩せるのは満了した（運用期間が終わった）商品だけ＝ユーザー方針「運用期間中は取り崩さない・期間が終わったら取り崩す」
         let draw = 0;
-        let investTotal = balances.reduce((a,b)=> a+b, 0);
-        if(cash < 0 && investTotal > 0){
-          draw = Math.min(investTotal, -cash);
-          const ratio = draw/investTotal;
-          for(let i=0; i<balances.length; i++){ balances[i] -= balances[i]*ratio; principalByItem[i] -= principalByItem[i]*ratio; }
-          cash += draw; investTotal -= draw;
+        let drawableTotal = 0;
+        for(let i=0; i<balances.length; i++){ if(hAge > invs[i].endAge && balances[i] > 0) drawableTotal += balances[i]; }
+        if(cash < 0 && drawableTotal > 0){
+          draw = Math.min(drawableTotal, -cash);
+          const ratio = draw/drawableTotal;
+          for(let i=0; i<balances.length; i++){ if(hAge > invs[i].endAge && balances[i] > 0){ balances[i] -= balances[i]*ratio; principalByItem[i] -= principalByItem[i]*ratio; } }
+          cash += draw;
         }
+        let investTotal = balances.reduce((a,b)=> a+b, 0);
         const invest = investTotal;
         const net = cash + invest;
         // 年間収支＝金融資産合計の前年差（運用成長を含み、取り崩し・将来一括投入・「使う」等の内部移動は相殺）。表の合計増減と必ず一致する
@@ -2614,6 +2942,7 @@
           cash, invest, net, inflF, draw,
           investByItem: balances.slice(),   // 運用商品ごとの残高（項目別テーブル用）
           principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
+          investGainCum,   // 運用益の生涯累計（その年までの合計）
           milestone: (hAge===hRetire || hAge===pensionAge || (houseType==='buy'&&hAge===buyAge))
         });
       }
@@ -2682,7 +3011,7 @@
       updateLoanBalanceHint();
       updateMonthlyPayDisplay();
       updateLivingTotal();
-      if(typeof updateInsTotal==='function') updateInsTotal();   // ⑦加入中の保険：死亡保障の合計＋現状比
+      if(typeof updateInsTotal==='function') updateInsTotal();   // 【一条フック】死亡保障の合計＋現状比
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       const { rows, hRetire, hAge0, endAge } = simulate();
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
@@ -2703,11 +3032,13 @@
       const retireRow = rows.find(r=> r.hAge===hRetire) || rows[rows.length-1];
       const noInvRetire = noInvRows.find(r=> r.hAge===hRetire) || noInvRows[noInvRows.length-1];
       const benefit = retireRow.net - noInvRetire.net; // 運用効果（退職時・名目）
-      let peak = rows[0], min = rows[0], depletion = null;
+      let peak = rows[0], min = rows[0], depletion = null, cashShort = null;
       rows.forEach(r=>{
         if(r.net > peak.net) peak = r;
         if(r.net < min.net) min = r;
-        if(depletion===null && r.net < 0) depletion = r;
+        if(depletion===null && r.net < 0) depletion = r;   // 総資産（運用資産込み）も底をつく＝本当の資金ショート
+        // 運用期間中は取り崩さない前提のため、総資産はプラスでも現金（預貯金）が不足する期間を別に検知
+        if(cashShort===null && r.cash < 0) cashShort = r;
       });
       const endRow = rows[rows.length-1];
 
@@ -2735,6 +3066,12 @@
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
         $('verdict-title').textContent = '要対策：資金がショートします';
         $('verdict-text').innerHTML = `このままだと <b>${hNameH()}${depletion.hAge}歳（${depletion.year}年）</b> ごろに金融資産が底をつく見込みです。下のアドバイスをご覧ください。`;
+      } else if(cashShort){
+        // 総資産（運用資産込み）はプラスでも、運用を取り崩さない前提だと現金（預貯金）が不足する期間がある
+        v.classList.add('warn');
+        v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+        $('verdict-title').textContent = '注意：現金（預貯金）が不足する期間があります';
+        $('verdict-text').innerHTML = `総資産（運用資産を含む）は保てますが、<b>運用期間中は取り崩さない前提</b>だと <b>${hNameH()}${cashShort.hAge}歳（${cashShort.year}年）</b> ごろに<b>現金（預貯金）が足りなくなります</b>。この期間だけ運用の一部を取り崩すか、収入・支出・積立額の見直しをご検討ください。`;
       } else if(min.net < reserve6m){
         v.classList.add('warn');
         v.querySelector('.verdict-ico').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
@@ -2747,13 +3084,16 @@
         $('verdict-text').innerHTML = `終了時（${endAge}歳）の総資産は <b>${fmt(endRow.net)}万円</b> の見込みです。`;
       }
 
-      drawAssetChart(rows);
-      drawFlowChart(rows);
+      // 資産推移の「表示期間」で、グラフ・表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）
+      const viewRows = (ichijoHorizon==='end') ? rows : rows.slice(0, Math.max(ichijoHorizonYears(), 1));
+      drawAssetChart(viewRows);
+      drawFlowChart(viewRows);
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
-      drawTable(rows);
-      drawAssetTable(rows);
+      drawTable(viewRows);
+      drawAssetTable(viewRows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
+      updateIchijoHorizonLabel();   // 「終了年齢まで」ボタンのラベルをend-ageに同期
     }
 
     /* ============================================================
@@ -2765,10 +3105,50 @@
        ============================================================ */
     const PLANS = { active:'genjo', genjo:{ state:null, sum:null }, mirai:{ state:null, sum:null } };
     const PLAN_LABEL = { genjo:'現状プラン', mirai:'将来プラン' };
+    // 将来プランを一度でも作り始めた（＝現状と別物にした）か。falseの間は将来＝現状のコピーとして自動追従させ、
+    // 現状タブのままでも比較カードが「往復なし」で出せるようにする
+    let miraiTouched = false;
+    let _refreshingSum = false;   // 裏でもう一方のプランを集計中の再帰ガード
 
     // プランの計算結果を、比較に必要な最小限の形で記録する
+    // 総資産(net)に加え、運用資産の時価(iv)・⑦保険の死亡保障(ins)・団信でゼロになる残債(ds)も年ごとに記録。
+    // 下の「資産運用のくらべ」「万一のときの死亡保障額」カードが、現状⇔将来の年齢指定つき比較に使う
     function planSummary(rows){
-      return rows.map(r=> ({ hAge:r.hAge, net:Math.round(r.net), inflF:r.inflF }));
+      const single = isSingle();
+      const simple = hokenMode()==='simple';
+      const insList = simple ? [] : readInsurances();
+      const simpleH = simple ? Math.round(Math.max(num('ins-total-h',0),0)) : 0;
+      const simpleW = simple ? Math.round(Math.max(num('ins-total-w',0),0)) : 0;
+      const members = insWhoMembers();
+      // 団信（名義・ペアローン割合・一括返済予定を反映。賃貸は残債なし）
+      const hAge0 = num('h-age',35);
+      const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
+      const schedule = (houseType==='rent') ? null : buildLoanSchedule();
+      const payoffAge = num('loan-payoff-age',65);
+      const willPayoff = !!schedule && loanPayoffMode()==='lumpsum' && schedule.principal>0 && (payoffAge-buyAge) < num('loan-term',35);
+      const shareH = loanShareOf('h'), shareW = single ? 0 : loanShareOf('w');
+      const out = rows.map(r=>{
+        let dsH=0, dsW=0;
+        if(schedule && r.hAge>=buyAge){
+          const bal = (willPayoff && r.hAge>=payoffAge) ? 0 : loanBalanceAt(schedule, r.hAge-buyAge);
+          dsH = Math.round(bal*shareH); dsW = Math.round(bal*shareW);
+        }
+        const ins = {};
+        members.forEach(mm=>{
+          if(mm.key==='h')      ins.h = simple ? simpleH : insCoverAtAge(insList,'h',r.hAge);
+          else if(mm.key==='w') ins.w = single ? 0 : (simple ? simpleW : insCoverAtAge(insList,'w',r.wAge));
+          else {
+            const idx = parseInt(mm.key.slice(1))||0;
+            const cAge = (r.childAges && r.childAges[idx]!=null) ? r.childAges[idx] : null;
+            ins[mm.key] = (simple || cAge==null) ? 0 : insCoverAtAge(insList, mm.key, cAge);
+          }
+        });
+        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
+      });
+      // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
+      // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
+      out.gainTotal = rows.length ? Math.round(rows[rows.length-1].investGainCum||0) : 0;
+      return out;
     }
     function sumAt(sum, age){
       if(!sum || !sum.length) return null;
@@ -2790,11 +3170,19 @@
     // recomputeのたびに：表示中プランの結果を記録し、差額表示・比較カードを更新
     function planAfterRecompute(rows){
       PLANS[PLANS.active].sum = planSummary(rows);
+      // 将来プランをまだ作っていない間は、現状の内容を将来プランへ自動コピーしておく。
+      // これで「将来タブを一度も開いていなくても」比較カードが（差＝±0で）表示され、往復が不要になる
+      if(PLANS.active==='genjo' && !miraiTouched && !_refreshingSum){
+        PLANS.mirai.state = collectState();
+        PLANS.mirai.sum = PLANS.genjo.sum;
+      }
       renderKpiDiffs(rows);
       renderFieldDiffs();
       renderInvestDiffs();
       renderPlanEffect();
       drawCompareChart();
+      renderInvestDiffCard();
+      renderHokenDiffCard();
     }
 
     // KPIカード：将来プラン表示中は、現状との差額を小さく表示
@@ -2806,7 +3194,9 @@
       const cur1 = rows.find(r=> r.hAge===a1) || rows[rows.length-1];
       const cur2 = rows.find(r=> r.hAge===a2) || rows[rows.length-1];
       const b1 = sumAt(base,a1), b2 = sumAt(base,a2);
-      const put = (id, d)=>{ const el=$(id); if(el) el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
+      // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）を表示しない（プラスは表示）。単身世帯では無効
+      const hideNegDiff = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
+      const put = (id, d)=>{ const el=$(id); if(!el) return; if(hideNegDiff && d < 0){ el.innerHTML=''; return; } el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
       put('kpi-diff-1',  cur1.net - b1.net);
       put('kpi-diff-r1', cur1.net/cur1.inflF - b1.net/b1.inflF);
       put('kpi-diff-2',  cur2.net - b2.net);
@@ -2819,11 +3209,14 @@
       panel.querySelectorAll('.fdiff').forEach(el=> el.remove());
       if(PLANS.active!=='mirai' || !PLANS.genjo.state) return;
       const base = PLANS.genjo.state.fields || {};
+      // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）は表示しない
+      const hideNeg = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
       panel.querySelectorAll('input[type="number"][id]').forEach(el=>{
         if(!(el.id in base)) return;
         const cur = parseFloat(el.value), prev = parseFloat(base[el.id]);
         if(!isFinite(cur) || !isFinite(prev) || cur===prev) return;
         const d = cur - prev;
+        if(hideNeg && d<0) return;
         const span = document.createElement('span');
         span.className = 'fdiff ' + (d>0 ? 'diff-plus' : 'diff-minus');
         // 単位（万円・％・歳など）は入力欄の隣にある単位表示から取得して付ける
@@ -2872,9 +3265,12 @@
       const depDiff = gs.dep && !ms.dep ? '<span class="diff-plus">解消！</span>'
                     : (!gs.dep && ms.dep ? '<span class="diff-minus">発生</span>' : '—');
       const row = (label, gv, mv, diff)=> `<tr><td>${label}</td><td>${gv}</td><td><b>${mv}</b></td><td>${diff||'±0'}</td></tr>`;
+      // 「奥様の働き方を変える予定」がONのときは、総資産の差のマイナス（減った額）は表示しない（資金ショートの注意は残す）
+      const hideNeg = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
+      const dcell = (d)=> (hideNeg && Math.round(d)<0) ? '±0' : diffHTML(d,'');
       el.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
-        ${row('65歳時点の総資産', fmt(g65), fmt(m65), diffHTML(m65-g65,''))}
-        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), diffHTML(ms.end.net-gs.end.net,''))}
+        ${row('65歳時点の総資産', fmt(g65), fmt(m65), dcell(m65-g65))}
+        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), dcell(ms.end.net-gs.end.net))}
         ${row('資金ショート', dep(gs), dep(ms), depDiff)}
       </tbody></table></div>`;
     }
@@ -2904,6 +3300,178 @@
       }});
     }
 
+    /* ---------- 追加くらべ①②：資産運用の差・万一の死亡保障額（現状⇔将来・年齢指定つき）---------- */
+    // 指定年齢（夫の年齢）に最も近いsum行（範囲外は端に寄せる）
+    function sumAtClamp(sum, age){
+      if(!sum || !sum.length) return null;
+      return sum.find(x=> x.hAge===age) || (age < sum[0].hAge ? sum[0] : sum[sum.length-1]);
+    }
+    // 新形式のsum（iv/ins/dsを含む）かどうか。古い保存データのsumはfalse
+    const sumHasExtra = (sum)=> !!(sum && sum.length && typeof sum[0].iv==='number');
+    // 両プランのsumが揃っていない／古い形式のときの案内文（共通）
+    function diffCardPlaceholder(tbl, box, g, m){
+      if(!g || !m){
+        tbl.innerHTML = `<p class="cmp2-placeholder">上の「<b>将来プラン</b>」タブに切り替えて数字を変えると、ここに現状との比較（何歳時点でも確認できます）が表示されます。</p>`;
+        box.style.display='none'; return true;
+      }
+      if(!sumHasExtra(g) || !sumHasExtra(m)){
+        tbl.innerHTML = `<p class="cmp2-placeholder">保存データを読み込んだ直後です。数字を一度変えると、ここに比較が表示されます。</p>`;
+        box.style.display='none'; return true;
+      }
+      box.style.display='';
+      return false;
+    }
+    let investDiffChart = null;
+    // 将来プランをまだ作っていない（現状のコピーのまま）ときに、比較カードの上に出す案内
+    function untouchedNote(){
+      return miraiTouched ? '' : `<p class="hint" style="margin-top:4px;">※ いまは「将来プラン」が現状と同じ内容です。上の<b>「将来プラン」タブ</b>で保険・積立・住まいなどの数字を変えると、ここに差が表示されます。</p>`;
+    }
+    function renderInvestDiffCard(){
+      const card = $('invest-diff-card'); if(!card) return;
+      const tbl = $('ivd-table'), box = card.querySelector('.chart-box');
+      if($('ivd-hname')) $('ivd-hname').textContent = hNameH();
+      const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
+      if(diffCardPlaceholder(tbl, box, g, m)) return;
+      const a = Math.round(num('ivd-age',65));
+      const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
+      // 指定年齢が試算範囲外のときは、実際に表示している年齢（端に寄せた年齢）をラベルに使う
+      const aEff = ga ? ga.hAge : a;
+      const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
+        ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
+      // その年齢までの累計運用益／生涯の累計運用益（生涯 ≧ 指定年齢まで になる）
+      const gGainAge = ga ? (ga.gainCum||0) : 0, mGainAge = ma ? (ma.gainCum||0) : 0;
+      const gGain = g.gainTotal||0, mGain = m.gainTotal||0;
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
+        <tr><td>${aEff}歳までに生んだ利益（累計）</td><td>${fmt(gGainAge)}</td><td><b>${fmt(mGainAge)}</b></td><td>${diffHTML(mGainAge-gGainAge,'')||'±0'}</td></tr>
+        <tr><td>生涯で生んだ利益（累計）</td><td>${fmt(gGain)}</td><td><b>${fmt(mGain)}</b></td><td>${diffHTML(mGain-gGain,'')||'±0'}</td></tr>
+      </tbody></table></div>${untouchedNote()}${clampNote}
+      <p class="hint" style="margin-top:4px;">「生んだ利益（累計）」は、積み立てた元本を差し引いて、運用で増えた分だけを合計した金額です（途中で取り崩して使った分の利益も含みます）。上段は<b>指定した年齢まで</b>、下段は<b>シミュレーション終了年齢までの生涯</b>の累計なので、生涯のほうが大きくなります。<b>ご入力の想定利回りが続いた場合の試算</b>で、成果を保証するものではありません。</p>`;
+      // 5歳きざみの棒グラフ（現状＝灰・将来＝緑。「現状と将来をくらべる」と同じ見せ方）
+      const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
+      const ages=[]; for(let x=Math.ceil(first/5)*5; x<=last; x+=5) ages.push(x);
+      if(!ages.length || ages[0]!==first) ages.unshift(first);
+      const pick = (sum)=> ages.map(x=>{ const v=sum.find(r=>r.hAge===x); return v ? (v.iv||0) : null; });
+      const data = { labels: ages.map(x=> x+'歳'), datasets:[
+        { label:'現状のまま', data:pick(g), backgroundColor:'#b9c9d8', borderRadius:6, maxBarThickness:26 },
+        { label:'将来プラン', data:pick(m), backgroundColor:'#4a9fd4', borderRadius:6, maxBarThickness:26 }
+      ]};
+      if(investDiffChart){ investDiffChart.data = data; investDiffChart.update(); return; }
+      investDiffChart = new Chart($('investDiffChart').getContext('2d'), { type:'bar', data, options:{
+        responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} }, x:{ grid:{display:false} } },
+        plugins:{
+          legend:{ labels:{ font:{family:'Noto Sans JP'}, usePointStyle:true, pointStyle:'rectRounded' } },
+          tooltip:{ callbacks:{ label:(c)=> c.dataset.label+'：'+(c.parsed.y==null?'—':c.parsed.y.toLocaleString()+'万円') } }
+        }
+      }});
+    }
+    let hokenDiffChart = null, hkdMemberKey = 'h';
+    // 夫の年齢との差（被保険者ごとの年齢表示に使う。表示中プランの入力値基準）
+    function hkdAgeOffset(key){
+      if(key==='h') return 0;
+      if(key==='w') return num('w-age',33) - num('h-age',35);
+      const ch = readChildren()[parseInt(key.slice(1))||0];
+      return ch ? ch.age - num('h-age',35) : 0;
+    }
+    // 死亡保障の表の初期表示年齢＝住宅ローン（団信）が有効になる年齢。現状・将来のうち、これから購入するプランの
+    // 購入年齢の最大（両方のローンが立ち上がった後）を使う。持ち家・賃貸のみなら現在の年齢
+    function hokenDefaultAge(){
+      const curAge = num('h-age',35);
+      let best = curAge;
+      // 表示中プラン：ライブDOMから（これから購入なら購入年齢）
+      if(houseType==='buy'){ const ba = num('buy-age', curAge); if(ba>best) best = ba; }
+      // もう一方のプラン：保存stateから
+      const other = PLANS.active==='genjo' ? 'mirai' : 'genjo';
+      const s = PLANS[other] && PLANS[other].state;
+      if(s && s.house==='buy'){ const ba = parseInt((s.fields||{})['buy-age']); if(isFinite(ba) && ba>best) best = ba; }
+      return best;
+    }
+    function renderHokenDiffCard(){
+      const card = $('hoken-diff-card'); if(!card) return;
+      const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box');
+      if($('hkd-hname')) $('hkd-hname').textContent = hNameH();
+      const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
+      if(diffCardPlaceholder(tbl, box, g, m)){ segEl.innerHTML=''; return; }
+      // 団信の前提：「返済を続ける」＝実際のローン残高どおり ／ 「○歳で完済とみなす」＝その年齢以降は団信0
+      const danPayoff = hkdDanMode()==='payoff';
+      const danAge = num('hkd-dan-age', 60);
+      // ⑦保険＋団信（h/wのみ）の合計。お子さまは保障がある場合だけ表に出す
+      const totalOf = (row, key)=>{
+        if(!row) return null;
+        const ins = (row.ins && typeof row.ins[key]==='number') ? row.ins[key] : 0;
+        let ds = (key==='h') ? (row.ds ? row.ds.h : 0) : (key==='w') ? (row.ds ? row.ds.w : 0) : 0;
+        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ
+        return { total: Math.round(ins+ds), ins: Math.round(ins), ds: Math.round(ds) };
+      };
+      const members = insWhoMembers().filter(mm=>{
+        if(mm.key==='w') return !isSingle();
+        if(mm.key==='h') return true;
+        return [g,m].some(s=> s.some(r=> r.ins && (r.ins[mm.key]||0)>0));
+      });
+      // 年齢の空欄時は、住宅ローン（団信）が有効になる購入後の年齢を初期表示にする（現状が0のまま見えないのを防ぐ）
+      const a = Math.round(num('hkd-age', hokenDefaultAge()));
+      const ga = sumAtClamp(g,a), ma = sumAtClamp(m,a);
+      // 指定年齢が試算範囲外のときは、実際に表示している年齢（端に寄せた年齢）をラベルに使う
+      const aEff = ga ? ga.hAge : a;
+      const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
+        ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
+      const cell = (t)=> t==null ? '—' : `${fmt(t.total)}${t.ds>0 ? `<br><small style="color:var(--ink-soft);">うち団信 ${fmt(t.ds)}</small>` : ''}`;
+      // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
+      const trs = members.map(mm=>{
+        const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
+        const personAge = aEff + hkdAgeOffset(mm.key);
+        const d = (gt&&mt) ? diffHTML(mt.total-gt.total,'') : '';
+        return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>`;
+      }).join('');
+      const simpleNote = (hokenMode()==='simple' || PLANS.genjo.state?.hokenMode==='simple' || PLANS.mirai.state?.hokenMode==='simple')
+        ? `<p class="hint" style="margin-top:4px;">※「まとめて入力」のプランは満了時期がわからないため、年齢による保障の変化（満了・逓減）は反映されません（保険ごとに入力すると正確になります）。</p>` : '';
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>${aEff}歳時点の死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${untouchedNote()}${clampNote}${simpleNote}`;
+      // 被保険者の切替セグメント（下のグラフ用）
+      if(!members.some(mm=> mm.key===hkdMemberKey)) hkdMemberKey = 'h';
+      segEl.innerHTML = members.map(mm=> `<button type="button" data-hkdm="${mm.key}"${mm.key===hkdMemberKey?' class="active"':''}>${esc(mm.label)}</button>`).join('');
+      // 保障額の推移グラフ（段差のあるステップ線。現状＝灰点線・将来＝緑実線）
+      const first = Math.min(g[0].hAge, m[0].hAge), last = Math.max(g[g.length-1].hAge, m[m.length-1].hAge);
+      const offs = hkdAgeOffset(hkdMemberKey);
+      const labels=[], gd=[], md=[];
+      for(let x=first; x<=last; x++){
+        labels.push((x+offs)+'歳');
+        const gr = g.find(r=> r.hAge===x), mr = m.find(r=> r.hAge===x);
+        const gt = totalOf(gr, hkdMemberKey), mt = totalOf(mr, hkdMemberKey);
+        gd.push(gt ? gt.total : null); md.push(mt ? mt.total : null);
+      }
+      // 凡例に被保険者名を入れる（印刷では切替ボタンが消えるため、誰の保障のグラフか紙面にも残す）
+      const memberLabel = (members.find(mm=> mm.key===hkdMemberKey)||{}).label || '';
+      const data = { labels, datasets:[
+        { label:`現状プラン（${memberLabel}）`, data:gd, borderColor:'#8fa3b8', borderDash:[6,4], borderWidth:2, stepped:true, pointRadius:0, tension:0 },
+        { label:`将来プラン（${memberLabel}）`, data:md, borderColor:'#4a9fd4', borderWidth:2.5, stepped:true, pointRadius:0, tension:0 }
+      ]};
+      if(hokenDiffChart){ hokenDiffChart.data = data; hokenDiffChart.update(); return; }
+      hokenDiffChart = new Chart($('hokenDiffChart').getContext('2d'), { type:'line', data, options:{
+        responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} }, x:{ grid:{display:false}, ticks:{ maxTicksLimit:12 } } },
+        plugins:{
+          legend:{ labels:{ font:{family:'Noto Sans JP'}, usePointStyle:true, pointStyle:'line' } },
+          tooltip:{ callbacks:{ label:(c)=> c.dataset.label+'：'+(c.parsed.y==null?'—':c.parsed.y.toLocaleString()+'万円') } }
+        }
+      }});
+    }
+    // 団信の前提トグル（返済を続ける／○歳で完済とみなす）。表示専用＝家計の資金繰り（③のローン返済）は変えない
+    function hkdDanMode(){ return document.querySelector('#hkd-dan-seg button.active')?.dataset.hkddan || 'continue'; }
+    if($('ivd-age')) $('ivd-age').addEventListener('input', renderInvestDiffCard);
+    if($('hkd-age')) $('hkd-age').addEventListener('input', renderHokenDiffCard);
+    if($('hkd-member-seg')) $('hkd-member-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      hkdMemberKey = b.dataset.hkdm;
+      renderHokenDiffCard();
+    });
+    if($('hkd-dan-seg')) $('hkd-dan-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      [...$('hkd-dan-seg').children].forEach(x=> x.classList.toggle('active', x===b));
+      const wrap = $('hkd-dan-age-wrap'); if(wrap) wrap.classList.toggle('hidden', b.dataset.hkddan!=='payoff');
+      renderHokenDiffCard();
+    });
+    if($('hkd-dan-age')) $('hkd-dan-age').addEventListener('input', renderHokenDiffCard);
+
     // 資産推移グラフに重ねる「現状プラン」の点線（将来プラン表示中のみ）
     function planGhost(){
       if(PLANS.active!=='mirai' || !PLANS.genjo.sum) return null;
@@ -2924,6 +3492,7 @@
     function switchPlan(p){
       if(p===PLANS.active || !PLANS[p]) return;
       PLANS[PLANS.active].state = collectState();
+      if(p==='mirai') miraiTouched = true;   // 将来タブを開いた＝ここから将来は現状と独立（自動追従を止める）
       if(!PLANS[p].state){
         // 初回の切り替え：現状の内容をコピーして将来プランのたたき台にする
         PLANS[p].state = PLANS[PLANS.active].state;
@@ -2932,6 +3501,22 @@
       PLANS.active = p;
       updatePlanTabs();
       applyState(PLANS[p].state);
+    }
+    // 表示していないプランのsumを、その保存stateから作り直す（古い形式の保存データを読み込んだ直後などに、
+    // 両タブを開かなくても比較カードを出せるようにする）。裏で一時的にstateを復元→集計→元に戻す
+    function refreshInactiveSum(){
+      if(_refreshingSum) return;
+      const other = PLANS.active==='genjo' ? 'mirai' : 'genjo';
+      if(!PLANS[other].state){ return; }
+      _refreshingSum = true;
+      const activeState = collectState();
+      try{
+        applyState(PLANS[other].state, true);   // 再計算を呼ばずにDOMだけ差し替え
+        PLANS[other].sum = planSummary(simulate().rows);
+      }catch(e){}
+      applyState(activeState, true);             // 表示中プランに戻す
+      _refreshingSum = false;
+      recompute();                               // 両プランのsumがそろった状態で全体を再描画
     }
     if($('plan-tabs')) $('plan-tabs').addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(b) switchPlan(b.dataset.plan);
@@ -2950,14 +3535,18 @@
         PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
         PLANS.mirai = { state: pl.mirai && pl.mirai.state || null, sum: pl.mirai && pl.mirai.sum || null };
         PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
+        miraiTouched = !!(PLANS.mirai.state);   // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従
         updatePlanTabs();
-        if(PLANS[PLANS.active].state) applyState(PLANS[PLANS.active].state);
+        if(PLANS[PLANS.active].state){ restoreWifeWork(PLANS[PLANS.active].state); applyState(PLANS[PLANS.active].state); }
+        refreshInactiveSum();                   // 読込直後から両タブを開かずに比較を表示（古い形式のsumも作り直す）
       } else if(saved && saved.state){
         // 旧形式（ツール①の保存データ）：現状プランとして読み込む
         PLANS.genjo = { state: saved.state, sum:null };
         PLANS.mirai = { state:null, sum:null };
         PLANS.active = 'genjo';
+        miraiTouched = false;
         updatePlanTabs();
+        restoreWifeWork(saved.state);
         applyState(saved.state);
       }
     }
@@ -3197,7 +3786,7 @@
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
           sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
-                `③住まいで「これから購入」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`],
+                `③住まいで「これから購入」に切り替えると、購入した場合との比較ができます。ローン・固定資産税・修繕費・売電などを入れて、現状の賃貸と将来の購入を数字で見くらべられます。`],
           concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
@@ -3226,7 +3815,7 @@
         if(balAt>0.5 && willLump) good.push(`${payAge}歳での一括返済を設定済み。退職金などで残高 約${fmt(balAt)}万円 を清算すると、以後の固定費がぐっと軽くなります（手元資金の減らしすぎには注意）。`);
         good.push(`住宅ローン控除（年末残高×0.7%・最大13年）を、収入に自動反映しています。`);
         if(zeh) good.push(`ZEHの売電・光熱費削減（年 約${fmt(num('zeh-sell')+num('zeh-save'))}万円）が家計を助けます。`);
-        good.push(`耐震等級3の確認資料（性能評価書など）がある住宅なら、地震保険料は50%割引の対象です。④生活費の「火災・地震保険」もあわせてご確認ください。`);
+        if(zeh) good.push(`耐震等級3の確認資料（性能評価書など）がある住宅なら、地震保険料は50%割引の対象です。④生活費の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
         if(rateType==='fixed') good.push(`固定金利のため、返済額が将来にわたって変わらず、家計計画が立てやすいです。`);
         if(ratio>25) con.push(`返済負担率 約${ratio}% はやや重め。頭金の増額や返済期間の調整で軽くできます。`);
@@ -3524,6 +4113,11 @@
     // すべての入力変更で再計算
     $('input-panel').addEventListener('input', recompute);
 
+    // 妻の働き方を変える予定：ON/OFFと期間追加
+    if($('wife-worklife')) $('wife-worklife').addEventListener('change', ()=>{ toggleWifeWorklife(); onWifeWorkChange(); });
+    if($('wife-worklife-add')) $('wife-worklife-add').addEventListener('click', ()=>{ const w0=num('w-age',33); wifeWorkRow(w0, Math.min(w0+5,90), 0); onWifeWorkChange(); });
+    toggleWifeWorklife();   // 初期表示（既定はOFF＝通常の年収入力）
+
     // 子ども・イベント・生活費・運用商品 追加ボタン
     $('add-child').addEventListener('click', ()=>{ childRow(0,'public','shiritsu_b','home'); recompute(); });
     $('add-event').addEventListener('click', ()=>{ eventRow(45,'車の買い替え',200); recompute(); });
@@ -3553,7 +4147,7 @@
     $('age-point-2').addEventListener('input', recompute);
 
     // ZEH チェックで詳細入力を開閉
-    $('zeh-on').addEventListener('change', ()=>{ $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked); recompute(); });
+    $('zeh-on').addEventListener('change', ()=>{ $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked); updateSolarConfigVisibility(); applySolarToZeh(); recompute(); });
 
     // PDF/印刷モードの準備：運用の金融資産（項目別）の表をCF表の下に複製して追加
     function buildPdfExtras(){
@@ -3603,13 +4197,15 @@
         res.appendChild(d);
       }
       document.body.classList.add('pdf-mode');
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+      document.querySelectorAll('details.ic-fold').forEach(d=>{ d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });   // 前提・出典はPDF/印刷では全文表示
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
       removePdfExtras();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); }catch(e){}
+      document.querySelectorAll('details.ic-fold').forEach(d=>{ d.open = d.dataset.wasOpen === '1'; });
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
 
     // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力
@@ -4125,7 +4721,7 @@
         facts:['iDeCoは掛金が<b>全額所得控除</b>になり、所得税・住民税が軽くなります。','運用益も<b>非課税</b>で再投資できます。','受取時も<b>退職所得控除・公的年金等控除</b>の対象です。','掛金上限は会社員（企業年金なし）で<b>月2.3万円</b>。','自営業は<b>月6.8万円</b>まで拠出でき節税効果が大きいです。','原則<b>60歳まで引き出せない</b>ので余裕資金で行います。','受取は60〜75歳で一時金・年金・併用が選べます。','「いつでも引き出せるNISA」に対し、iDeCoは<b>節税しながら老後専用</b>です。'],
         probes:['老後の備えをお考えなのですね。今、企業年金やiDeCoには加入されていますか？ご職業も教えていただけると目安が出ます。','毎月いくらくらいなら、60歳まで動かさなくても大丈夫な余裕資金として続けられそうですか？'],
         concl:'一般的には、まず<b>勤務先の制度（企業型DC等）</b>を確認し、所得がある方ほど節税メリットが大きくなります。NISAと併用し、無理のない掛金から始めるのがおすすめです。' },
-      hoken:{ label:'保険', re:/保険|生命保険|医療保険|がん保険|共済|就業不能|終身|定期保険|養老|保障|団信|団体信用/,
+      hoken:{ label:'保険', re:/保険|生命保険|医療保険|がん保険|共済|就業不能|終身|定期保険|養老|保障/,
         facts:['保険の基本は<b>「必要な保障を、ムダなく」</b>。預貯金で備えられる部分に保険は不要です。','必要保障額の目安＝<b>今後の生活費＋教育費－（遺族年金＋貯蓄）</b>で試算します。','<b>掛け捨て（定期・収入保障）</b>は割安に大きな保障を確保できます。','<b>貯蓄型（終身・養老）</b>は保障と資金づくりを兼ね、相続対策にも使えます。','生命保険には<b>500万円×法定相続人</b>の相続非課税枠があります。','会社員は<b>傷病手当金</b>があるため、就業不能保険は不足分だけで足りることが多いです。','医療保険は<b>高額療養費制度</b>（自己負担に上限）を踏まえ貯蓄とのバランスで。','<b>お子さまの独立や住宅ローン完済</b>など、節目での見直しが効果的です。','<b>収入保障保険</b>は毎月お給料のように受け取れるタイプで、保障が年々減っていく合理的（割安）な形です。','<b>団信</b>に入っている住宅ローンの分は、死亡保障から除いて考えられます。','医療保険・がん保険は<b>高額療養費制度との重複</b>に注意し、貯蓄とのバランスで決めるのがコツです。'],
         probes:['保険を見直したいのですね。まず、今はどんな保険に入っていますか？（生命・医療・がん など）','扶養するご家族（配偶者・お子さま）は何人ですか？住宅ローンの団信の有無も教えてください。'],
         concl:'一般的には、<b>遺族年金や高額療養費などの公的保障＋貯蓄</b>で足りない部分だけを保険で補うのが合理的です。お子さまが小さいご家庭は死亡保障を手厚く、独立後は薄く——と最適額が変わります。' },
@@ -4551,6 +5147,7 @@
     const CONFUSED = /わからない|分からない|わかりません|判らない|むずかし|難しい|困った|困っています|困る|不安|心配|迷って|迷います|どうすれば|どうしたら|どうすべき|自信がない|大丈夫でしょうか|助けて|相談したい|専門家/;
     function sendChat(q){
       q=(q||'').trim(); if(!q) return;
+      try{ q = q.normalize('NFKC'); }catch(e){}   // 全角英数（Ｃ値・ＮＩＳＡ等）を半角へ正規化し、トピック判定・ファクト一致のとりこぼしを防ぐ
       chatTurns++;
       addMsg('user', esc(q));
       $('chat-text').value='';
@@ -4691,7 +5288,10 @@
       });
       return {
         v:1, fields,
+        wifeWorklife: !!($('wife-worklife') && $('wife-worklife').checked),
+        wifeSchedule: readWifeWork(),
         house: houseType,
+        ichijoRegion, ichijoHorizon,   // 太陽光の日射区分・資産推移の表示期間を保存（太陽光kW/蓄電池はfieldsで自動保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         kasaiCycle: kasaiCycle(),
@@ -4700,18 +5300,19 @@
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
         loanRepayType: loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri',
-        children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, honorific:r.querySelector('.cr-honorific-seg button.active')?.dataset.honorific||'君' })),
+        children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, gender:r.querySelector('.cr-gender-seg button.active')?.dataset.gender||'boy' })),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
         investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked })),
         hokenMode: hokenMode(),
-        insurances: [...$('ins-list').querySelectorAll('.ins-row')].map(r=>({ who:r.querySelector('.ins-who').value, type:r.querySelector('.ins-type').value, name:r.querySelector('.ins-name').value, amount:r.querySelector('.ins-amount').value, monthly:r.querySelector('.ins-monthly').value, end:r.querySelector('.ins-end').value, on:r.querySelector('.iv-on').checked }))
+        insurances: [...$('ins-list').querySelectorAll('.ins-row')].map(r=>({ who:r.querySelector('.ins-who').value, type:r.querySelector('.ins-type').value, name:r.querySelector('.ins-name').value, amount:r.querySelector('.ins-amount').value, monthly:r.querySelector('.ins-monthly').value, end:r.querySelector('.ins-end').value, keep:(r.querySelector('.ins-keep')?.value)||'keep', on:r.querySelector('.iv-on').checked }))
       };
     }
 
-    // 保存内容を画面に復元する
-    function applyState(s){
+    // 保存内容を画面に復元する。skipRecompute=true のときは再計算・再描画を呼ばない
+    // （裏でもう一方のプランを一時的に復元して集計するときに使う＝画面のちらつき・再帰を防ぐ）
+    function applyState(s, skipRecompute){
       if(!s) return;
       adviceVariant = {};   // 読み込んだお客様ごとにAI診断の言い回しを変える
       childrenList.innerHTML=''; eventsList.innerHTML=''; incomeEventsList.innerHTML=''; $('custom-expenses').innerHTML=''; $('invest-list').innerHTML='';
@@ -4719,7 +5320,7 @@
       // 旧保存データ（⑦追加前）読込時に、前のお客様の保険入力が残らないようリセット（新しい保存はこの後のfields復元で上書きされる）
       if($('ins-total-h')) $('ins-total-h').value = 0;
       if($('ins-total-w')) $('ins-total-w').value = 0;
-      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.honorific||'君'));
+      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy')));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
@@ -4729,12 +5330,19 @@
       });
       (s.insurances||[]).forEach(it=>{
         const endV = (it.end==='' || it.end==null) ? '' : (parseInt(it.end)||0);   // 満了歳の空欄（無期限扱い）を保存後もそのまま保持
-        insRow(it.who||'h', it.type||'shunyu', it.name||'', parseFloat(it.amount)||0, parseFloat(it.monthly)||0, endV);
+        insRow(it.who||'h', it.type||'shunyu', it.name||'', parseFloat(it.amount)||0, parseFloat(it.monthly)||0, endV, it.keep||'keep');
         if(it.on===false){ const row=$('ins-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
       });
       setHokenMode(s.hokenMode||'detail');   // 旧保存データはモード情報なし＝既定に戻す
-      Object.entries(s.fields||{}).forEach(([id,val])=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
+      Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id==='wife-worklife') return; /* 妻の働き方はプラン共通（現状⇔将来で切り替えない）*/ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
       if(s.house) setHouse(s.house);
+      // 資産推移の表示期間を復元
+      if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = ['end','35','custom'].includes(s.ichijoHorizon) ? s.ichijoHorizon : 'end'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.toggle('hidden', ichijoHorizon!=='custom'); }
+      if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 太陽光の日射区分を復元
+      updateSolarConfigVisibility();                        // 太陽光の詳細欄はZEH（太陽光）ONに連動
+      userEditedZeh = true;   // 保存値は手入力済みとみなし、以後の太陽光変更で自動上書きしない
+      // 金利はカスタム値（既定の0.95でも3.1でもない値）のときだけ保護。既定値なら金利タイプ切替との連動を生かす
+      userEditedRate = (()=>{ const v = parseFloat($('loan-rate')?.value); return isFinite(v) && v!==0.95 && v!==3.1; })();
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
       if(s.expMode) setExpMode(s.expMode);
       if(s.kasaiCycle) setKasaiCycle(s.kasaiCycle);
@@ -4748,7 +5356,7 @@
       Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id.startsWith('rate_step')){ const el=$(id); if(el) el.value=val; } });
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();
       if($('zeh-fields')) $('zeh-fields').classList.toggle('hidden', !$('zeh-on').checked);
-      recompute();
+      if(!skipRecompute) recompute();
     }
 
     // 保存データはログイン中アカウントごとに別々のキーで管理（アカウント間で分離）
@@ -4920,7 +5528,8 @@
       showSaveView('login');
     });
 
-    // 保存・上書き時に、顧客管理（crm.html）の台帳へも自動反映（同名顧客が無ければ「商談中」で作成しリンク追加）
+    // 【一条フック】保存・上書きと同時に、顧客管理（crm.html）の台帳へも自動反映。
+    // 保存名と同名の顧客が無ければ作成し、この保存データへのリンク（ツール名・アカウント・保存名）を追加/更新する
     function omcrmSync(name){
       try{
         if(!currentUser || !name) return;

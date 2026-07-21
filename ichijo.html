@@ -262,6 +262,20 @@
     .ex-years-wrap{ display:inline-flex; align-items:center; gap:6px; font-size:.88rem; color:var(--ink); white-space:nowrap; }
     .ex-years-wrap[hidden]{ display:none !important; }
     .ex-years-wrap input{ width:60px; text-align:center; padding:8px 6px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; font-size:.92rem; }
+    /* 妻の働き方：期間ごとの年収（1段目＝働く期間・全幅、2段目＝年収＋削除） */
+    .row-item.wife-work-row{
+      grid-template-columns:1fr auto;
+      grid-template-areas:"wwage wwage" "wwamount wwdel";
+      row-gap:12px;
+    }
+    .wife-work-row .ww-age-field{ grid-area:wwage; }
+    .wife-work-row .ww-amount-field{ grid-area:wwamount; }
+    .wife-work-row .ww-del{ grid-area:wwdel; }
+    .ww-age-range{ display:flex; align-items:center; gap:8px; }
+    .ww-age-range input{ width:72px; text-align:center; padding:11px 8px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; }
+    .ww-age-range input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
+    .ww-age-range .ww-u{ font-size:.85rem; color:var(--ink-soft); font-weight:500; }
+    .ww-age-range .ww-tilde{ color:var(--ink-soft); padding:0 2px; }
     @media(max-width:560px){
       .row-item, .row-item.event-row, .row-item.income-row{ grid-template-columns:1fr 1fr; }
       .row-item.expense-row{ grid-template-columns:1fr auto; grid-template-areas:"exname exname" "examount exdel" "experiod experiod"; }
@@ -853,8 +867,8 @@
               <div class="grid3">
                 <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" class="name-ctr" placeholder="妻"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="w-age" value="33" min="18" max="70"><span class="u">歳</span></div></div>
-                <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
-                <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
+                <div class="field w-flat-income"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
+                <div class="field w-flat-income"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
                 <div class="field"><label>退職予定</label><div class="input-unit"><input type="number" id="w-retire" value="65" min="50" max="80"><span class="u">歳</span></div></div>
                 <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="w-bonus" value="300" min="0" step="50"><span class="u">万円</span></div></div>
               </div>
@@ -862,7 +876,11 @@
                 <input type="checkbox" id="wife-worklife" style="width:18px; height:18px; flex:0 0 auto;">
                 <span>奥様の働き方を変える予定（育休の延長・時短・専業など）</span>
               </label>
-              <span class="hint" style="display:block; margin-top:4px;">チェックすると、右上の総資産で「現状比のマイナス（減った額）」を表示しません。働き方は、お金だけで測るものではありません。</span>
+              <div id="wife-worklife-panel" class="hidden" style="margin-top:8px;">
+                <p class="hint" style="margin:2px 0 8px;">働き方に合わせて、<b>期間ごとの年収（額面）</b>を入力してください。入力した期間以外は収入なし（育休・専業など）として計算します。ここで入れた収入は<b>現状プラン・将来プランの両方に同じように反映</b>し、現状比の減額としては表示しません。</p>
+                <div id="wife-worklife-rows"></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="wife-worklife-add" style="margin-top:2px;"><i class="fa-solid fa-plus"></i> 期間を追加</button>
+              </div>
             </div>
 
             <div class="note">
@@ -1922,6 +1940,83 @@
       }));
     }
 
+    /* ---------- 妻の働き方：期間ごとの年収（額面）。ONのとき、現状・将来の両プランで妻の収入をこの表で決める ---------- */
+    function wifeWorkRow(from=33, to=40, amount=0){
+      const rows = $('wife-worklife-rows'); if(!rows) return null;
+      const div = document.createElement('div');
+      div.className = 'row-item wife-work-row';
+      div.innerHTML = `
+        <div class="field ww-age-field"><label>${wNameH()}が働く期間（${wNameH()}の年齢）</label>
+          <div class="ww-age-range">
+            <input type="number" class="ww-from" value="${from}" min="18" max="90"><span class="ww-u">歳</span>
+            <span class="ww-tilde">〜</span>
+            <input type="number" class="ww-to" value="${to}" min="18" max="90"><span class="ww-u">歳</span>
+          </div>
+        </div>
+        <div class="field ww-amount-field"><label>年収（額面）</label>
+          <div class="input-unit"><input type="number" class="ww-amount" value="${amount}" min="0" step="10"><span class="u">万円</span></div>
+          <span class="hint ww-net"></span>
+        </div>
+        <button class="btn-del ww-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>`;
+      div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); onWifeWorkChange(); });
+      div.querySelectorAll('input').forEach(el=> el.addEventListener('input', onWifeWorkChange));
+      rows.appendChild(div);
+      updateWifeWorkNet(div);
+      return div;
+    }
+    function updateWifeWorkNet(div){
+      const amt = parseFloat(div.querySelector('.ww-amount').value)||0;
+      const el = div.querySelector('.ww-net'); if(!el) return;
+      el.textContent = amt>0 ? ('手取り 約'+(Math.round(grossToNet(amt)/12*10)/10)+'万円/月') : '無収入（育休・専業など）';
+    }
+    function readWifeWork(){
+      const rows = $('wife-worklife-rows'); if(!rows) return [];
+      return [...rows.querySelectorAll('.wife-work-row')].map(r=>({
+        from: parseInt(r.querySelector('.ww-from').value)||0,
+        to: parseInt(r.querySelector('.ww-to').value)||0,
+        amount: parseFloat(r.querySelector('.ww-amount').value)||0
+      })).filter(x=> x.from>0 && x.to>=x.from);
+    }
+    function wifeWorkAmountAt(wAge){
+      for(const r of readWifeWork()){ if(wAge>=r.from && wAge<=r.to) return r.amount; }
+      return 0;
+    }
+    // ONかつ夫婦世帯のときだけ有効。simulateやバッジ表示の判定に使う
+    function wifeWorklifeOn(){ return !isSingle() && $('wife-worklife') && $('wife-worklife').checked; }
+    function toggleWifeWorklife(){
+      const on = wifeWorklifeOn();
+      const panel = $('wife-worklife-panel'); if(panel) panel.classList.toggle('hidden', !on);
+      document.querySelectorAll('.w-flat-income').forEach(el=> el.classList.toggle('hidden', on));
+      const rows = $('wife-worklife-rows');
+      if(on && rows && !rows.children.length){
+        // 初回ON：いまの年収を初期値に、退職予定までの1行を用意
+        const w0=num('w-age',33), wr=num('w-retire',65), wi=num('w-income',300);
+        wifeWorkRow(w0, Math.max(wr-1,w0), wi);
+      }
+    }
+    function onWifeWorkChange(){
+      // 隠している w-income を「現在の妻の年齢の収入」に合わせる（保険分析・手取り表示など既存機能の整合のため）
+      if(wifeWorklifeOn()){
+        if($('w-income')) $('w-income').value = wifeWorkAmountAt(num('w-age',33));
+        if($('w-raise')) $('w-raise').value = 0;
+        const rows = $('wife-worklife-rows');
+        if(rows) [...rows.querySelectorAll('.wife-work-row')].forEach(updateWifeWorkNet);
+      }
+      updateNetDisplay();
+      recompute();
+      refreshInactiveSum();   // 現状プランの妻収入も同じ表に合わせ直す（現状比の差を作らない）
+    }
+    // 保存データ／共有リンクから復元するとき、妻の働き方（ON/OFF・期間表）を戻す
+    function restoreWifeWork(st){
+      if($('wife-worklife')) $('wife-worklife').checked = !!(st && st.wifeWorklife);
+      const rows = $('wife-worklife-rows');
+      if(rows){
+        rows.innerHTML='';
+        (st && st.wifeSchedule || []).forEach(r=> wifeWorkRow(parseInt(r.from)||0, parseInt(r.to)||0, parseFloat(r.amount)||0));
+      }
+      toggleWifeWorklife();
+    }
+
     /* ---------- 生活費の費目（自由追加） ---------- */
     function expenseRow(name='', amount=1, years=0, start=0){
       const div = document.createElement('div');
@@ -2951,7 +3046,12 @@
         /* ---- 収入 ---- */
         let income = 0;
         if(hAge < hRetire) income += grossToNet(hIncome0 * Math.pow(1+hRaise, t)); // 額面→手取り
-        if(wAge < wRetire) income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
+        if(wifeWorklifeOn()){
+          const wa = wifeWorkAmountAt(wAge);   // 働き方を変える予定：期間表で妻の年収を決める（範囲外は0＝無収入）
+          if(wa>0) income += grossToNet(wa);
+        } else if(wAge < wRetire){
+          income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
+        }
         if(hAge >= pensionAge) income += pensionAnnual * inflF;    // 年金（夫婦合計・物価スライドを簡易反映）
         if(hAge === hRetire){ income += hBonus; eventList.push({label:hNameH()+' 退職金', type:'family'}); }
         if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wNameH()+' 退職金', type:'family'}); }
@@ -3380,11 +3480,14 @@
       panel.querySelectorAll('.fdiff').forEach(el=> el.remove());
       if(PLANS.active!=='mirai' || !PLANS.genjo.state) return;
       const base = PLANS.genjo.state.fields || {};
+      // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）は表示しない
+      const hideNeg = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
       panel.querySelectorAll('input[type="number"][id]').forEach(el=>{
         if(!(el.id in base)) return;
         const cur = parseFloat(el.value), prev = parseFloat(base[el.id]);
         if(!isFinite(cur) || !isFinite(prev) || cur===prev) return;
         const d = cur - prev;
+        if(hideNeg && d<0) return;
         const span = document.createElement('span');
         span.className = 'fdiff ' + (d>0 ? 'diff-plus' : 'diff-minus');
         // 単位（万円・％・歳など）は入力欄の隣にある単位表示から取得して付ける
@@ -3433,9 +3536,12 @@
       const depDiff = gs.dep && !ms.dep ? '<span class="diff-plus">解消！</span>'
                     : (!gs.dep && ms.dep ? '<span class="diff-minus">発生</span>' : '—');
       const row = (label, gv, mv, diff)=> `<tr><td>${label}</td><td>${gv}</td><td><b>${mv}</b></td><td>${diff||'±0'}</td></tr>`;
+      // 「奥様の働き方を変える予定」がONのときは、総資産の差のマイナス（減った額）は表示しない（資金ショートの注意は残す）
+      const hideNeg = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
+      const dcell = (d)=> (hideNeg && Math.round(d)<0) ? '±0' : diffHTML(d,'');
       el.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
-        ${row('65歳時点の総資産', fmt(g65), fmt(m65), diffHTML(m65-g65,''))}
-        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), diffHTML(ms.end.net-gs.end.net,''))}
+        ${row('65歳時点の総資産', fmt(g65), fmt(m65), dcell(m65-g65))}
+        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), dcell(ms.end.net-gs.end.net))}
         ${row('資金ショート', dep(gs), dep(ms), depDiff)}
       </tbody></table></div>`;
     }
@@ -3702,7 +3808,7 @@
         PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
         miraiTouched = !!(PLANS.mirai.state);   // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従
         updatePlanTabs();
-        if(PLANS[PLANS.active].state) applyState(PLANS[PLANS.active].state);
+        if(PLANS[PLANS.active].state){ restoreWifeWork(PLANS[PLANS.active].state); applyState(PLANS[PLANS.active].state); }
         refreshInactiveSum();                   // 読込直後から両タブを開かずに比較を表示（古い形式のsumも作り直す）
       } else if(saved && saved.state){
         // 旧形式（ツール①の保存データ）：現状プランとして読み込む
@@ -3711,6 +3817,7 @@
         PLANS.active = 'genjo';
         miraiTouched = false;
         updatePlanTabs();
+        restoreWifeWork(saved.state);
         applyState(saved.state);
       }
     }
@@ -4281,6 +4388,11 @@
 
     // すべての入力変更で再計算
     $('input-panel').addEventListener('input', recompute);
+
+    // 妻の働き方を変える予定：ON/OFFと期間追加
+    if($('wife-worklife')) $('wife-worklife').addEventListener('change', ()=>{ toggleWifeWorklife(); onWifeWorkChange(); });
+    if($('wife-worklife-add')) $('wife-worklife-add').addEventListener('click', ()=>{ const w0=num('w-age',33); wifeWorkRow(w0, Math.min(w0+5,90), 0); onWifeWorkChange(); });
+    toggleWifeWorklife();   // 初期表示（既定はOFF＝通常の年収入力）
 
     // 子ども・イベント・生活費・運用商品 追加ボタン
     $('add-child').addEventListener('click', ()=>{ childRow(0,'public','shiritsu_b','home'); recompute(); });
@@ -5522,6 +5634,8 @@
       });
       return {
         v:1, fields,
+        wifeWorklife: !!($('wife-worklife') && $('wife-worklife').checked),
+        wifeSchedule: readWifeWork(),
         house: houseType,
         htype, ichijoRegion, ichijoHorizon,   // 【一条フック】住宅の性能タイプ・日射区分・比較期間を保存（太陽光kW/蓄電池はfieldsで自動保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
@@ -5566,7 +5680,7 @@
         if(it.on===false){ const row=$('ins-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
       });
       setHokenMode(s.hokenMode||'detail');   // 旧保存データはモード情報なし＝既定に戻す
-      Object.entries(s.fields||{}).forEach(([id,val])=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
+      Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id==='wife-worklife') return; /* 妻の働き方はプラン共通（現状⇔将来で切り替えない）*/ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）

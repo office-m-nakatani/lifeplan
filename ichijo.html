@@ -1267,14 +1267,21 @@
               <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
               <span class="lt-value" id="ins-sum-value"></span>
             </div>
-            <div class="note" style="margin-bottom:8px;">
-              <i class="fa-solid fa-scale-balanced"></i>
-              <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、結果の「万一のときの死亡保障額」カードでご覧いただけます。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
-            </div>
-            <div class="note" style="margin-bottom:12px;">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
-            </div>
+            <details class="ic-fold" style="margin-top:0; margin-bottom:12px;">
+              <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
+              <div class="note" style="margin-bottom:8px;">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、結果の「万一のときの死亡保障額」カードでご覧いただけます。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
+              </div>
+              <div class="note" style="margin-bottom:8px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+              </div>
+              <div class="note" style="margin-bottom:0;">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>保険証券や「ご契約内容のお知らせ」の<strong>死亡保険金額</strong>を転記してください。<strong>収入保障保険（家族収入保障・逓減定期）</strong>は「年金月額」と「何歳まで受け取れるか」を入力すると、<strong>残り期間分の総額に換算</strong>して計算します（受取総額は年々減っていく保険です）。医療保険・がん保険など死亡保障のないものは対象外です。<br><strong>終身保険</strong>は「今後の予定」で<strong>一生涯続けるか、途中で解約して現金化する予定か</strong>を選べます。「途中で解約する予定」を選ぶと、指定した年齢まで死亡保障に数え、それ以降は保障から外して計算します（年齢が未入力のときは一生涯として計算。解約返戻金は資産推移に自動計上しません）。満了歳のある保険（定期・養老など）は<strong>その年齢まで保障あり</strong>として計算します（例：60歳までなら61歳で保障ゼロ）。収入保障保険は残り年数分の換算のため、受取満了の年齢では0になります。</span>
+              </div>
+            </details>
             <div class="field">
               <label>入力方法</label>
               <div class="seg" id="hoken-mode-seg">
@@ -1287,10 +1294,6 @@
             <div class="conditional" data-hoken-panel="detail">
               <div id="ins-list"></div>
               <button class="btn-add" id="add-ins" type="button"><i class="fa-solid fa-plus"></i> 加入中の保険を追加</button>
-              <div class="note">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>保険証券や「ご契約内容のお知らせ」の<strong>死亡保険金額</strong>を転記してください。<strong>収入保障保険（家族収入保障・逓減定期）</strong>は「年金月額」と「何歳まで受け取れるか」を入力すると、<strong>残り期間分の総額に換算</strong>して計算します（受取総額は年々減っていく保険です）。医療保険・がん保険など死亡保障のないものは対象外です。<br><strong>終身保険</strong>は「今後の予定」で<strong>一生涯続けるか、途中で解約して現金化する予定か</strong>を選べます。「途中で解約する予定」を選ぶと、指定した年齢まで死亡保障に数え、それ以降は保障から外して計算します（年齢が未入力のときは一生涯として計算。解約返戻金は資産推移に自動計上しません）。満了歳のある保険（定期・養老など）は<strong>その年齢まで保障あり</strong>として計算します（例：60歳までなら61歳で保障ゼロ）。収入保障保険は残り年数分の換算のため、受取満了の年齢では0になります。</span>
-              </div>
             </div>
 
             <!-- まとめて入力（証券が手元にない・詳細が分からない場合） -->

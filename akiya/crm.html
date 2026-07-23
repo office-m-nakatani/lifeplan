@@ -47,13 +47,22 @@ tailwind.config = {
       <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
     </nav>
     <div class="flex items-center gap-1.5 shrink-0">
-      <button onclick="openNew()" class="bg-grn text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-full hover:opacity-90 whitespace-nowrap">＋ 新規案件</button>
+      <label class="hidden sm:flex items-center gap-1 text-[10px] text-sub font-bold">表示役割
+        <select id="roleSel" onchange="setRole(this.value)" class="text-xs font-bold border border-line rounded-full px-2.5 py-1.5 bg-paper"></select>
+      </label>
+      <button id="newBtn" onclick="openNew()" class="bg-grn text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-full hover:opacity-90 whitespace-nowrap">＋ 新規案件</button>
       <div class="relative">
         <button onclick="toggleMenu()" class="w-9 h-9 rounded-full border border-line flex items-center justify-center hover:bg-paper" title="データ">
           <svg class="w-5 h-5 text-sub" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6h.01M12 12h.01M12 18h.01"/></svg>
         </button>
-        <div id="menu" class="hidden absolute right-0 mt-1 w-56 bg-white border border-line rounded-xl softshadow p-1.5 text-sm z-50">
-          <button onclick="exportJSON()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONで書き出し（バックアップ/共有）</button>
+        <div id="menu" class="hidden absolute right-0 mt-1 w-64 bg-white border border-line rounded-xl softshadow p-1.5 text-sm z-50">
+          <p class="text-[10px] text-sub font-bold px-3 pt-1.5 pb-0.5">提携先との連携</p>
+          <button onclick="openShareModal()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先へ送る（分野を選んで書き出し）</button>
+          <button onclick="document.getElementById('receiveFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先データを受け取る（担当モードで開く）</button>
+          <button onclick="document.getElementById('returnFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先からの更新を反映（社内）</button>
+          <div class="border-t border-line my-1"></div>
+          <p class="text-[10px] text-sub font-bold px-3 pt-0.5 pb-0.5">データ</p>
+          <button onclick="exportJSON()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">全データをJSONで書き出し（バックアップ）</button>
           <button onclick="document.getElementById('importFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONを読み込み（統合）</button>
           <button onclick="loadSeed(true)" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">デモ用サンプルを再読み込み</button>
           <button onclick="wipe()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper text-red">全データを消去</button>
@@ -61,8 +70,11 @@ tailwind.config = {
       </div>
     </div>
     <input type="file" id="importFile" accept="application/json" class="hidden" onchange="importJSON(event)">
+    <input type="file" id="receiveFile" accept="application/json" class="hidden" onchange="receiveShare(event)">
+    <input type="file" id="returnFile" accept="application/json" class="hidden" onchange="applyReturn(event)">
   </div>
 </header>
+<div id="roleBar" class="hidden"></div>
 
 <main id="app" class="max-w-[1400px] mx-auto px-3 sm:px-5 py-5"></main>
 
@@ -82,7 +94,18 @@ tailwind.config = {
   </div>
 </div>
 
-<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white text-sm font-bold px-5 py-3 rounded-full softshadow"></div>
+<!-- ===== 提携先へ送るモーダル ===== -->
+<div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-lg softshadow my-4">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-line">
+      <p class="font-black">提携先へデータを送る</p>
+      <button onclick="closeShare()" class="text-sub hover:text-ink text-xl leading-none">×</button>
+    </div>
+    <div id="shareBody" class="p-5"></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] bg-ink text-white text-sm font-bold px-5 py-3 rounded-full softshadow"></div>
 
 <script>
 /* ============================================================
@@ -171,6 +194,139 @@ function load(){
 }
 function getC(id){ return DB.find(c => c.id === id); }
 function upsert(c){ const i = DB.findIndex(x => x.id===c.id); if(i>=0) DB[i]=c; else DB.push(c); save(); }
+
+/* ============================================================
+   役割（アクセス制御）— 社内は全権、提携先は自分の分野だけ編集可
+   ============================================================ */
+const ROLE_DEFS = {
+  admin:            { label:'社内（全権）',        domain:null,               color:'#243B33' },
+  inheritance_reg:  { label:'司法書士',            domain:'inheritance_reg',  color:'#2E9E68' },
+  demolition_reg:   { label:'土地家屋調査士',      domain:'demolition_reg',   color:'#0EA5E9' },
+  tax:              { label:'税理士',              domain:'tax',              color:'#F0862B' },
+  realestate:       { label:'不動産',              domain:'realestate',       color:'#8B5CF6' },
+  construction_ext: { label:'エクステリア・造成',  domain:'construction_ext', color:'#4FA6D5' },
+  fp:               { label:'FP（資金・補助金）',  domain:'fp',               color:'#F59E0B' },
+};
+let ROLE = localStorage.getItem('akiya_crm_role') || 'admin';
+if(!ROLE_DEFS[ROLE]) ROLE = 'admin';
+function isAdmin(){ return ROLE === 'admin'; }
+function roleDomain(){ return ROLE_DEFS[ROLE].domain; }
+function canEditDomain(dkey){ return isAdmin() || roleDomain() === dkey; }
+function canEditCore(){ return isAdmin(); }               // 商談ステージ・お客様情報・注意点は社内のみ
+/* 提携先には「自分の分野が必要」な案件だけを見せる */
+function scope(){ if(isAdmin()) return DB; const dk = roleDomain(); return DB.filter(c => c.domains?.[dk]?.need==='required'); }
+
+function setRole(r){
+  if(!ROLE_DEFS[r]) return;
+  if(r!=='admin' && !confirm(ROLE_DEFS[r].label+'モードに切り替えます。\n自分の分野（'+(domainMeta(ROLE_DEFS[r].domain)?.label||'')+'）以外は閲覧のみになります。よろしいですか？')) { applyRoleUI(); return; }
+  ROLE = r; localStorage.setItem('akiya_crm_role', r);
+  applyRoleUI(); if(openId){ renderDetail(); } render();
+}
+function applyRoleUI(){
+  const sel = document.getElementById('roleSel'); if(sel) sel.value = ROLE;
+  const nb = document.getElementById('newBtn'); if(nb) nb.style.display = isAdmin() ? '' : 'none';
+  const bar = document.getElementById('roleBar');
+  if(bar){
+    if(isAdmin()){ bar.className = 'hidden'; bar.innerHTML=''; }
+    else {
+      const d = ROLE_DEFS[ROLE];
+      bar.className = 'text-white';
+      bar.style.background = d.color;
+      bar.innerHTML = `<div class="max-w-[1400px] mx-auto px-4 py-2 flex items-center gap-2 text-sm font-bold flex-wrap">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        ${d.label}モードで表示中：<span class="font-normal">担当分野「${domainMeta(d.domain)?.label||''}」のみ編集できます。他はすべて閲覧のみです。</span>
+        <button onclick="exportReturn()" class="ml-auto bg-white/20 hover:bg-white/30 rounded-full px-4 py-1.5">自分の更新を書き出して返信</button>
+      </div>`;
+    }
+  }
+}
+
+/* ============================================================
+   提携先とのデータ共有（費用ゼロ＝ファイルの受け渡し）
+   ============================================================ */
+function download(text, name){
+  const blob = new Blob([text], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = name; a.click();
+}
+/* 社内→提携先：指定分野が必要な案件だけを、役割タグ付きで書き出す */
+function shareToPartner(role, cases){
+  const payload = { type:'akiya_crm_share', role, exportedAt: todayISO(), cases: JSON.parse(JSON.stringify(cases)) };
+  download(JSON.stringify(payload,null,2), '空き家CRM_'+(ROLE_DEFS[role]?.label||role)+'_'+todayISO()+'.json');
+  toast(ROLE_DEFS[role].label+'向けに'+cases.length+'件を書き出しました');
+}
+function openShareModal(caseId){
+  shareCaseId = caseId || null;
+  const only = caseId ? getC(caseId) : null;
+  document.getElementById('shareBody').innerHTML = `
+    <p class="text-sm text-sub mb-3">${only?('「'+esc(only.name||'')+'様」の案件を、'):'該当案件を'}選んだ提携先へ送るファイルを作成します。<br>提携先はそのファイルを顧客管理ページで読み込むと、<strong class="text-ink">自分の分野だけ編集できる状態</strong>で開きます。</p>
+    <div class="space-y-1.5">
+      ${DOMAINS.map(dm=>{
+        const n = (caseId?[only]:DB).filter(c=>c && c.domains?.[dm.key]?.need==='required').length;
+        return `<button onclick="doShare('${dm.key}')" ${n?'':'disabled'} class="w-full flex items-center gap-2 border border-line rounded-xl px-3 py-2.5 text-left ${n?'hover:border-grn':'opacity-40'}">
+          <span class="w-3 h-3 rounded-full" style="background:${dm.color}"></span>
+          <span class="font-bold text-sm flex-1">${dm.label}<span class="text-sub font-normal">（${dm.role}）</span></span>
+          <span class="text-xs text-sub">${n}件</span>
+          <svg class="w-4 h-4 text-sub" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+        </button>`;
+      }).join('')}
+    </div>
+    <p class="text-[11px] text-sub mt-3">※ ファイルにはお客様情報が含まれます。送付先を確認のうえ、メール等でお送りください（このツールから自動送信はしません）。</p>`;
+  document.getElementById('shareModal').classList.remove('hidden');
+}
+let shareCaseId = null;
+function closeShare(){ document.getElementById('shareModal').classList.add('hidden'); }
+function doShare(role){
+  const base = shareCaseId ? [getC(shareCaseId)] : DB;
+  const cases = base.filter(c => c && c.domains?.[role]?.need==='required');
+  if(!cases.length){ toast('該当案件がありません'); return; }
+  shareToPartner(role, cases);
+  closeShare();
+}
+/* 提携先が受け取る：役割つきファイルを読み込み、担当モードで開く */
+function receiveShare(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try {
+    const p = JSON.parse(r.result);
+    if(p.type!=='akiya_crm_share' || !Array.isArray(p.cases) || !ROLE_DEFS[p.role]) throw 0;
+    if(!confirm(ROLE_DEFS[p.role].label+'として'+p.cases.length+'件を受け取ります。\nこの端末の表示データは受け取った内容に置き換わります（元に戻す場合はサンプル再読み込み）。続けますか？')) return;
+    DB = p.cases; save();
+    ROLE = p.role; localStorage.setItem('akiya_crm_role', ROLE);
+    applyRoleUI(); setView('partner');
+    toast(ROLE_DEFS[p.role].label+'モードで'+p.cases.length+'件を読み込みました');
+  } catch(err){ toast('この共有ファイルを読み込めませんでした'); } };
+  r.readAsText(f); e.target.value=''; toggleMenu();
+}
+/* 提携先→社内：自分の更新を書き出す（自分の分野のみが後で反映される） */
+function exportReturn(){
+  if(isAdmin()){ toast('提携先モードのときに使えます'); return; }
+  const dk = roleDomain();
+  const cases = DB.filter(c => c.domains?.[dk]?.need==='required');
+  shareToPartner(ROLE, cases);
+}
+/* 社内が反映：提携先の返信ファイルから「その分野だけ」を安全にマージ（他分野は上書きしない） */
+function applyReturn(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try {
+    const p = JSON.parse(r.result);
+    if(p.type!=='akiya_crm_share' || !Array.isArray(p.cases) || !ROLE_DEFS[p.role]) throw 0;
+    const dk = ROLE_DEFS[p.role].domain; let upd=0, notes=0;
+    p.cases.forEach(pc=>{
+      const c = getC(pc.id); if(!c) return;
+      if(dk && pc.domains?.[dk]){ c.domains[dk] = pc.domains[dk]; upd++; }
+      (pc.followHistory||[]).forEach(h=>{
+        if(!(c.followHistory||[]).some(x=>x.date===h.date && x.memo===h.memo)){ c.followHistory.unshift(h); notes++; }
+      });
+      upsert(c);
+    });
+    render();
+    toast(ROLE_DEFS[p.role].label+'の更新を反映：'+upd+'件（新規メモ'+notes+'件）');
+  } catch(err){ toast('この返信ファイルを反映できませんでした'); } };
+  r.readAsText(f); e.target.value=''; toggleMenu();
+}
+function savedFlash(){ toast('✓ 保存しました'); }
 
 /* ============================================================
    診断データ → 分野の自動フラグ（“見える化して次の出番が分かる”の核）
@@ -296,6 +452,7 @@ function alertsFor(c){
 /* ==== LP（60秒診断）からの自動読み取り ==== */
 function inboxLeads(){ try { return JSON.parse(localStorage.getItem('akiya_crm_inbox')) || []; } catch(e){ return []; } }
 function bannerHTML(){
+  if(!isAdmin()) return '';
   const q = inboxLeads();
   if(!q.length) return '';
   const names = q.map(l => (l.name ? esc(l.name)+'様' : '診断のみ・匿名') + (l.city ? '／'+esc(l.city) : '')).join('、');
@@ -376,7 +533,7 @@ function alertPip(c){
 
 /* ---- 受信リード（トリアージ） ---- */
 function renderInbox(){
-  const leads = DB.filter(c=>c.stage==='lead').sort((a,b)=> (b.urgencyScore||0)-(a.urgencyScore||0));
+  const leads = scope().filter(c=>c.stage==='lead').sort((a,b)=> (b.urgencyScore||0)-(a.urgencyScore||0));
   const rows = leads.map(c=>{
     const al = alertsFor(c);
     return `<tr class="border-t border-line hover:bg-paper cursor-pointer" onclick="openDetail('${c.id}')">
@@ -407,8 +564,9 @@ function renderInbox(){
 
 /* ---- 解体パイプライン・カンバン ---- */
 function renderKanban(){
+  const base = scope();
   const cols = OPEN_STAGES.map(s=>{
-    const items = DB.filter(c=>c.stage===s.key);
+    const items = base.filter(c=>c.stage===s.key);
     const cards = items.map(c=>{
       return `<div class="bg-white rounded-xl border border-line p-3 mb-2 cursor-pointer hover:border-grn" onclick="openDetail('${c.id}')">
         <div class="flex items-center justify-between gap-2 mb-1">
@@ -435,7 +593,7 @@ function renderKanban(){
       <div class="min-h-[40px]">${cards||'<p class="text-[11px] text-sub px-1">—</p>'}</div>
     </div>`;
   }).join('');
-  const lost = DB.filter(c=>c.stage==='closed_lost').length;
+  const lost = base.filter(c=>c.stage==='closed_lost').length;
   return `
   <div class="flex items-center justify-between mb-3">
     <h2 class="font-black text-lg">解体パイプライン</h2>
@@ -446,7 +604,8 @@ function renderKanban(){
 
 /* ---- 分野別ボード（担当が“自分の番/もうすぐ”を見る） ---- */
 function renderPartner(){
-  const blocks = DOMAINS.map(dm=>{
+  const doms = isAdmin() ? DOMAINS : DOMAINS.filter(dm => dm.key === roleDomain());
+  const blocks = doms.map(dm=>{
     const rel = DB.filter(c=>c.stage!=='closed_lost' && c.domains?.[dm.key]?.need==='required');
     const groups = { active:[], done:[] };
     rel.forEach(c=>{ const p = domainPhase(dm.key, c.domains[dm.key]); (groups[p.key]||(groups[p.key]=[])).push(c); });
@@ -477,25 +636,26 @@ function renderPartner(){
   }).join('');
   return `
   <div class="flex items-center justify-between mb-3">
-    <h2 class="font-black text-lg">分野別ボード</h2>
+    <h2 class="font-black text-lg">${isAdmin()?'分野別ボード':'あなたの担当案件'}</h2>
     <p class="text-[11px] text-sub">各分野の担当が、自分の対応中案件と完了案件を一覧できます。</p>
   </div>
-  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3">${blocks}</div>`;
+  <div class="grid ${isAdmin()?'md:grid-cols-2 xl:grid-cols-3':'max-w-2xl'} gap-3">${blocks}</div>`;
 }
 
 /* ---- ダッシュボード ---- */
 function renderDashboard(){
-  const open = DB.filter(c=>c.stage!=='closed_lost');
-  const leads = DB.filter(c=>c.stage==='lead').length;
+  const base = scope();
+  const open = base.filter(c=>c.stage!=='closed_lost');
+  const leads = base.filter(c=>c.stage==='lead').length;
   const pipelineYen = open.reduce((s,c)=> s + (Number(c.estimateRangeLow)||0), 0);
-  const won = DB.filter(c=>stageIndex(c.stage)>=stageIndex('contract') && c.stage!=='closed_lost').length;
-  const lost = DB.filter(c=>c.stage==='closed_lost').length;
+  const won = base.filter(c=>stageIndex(c.stage)>=stageIndex('contract') && c.stage!=='closed_lost').length;
+  const lost = base.filter(c=>c.stage==='closed_lost').length;
   const rate = (won+lost)>0 ? Math.round(won/(won+lost)*100) : 0;
   const urgent = open.filter(c=>c.urgencyLevel==='高').length;
 
   // アラート集約
   const allAlerts = [];
-  DB.forEach(c=> alertsFor(c).forEach(a=> allAlerts.push({c,a})));
+  base.forEach(c=> alertsFor(c).forEach(a=> allAlerts.push({c,a})));
   allAlerts.sort((x,y)=> (x.a.lv==='red'?0:1)-(y.a.lv==='red'?0:1));
 
   const tile = (label,val,sub,col)=>`<div class="bg-white rounded-2xl border border-line p-4">
@@ -559,17 +719,18 @@ function openDetail(id){ openId = id; document.getElementById('detail').classLis
 function closeDetail(){ document.getElementById('detail').classList.add('hidden'); openId=null; render(); }
 document.getElementById('detail').addEventListener('click', e=>{ if(e.target.id==='detail') closeDetail(); });
 
-function field(id,key,value){ const c=getC(id); c[key]=value; upsert(c); renderDetail(); }
-function fieldNoRerender(id,key,value){ const c=getC(id); c[key]=value; upsert(c); }
-function domField(id,dkey,prop,value){ const c=getC(id); c.domains[dkey]=c.domains[dkey]||{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''}; c.domains[dkey][prop]=value; upsert(c); renderDetail(); }
+function field(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); renderDetail(); }
+function fieldNoRerender(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); }
+function domField(id,dkey,prop,value){ if(!canEditDomain(dkey)) return; const c=getC(id); c.domains[dkey]=c.domains[dkey]||{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''}; c.domains[dkey][prop]=value; upsert(c); savedFlash(); renderDetail(); }
 function addFollow(id){
   const c=getC(id);
   const type=document.getElementById('fh-type').value;
   const memo=document.getElementById('fh-memo').value.trim();
   if(!memo) return;
   c.followHistory=c.followHistory||[];
-  c.followHistory.unshift({date:todayISO(), type, memo});
-  upsert(c); renderDetail();
+  const who = isAdmin() ? '' : '【'+ROLE_DEFS[ROLE].label+'】';
+  c.followHistory.unshift({date:todayISO(), type, memo: who+memo});
+  upsert(c); savedFlash(); renderDetail();
 }
 
 function renderDetail(){
@@ -585,7 +746,7 @@ function renderDetail(){
   /* --- 商談ステッパー（大きめ・クリックで移動） --- */
   const stepper = OPEN_STAGES.map((s,i)=>{
     const done = !isLost && i < si, cur = !isLost && i===si;
-    return `<button onclick="field('${c.id}','stage','${s.key}')" title="${s.label}" class="flex flex-col items-center gap-1.5 shrink-0" style="min-width:72px">
+    return `<button ${canEditCore()?`onclick="field('${c.id}','stage','${s.key}')"`:'disabled'} title="${s.label}" class="flex flex-col items-center gap-1.5 shrink-0" style="min-width:72px">
       <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black transition-all" style="background:${cur?s.color:(done?'#DCF1E5':'#EEF1F4')};color:${cur?'#fff':(done?'#16794C':'#8A98A5')};${cur?'box-shadow:0 0 0 4px '+s.color+'33':''}">${done?'✓':i+1}</span>
       <span class="text-[10px] leading-tight text-center ${cur?'font-black':'text-sub'}">${s.label.replace('・','<br>')}</span>
     </button>`;
@@ -598,23 +759,21 @@ function renderDetail(){
     return `<div class="rounded-xl px-4 py-3 mb-2" style="background:${bg}"><p class="text-sm leading-relaxed"><span class="font-black" style="color:${col}">［${s.lv}］</span> ${esc(s.t)}</p></div>`;
   }).join('') : '<p class="text-sm text-sub">現時点の推奨アクションはありません。</p>';
 
-  /* --- 6分野（1行1分野・進捗バーつき） --- */
+  /* --- 6分野（1行1分野・進捗バーつき・役割で編集可否） --- */
+  const ro = (labelTxt, val) => `<div><p class="text-xs text-sub font-bold">${labelTxt}</p><p class="mt-1 text-[15px] px-2.5 py-2 rounded-lg bg-paper">${val?esc(val):'—'}</p></div>`;
   const domainRows = DOMAINS.map(dm=>{
     const d = c.domains?.[dm.key] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
     const ph = domainPhase(dm.key, d);
+    const editable = canEditDomain(dm.key);
+    const mine = !isAdmin() && roleDomain()===dm.key;
     const needSel = Object.keys(NEEDS).map(k=>`<option value="${k}" ${d.need===k?'selected':''}>${NEEDS[k].label}</option>`).join('');
     const stageSel = dm.stages.map(s=>`<option ${d.stage===s?'selected':''}>${s}</option>`).join('');
     const stIdx = dm.stages.indexOf(d.stage);
     const stPct = d.need==='required' && stIdx>0 ? Math.round(stIdx/(dm.stages.length-1)*100) : 0;
-    const dim = (d.need==='not_required') ? 'opacity-60' : '';
-    return `<div class="bg-white rounded-xl border-l-4 border border-line p-4 ${dim}" style="border-left-color:${dm.color}">
-      <div class="flex items-center gap-2 flex-wrap mb-3">
-        <p class="font-black text-[15px]">${dm.label}</p>
-        <span class="text-xs text-sub">${dm.role}</span>
-        <span class="ml-auto">${badge(ph.label, ph.key==='active'||ph.key==='done'?'#fff':ph.color, ph.key==='active'?'#2E9E68':ph.key==='done'?'#16794C':ph.bg)}</span>
-      </div>
-      ${d.need==='required'?`<div class="h-1.5 bg-paper rounded-full overflow-hidden mb-3"><div class="h-1.5 rounded-full" style="width:${stPct}%;background:${dm.color}"></div></div>`:''}
-      <div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+    const dim = (d.need==='not_required') ? 'opacity-70' : '';
+    let controls;
+    if(editable){
+      controls = `<div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
         <label class="text-xs text-sub font-bold">要否
           <select onchange="domField('${c.id}','${dm.key}','need',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">${needSel}</select>
         </label>
@@ -631,7 +790,23 @@ function renderDetail(){
         <label class="text-xs text-sub font-bold">次アクション
           <input value="${esc(d.next||'')}" onchange="domField('${c.id}','${dm.key}','next',this.value)" placeholder="次にやること" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
         </label>`}
+      </div>`;
+    } else {
+      controls = `<div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+        ${ro('要否', NEEDS[d.need]?.label)}
+        ${d.need==='not_required' ? `<div class="col-span-1 xl:col-span-3">${ro('不要の理由', d.reason)}</div>`
+          : `${ro('進捗ステージ', d.stage)}${ro('担当', d.assignee)}${ro('次アクション', d.next)}`}
+      </div>`;
+    }
+    return `<div class="bg-white rounded-xl border-l-4 border p-4 ${dim}" style="border-left-color:${dm.color};${mine?'border-color:'+dm.color+';box-shadow:0 0 0 2px '+dm.color+'33':'border-color:#E2E9E3'}">
+      <div class="flex items-center gap-2 flex-wrap mb-3">
+        <p class="font-black text-[15px]">${dm.label}</p>
+        <span class="text-xs text-sub">${dm.role}</span>
+        ${mine?'<span class="text-[10px] font-black text-white px-2 py-0.5 rounded-full" style="background:'+dm.color+'">あなたの担当</span>':(editable?'':'<span class="text-[10px] font-bold text-sub px-2 py-0.5 rounded-full bg-paper">閲覧のみ</span>')}
+        <span class="ml-auto">${badge(ph.label, ph.key==='active'||ph.key==='done'?'#fff':ph.color, ph.key==='active'?'#2E9E68':ph.key==='done'?'#16794C':ph.bg)}</span>
       </div>
+      ${d.need==='required'?`<div class="h-1.5 bg-paper rounded-full overflow-hidden mb-3"><div class="h-1.5 rounded-full" style="width:${stPct}%;background:${dm.color}"></div></div>`:''}
+      ${controls}
     </div>`;
   }).join('');
 
@@ -661,10 +836,15 @@ function renderDetail(){
         </div>
         <p class="text-xs text-sub">${esc(c.id)}・${esc(c.city||'')}</p>
       </div>
-      ${c.phone?`<a href="tel:${esc(c.phone)}" class="hidden sm:flex items-center gap-1.5 border border-grn text-grn font-bold text-sm rounded-full px-4 py-2 hover:bg-grnL shrink-0 ml-auto">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2.1a1 1 0 01.98.8l.72 3.61a1 1 0 01-.27.9L7.2 9.6a12.05 12.05 0 007.2 7.2l1.29-2.33a1 1 0 01.9-.27l3.61.72a1 1 0 01.8.98V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z"/></svg>
-        ${esc(c.phone)}</a>`:'<span class="ml-auto"></span>'}
-      <button onclick="delCustomer('${c.id}')" class="text-xs text-red border border-red/40 rounded-full px-3 py-2 hover:bg-red/5 shrink-0">削除</button>
+      <div class="ml-auto flex items-center gap-1.5 shrink-0">
+        ${c.phone?`<a href="tel:${esc(c.phone)}" class="hidden sm:flex items-center gap-1.5 border border-grn text-grn font-bold text-sm rounded-full px-4 py-2 hover:bg-grnL">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2.1a1 1 0 01.98.8l.72 3.61a1 1 0 01-.27.9L7.2 9.6a12.05 12.05 0 007.2 7.2l1.29-2.33a1 1 0 01.9-.27l3.61.72a1 1 0 01.8.98V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z"/></svg>
+          ${esc(c.phone)}</a>`:''}
+        ${canEditCore()?`<button onclick="openShareModal('${c.id}')" class="flex items-center gap-1.5 bg-grn text-white font-bold text-sm rounded-full px-4 py-2 hover:opacity-90">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>
+          提携先へ送る</button>
+        <button onclick="delCustomer('${c.id}')" class="text-xs text-red border border-red/40 rounded-full px-3 py-2 hover:bg-red/5">削除</button>`:''}
+      </div>
     </div>
   </div>
 
@@ -676,7 +856,9 @@ function renderDetail(){
         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.3 3.4a2 2 0 001.74 2.85h15.12a2 2 0 001.74-2.85L13.74 4.94a2 2 0 00-3.48 0L2.7 16.15zM12 17h.01"/></svg>
         チーム共有の注意点（全担当がここを最初に見る）
       </p>
-      <textarea rows="2" onchange="fieldNoRerender('${c.id}','teamNote',this.value); render();" placeholder="例）ご近所トラブル歴あり・近隣挨拶は丁寧に／連絡は夕方以降が繋がりやすい／キーマンは長男様 など" class="w-full bg-white border rounded-xl px-3.5 py-2.5 text-[15px] leading-relaxed" style="border-color:#F5A52466">${esc(c.teamNote||'')}</textarea>
+      ${canEditCore()
+        ? `<textarea rows="2" onchange="fieldNoRerender('${c.id}','teamNote',this.value); render();" placeholder="例）ご近所トラブル歴あり・近隣挨拶は丁寧に／連絡は夕方以降が繋がりやすい／キーマンは長男様 など" class="w-full bg-white border rounded-xl px-3.5 py-2.5 text-[15px] leading-relaxed" style="border-color:#F5A52466">${esc(c.teamNote||'')}</textarea>`
+        : `<p class="bg-white rounded-xl px-3.5 py-2.5 text-[15px] leading-relaxed" style="border:1px solid #F5A52466">${c.teamNote?esc(c.teamNote):'（注意点の記載はありません）'}</p>`}
     </div>
 
     <div class="grid xl:grid-cols-5 gap-4">
@@ -687,7 +869,7 @@ function renderDetail(){
         <div class="bg-white rounded-2xl border border-line p-5">
           <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
             <p class="font-black text-sm text-sub">解体の商談ステージ</p>
-            <select onchange="field('${c.id}','stage',this.value)" class="border border-line rounded-lg px-3 py-2 text-sm font-bold">${stageOpts}</select>
+            ${canEditCore()?`<select onchange="field('${c.id}','stage',this.value)" class="border border-line rounded-lg px-3 py-2 text-sm font-bold">${stageOpts}</select>`:''}
           </div>
           <div class="flex items-end gap-3 mb-2">
             <p class="font-black text-2xl" style="color:${sMeta.color}">${sMeta.label}</p>
@@ -695,11 +877,15 @@ function renderDetail(){
           </div>
           <div class="h-2.5 bg-paper rounded-full overflow-hidden mb-5"><div class="h-2.5 rounded-full transition-all" style="width:${isLost?100:prog}%;background:${sMeta.color}"></div></div>
           <div class="flex items-start overflow-x-auto pb-2">${stepper}</div>
-          <div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line">
+          ${canEditCore()?`<div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line">
             <label class="text-xs text-sub font-bold">自社担当<input value="${esc(c.assignee||'')}" onchange="fieldNoRerender('${c.id}','assignee',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">次アクション<input value="${esc(c.nextAction||'')}" onchange="fieldNoRerender('${c.id}','nextAction',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">次アクション日<input type="date" value="${esc(c.nextActionDate||'')}" onchange="field('${c.id}','nextActionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
-          </div>
+          </div>`:`<div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line text-[15px]">
+            <div><p class="text-xs text-sub font-bold">自社担当</p><p class="mt-1">${esc(c.assignee||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">次アクション</p><p class="mt-1">${esc(c.nextAction||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">次アクション日</p><p class="mt-1">${esc(c.nextActionDate||'—')}</p></div>
+          </div>`}
         </div>
 
         <!-- 次の戦略 -->
@@ -741,7 +927,7 @@ function renderDetail(){
             <p class="text-[10px] text-sub mb-0.5">解体費の概算レンジ</p>
             <p class="font-black text-lg text-grn">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'万〜'+c.estimateRangeHigh+'万'):'—'} <span class="text-xs text-sub font-bold">／ 緊急度 ${c.urgencyLevel||'—'}${c.urgencyScore?('（'+c.urgencyScore+'点）'):''}</span></p>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
+          ${canEditCore()?`<div class="grid grid-cols-2 gap-2.5">
             <label class="text-xs text-sub font-bold">確定見積（万円）<input type="number" value="${c.finalEstimate??''}" onchange="fieldNoRerender('${c.id}','finalEstimate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">補助金該当
               <select onchange="fieldNoRerender('${c.id}','subsidyApplicable',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
@@ -749,7 +935,12 @@ function renderDetail(){
               </select></label>
             <label class="text-xs text-sub font-bold">解体完了日<span class="font-normal">（滅失登記の起点）</span><input type="date" value="${esc(c.demolitionDate||'')}" onchange="field('${c.id}','demolitionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">相続開始日<span class="font-normal">（控除の起算）</span><input type="date" value="${esc(c.inheritanceStartDate||'')}" onchange="field('${c.id}','inheritanceStartDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
-          </div>
+          </div>`:`<div class="grid grid-cols-2 gap-2.5 text-[15px]">
+            <div><p class="text-xs text-sub font-bold">確定見積（万円）</p><p class="mt-1">${c.finalEstimate??'—'}</p></div>
+            <div><p class="text-xs text-sub font-bold">補助金該当</p><p class="mt-1">${esc(c.subsidyApplicable||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">解体完了日</p><p class="mt-1">${esc(c.demolitionDate||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">相続開始日</p><p class="mt-1">${esc(c.inheritanceStartDate||'—')}</p></div>
+          </div>`}
         </div>
 
         <!-- フォロー履歴 -->
@@ -763,19 +954,21 @@ function renderDetail(){
             <button onclick="addFollow('${c.id}')" class="bg-grn text-white text-sm font-bold px-4 rounded-lg shrink-0">追加</button>
           </div>
           <div class="max-h-64 overflow-y-auto mb-3">${follow}</div>
-          <label class="text-xs text-sub font-bold">補足メモ<textarea onchange="fieldNoRerender('${c.id}','notes',this.value)" rows="3" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-1 leading-relaxed">${esc(c.notes||'')}</textarea></label>
+          ${canEditCore()
+            ? `<label class="text-xs text-sub font-bold">補足メモ<textarea onchange="fieldNoRerender('${c.id}','notes',this.value)" rows="3" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-1 leading-relaxed">${esc(c.notes||'')}</textarea></label>`
+            : (c.notes?`<div><p class="text-xs text-sub font-bold">補足メモ</p><p class="text-sm mt-1 leading-relaxed bg-paper rounded-lg px-3 py-2">${esc(c.notes)}</p></div>`:'')}
         </div>
       </div>
     </div>
   </div>`;
 }
 
-function delCustomer(id){ if(!confirm('この案件を削除しますか？')) return; DB=DB.filter(c=>c.id!==id); save(); closeDetail(); }
+function delCustomer(id){ if(!canEditCore()) return; if(!confirm('この案件を削除しますか？')) return; DB=DB.filter(c=>c.id!==id); save(); closeDetail(); }
 
 /* ============================================================
    新規案件
    ============================================================ */
-function openNew(){ document.getElementById('newModal').classList.remove('hidden'); renderNew(); }
+function openNew(){ if(!canEditCore()) return; document.getElementById('newModal').classList.remove('hidden'); renderNew(); }
 function closeNew(){ document.getElementById('newModal').classList.add('hidden'); }
 document.getElementById('newModal').addEventListener('click', e=>{ if(e.target.id==='newModal') closeNew(); });
 
@@ -960,8 +1153,11 @@ function loadSeed(force){
 /* ============================================================
    起動
    ============================================================ */
+// 役割セレクタを生成
+document.getElementById('roleSel').innerHTML = Object.keys(ROLE_DEFS).map(k=>`<option value="${k}">${ROLE_DEFS[k].label}</option>`).join('');
 load();
-setView('inbox');
+applyRoleUI();
+setView(isAdmin() ? 'inbox' : 'partner');
 </script>
 </body>
 </html>

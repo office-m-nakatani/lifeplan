@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空き家サポート 顧客管理（社内用）｜香川あんしん空き家サポート</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      ink:'#243B33', sub:'#5F7268', line:'#E2E9E3', paper:'#F5F8F5', card:'#FFFFFF',
+      grn:'#2E9E68', grnL:'#E7F6EC', org:'#F0862B', orgL:'#FFF1DE',
+      sky:'#4FA6D5', skyL:'#EAF6FC', vio:'#8B5CF6', red:'#E5484D', amber:'#F5A524'
+    },
+    fontFamily: { sans:['"Noto Sans JP"','sans-serif'] }
+  } }
+}
+</script>
+<style>
+  body { font-family:'Noto Sans JP',sans-serif; color:#243B33; background:#F5F8F5; }
+  .kanban::-webkit-scrollbar{ height:10px } .kanban::-webkit-scrollbar-thumb{ background:#CBD9CE; border-radius:9999px }
+  [x-cloak]{ display:none }
+  .tabbtn.active{ background:#2E9E68; color:#fff }
+  .softshadow{ box-shadow:0 6px 20px -10px rgba(36,59,51,.25) }
+  select,input,textarea{ background:#fff }
+</style>
+</head>
+<body class="text-ink">
+
+<!-- ===== ヘッダー ===== -->
+<header class="sticky top-0 z-40 bg-white border-b border-line">
+  <div class="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center gap-3">
+    <div class="flex items-center gap-2 shrink-0">
+      <svg class="w-7 h-7 text-grn" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
+      <div class="leading-tight">
+        <p class="font-black text-sm sm:text-base">空き家サポート 顧客管理</p>
+        <p class="text-[10px] text-sub -mt-0.5">社内用・チーム連携ボード</p>
+      </div>
+    </div>
+    <nav id="tabs" class="flex items-center gap-1 ml-auto text-xs sm:text-sm font-bold overflow-x-auto">
+      <button data-view="inbox"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
+      <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">解体パイプライン</button>
+      <button data-view="partner"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">分野別ボード</button>
+      <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
+    </nav>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="openNew()" class="bg-grn text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-full hover:opacity-90 whitespace-nowrap">＋ 新規案件</button>
+      <div class="relative">
+        <button onclick="toggleMenu()" class="w-9 h-9 rounded-full border border-line flex items-center justify-center hover:bg-paper" title="データ">
+          <svg class="w-5 h-5 text-sub" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6h.01M12 12h.01M12 18h.01"/></svg>
+        </button>
+        <div id="menu" class="hidden absolute right-0 mt-1 w-56 bg-white border border-line rounded-xl softshadow p-1.5 text-sm z-50">
+          <button onclick="exportJSON()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONで書き出し（バックアップ/共有）</button>
+          <button onclick="document.getElementById('importFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONを読み込み（統合）</button>
+          <button onclick="loadSeed(true)" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">デモ用サンプルを再読み込み</button>
+          <button onclick="wipe()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper text-red">全データを消去</button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept="application/json" class="hidden" onchange="importJSON(event)">
+  </div>
+</header>
+
+<main id="app" class="max-w-[1400px] mx-auto px-3 sm:px-5 py-5"></main>
+
+<!-- ===== 詳細オーバーレイ ===== -->
+<div id="detail" class="hidden fixed inset-0 z-50 bg-paper overflow-y-auto">
+  <div id="detailBody"></div>
+</div>
+
+<!-- ===== 新規/取り込みモーダル ===== -->
+<div id="newModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-2xl softshadow my-4">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-line sticky top-0 bg-white rounded-t-2xl">
+      <p class="font-black">新規案件を追加</p>
+      <button onclick="closeNew()" class="text-sub hover:text-ink text-xl leading-none">×</button>
+    </div>
+    <div id="newBody" class="p-5"></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white text-sm font-bold px-5 py-3 rounded-full softshadow"></div>
+
+<script>
+/* ============================================================
+   設定（統合仕様より）
+   ============================================================ */
+const STAGES = [
+  { key:'lead',        label:'反響・リード',   color:'#6B7280' },
+  { key:'contact',     label:'初回接触',       color:'#0EA5E9' },
+  { key:'survey',      label:'現地調査',       color:'#14B8A6' },
+  { key:'estimate',    label:'見積提出',       color:'#F59E0B' },
+  { key:'negotiation', label:'商談・条件調整', color:'#F97316' },
+  { key:'contract',    label:'契約',           color:'#8B5CF6' },
+  { key:'pre_work',    label:'着工前準備',     color:'#6366F1' },
+  { key:'construction',label:'施工中',         color:'#3B82F6' },
+  { key:'completed',   label:'完工・引渡',     color:'#10B981' },
+  { key:'aftercare',   label:'アフター・横展開',color:'#22C55E' },
+  { key:'closed_lost', label:'失注・長期保留', color:'#DC2626' },
+];
+const stageIndex = k => STAGES.findIndex(s => s.key === k);
+const stageMeta  = k => STAGES.find(s => s.key === k) || STAGES[0];
+const OPEN_STAGES = STAGES.filter(s => s.key !== 'closed_lost');
+
+/* 6分野（解体は背骨なので別扱い。順不同で動く支援ドメイン） */
+const DOMAINS = [
+  { key:'inheritance_reg', label:'相続登記', role:'司法書士', color:'#2E9E68',
+    stages:['未判定','名義確認','相続人確定','遺産分割協議','相続登記申請','完了'] },
+  { key:'demolition_reg',  label:'滅失登記', role:'土地家屋調査士', color:'#0EA5E9',
+    stages:['未判定','解体完了待ち','書類交付','申請（完工＋1ヶ月）','完了'] },
+  { key:'tax',             label:'税務', role:'税理士', color:'#F0862B',
+    stages:['未判定','課税論点の洗い出し','3000万控除の判定','固定資産税の試算','申告サポート','完了'] },
+  { key:'realestate',      label:'不動産', role:'不動産会社', color:'#8B5CF6',
+    stages:['未判定','査定','売り方決定','媒介契約','売買契約','決済・完了'] },
+  { key:'construction_ext',label:'エクステリア・造成・新築', role:'自社/工務店', color:'#4FA6D5',
+    stages:['未判定','活用意向・再建築可否','プラン提示','見積・設計','契約','着手・完了'] },
+  { key:'fp',              label:'資金・補助金（FP）', role:'FP', color:'#F59E0B',
+    stages:['未判定','資金ヒアリング','補助金の該当確認','資金計画','資金確保完了'] },
+];
+const domainMeta = k => DOMAINS.find(d => d.key === k);
+
+/* 分野ステータス（未要件どおり：不要は理由を残す／必要はスタンバイ〜対応中を派生） */
+const NEEDS = {
+  undetermined:{ label:'未判定', color:'#8A98A5', bg:'#EEF1F4' },
+  required:    { label:'必要',   color:'#2E9E68', bg:'#E7F6EC' },
+  not_required:{ label:'不要',   color:'#8A98A5', bg:'#F1F4F2' },
+  hold:        { label:'保留',   color:'#F0862B', bg:'#FFF1DE' },
+};
+/* 必要ドメインの「今どの局面か」を派生（対応中／完了のみのシンプル表示） */
+function domainPhase(dkey, d){
+  if(!d) return { key:'undetermined', label:'未判定', color:'#8A98A5', bg:'#EEF1F4' };
+  if(d.need==='not_required') return { key:'not_required', label:'不要', color:'#8A98A5', bg:'#F1F4F2' };
+  if(d.need==='hold')         return { key:'hold', label:'保留', color:'#F0862B', bg:'#FFF1DE' };
+  if(d.need==='undetermined') return { key:'undetermined', label:'未判定', color:'#8A98A5', bg:'#EEF1F4' };
+  // required
+  const meta = domainMeta(dkey);
+  const last = meta.stages[meta.stages.length-1];
+  if(d.stage === last) return { key:'done', label:'完了', color:'#16794C', bg:'#DCF1E5' };
+  return { key:'active', label:'対応中', color:'#2E9E68', bg:'#E7F6EC' };
+}
+
+/* 表示ラベル */
+const L = {
+  source:{}, // free
+  structure:{ wood:'木造', lightSteel:'軽量鉄骨', heavySteel:'重量鉄骨', rc:'RC造', other:'その他' },
+  floors:{ '1f':'平屋', '2f':'2階建て', '3f':'3階建て以上' },
+  era:{ new:'2006年以降', mid:'1990〜2005年', old:'1989年以前', unknown:'不明' },
+  road:{ wide:'広い(4m以上)', mid:'軽なら通れる(2〜4m)', narrow:'狭い(2m未満)', unknown:'不明' },
+  garden:{ none:'外構ほぼなし', few:'少なめ', normal:'一般的', many:'多め' },
+  zanchi:{ empty:'ほぼ空', half:'半分ほど', full:'満載' },
+  owner:{ self:'ご本人', deceased:'故人のまま', unknown:'不明' },
+  exit:{ sell:'売却', use:'活用', undecided:'未定' },
+  urgencyLevel:{ '高':'高', '中':'中', '低':'低' },
+};
+const lab = (grp,k) => (L[grp] && L[grp][k]) || k || '—';
+const urgColor = lv => lv==='高' ? '#E5484D' : lv==='中' ? '#F0862B' : '#2E9E68';
+
+/* ============================================================
+   ストレージ
+   ============================================================ */
+const KEY = 'akiya_crm_v1';
+let DB = [];
+function save(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
+function load(){
+  try { DB = JSON.parse(localStorage.getItem(KEY)) || []; }
+  catch(e){ DB = []; }
+  if(!DB.length) loadSeed(false);
+}
+function getC(id){ return DB.find(c => c.id === id); }
+function upsert(c){ const i = DB.findIndex(x => x.id===c.id); if(i>=0) DB[i]=c; else DB.push(c); save(); }
+
+/* ============================================================
+   診断データ → 分野の自動フラグ（“見える化して次の出番が分かる”の核）
+   ============================================================ */
+function deriveDomains(c){
+  const d = c.domains || {};
+  const set = (k,v) => d[k] = Object.assign({ need:'undetermined', stage:'未判定', assignee:'', next:'', reason:'' }, d[k], v);
+
+  // 相続登記（司法書士）
+  if(c.owner==='deceased') set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next:'戸籍収集・相続人確定' });
+  else if(c.owner==='unknown') set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next:'登記簿取得で名義確定' });
+  else set('inheritance_reg',{ need:'not_required', reason:'名義がご本人のため登記不要' });
+
+  // 滅失登記（土地家屋調査士）＝建物ありは必ず後工程で発生
+  set('demolition_reg',{ need:'required', stage:d.demolition_reg?.stage||'解体完了待ち', next:'解体完了を待って申請（完工＋1ヶ月）' });
+
+  // 税務（税理士）
+  if(c.exit==='sell' || c.owner==='deceased') set('tax',{ need:'required', stage:d.tax?.stage||'課税論点の洗い出し', next:'3000万控除の可否・固定資産税の確認' });
+  else set('tax',{ need:'undetermined', next:'固定資産税（住宅用地特例の解除）は後続で確認' });
+
+  // 不動産
+  if(c.exit==='sell') set('realestate',{ need:'required', stage:d.realestate?.stage||'査定', next:'現況／更地の両建て査定' });
+  else if(c.exit==='use') set('realestate',{ need:'not_required', reason:'活用予定のため売却不要' });
+  else set('realestate',{ need:'undetermined', next:'出口未定。査定を見て判断' });
+
+  // エクステリア・造成・新築
+  if(c.exit==='use') set('construction_ext',{ need:'required', stage:d.construction_ext?.stage||'活用意向・再建築可否', next:'活用プランと再建築可否の確認' });
+  else if(c.exit==='sell') set('construction_ext',{ need:'not_required', reason:'更地渡し・売却のため活用なし' });
+  else set('construction_ext',{ need:'undetermined', next: c.garden==='many' ? '外構多め＝再整備需要のシグナル' : '' });
+
+  // FP（資金・補助金）
+  const high = (Number(c.estimateRangeLow)||0) >= 150 || c.urgencyLevel==='高';
+  if(high) set('fp',{ need:'required', stage:d.fp?.stage||'資金ヒアリング', next:'解体費と自己資金・補助金の確認' });
+  else set('fp',{ need:'undetermined', next:'' });
+
+  c.domains = d;
+  return c;
+}
+
+/* ============================================================
+   次の戦略エンジン（案件→推奨アクション配列）
+   ============================================================ */
+function strategyFor(c){
+  const out = [];
+  const si = stageIndex(c.stage);
+  const contacted = (c.followHistory||[]).some(h => h.type && h.type!=='自動起票');
+  const pastNext = c.nextActionDate && c.nextActionDate < todayISO();
+
+  if(c.stage==='lead' && c.urgencyLevel==='高' && !contacted)
+    out.push({lv:'高', t:'当日中（緊急度「高」は4時間以内）に一次架電。不通ならSMS＋メールで現地調査の候補日を提示。相見積が始まる前に押さえる。'});
+  if(c.owner==='deceased' && si < stageIndex('contract'))
+    out.push({lv:'高', t:'名義が故人のまま。相続登記（司法書士）を前工程で先行し、名義が片付く／相続人全員の同意が取れるまで契約・着工はブロック。現地調査に司法書士を同席。'});
+  if(c.owner==='unknown')
+    out.push({lv:'高', t:'名義が不明。まず司法書士が登記簿を取得して名義を確定。確定まで契約は保留。'});
+  if(c.stage==='survey')
+    out.push({lv:'高', t:'現地調査の結果（地中埋設物・石綿・私道掘削承諾・残置物）を反映した「確定レンジ見積」へ更新。診断概算からの差分理由を明示。'});
+  if(c.exit==='sell')
+    out.push({lv:'高', t:'即解体に走らず、不動産査定（現況／更地）と税理士の3000万円控除の可否判定を並行で起票。更地渡しか古家付きかで自社解体の要否を確定。'});
+  if(c.exit==='sell' && c.era==='old' && c.owner==='deceased')
+    out.push({lv:'高', t:'被相続人居住用財産3000万円特別控除の本命。相続開始から3年目の年末を逆算し、相続登記→解体→滅失→売買のクリティカルパスを設定。実建築年（1981/5/31以前か）を現地確認のうえ税理士へ。'});
+  if(c.exit==='use')
+    out.push({lv:'中', t:'エクステリア／造成／新築を起票。解体〜造成を同一重機・仮設で連結受注し原価圧縮。着手前に再建築可否（接道2m・セットバック・用途地域・調整区域）を確認。'});
+  if((Number(c.estimateRangeLow)||0) >= 150 && c.urgencyLevel==='高')
+    out.push({lv:'中', t:'資金ネックの典型パターン。FPを起票し、空き家解体ローン＋市町補助金の該当を着工前に確認（交付決定前の着工は対象外）。'});
+  if((c.stage==='estimate'||c.stage==='negotiation') && pastNext)
+    out.push({lv:'中', t:'見積提出後にサイレントの懸念。値引き合戦ではなく工期確約・登記/補助金ワンストップ・産廃適正処理で追客。'});
+  if(c.stage==='completed')
+    out.push({lv:'高', t:'完工。滅失登記（土地家屋調査士）を完工＋1ヶ月以内で起票、税理士へ固定資産税（住宅用地特例の解除）を通知、出口（売却／活用）へ引継ぎ。3つ同時に発火。'});
+  if(c.subsidyApplicable==='該当あり')
+    out.push({lv:'中', t:'補助金は交付決定後に着工する工程で組む（着工後は申請不可の自治体が多い）。着工前準備に「補助金申請済？」ゲートを立てる。'});
+
+  const order = {'高':0,'中':1,'低':2};
+  return out.sort((a,b)=> order[a.lv]-order[b.lv]);
+}
+
+/* ============================================================
+   フォロー漏れアラート
+   ============================================================ */
+function daysSince(iso){ if(!iso) return null; return Math.floor((Date.now() - new Date(iso+'T00:00:00').getTime())/86400000); }
+function alertsFor(c){
+  const a = [];
+  const open = c.stage !== 'closed_lost';
+  const si = stageIndex(c.stage);
+  const contacted = (c.followHistory||[]).some(h => h.type && h.type!=='自動起票');
+
+  if(c.stage==='lead' && open){
+    const d = daysSince(c.createdAt);
+    if(c.urgencyLevel==='高' && !contacted && d!==null && d>=1) a.push({lv:'red', t:'緊急度「高」の新規リードが未接触のまま放置'});
+    else if(!contacted && d!==null && d>=1) a.push({lv:'amber', t:'新規リードが24時間以上未接触'});
+  }
+  if(open && c.nextActionDate && c.nextActionDate < todayISO())
+    a.push({lv:'amber', t:'次アクション日を超過（'+c.nextActionDate+'）'});
+  if((c.owner==='deceased'||c.owner==='unknown') && si>=stageIndex('contract') && c.domains?.inheritance_reg?.stage!=='完了')
+    a.push({lv:'red', t:'名義が未解決のまま契約以降へ進行（着工不可ブロック）'});
+  if((c.stage==='completed'||c.stage==='aftercare') && c.demolitionDate){
+    const d = daysSince(c.demolitionDate);
+    if(c.domains?.demolition_reg?.stage!=='完了'){
+      if(d!==null && d>=30) a.push({lv:'red', t:'滅失登記が期限（完工＋1ヶ月）を超過'});
+      else if(d!==null && d>=20) a.push({lv:'amber', t:'滅失登記の期限が接近（完工＋1ヶ月）'});
+    }
+  }
+  if(c.exit==='sell' && c.owner==='deceased' && c.inheritanceStartDate){
+    const y = new Date(c.inheritanceStartDate+'T00:00:00').getFullYear();
+    const deadline = new Date(y+3, 11, 31);
+    const left = Math.ceil((deadline - Date.now())/86400000);
+    if(left<=30) a.push({lv:'red', t:'3000万円控除の期限が残り'+left+'日'});
+    else if(left<=90) a.push({lv:'amber', t:'3000万円控除の期限が残り'+left+'日'});
+  }
+  // 必要分野が未着手
+  DOMAINS.forEach(dm => {
+    const d = c.domains?.[dm.key];
+    if(open && d && d.need==='required' && (!d.stage || d.stage==='未判定')){
+      const ds = daysSince(c.createdAt);
+      if(ds!==null && ds>=7) a.push({lv:'amber', t:dm.label+'（'+dm.role+'）が必要判定のまま未着手'});
+    }
+  });
+  // 出口ハンドオフ漏れ
+  if(open && c.exit==='sell' && (c.domains?.realestate?.need==='undetermined' || c.domains?.tax?.need==='undetermined'))
+    a.push({lv:'amber', t:'売却なのに不動産／税理士が未起票'});
+  return a;
+}
+
+/* ==== LP（60秒診断）からの自動読み取り ==== */
+function inboxLeads(){ try { return JSON.parse(localStorage.getItem('akiya_crm_inbox')) || []; } catch(e){ return []; } }
+function bannerHTML(){
+  const q = inboxLeads();
+  if(!q.length) return '';
+  const names = q.map(l => (l.name ? esc(l.name)+'様' : '診断のみ・匿名') + (l.city ? '／'+esc(l.city) : '')).join('、');
+  return `<div class="mb-4 rounded-2xl border-2 p-4 flex flex-wrap items-center gap-3" style="border-color:#2E9E68;background:#E7F6EC">
+    <svg class="w-8 h-8 text-grn shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.9c-1.2 0-2.15.97-2.15 2.16v12.18c0 1.2.96 2.16 2.15 2.16h10.2c1.2 0 2.15-.97 2.15-2.16V5.91c0-1.2-.96-2.16-2.15-2.16H15M9 3.75V6h6V3.75M9 3.75a1.5 1.5 0 013 0m3 0a1.5 1.5 0 00-3 0m-4 8.25l2.5 2.5 5-5"/></svg>
+    <div class="flex-1 min-w-[220px]">
+      <p class="font-black text-sm">LPの60秒診断から新着データ <span class="text-grn">${q.length}件</span></p>
+      <p class="text-xs text-sub mt-0.5">${names}</p>
+    </div>
+    <button onclick="importLeads()" class="bg-grn text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-90">すべて取り込む</button>
+    <button onclick="discardLeads()" class="text-xs text-sub underline">破棄</button>
+  </div>`;
+}
+function mapLead(l){
+  const c = {
+    id:'AK-'+new Date().getFullYear()+'-'+String(l.ts||Date.now()).slice(-5),
+    createdAt: l.date || todayISO(),
+    source: l.kind==='form' ? '問い合わせフォーム' : '60秒診断',
+    name:l.name||'', phone:l.phone||'', email:l.email||'', city:l.city||'',
+    desiredConsult:(l.consult||'').slice(0,400), assignee:'', teamNote:'',
+    stage:'lead', nextAction:'一次架電・ヒアリング', nextActionDate: todayISO(),
+    structure:l.structure||'wood', tsubo:Number(l.tsubo)||null, floors:l.floors||'2f',
+    era:l.era||'unknown', road:l.road||'unknown', garden:l.garden||'normal', zanchi:l.zanchi||'half',
+    owner:l.owner||'self', exit:l.exit||'undecided',
+    urgencyLevel:l.urgencyLevel||'中', urgencyScore:l.urgencyScore||null,
+    estimateRangeLow: l.total ? Math.round(l.total*0.85/10000) : null,
+    estimateRangeHigh: l.total ? Math.round(l.total*1.15/10000) : null,
+    finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
+    demolitionDate:null, inheritanceStartDate:null, domains:{},
+    followHistory:[{date:todayISO(), type:'メモ', memo:'LP診断からの自動読み取りで起票'}], lostReason:null, notes:''
+  };
+  deriveDomains(c);
+  return c;
+}
+function importLeads(){
+  const q = inboxLeads(); if(!q.length) return;
+  q.forEach(l => upsert(mapLead(l)));
+  localStorage.removeItem('akiya_crm_inbox');
+  render(); toast(q.length+'件を自動取り込みしました');
+}
+function discardLeads(){
+  if(!confirm('LPからの新着データを破棄しますか？')) return;
+  localStorage.removeItem('akiya_crm_inbox'); render();
+}
+
+/* ============================================================
+   ルーティング / 描画
+   ============================================================ */
+let VIEW = 'inbox';
+function setView(v){ VIEW = v; document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.view===v)); render(); }
+document.getElementById('tabs').addEventListener('click', e => { const b=e.target.closest('.tabbtn'); if(b) setView(b.dataset.view); });
+
+function render(){
+  const app = document.getElementById('app');
+  let html = '';
+  if(VIEW==='inbox') html = renderInbox();
+  else if(VIEW==='kanban') html = renderKanban();
+  else if(VIEW==='partner') html = renderPartner();
+  else if(VIEW==='dashboard') html = renderDashboard();
+  app.innerHTML = bannerHTML() + html;
+}
+
+function badge(text, color, bg){ return `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full" style="color:${color};background:${bg}">${text}</span>`; }
+function domainDots(c){
+  return DOMAINS.map(dm=>{
+    const ph = domainPhase(dm.key, c.domains?.[dm.key]);
+    const on = ['required','active','standby','done'].includes(ph.key) || (c.domains?.[dm.key]?.need==='required');
+    const col = ph.key==='not_required' ? '#D6DDD7' : (c.domains?.[dm.key]?.need==='required' ? dm.color : (ph.key==='hold' ? '#F0862B' : '#D6DDD7'));
+    return `<span title="${dm.label}：${ph.label}" class="w-2.5 h-2.5 rounded-full inline-block" style="background:${col}"></span>`;
+  }).join('');
+}
+function alertPip(c){
+  const a = alertsFor(c);
+  if(!a.length) return '';
+  const red = a.some(x=>x.lv==='red');
+  return `<span class="text-[10px] font-black px-1.5 py-0.5 rounded-full" style="color:#fff;background:${red?'#E5484D':'#F5A524'}">${a.length}</span>`;
+}
+
+/* ---- 受信リード（トリアージ） ---- */
+function renderInbox(){
+  const leads = DB.filter(c=>c.stage==='lead').sort((a,b)=> (b.urgencyScore||0)-(a.urgencyScore||0));
+  const rows = leads.map(c=>{
+    const al = alertsFor(c);
+    return `<tr class="border-t border-line hover:bg-paper cursor-pointer" onclick="openDetail('${c.id}')">
+      <td class="px-3 py-2.5"><div class="font-bold">${esc(c.name||'（無名）')}</div><div class="text-[11px] text-sub">${esc(c.city||'')}・${lab('source',c.source)||esc(c.source||'')}</div></td>
+      <td class="px-3 py-2.5">${badge('緊急度 '+(c.urgencyLevel||'—'), '#fff', urgColor(c.urgencyLevel))}</td>
+      <td class="px-3 py-2.5 whitespace-nowrap">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):'—'}</td>
+      <td class="px-3 py-2.5">${lab('owner',c.owner)} / 出口:${lab('exit',c.exit)}</td>
+      <td class="px-3 py-2.5 text-[11px] text-sub">${esc(c.createdAt||'')}</td>
+      <td class="px-3 py-2.5">${al.length?badge(al[0].t, '#fff', al.some(x=>x.lv==='red')?'#E5484D':'#F5A524'):'<span class=\"text-[11px] text-sub\">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  return `
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-black text-lg">受信リード（未対応の新規） <span class="text-sub text-sm font-bold">${leads.length}件</span></h2>
+    <p class="text-[11px] text-sub">緊急度スコア順。24時間以内（緊急度「高」は4時間以内）の初回接触を。</p>
+  </div>
+  <div class="bg-white rounded-2xl border border-line overflow-hidden">
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="bg-paper text-sub text-[11px]"><tr>
+        <th class="text-left px-3 py-2 font-bold">お客様</th><th class="text-left px-3 py-2 font-bold">緊急度</th>
+        <th class="text-left px-3 py-2 font-bold">概算</th><th class="text-left px-3 py-2 font-bold">名義/出口</th>
+        <th class="text-left px-3 py-2 font-bold">受信</th><th class="text-left px-3 py-2 font-bold">アラート</th>
+      </tr></thead>
+      <tbody>${rows || `<tr><td colspan="6" class="px-3 py-8 text-center text-sub">未対応のリードはありません。</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ---- 解体パイプライン・カンバン ---- */
+function renderKanban(){
+  const cols = OPEN_STAGES.map(s=>{
+    const items = DB.filter(c=>c.stage===s.key);
+    const cards = items.map(c=>{
+      return `<div class="bg-white rounded-xl border border-line p-3 mb-2 cursor-pointer hover:border-grn" onclick="openDetail('${c.id}')">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <p class="font-bold text-sm truncate">${esc(c.name||'（無名）')}</p>
+          ${alertPip(c)}
+        </div>
+        <p class="text-[11px] text-sub mb-2">${esc(c.city||'')}・${lab('structure',c.structure)}・約${c.tsubo||'?'}坪</p>
+        <div class="flex items-center gap-1.5 mb-2">
+          ${badge(c.urgencyLevel||'—', '#fff', urgColor(c.urgencyLevel))}
+          <span class="text-[11px] text-sub">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):''}</span>
+        </div>
+        <div class="flex items-center gap-1 mb-2">${domainDots(c)}</div>
+        ${c.teamNote?`<p class="text-[11px] font-bold rounded-lg px-2 py-1 mb-1 line-clamp-2" style="color:#B45309;background:#FFF7E6">⚠ ${esc(c.teamNote)}</p>`:''}
+        ${c.nextAction?`<p class="text-[11px] text-ink mt-1 line-clamp-2">${esc(c.nextAction)}</p>`:''}
+        ${c.nextActionDate?`<p class="text-[10px] mt-1 ${c.nextActionDate<todayISO()?'text-red font-bold':'text-sub'}">次: ${c.nextActionDate}</p>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="shrink-0 w-[250px]">
+      <div class="flex items-center gap-2 mb-2 sticky top-0">
+        <span class="w-2.5 h-2.5 rounded-full" style="background:${s.color}"></span>
+        <p class="font-bold text-sm">${s.label}</p>
+        <span class="text-[11px] text-sub ml-auto">${items.length}</span>
+      </div>
+      <div class="min-h-[40px]">${cards||'<p class="text-[11px] text-sub px-1">—</p>'}</div>
+    </div>`;
+  }).join('');
+  const lost = DB.filter(c=>c.stage==='closed_lost').length;
+  return `
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-black text-lg">解体パイプライン</h2>
+    <p class="text-[11px] text-sub">カードの色ドット＝6分野の状態（濃い色＝必要）。⚠＝チーム共有の注意点。失注/保留：${lost}件</p>
+  </div>
+  <div class="kanban flex gap-3 overflow-x-auto pb-4">${cols}</div>`;
+}
+
+/* ---- 分野別ボード（担当が“自分の番/もうすぐ”を見る） ---- */
+function renderPartner(){
+  const blocks = DOMAINS.map(dm=>{
+    const rel = DB.filter(c=>c.stage!=='closed_lost' && c.domains?.[dm.key]?.need==='required');
+    const groups = { active:[], done:[] };
+    rel.forEach(c=>{ const p = domainPhase(dm.key, c.domains[dm.key]); (groups[p.key]||(groups[p.key]=[])).push(c); });
+    const chip = (c)=>{
+      const d = c.domains[dm.key];
+      return `<div class="bg-white border border-line rounded-lg px-3 py-2 mb-1.5 cursor-pointer hover:border-grn" onclick="openDetail('${c.id}')">
+        <div class="flex items-center justify-between gap-2">
+          <p class="font-bold text-sm truncate">${esc(c.name||'')}</p>
+          <span class="text-[10px] text-sub">${stageMeta(c.stage).label}</span>
+        </div>
+        <p class="text-[11px] text-sub">${esc(c.city||'')}／担当:${esc(d.assignee||'未割当')}</p>
+        ${d.next?`<p class="text-[11px] text-ink mt-0.5">→ ${esc(d.next)}</p>`:''}
+        <p class="text-[10px] mt-0.5" style="color:${dm.color}">分野ステージ: ${esc(d.stage||'未判定')}</p>
+      </div>`;
+    };
+    const section = (title,col,arr)=> arr.length?`<div class="mb-2"><p class="text-[11px] font-bold mb-1" style="color:${col}">${title}（${arr.length}）</p>${arr.map(chip).join('')}</div>`:'';
+    return `<div class="bg-paper rounded-2xl border border-line p-3">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-3 h-3 rounded-full" style="background:${dm.color}"></span>
+        <p class="font-black text-sm">${dm.label}</p>
+        <span class="text-[11px] text-sub">${dm.role}</span>
+        <span class="text-[11px] text-sub ml-auto">対応中 ${groups.active.length}件</span>
+      </div>
+      ${section('対応中','#2E9E68',groups.active)}
+      ${section('完了','#16794C',groups.done)}
+      ${(!groups.active.length&&!groups.done.length)?'<p class="text-[11px] text-sub">担当案件なし</p>':''}
+    </div>`;
+  }).join('');
+  return `
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-black text-lg">分野別ボード</h2>
+    <p class="text-[11px] text-sub">各分野の担当が、自分の対応中案件と完了案件を一覧できます。</p>
+  </div>
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3">${blocks}</div>`;
+}
+
+/* ---- ダッシュボード ---- */
+function renderDashboard(){
+  const open = DB.filter(c=>c.stage!=='closed_lost');
+  const leads = DB.filter(c=>c.stage==='lead').length;
+  const pipelineYen = open.reduce((s,c)=> s + (Number(c.estimateRangeLow)||0), 0);
+  const won = DB.filter(c=>stageIndex(c.stage)>=stageIndex('contract') && c.stage!=='closed_lost').length;
+  const lost = DB.filter(c=>c.stage==='closed_lost').length;
+  const rate = (won+lost)>0 ? Math.round(won/(won+lost)*100) : 0;
+  const urgent = open.filter(c=>c.urgencyLevel==='高').length;
+
+  // アラート集約
+  const allAlerts = [];
+  DB.forEach(c=> alertsFor(c).forEach(a=> allAlerts.push({c,a})));
+  allAlerts.sort((x,y)=> (x.a.lv==='red'?0:1)-(y.a.lv==='red'?0:1));
+
+  const tile = (label,val,sub,col)=>`<div class="bg-white rounded-2xl border border-line p-4">
+    <p class="text-[11px] text-sub font-bold">${label}</p>
+    <p class="font-black text-2xl mt-1" style="color:${col||'#243B33'}">${val}</p>
+    ${sub?`<p class="text-[11px] text-sub mt-0.5">${sub}</p>`:''}</div>`;
+
+  // ステージ別件数
+  const stageBars = OPEN_STAGES.map(s=>{
+    const n = DB.filter(c=>c.stage===s.key).length;
+    const w = open.length? Math.round(n/Math.max(1,open.length)*100):0;
+    return `<div class="flex items-center gap-2 text-xs">
+      <span class="w-24 shrink-0 text-sub">${s.label}</span>
+      <div class="flex-1 bg-paper rounded-full h-3 overflow-hidden"><div style="width:${Math.max(3,w)}%;background:${s.color}" class="h-3"></div></div>
+      <span class="w-6 text-right font-bold">${n}</span>
+    </div>`;
+  }).join('');
+
+  // 分野別稼働
+  const domLoad = DOMAINS.map(dm=>{
+    const n = open.filter(c=>c.domains?.[dm.key]?.need==='required').length;
+    return `<div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full" style="background:${dm.color}"></span><span class="flex-1">${dm.label}<span class="text-sub">（${dm.role}）</span></span><span class="font-bold">${n}</span></div>`;
+  }).join('');
+
+  const alertList = allAlerts.length ? allAlerts.map(({c,a})=>`
+    <div class="flex items-center gap-2 px-3 py-2 border-b border-line last:border-0 hover:bg-paper cursor-pointer" onclick="openDetail('${c.id}')">
+      <span class="w-2 h-2 rounded-full shrink-0" style="background:${a.lv==='red'?'#E5484D':'#F5A524'}"></span>
+      <span class="font-bold text-sm w-32 truncate">${esc(c.name||'')}</span>
+      <span class="text-[11px] text-sub w-20 shrink-0">${stageMeta(c.stage).label}</span>
+      <span class="text-[13px] flex-1">${esc(a.t)}</span>
+    </div>`).join('') : '<p class="px-3 py-6 text-center text-sub text-sm">フォロー漏れアラートはありません。</p>';
+
+  return `
+  <h2 class="font-black text-lg mb-3">ダッシュボード</h2>
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+    ${tile('受信リード（未対応）', leads+'件', '要初回接触', leads?'#E5484D':'#2E9E68')}
+    ${tile('進行中の案件', open.length+'件','','#243B33')}
+    ${tile('パイプライン概算', '¥'+pipelineYen+'万','下限合計','#2E9E68')}
+    ${tile('成約率', rate+'%', '成約'+won+'／失注'+lost)}
+    ${tile('緊急度「高」', urgent+'件','', urgent?'#E5484D':'#2E9E68')}
+  </div>
+  <div class="grid lg:grid-cols-3 gap-3">
+    <div class="bg-white rounded-2xl border border-line p-4 lg:col-span-1">
+      <p class="font-black text-sm mb-3">ステージ別 件数</p><div class="space-y-2">${stageBars}</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-line p-4 lg:col-span-1">
+      <p class="font-black text-sm mb-3">分野別 稼働案件</p><div class="space-y-2">${domLoad}</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-line lg:col-span-1 overflow-hidden">
+      <p class="font-black text-sm px-4 pt-4 pb-2">フォロー漏れアラート <span class="text-sub font-bold">${allAlerts.length}</span></p>
+      <div>${alertList}</div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   詳細（編集）
+   ============================================================ */
+let openId = null;
+function openDetail(id){ openId = id; document.getElementById('detail').classList.remove('hidden'); renderDetail(); }
+function closeDetail(){ document.getElementById('detail').classList.add('hidden'); openId=null; render(); }
+document.getElementById('detail').addEventListener('click', e=>{ if(e.target.id==='detail') closeDetail(); });
+
+function field(id,key,value){ const c=getC(id); c[key]=value; upsert(c); renderDetail(); }
+function fieldNoRerender(id,key,value){ const c=getC(id); c[key]=value; upsert(c); }
+function domField(id,dkey,prop,value){ const c=getC(id); c.domains[dkey]=c.domains[dkey]||{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''}; c.domains[dkey][prop]=value; upsert(c); renderDetail(); }
+function addFollow(id){
+  const c=getC(id);
+  const type=document.getElementById('fh-type').value;
+  const memo=document.getElementById('fh-memo').value.trim();
+  if(!memo) return;
+  c.followHistory=c.followHistory||[];
+  c.followHistory.unshift({date:todayISO(), type, memo});
+  upsert(c); renderDetail();
+}
+
+function renderDetail(){
+  const c = getC(openId); if(!c) return;
+  const si = stageIndex(c.stage);
+  const sMeta = stageMeta(c.stage);
+  const isLost = c.stage==='closed_lost';
+  const prog = isLost ? 0 : Math.round(si/(OPEN_STAGES.length-1)*100);
+  const strat = strategyFor(c);
+  const al = alertsFor(c);
+  const stageOpts = STAGES.map(s=>`<option value="${s.key}" ${c.stage===s.key?'selected':''}>${s.label}</option>`).join('');
+
+  /* --- 商談ステッパー（大きめ・クリックで移動） --- */
+  const stepper = OPEN_STAGES.map((s,i)=>{
+    const done = !isLost && i < si, cur = !isLost && i===si;
+    return `<button onclick="field('${c.id}','stage','${s.key}')" title="${s.label}" class="flex flex-col items-center gap-1.5 shrink-0" style="min-width:72px">
+      <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black transition-all" style="background:${cur?s.color:(done?'#DCF1E5':'#EEF1F4')};color:${cur?'#fff':(done?'#16794C':'#8A98A5')};${cur?'box-shadow:0 0 0 4px '+s.color+'33':''}">${done?'✓':i+1}</span>
+      <span class="text-[10px] leading-tight text-center ${cur?'font-black':'text-sub'}">${s.label.replace('・','<br>')}</span>
+    </button>`;
+  }).join('<span class="flex-1 h-0.5 bg-line self-start mt-[17px] min-w-[8px]"></span>');
+
+  /* --- 次の戦略 --- */
+  const stratHtml = strat.length ? strat.map(s=>{
+    const col = s.lv==='高'?'#E5484D':s.lv==='中'?'#F0862B':'#2E9E68';
+    const bg  = s.lv==='高'?'#FDECEC':s.lv==='中'?'#FFF1DE':'#E7F6EC';
+    return `<div class="rounded-xl px-4 py-3 mb-2" style="background:${bg}"><p class="text-sm leading-relaxed"><span class="font-black" style="color:${col}">［${s.lv}］</span> ${esc(s.t)}</p></div>`;
+  }).join('') : '<p class="text-sm text-sub">現時点の推奨アクションはありません。</p>';
+
+  /* --- 6分野（1行1分野・進捗バーつき） --- */
+  const domainRows = DOMAINS.map(dm=>{
+    const d = c.domains?.[dm.key] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+    const ph = domainPhase(dm.key, d);
+    const needSel = Object.keys(NEEDS).map(k=>`<option value="${k}" ${d.need===k?'selected':''}>${NEEDS[k].label}</option>`).join('');
+    const stageSel = dm.stages.map(s=>`<option ${d.stage===s?'selected':''}>${s}</option>`).join('');
+    const stIdx = dm.stages.indexOf(d.stage);
+    const stPct = d.need==='required' && stIdx>0 ? Math.round(stIdx/(dm.stages.length-1)*100) : 0;
+    const dim = (d.need==='not_required') ? 'opacity-60' : '';
+    return `<div class="bg-white rounded-xl border-l-4 border border-line p-4 ${dim}" style="border-left-color:${dm.color}">
+      <div class="flex items-center gap-2 flex-wrap mb-3">
+        <p class="font-black text-[15px]">${dm.label}</p>
+        <span class="text-xs text-sub">${dm.role}</span>
+        <span class="ml-auto">${badge(ph.label, ph.key==='active'||ph.key==='done'?'#fff':ph.color, ph.key==='active'?'#2E9E68':ph.key==='done'?'#16794C':ph.bg)}</span>
+      </div>
+      ${d.need==='required'?`<div class="h-1.5 bg-paper rounded-full overflow-hidden mb-3"><div class="h-1.5 rounded-full" style="width:${stPct}%;background:${dm.color}"></div></div>`:''}
+      <div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+        <label class="text-xs text-sub font-bold">要否
+          <select onchange="domField('${c.id}','${dm.key}','need',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">${needSel}</select>
+        </label>
+        ${d.need==='not_required' ? `
+        <label class="text-xs text-sub font-bold col-span-1 xl:col-span-3">不要の理由（チームに共有）
+          <input value="${esc(d.reason||'')}" onchange="domField('${c.id}','${dm.key}','reason',this.value)" placeholder="例）名義がご本人のため登記不要／売却しないため不動産不要" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+        </label>` : `
+        <label class="text-xs text-sub font-bold">進捗ステージ
+          <select onchange="domField('${c.id}','${dm.key}','stage',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1" ${d.need!=='required'?'disabled':''}>${stageSel}</select>
+        </label>
+        <label class="text-xs text-sub font-bold">担当
+          <input value="${esc(d.assignee||'')}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者・提携先" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+        </label>
+        <label class="text-xs text-sub font-bold">次アクション
+          <input value="${esc(d.next||'')}" onchange="domField('${c.id}','${dm.key}','next',this.value)" placeholder="次にやること" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+        </label>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  /* --- 建物・診断データ --- */
+  const diag = [
+    ['所在地',esc(c.city||'—')],['構造',lab('structure',c.structure)],['延床',(c.tsubo||'?')+'坪'],['階数',lab('floors',c.floors)],
+    ['築年',lab('era',c.era)],['接道',lab('road',c.road)],['外構',lab('garden',c.garden)],['残置物',lab('zanchi',c.zanchi)],
+    ['名義',lab('owner',c.owner)],['出口',lab('exit',c.exit)]
+  ].map(([k,v])=>`<div class="bg-paper rounded-lg px-3 py-2"><p class="text-[10px] text-sub">${k}</p><p class="text-sm font-bold">${v}</p></div>`).join('');
+
+  const follow = (c.followHistory||[]).map(h=>`<div class="flex gap-2 text-sm py-2 border-b border-line last:border-0">
+    <span class="text-xs text-sub w-20 shrink-0 pt-0.5">${h.date}</span>
+    <span class="text-xs font-bold w-12 shrink-0 pt-0.5" style="color:#2E9E68">${esc(h.type)}</span>
+    <span class="flex-1 leading-relaxed">${esc(h.memo)}</span></div>`).join('') || '<p class="text-sm text-sub">記録なし</p>';
+
+  document.getElementById('detailBody').innerHTML = `
+  <div class="sticky top-0 bg-white border-b border-line px-4 sm:px-6 py-3 z-10">
+    <div class="max-w-[1240px] mx-auto flex items-center gap-3">
+      <button onclick="closeDetail()" class="w-10 h-10 rounded-full border border-line bg-white flex items-center justify-center hover:bg-paper shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="font-black text-xl truncate">${esc(c.name||'（無名）')}<span class="text-sm font-bold text-sub ml-1">様</span></p>
+          ${badge('緊急度 '+(c.urgencyLevel||'—'),'#fff',urgColor(c.urgencyLevel))}
+          ${al.length?badge('アラート '+al.length,'#fff',al.some(x=>x.lv==='red')?'#E5484D':'#F5A524'):''}
+        </div>
+        <p class="text-xs text-sub">${esc(c.id)}・${esc(c.city||'')}</p>
+      </div>
+      ${c.phone?`<a href="tel:${esc(c.phone)}" class="hidden sm:flex items-center gap-1.5 border border-grn text-grn font-bold text-sm rounded-full px-4 py-2 hover:bg-grnL shrink-0 ml-auto">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2.1a1 1 0 01.98.8l.72 3.61a1 1 0 01-.27.9L7.2 9.6a12.05 12.05 0 007.2 7.2l1.29-2.33a1 1 0 01.9-.27l3.61.72a1 1 0 01.8.98V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z"/></svg>
+        ${esc(c.phone)}</a>`:'<span class="ml-auto"></span>'}
+      <button onclick="delCustomer('${c.id}')" class="text-xs text-red border border-red/40 rounded-full px-3 py-2 hover:bg-red/5 shrink-0">削除</button>
+    </div>
+  </div>
+
+  <div class="max-w-[1240px] mx-auto p-4 sm:p-6 space-y-4">
+
+    <!-- チーム共有の注意点 -->
+    <div class="rounded-2xl border-2 p-4" style="border-color:#F5A524;background:#FFF7E6">
+      <p class="font-black text-sm flex items-center gap-2 mb-2" style="color:#B45309">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.3 3.4a2 2 0 001.74 2.85h15.12a2 2 0 001.74-2.85L13.74 4.94a2 2 0 00-3.48 0L2.7 16.15zM12 17h.01"/></svg>
+        チーム共有の注意点（全担当がここを最初に見る）
+      </p>
+      <textarea rows="2" onchange="fieldNoRerender('${c.id}','teamNote',this.value); render();" placeholder="例）ご近所トラブル歴あり・近隣挨拶は丁寧に／連絡は夕方以降が繋がりやすい／キーマンは長男様 など" class="w-full bg-white border rounded-xl px-3.5 py-2.5 text-[15px] leading-relaxed" style="border-color:#F5A52466">${esc(c.teamNote||'')}</textarea>
+    </div>
+
+    <div class="grid xl:grid-cols-5 gap-4">
+      <!-- 左：進捗と戦略 -->
+      <div class="xl:col-span-3 space-y-4">
+
+        <!-- 解体ステージ -->
+        <div class="bg-white rounded-2xl border border-line p-5">
+          <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <p class="font-black text-sm text-sub">解体の商談ステージ</p>
+            <select onchange="field('${c.id}','stage',this.value)" class="border border-line rounded-lg px-3 py-2 text-sm font-bold">${stageOpts}</select>
+          </div>
+          <div class="flex items-end gap-3 mb-2">
+            <p class="font-black text-2xl" style="color:${sMeta.color}">${sMeta.label}</p>
+            ${isLost?'':`<p class="text-sm text-sub font-bold mb-1">全体進捗 ${prog}%</p>`}
+          </div>
+          <div class="h-2.5 bg-paper rounded-full overflow-hidden mb-5"><div class="h-2.5 rounded-full transition-all" style="width:${isLost?100:prog}%;background:${sMeta.color}"></div></div>
+          <div class="flex items-start overflow-x-auto pb-2">${stepper}</div>
+          <div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line">
+            <label class="text-xs text-sub font-bold">自社担当<input value="${esc(c.assignee||'')}" onchange="fieldNoRerender('${c.id}','assignee',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">次アクション<input value="${esc(c.nextAction||'')}" onchange="fieldNoRerender('${c.id}','nextAction',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">次アクション日<input type="date" value="${esc(c.nextActionDate||'')}" onchange="field('${c.id}','nextActionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+          </div>
+        </div>
+
+        <!-- 次の戦略 -->
+        <div class="bg-white rounded-2xl border border-line p-5">
+          <p class="font-black text-[15px] mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-org" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            次の戦略（自動サジェスト）
+          </p>
+          ${stratHtml}
+        </div>
+
+        <!-- 6分野 -->
+        <div>
+          <p class="font-black text-[15px] mb-2">6分野の連携状況 <span class="text-xs text-sub font-bold">（解体以降は順不同・不要は理由を記録して共有）</span></p>
+          <div class="space-y-2.5">${domainRows}</div>
+        </div>
+      </div>
+
+      <!-- 右：お客様情報・記録 -->
+      <div class="xl:col-span-2 space-y-4">
+
+        <!-- お客様情報 -->
+        <div class="bg-white rounded-2xl border border-line p-5">
+          <p class="font-black text-sm text-sub mb-3">お客様情報</p>
+          <div class="space-y-2 text-[15px]">
+            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">電話</span>${c.phone?`<a href="tel:${esc(c.phone)}" class="font-black text-grn">${esc(c.phone)}</a>`:'—'}</div>
+            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">メール</span>${c.email?`<a href="mailto:${esc(c.email)}" class="font-bold underline break-all">${esc(c.email)}</a>`:'—'}</div>
+            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">流入</span><span class="font-bold">${esc(c.source||'—')}</span></div>
+            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">発生日</span><span class="font-bold">${esc(c.createdAt||'—')}</span></div>
+          </div>
+          ${c.desiredConsult?`<div class="mt-3 bg-paper rounded-xl px-3.5 py-2.5"><p class="text-[10px] text-sub mb-1">ご相談内容（お客様の言葉）</p><p class="text-sm leading-relaxed">${esc(c.desiredConsult)}</p></div>`:''}
+        </div>
+
+        <!-- 建物・診断データ -->
+        <div class="bg-white rounded-2xl border border-line p-5">
+          <p class="font-black text-sm text-sub mb-3">建物・診断データ</p>
+          <div class="grid grid-cols-2 gap-2 mb-3">${diag}</div>
+          <div class="rounded-xl px-3.5 py-2.5 mb-3" style="background:#E7F6EC">
+            <p class="text-[10px] text-sub mb-0.5">解体費の概算レンジ</p>
+            <p class="font-black text-lg text-grn">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'万〜'+c.estimateRangeHigh+'万'):'—'} <span class="text-xs text-sub font-bold">／ 緊急度 ${c.urgencyLevel||'—'}${c.urgencyScore?('（'+c.urgencyScore+'点）'):''}</span></p>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="text-xs text-sub font-bold">確定見積（万円）<input type="number" value="${c.finalEstimate??''}" onchange="fieldNoRerender('${c.id}','finalEstimate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">補助金該当
+              <select onchange="fieldNoRerender('${c.id}','subsidyApplicable',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                ${['未確認','該当あり','該当なし'].map(o=>`<option ${c.subsidyApplicable===o?'selected':''}>${o}</option>`).join('')}
+              </select></label>
+            <label class="text-xs text-sub font-bold">解体完了日<span class="font-normal">（滅失登記の起点）</span><input type="date" value="${esc(c.demolitionDate||'')}" onchange="field('${c.id}','demolitionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">相続開始日<span class="font-normal">（控除の起算）</span><input type="date" value="${esc(c.inheritanceStartDate||'')}" onchange="field('${c.id}','inheritanceStartDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+          </div>
+        </div>
+
+        <!-- フォロー履歴 -->
+        <div class="bg-white rounded-2xl border border-line p-5">
+          <p class="font-black text-sm text-sub mb-3">フォロー履歴</p>
+          <div class="flex gap-2 mb-3">
+            <select id="fh-type" class="border border-line rounded-lg px-2 py-2 text-sm shrink-0">
+              ${['架電','来店','メール','LINE','現地','面談','メモ'].map(t=>`<option>${t}</option>`).join('')}
+            </select>
+            <input id="fh-memo" placeholder="対応内容を入力してEnter不要→追加" class="flex-1 border border-line rounded-lg px-3 py-2 text-sm min-w-0">
+            <button onclick="addFollow('${c.id}')" class="bg-grn text-white text-sm font-bold px-4 rounded-lg shrink-0">追加</button>
+          </div>
+          <div class="max-h-64 overflow-y-auto mb-3">${follow}</div>
+          <label class="text-xs text-sub font-bold">補足メモ<textarea onchange="fieldNoRerender('${c.id}','notes',this.value)" rows="3" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-1 leading-relaxed">${esc(c.notes||'')}</textarea></label>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function delCustomer(id){ if(!confirm('この案件を削除しますか？')) return; DB=DB.filter(c=>c.id!==id); save(); closeDetail(); }
+
+/* ============================================================
+   新規案件
+   ============================================================ */
+function openNew(){ document.getElementById('newModal').classList.remove('hidden'); renderNew(); }
+function closeNew(){ document.getElementById('newModal').classList.add('hidden'); }
+document.getElementById('newModal').addEventListener('click', e=>{ if(e.target.id==='newModal') closeNew(); });
+
+function sel(id,grp,cur){ return `<select id="${id}" class="w-full border border-line rounded-lg px-2 py-2 text-sm">${Object.keys(L[grp]).map(k=>`<option value="${k}" ${cur===k?'selected':''}>${L[grp][k]}</option>`).join('')}</select>`; }
+function renderNew(){
+  document.getElementById('newBody').innerHTML = `
+  <div class="bg-skyL rounded-xl p-3 mb-4">
+    <p class="text-[11px] font-bold mb-1">診断データを貼り付けて自動入力（任意）</p>
+    <p class="text-[10px] text-sub mb-2">LP「香川あんしん空き家サポート」の診断結果テキスト、または診断JSONを貼り付け→「取り込む」。診断から6分野の必要/不要を自動判定します。</p>
+    <textarea id="paste" rows="3" class="w-full border border-line rounded-lg px-3 py-2 text-sm" placeholder="診断結果テキスト or JSON を貼り付け"></textarea>
+    <button onclick="parsePaste()" class="mt-2 text-xs font-bold border border-sky text-sky rounded-full px-4 py-1.5">取り込む</button>
+  </div>
+  <div class="grid sm:grid-cols-2 gap-3">
+    <label class="text-[11px] text-sub font-bold">お名前<input id="n-name" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">電話<input id="n-phone" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">メール<input id="n-email" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">所在地（市町）<input id="n-city" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">流入経路<input id="n-source" value="60秒診断" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">自社担当<input id="n-assignee" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">構造${sel('n-structure','structure','wood')}</label>
+    <label class="text-[11px] text-sub font-bold">階数${sel('n-floors','floors','2f')}</label>
+    <label class="text-[11px] text-sub font-bold">延床（坪）<input id="n-tsubo" type="number" value="30" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">築年${sel('n-era','era','unknown')}</label>
+    <label class="text-[11px] text-sub font-bold">接道${sel('n-road','road','good')}</label>
+    <label class="text-[11px] text-sub font-bold">外構${sel('n-garden','garden','normal')}</label>
+    <label class="text-[11px] text-sub font-bold">残置物${sel('n-zanchi','zanchi','half')}</label>
+    <label class="text-[11px] text-sub font-bold">名義${sel('n-owner','owner','self')}</label>
+    <label class="text-[11px] text-sub font-bold">出口${sel('n-exit','exit','undecided')}</label>
+    <label class="text-[11px] text-sub font-bold">緊急度${sel('n-urg','urgencyLevel','中')}</label>
+    <label class="text-[11px] text-sub font-bold">概算下限（万円）<input id="n-lo" type="number" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+    <label class="text-[11px] text-sub font-bold">概算上限（万円）<input id="n-hi" type="number" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+  </div>
+  <label class="text-[11px] text-sub font-bold block mt-3">希望相談内容<textarea id="n-consult" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></textarea></label>
+  <div class="flex justify-end gap-2 mt-5">
+    <button onclick="closeNew()" class="text-sm font-bold px-5 py-2.5 rounded-full border border-line">キャンセル</button>
+    <button onclick="createCustomer()" class="bg-grn text-white text-sm font-bold px-6 py-2.5 rounded-full">この案件を作成（6分野を自動判定）</button>
+  </div>`;
+}
+function val(id){ const e=document.getElementById(id); return e?e.value:''; }
+function parsePaste(){
+  const raw = val('paste').trim(); if(!raw) return;
+  // JSON優先
+  try {
+    const j = JSON.parse(raw);
+    const map = {city:'n-city',structure:'n-structure',tsubo:'n-tsubo',floors:'n-floors',era:'n-era',road:'n-road',garden:'n-garden',zanchi:'n-zanchi',owner:'n-owner',exit:'n-exit'};
+    Object.keys(map).forEach(k=>{ if(j[k]!=null){ const e=document.getElementById(map[k]); if(e) e.value=j[k]; } });
+    if(j.urgencyLevel){ const e=document.getElementById('n-urg'); if(e) e.value=j.urgencyLevel; }
+    if(j.total){ document.getElementById('n-lo').value=Math.round(j.total*0.85/10000); document.getElementById('n-hi').value=Math.round(j.total*1.15/10000); }
+    toast('診断JSONを取り込みました'); return;
+  } catch(e){}
+  // テキスト（LPの診断サマリー／相談メール形式を全項目パース）
+  const m = (re)=>{ const x=raw.match(re); return x?x[1].trim():''; };
+  const put = (id,v)=>{ if(v){ const e=document.getElementById(id); if(e) e.value=v; } };
+  put('n-name',  m(/お名前[:：]\s*(.+)/));
+  put('n-phone', m(/電話[:：]\s*(.+)/));
+  put('n-email', m(/メール[:：]\s*(.+)/));
+  put('n-city',  m(/所在地[:：]\s*(.+)/));
+  const tsubo = m(/約(\d+)坪/); put('n-tsubo', tsubo);
+  const pickKey = (grp, text) => { for(const k of Object.keys(L[grp])){ if(text.includes(L[grp][k])) return k; } return ''; };
+  put('n-structure', pickKey('structure', raw));
+  if(/平屋/.test(raw)) put('n-floors','1f'); else if(/3階/.test(raw)) put('n-floors','3f'); else if(/2階/.test(raw)) put('n-floors','2f');
+  if(/2006年以降/.test(raw)) put('n-era','new'); else if(/1990/.test(raw)) put('n-era','mid'); else if(/1989年以前/.test(raw)) put('n-era','old'); else if(/築年不明/.test(raw)) put('n-era','unknown');
+  if(/広い（4m|広い\(4m/.test(raw)) put('n-road','wide'); else if(/軽なら通れる/.test(raw)) put('n-road','mid'); else if(/狭い（2m|狭い\(2m/.test(raw)) put('n-road','narrow'); else if(/前面道路[:：]不明/.test(raw)) put('n-road','unknown');
+  if(/外構ほぼなし/.test(raw)) put('n-garden','none'); else if(/外構少なめ/.test(raw)) put('n-garden','few'); else if(/外構多め/.test(raw)) put('n-garden','many'); else if(/外構一般的/.test(raw)) put('n-garden','normal');
+  if(/残置物ほぼなし/.test(raw)) put('n-zanchi','empty'); else if(/残置物ほぼそのまま/.test(raw)) put('n-zanchi','full'); else if(/残置物/.test(raw)) put('n-zanchi','half');
+  if(/亡くなった|故人/.test(raw)) put('n-owner','deceased');
+  else if(/名義は不明|名義[:：]不明/.test(raw)) put('n-owner','unknown');
+  else if(/名義はご本人/.test(raw)) put('n-owner','self');
+  if(/売却/.test(raw)) put('n-exit','sell'); else if(/活用/.test(raw)) put('n-exit','use');
+  const rng = raw.match(/概算[:：]\s*([0-9,]+)万〜([0-9,]+)万/);
+  if(rng){ put('n-lo', rng[1].replace(/,/g,'')); put('n-hi', rng[2].replace(/,/g,'')); }
+  const consult = m(/希望する相談[:：]\s*(.+)/); if(consult) put('n-consult','【希望】'+consult);
+  toast('診断テキストから全項目を取り込みました（内容をご確認ください）');
+}
+function createCustomer(){
+  const id = 'AK-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-5);
+  const c = {
+    id, createdAt: todayISO(), source: val('n-source')||'手入力',
+    name: val('n-name'), phone: val('n-phone'), email: val('n-email'), city: val('n-city'),
+    desiredConsult: val('n-consult'), assignee: val('n-assignee'), teamNote:'',
+    stage:'lead', nextAction: val('n-assignee')?'一次架電・ヒアリング':'担当割当＋一次架電', nextActionDate: todayISO(),
+    structure: val('n-structure'), tsubo: Number(val('n-tsubo'))||null, floors: val('n-floors'),
+    era: val('n-era'), road: val('n-road'), garden: val('n-garden'), zanchi: val('n-zanchi'),
+    owner: val('n-owner'), exit: val('n-exit'),
+    urgencyLevel: val('n-urg'), urgencyScore: null,
+    estimateRangeLow: Number(val('n-lo'))||null, estimateRangeHigh: Number(val('n-hi'))||null,
+    finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
+    demolitionDate:null, inheritanceStartDate:null,
+    domains:{}, followHistory:[{date:todayISO(),type:'メモ',memo:'新規起票（'+(val('n-source')||'手入力')+'）'}], lostReason:null, notes:''
+  };
+  deriveDomains(c);
+  upsert(c); closeNew(); toast('案件を作成しました'); openDetail(id);
+}
+
+/* ============================================================
+   データ入出力
+   ============================================================ */
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = '空き家CRM_'+todayISO()+'.json'; a.click(); toggleMenu(); toast('書き出しました');
+}
+function importJSON(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try {
+    const arr = JSON.parse(r.result); if(!Array.isArray(arr)) throw 0;
+    const ids = new Set(DB.map(c=>c.id));
+    let add=0,upd=0; arr.forEach(c=>{ if(ids.has(c.id)){ const i=DB.findIndex(x=>x.id===c.id); DB[i]=c; upd++; } else { DB.push(c); add++; } });
+    save(); render(); toast(`統合：新規${add}件・更新${upd}件`);
+  } catch(err){ toast('読み込みに失敗しました（JSON形式をご確認ください）'); } };
+  r.readAsText(f); e.target.value=''; toggleMenu();
+}
+function wipe(){ if(!confirm('全データを消去します。よろしいですか？（書き出しでバックアップ推奨）')) return; DB=[]; save(); render(); toggleMenu(); }
+function toggleMenu(){ document.getElementById('menu').classList.toggle('hidden'); }
+document.addEventListener('click', e=>{ if(!e.target.closest('#menu') && !e.target.closest('button[onclick="toggleMenu()"]')) document.getElementById('menu').classList.add('hidden'); });
+
+/* ============================================================
+   ユーティリティ
+   ============================================================ */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add('hidden'),2200); }
+
+/* ============================================================
+   デモ用サンプル
+   ============================================================ */
+function seedData(){
+  const mk = (o)=>{ const c=Object.assign({ finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施', demolitionDate:null, inheritanceStartDate:null, lostReason:null, notes:'', followHistory:[] }, o); if(!c.domains||!Object.keys(c.domains).length) deriveDomains(c); return c; };
+  return [
+    mk({ id:'AK-2026-0007', createdAt:'2026-07-14', source:'60秒診断', name:'高松 太郎', phone:'090-1111-2222', email:'taro@example.com',
+      desiredConsult:'父名義のままの実家を解体して売却したい。相続の手続きも不安。', assignee:'中谷',
+      teamNote:'ご連絡は夕方以降が繋がりやすい。相続はご兄弟2人の同意が必要（キーマンは長男の太郎様）。',
+      stage:'survey', nextAction:'現地調査を実施し確定レンジ見積。司法書士と相続登記見積をセット準備', nextActionDate:'2026-07-18',
+      city:'高松市', structure:'wood', tsubo:38, floors:'2f', era:'old', road:'mid', garden:'many', zanchi:'full',
+      owner:'deceased', exit:'sell', urgencyLevel:'高', urgencyScore:78, estimateRangeLow:160, estimateRangeHigh:230,
+      inheritanceStartDate:'2024-09-10', asbestosSurvey:'調査中',
+      notes:'3000万控除の本命。相続開始2024/9→控除期限2027末。相続登記→解体→滅失→売買のクリティカルパスを共有中。',
+      followHistory:[{date:'2026-07-14',type:'メモ',memo:'診断完了→起票。緊急度高・名義故人・売却フラグ'},{date:'2026-07-14',type:'架電',memo:'当日接触。父名義のまま・相続未了。現地調査7/18に設定'}],
+      domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'提携司法書士（森）',next:'戸籍収集・相続人確定',reason:''},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
+        tax:{need:'required',stage:'3000万控除の判定',assignee:'提携税理士（山田）',next:'控除の可否判定（2027末を逆算）',reason:''},
+        realestate:{need:'required',stage:'査定',assignee:'提携不動産（讃岐住販）',next:'現況／更地の両建て査定',reason:''},
+        construction_ext:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'更地渡し・売却のため活用なし'},
+        fp:{need:'required',stage:'資金ヒアリング',assignee:'提携FP（大西）',next:'解体費160万超・自己資金と補助金確認',reason:''} } }),
+    mk({ id:'AK-2026-0009', createdAt:'2026-07-15', source:'問い合わせフォーム', name:'丸亀 花子', phone:'080-3333-4444', email:'hanako@example.com',
+      desiredConsult:'自分名義の古い倉庫を解体して駐車場か新築を検討。費用が心配。', assignee:'中谷',
+      teamNote:'費用重視のお客様。見積は内訳を丁寧に説明する。日中はお仕事のためSMS連絡が確実。',
+      stage:'estimate', nextAction:'活用プラン比較と解体＋造成の一体見積を提示。FP資金計画', nextActionDate:'2026-07-20',
+      city:'丸亀市', structure:'lightSteel', tsubo:25, floors:'1f', era:'mid', road:'wide', garden:'few', zanchi:'half',
+      owner:'self', exit:'use', urgencyLevel:'中', urgencyScore:42, estimateRangeLow:95, estimateRangeHigh:140, finalEstimate:118, subsidyApplicable:'該当なし', asbestosSurvey:'無し',
+      notes:'self名義で相続登記不要。再建築可否を確認中。解体〜造成〜新築の連結受注でLTV最大化狙い。',
+      followHistory:[{date:'2026-07-15',type:'メモ',memo:'フォーム送信→起票。self名義・活用フラグ'},{date:'2026-07-15',type:'架電',memo:'接触。駐車場か新築で迷い。現調済で見積段階へ'}],
+      domains:{ inheritance_reg:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'名義がご本人のため登記不要'},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
+        tax:{need:'undetermined',stage:'未判定',assignee:'',next:'活用（非売却）。固定資産税のみ後続確認',reason:''},
+        realestate:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'活用予定のため売却不要'},
+        construction_ext:{need:'required',stage:'プラン提示',assignee:'自社エクステリア',next:'駐車場/新築の比較・再建築可否確認',reason:''},
+        fp:{need:'required',stage:'資金計画',assignee:'提携FP（大西）',next:'解体＋造成資金のローン候補提示',reason:''} } }),
+    mk({ id:'AK-2026-0011', createdAt:'2026-07-16', source:'60秒診断', name:'坂出 次郎', phone:'090-5555-6666', email:'jiro@example.com',
+      desiredConsult:'名義が誰か分からない祖父の家。近所から苦情が来ている。', assignee:'未割当',
+      teamNote:'⚠近隣から苦情あり＝近隣対応は最優先で丁寧に。前面道路は私道の可能性（掘削承諾の要確認）。',
+      stage:'lead', nextAction:'当日中に一次架電（緊急度高）。不通ならSMS＋メール。登記簿取得を案内', nextActionDate:'2026-07-16',
+      city:'坂出市', structure:'wood', tsubo:45, floors:'2f', era:'old', road:'narrow', garden:'normal', zanchi:'full',
+      owner:'unknown', exit:'undecided', urgencyLevel:'高', urgencyScore:85, estimateRangeLow:180, estimateRangeHigh:260,
+      notes:'最上流ゲート案件。名義不明→登記簿取得が最優先。私道接道で掘削承諾も要確認。出口未定。緊急度高で放置厳禁。',
+      followHistory:[{date:'2026-07-16',type:'メモ',memo:'診断完了→起票。緊急度85（老朽・私道・名義不明・満載）。近隣苦情=特定空家リスク'}],
+      domains:{ inheritance_reg:{need:'required',stage:'名義確認',assignee:'提携司法書士（森）',next:'登記簿取得で名義確定',reason:''},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
+        tax:{need:'undetermined',stage:'未判定',assignee:'',next:'出口未定のため保留',reason:''},
+        realestate:{need:'undetermined',stage:'未判定',assignee:'',next:'査定で出口確定後に判断',reason:''},
+        construction_ext:{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''},
+        fp:{need:'required',stage:'未判定',assignee:'',next:'概算180万超・資金懸念の可能性',reason:''} } }),
+  ];
+}
+function loadSeed(force){
+  if(force && !confirm('現在のデータをサンプル3件で置き換えます。よろしいですか？')) return;
+  DB = seedData(); save(); if(force){ toggleMenu(); render(); toast('サンプルを読み込みました'); }
+}
+
+/* ============================================================
+   起動
+   ============================================================ */
+load();
+setView('inbox');
+</script>
+</body>
+</html>

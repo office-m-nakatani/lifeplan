@@ -130,19 +130,27 @@ const OPEN_STAGES = STAGES.filter(s => s.key !== 'closed_lost');
 
 /* 6分野（解体は背骨なので別扱い。順不同で動く支援ドメイン） */
 const DOMAINS = [
-  { key:'inheritance_reg', label:'相続登記', role:'司法書士', color:'#2E9E68',
+  { key:'inheritance_reg', label:'相続登記', role:'司法書士', color:'#2E9E68', site:'https://www.jiroshiho.com/', siteName:'提携司法書士サイト',
     stages:['未判定','名義確認','相続人確定','遺産分割協議','相続登記申請','完了'] },
   { key:'demolition_reg',  label:'滅失登記', role:'土地家屋調査士', color:'#0EA5E9',
     stages:['未判定','解体完了待ち','書類交付','申請（完工＋1ヶ月）','完了'] },
   { key:'tax',             label:'税務', role:'税理士', color:'#F0862B',
     stages:['未判定','課税論点の洗い出し','3000万控除の判定','固定資産税の試算','申告サポート','完了'] },
-  { key:'realestate',      label:'不動産', role:'不動産会社', color:'#8B5CF6',
+  { key:'realestate',      label:'不動産', role:'不動産会社', color:'#8B5CF6', site:'https://www.sunestate-inc.jp/', siteName:'提携不動産サイト',
     stages:['未判定','査定','売り方決定','媒介契約','売買契約','決済・完了'] },
-  { key:'construction_ext',label:'エクステリア・造成・新築', role:'自社/工務店', color:'#4FA6D5',
+  { key:'construction_ext',label:'エクステリア・造成・新築', role:'自社/工務店', color:'#4FA6D5', site:'https://www.midorizouen.jp/category/notice', siteName:'提携エクステリア会社サイト',
     stages:['未判定','活用意向・再建築可否','プラン提示','見積・設計','契約','着手・完了'] },
   { key:'fp',              label:'資金・補助金（FP）', role:'FP', color:'#F59E0B',
     stages:['未判定','資金ヒアリング','補助金の該当確認','資金計画','資金確保完了'] },
 ];
+/* 提携先サイトへのリンク（新しいタブ・ユーザー指定URL） */
+function domainSiteLink(dm){
+  if(!dm.site) return '';
+  return `<a href="${dm.site}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="${dm.siteName||'提携先サイト'}を新しいタブで開く" class="inline-flex items-center gap-1 text-xs font-bold rounded-full px-2.5 py-1 hover:opacity-80" style="color:${dm.color};background:${dm.color}14">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-8.5M15 4h5m0 0v5m0-5L10 14"/></svg>
+    提携先サイト
+  </a>`;
+}
 const domainMeta = k => DOMAINS.find(d => d.key === k);
 
 /* 分野ステータス（未要件どおり：不要は理由を残す／必要はスタンバイ〜対応中を派生） */
@@ -623,10 +631,11 @@ function renderPartner(){
     };
     const section = (title,col,arr)=> arr.length?`<div class="mb-2"><p class="text-[11px] font-bold mb-1" style="color:${col}">${title}（${arr.length}）</p>${arr.map(chip).join('')}</div>`:'';
     return `<div class="bg-paper rounded-2xl border border-line p-3">
-      <div class="flex items-center gap-2 mb-3">
+      <div class="flex items-center gap-2 mb-3 flex-wrap">
         <span class="w-3 h-3 rounded-full" style="background:${dm.color}"></span>
         <p class="font-black text-sm">${dm.label}</p>
         <span class="text-[11px] text-sub">${dm.role}</span>
+        ${domainSiteLink(dm)}
         <span class="text-[11px] text-sub ml-auto">対応中 ${groups.active.length}件</span>
       </div>
       ${section('対応中','#2E9E68',groups.active)}
@@ -802,6 +811,7 @@ function renderDetail(){
       <div class="flex items-center gap-2 flex-wrap mb-3">
         <p class="font-black text-[15px]">${dm.label}</p>
         <span class="text-xs text-sub">${dm.role}</span>
+        ${domainSiteLink(dm)}
         ${mine?'<span class="text-[10px] font-black text-white px-2 py-0.5 rounded-full" style="background:'+dm.color+'">あなたの担当</span>':(editable?'':'<span class="text-[10px] font-bold text-sub px-2 py-0.5 rounded-full bg-paper">閲覧のみ</span>')}
         <span class="ml-auto">${badge(ph.label, ph.key==='active'||ph.key==='done'?'#fff':ph.color, ph.key==='active'?'#2E9E68':ph.key==='done'?'#16794C':ph.bg)}</span>
       </div>

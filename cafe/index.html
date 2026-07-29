@@ -350,57 +350,143 @@ button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:n
 .toast .svgi{width:24px;height:24px;color:#9ad3ab;}
 
 /* ===========================================================================
-   5. ニュース画面（3分無操作で全画面表示）
+   5. ニュース画面（1分無操作で全画面表示・4分割）
+   ・見出しは明朝（新聞の紙面らしさ）、数値はゴシック＋等幅数字で読み違えを防ぐ
+   ・カテゴリは色そのものが意味を持つ（経済=金／スポーツ=緑／海外=青／天気=橙）
    =========================================================================== */
+:root{
+  --nw-bg   :#1a110c;
+  --nw-panel:#2a1c14;
+  --nw-line :rgba(217,198,166,.16);
+  --nw-txt  :#f7f1e6;
+  --nw-txt2 :#ddcdb2;
+  --nw-txt3 :#a89078;
+  --nw-eco  :#d3a93c;   /* 経済 */
+  --nw-spo  :#8bb06d;   /* スポーツ */
+  --nw-wld  :#7fa3c9;   /* 海外 */
+  --nw-wea  :#dd8f45;   /* 天気 */
+}
 #news{
-  position:fixed;inset:0;z-index:200;background:linear-gradient(165deg,#33221a 0%,#241710 55%,#1b110c 100%);
-  color:var(--cream);display:flex;flex-direction:column;opacity:0;pointer-events:none;
-  transition:opacity .4s ease;
+  position:fixed;inset:0;z-index:200;color:var(--nw-txt);
+  background:linear-gradient(168deg,#33221a 0%,var(--nw-bg) 58%,#140d09 100%);
+  display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .4s ease;
 }
 #news.on{opacity:1;pointer-events:auto;}
 #news::before{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 22% 12%,rgba(201,162,60,.16),transparent 58%);
+  background:radial-gradient(ellipse at 18% 6%,rgba(211,169,60,.14),transparent 55%);
 }
+
+/* --- 見出し帯（店名＋日付時刻） --- */
 .nw-head{
-  flex:0 0 auto;display:flex;align-items:flex-end;gap:20px;padding:26px 44px 16px;
-  border-bottom:1px solid rgba(217,198,166,.2);position:relative;
+  flex:0 0 auto;height:78px;display:flex;align-items:center;gap:16px;padding:0 24px;
+  border-bottom:1px solid var(--nw-line);position:relative;
 }
-.nw-shop{display:flex;align-items:center;gap:12px;}
-.nw-shop .m{width:50px;height:50px;border-radius:14px;background:var(--cream);color:var(--brown-800);display:flex;align-items:center;justify-content:center;}
-.nw-shop .m svg{width:31px;height:31px;}
-.nw-shop .n{font-size:27px;letter-spacing:.16em;line-height:1.15;}
-.nw-shop .s{font-size:12px;letter-spacing:.22em;color:var(--beige-2);}
-.nw-clock{margin-left:auto;text-align:right;line-height:1;}
-.nw-date{font-size:21px;color:var(--beige);letter-spacing:.06em;margin-bottom:9px;}
-.nw-time{font-size:66px;font-weight:300;letter-spacing:.04em;font-variant-numeric:tabular-nums;}
-.nw-time .sec{font-size:34px;color:var(--beige-2);margin-left:6px;}
+.nw-shop{display:flex;align-items:center;gap:11px;}
+.nw-shop .m{width:44px;height:44px;border-radius:12px;background:var(--cream);color:var(--brown-800);display:flex;align-items:center;justify-content:center;}
+.nw-shop .m svg{width:27px;height:27px;}
+.nw-shop .n{font-size:24px;letter-spacing:.15em;line-height:1.15;}
+.nw-shop .s{font-size:11px;letter-spacing:.2em;color:var(--nw-txt3);}
+.nw-note{
+  background:rgba(211,169,60,.14);border:1px solid rgba(211,169,60,.42);color:#e8c987;
+  border-radius:6px;padding:5px 12px;font-size:13px;line-height:1.4;
+}
+.nw-clock{margin-left:auto;display:flex;align-items:baseline;gap:16px;}
+.nw-date{font-size:19px;color:var(--nw-txt2);letter-spacing:.05em;}
+.nw-time{font-size:44px;font-weight:300;letter-spacing:.03em;font-variant-numeric:tabular-nums;line-height:1;}
+.nw-time .sec{font-size:24px;color:var(--nw-txt3);margin-left:5px;}
 
-.nw-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:10px 44px;position:relative;}
-.nw-art{transition:opacity .5s ease, transform .5s ease;max-width:1020px;}
-.nw-art.fade{opacity:0;transform:translateY(10px);}
-.nw-meta{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
-.nw-cat{background:var(--accent);color:#fff;border-radius:6px;padding:5px 16px;font-size:17px;font-weight:700;letter-spacing:.08em;}
-.nw-src{font-size:16px;color:var(--beige-2);letter-spacing:.05em;}
-.nw-title{font-size:47px;line-height:1.32;margin:0 0 20px;font-weight:700;letter-spacing:.01em;}
-.nw-sum{font-size:23px;line-height:1.85;color:#e6d9c3;margin:0;max-width:940px;}
-.nw-dots{display:flex;gap:9px;margin-top:32px;}
-.nw-dots i{width:9px;height:9px;border-radius:50%;background:rgba(217,198,166,.3);display:block;transition:all .3s ease;}
-.nw-dots i.on{background:var(--gold);width:30px;border-radius:99px;}
+/* --- 4分割グリッド --- */
+.nw-grid{
+  flex:1;min-height:0;display:grid;gap:14px;padding:14px 24px;
+  grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+}
+.nw-card{
+  position:relative;background:var(--nw-panel);border:1px solid var(--nw-line);border-radius:16px;
+  padding:17px 22px 15px;display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  box-shadow:0 6px 20px rgba(0,0,0,.22);
+}
+.nw-card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--c);}
+.nw-chead{display:flex;align-items:center;gap:12px;margin-bottom:13px;flex:0 0 auto;}
+.nw-chip{
+  font-size:14px;font-weight:700;letter-spacing:.14em;color:#1a110c;background:var(--c);
+  border-radius:5px;padding:4px 13px;line-height:1.5;
+}
+.nw-cmeta{margin-left:auto;font-size:13.5px;color:var(--nw-txt3);letter-spacing:.03em;}
 
-.nw-foot{flex:0 0 auto;border-top:1px solid rgba(217,198,166,.2);background:rgba(0,0,0,.22);}
-.ticker{display:flex;align-items:center;height:58px;overflow:hidden;}
-.ticker-lb{flex:0 0 auto;background:var(--gold);color:#33220c;font-size:16px;font-weight:700;letter-spacing:.14em;padding:8px 20px;margin-left:20px;border-radius:5px;}
-.ticker-win{flex:1;overflow:hidden;margin:0 20px;position:relative;}
+/* --- 記事（タップで日経の記事ページへ） --- */
+.nw-a{
+  display:flex;flex-direction:column;flex:1;min-height:0;gap:9px;
+  text-decoration:none;color:inherit;border-radius:8px;
+  transition:opacity .45s ease, transform .45s ease;
+}
+.nw-a.fade{opacity:0;transform:translateY(8px);}
+.nw-a:focus-visible{outline:2px solid var(--c);outline-offset:5px;}
+.nw-h{font-size:29px;line-height:1.42;font-weight:700;letter-spacing:.01em;text-wrap:balance;}
+.nw-s{font-size:17px;line-height:1.7;color:var(--nw-txt2);}
+.nw-src{
+  margin-top:auto;display:flex;align-items:center;gap:9px;font-size:14px;color:var(--nw-txt3);
+  padding-top:6px;flex-wrap:wrap;
+}
+.nw-src .dot{width:3px;height:3px;border-radius:50%;background:var(--nw-txt3);}
+.nw-read{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+  color:var(--c);font-weight:700;font-size:14px;letter-spacing:.02em;
+}
+.nw-read .svgi{width:15px;height:15px;stroke-width:2.2;}
+.nw-a:active{transform:scale(.995);}
+.nw-dots{display:flex;gap:6px;margin-top:11px;flex:0 0 auto;}
+.nw-dots i{width:7px;height:7px;border-radius:50%;background:rgba(217,198,166,.26);transition:all .3s ease;}
+.nw-dots i.on{background:var(--c);width:22px;border-radius:99px;}
+
+/* --- 天気パネル（右下） --- */
+.nw-wnow{display:flex;align-items:center;gap:16px;flex:0 0 auto;}
+.nw-wicon{width:72px;height:72px;flex:0 0 auto;color:var(--nw-wea);}
+.nw-wicon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.nw-temp{font-size:66px;font-weight:300;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.nw-temp .u{font-size:26px;font-weight:400;color:var(--nw-txt2);margin-left:3px;}
+.nw-wdesc{font-size:19px;color:var(--nw-txt2);line-height:1.4;}
+.nw-wmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;flex:0 0 auto;}
+.nw-wm{
+  background:rgba(250,245,236,.07);border:1px solid var(--nw-line);border-radius:8px;
+  padding:6px 12px;font-size:14.5px;color:var(--nw-txt3);line-height:1.5;
+}
+.nw-wm b{color:var(--nw-txt);font-variant-numeric:tabular-nums;font-size:17px;margin-left:5px;font-weight:700;}
+.nw-wm.hi b{color:#f0b183;}
+.nw-wm.lo b{color:#9fc3dd;}
+.nw-warn{
+  margin-top:10px;background:rgba(221,143,69,.15);border:1px solid rgba(221,143,69,.45);
+  color:#f2c79c;border-radius:8px;padding:8px 12px;font-size:15px;line-height:1.55;flex:0 0 auto;
+}
+.nw-hours{display:flex;margin-top:auto;border-top:1px solid var(--nw-line);padding-top:10px;flex:0 0 auto;}
+.nw-hr{flex:1;text-align:center;font-size:13px;color:var(--nw-txt3);}
+.nw-hr b{display:block;font-size:17px;color:var(--nw-txt2);font-variant-numeric:tabular-nums;margin-top:3px;font-weight:600;}
+
+/* --- 下部（ティッカー＋案内） --- */
+.nw-foot{
+  flex:0 0 auto;height:72px;display:flex;align-items:center;gap:20px;padding:0 24px;
+  border-top:1px solid var(--nw-line);background:rgba(0,0,0,.25);
+}
+.ticker{flex:1;display:flex;align-items:center;min-width:0;overflow:hidden;}
+.ticker-lb{
+  flex:0 0 auto;background:var(--nw-eco);color:#33220c;font-size:15px;font-weight:700;
+  letter-spacing:.14em;padding:7px 17px;border-radius:5px;
+}
+.ticker-win{flex:1;overflow:hidden;margin-left:18px;}
 .ticker-track{display:inline-flex;white-space:nowrap;animation:tick linear infinite;}
-.ticker-track span{font-size:19px;color:#e6d9c3;padding-right:56px;letter-spacing:.03em;}
+.ticker-track span{font-size:18px;color:var(--nw-txt2);padding-right:54px;letter-spacing:.02em;}
 @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 .nw-hint{
-  text-align:center;padding:11px 0 15px;font-size:16px;color:rgba(217,198,166,.72);letter-spacing:.1em;
-  display:flex;align-items:center;justify-content:center;gap:10px;
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;font-size:16px;
+  color:var(--nw-txt3);letter-spacing:.08em;
 }
 .nw-hint .svgi{width:21px;height:21px;animation:tap 2.6s ease-in-out infinite;}
 @keyframes tap{0%,100%{transform:translateY(0);opacity:.6;}50%{transform:translateY(-4px);opacity:1;}}
+@media (prefers-reduced-motion:reduce){
+  .nw-hint .svgi{animation:none;}
+  .ticker-track{animation:none;}
+  .nw-a{transition:none;}
+}
 
 /* ちいさな画面（横向き想定外）での最低限の保険 */
 @media (max-width:1100px){
@@ -614,30 +700,40 @@ html,body{background:var(--cream);}
 <div id="news">
   <div class="nw-head">
     <div class="nw-shop">
-      <div class="m">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.6a2.7 2.7 0 0 1 0 5.4H17"/>
-          <path d="M8 5.4c-.7-1 .7-1.6 0-2.6M12 5.4c-.7-1 .7-1.6 0-2.6"/><path d="M3 21.2h15"/>
-        </svg>
-      </div>
+      <div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.6a2.7 2.7 0 0 1 0 5.4H17"/><path d="M8 5.4c-.7-1 .7-1.6 0-2.6M12 5.4c-.7-1 .7-1.6 0-2.6"/><path d="M3 21.2h15"/></svg></div>
       <div>
         <div class="n serif" id="nwShop">スマイル珈琲</div>
         <div class="s">PREMIUM COFFEE</div>
       </div>
     </div>
+    <div class="nw-note" id="nwNote"></div>
     <div class="nw-clock">
       <div class="nw-date" id="nwDate">-</div>
       <div class="nw-time" id="nwTime">-</div>
     </div>
   </div>
 
-  <div class="nw-body">
-    <div class="nw-art" id="nwArt">
-      <div class="nw-meta"><span class="nw-cat" id="nwCat">-</span><span class="nw-src" id="nwSrc">-</span></div>
-      <h2 class="nw-title" id="nwTitle">-</h2>
-      <p class="nw-sum" id="nwSum">-</p>
-    </div>
-    <div class="nw-dots" id="nwDots"></div>
+  <div class="nw-grid">
+    <section class="nw-card" style="--c:var(--nw-eco)">
+      <div class="nw-chead"><span class="nw-chip">経済</span><span class="nw-cmeta" id="nwM-economy">日本経済新聞</span></div>
+      <a class="nw-a" id="nwA-economy" target="_blank" rel="noopener noreferrer" data-article></a>
+      <div class="nw-dots" id="nwD-economy"></div>
+    </section>
+    <section class="nw-card" style="--c:var(--nw-spo)">
+      <div class="nw-chead"><span class="nw-chip">スポーツ</span><span class="nw-cmeta" id="nwM-sports">日本経済新聞</span></div>
+      <a class="nw-a" id="nwA-sports" target="_blank" rel="noopener noreferrer" data-article></a>
+      <div class="nw-dots" id="nwD-sports"></div>
+    </section>
+    <section class="nw-card" style="--c:var(--nw-wld)">
+      <div class="nw-chead"><span class="nw-chip">海外</span><span class="nw-cmeta" id="nwM-world">日本経済新聞</span></div>
+      <a class="nw-a" id="nwA-world" target="_blank" rel="noopener noreferrer" data-article></a>
+      <div class="nw-dots" id="nwD-world"></div>
+    </section>
+    <!-- 右下：香川県さぬき市の天気 -->
+    <section class="nw-card" style="--c:var(--nw-wea)">
+      <div class="nw-chead"><span class="nw-chip" id="nwWPlace">天気</span><span class="nw-cmeta" id="nwWAsof">-</span></div>
+      <div id="nwWBody" style="display:flex;flex-direction:column;flex:1;min-height:0;"></div>
+    </section>
   </div>
 
   <div class="nw-foot">
@@ -658,9 +754,10 @@ html,body{background:var(--cream);}
    0. 設定（変更はここだけでOK）
    =========================================================================== */
 const CONFIG = {
-  IDLE_SECONDS        : 180,  // 【重要】無操作が何秒続いたらニュース画面に入るか（3分）
-  NEWS_ROTATE_SECONDS : 8,    // 【重要】ニュース記事の切り替え間隔（秒）
-  TICKER_SECONDS      : 55,   // 下部ティッカーが1周する秒数（大きいほどゆっくり）
+  IDLE_SECONDS         : 60,   // 【重要】無操作が何秒続いたらニュース画面に入るか（1分）
+  NEWS_ROTATE_SECONDS  : 8,    // 【重要】各パネルの記事が切り替わる間隔（秒）
+  PANEL_STAGGER_SECONDS: 2.4,  // パネルごとに切り替えをずらす秒数（4枚が一斉に変わると目が疲れる）
+  TICKER_SECONDS       : 55,   // 下部ティッカーが1周する秒数（大きいほどゆっくり）
   DONE_SECONDS        : 6,    // 注文完了画面を表示してメニューへ戻るまでの秒数
   NEWS_REFRESH_MINUTES: 30,   // ニュースを取り直す間隔（分）
   CALL_HOLD_SECONDS   : 25,   // 店員呼び出しボタンが「呼び出し中」表示になる秒数
@@ -686,9 +783,10 @@ const SHOP = {
 /* ---------------------------------------------------------------------------
    ニュース取得先URL（【重要】ここを差し替えれば実データに切り替わります）
    ・上から順に試し、最初に取得できたものを使います
-   ・期待するJSON: [{title, summary, category, source}, ...]
-     もしくは {articles:[...]} / {items:[...]} 形式にも対応（normalizeNews参照）
-   ・取得できない場合は下の FALLBACK_NEWS（組み込みサンプル）を表示します
+   ・期待するJSON: {economy:[...], sports:[...], world:[...]}
+     各記事は {title, sub, time, url, source}。フラットな配列＋category でも可
+     （{articles:[...]} / {items:[...]} 形式にも対応。normalizeNews 参照）
+   ・取得できない場合は下の NEWS_DEMO（2026年7月30日の紙面見出し）を表示します
    ・外部APIを使う場合はCORS許可が必要です（費用ゼロ運用なら店内に置いたJSON推奨）
 --------------------------------------------------------------------------- */
 const NEWS_ENDPOINTS = [
@@ -696,29 +794,66 @@ const NEWS_ENDPOINTS = [
   // "https://example.com/api/cafe-news"           // 例2: 自店で用意したAPI
 ];
 
-// 組み込みサンプル記事（取得失敗時のフォールバック。喫茶店で読んで不快にならない一般話題）
-const FALLBACK_NEWS = [
-  { category:"くらし", source:"店内サンプル配信", title:"コーヒー豆は「密閉・冷暗所」が基本",
-    summary:"挽いた豆は香りが飛びやすく、開封後は密閉容器に移して冷暗所へ。二週間ほどで使い切る量をこまめに買うのが、いちばん手軽においしさを保つコツとされています。" },
-  { category:"天気",   source:"店内サンプル配信", title:"朝晩の冷え込みに備えて、羽織り一枚を",
-    summary:"日中は過ごしやすくても、朝夕は気温が下がりやすい時期。薄手の羽織りものを一枚持ち歩くだけで体調を崩しにくくなります。洗濯物は午前中に干すとよく乾きます。" },
-  { category:"スポーツ", source:"店内サンプル配信", title:"ウォーキングは「1日20分」から",
-    summary:"運動を続けるコツは、意気込まないこと。買い物や通勤の“ついで”に少し遠回りするだけでも十分です。歩幅をいつもより数センチ広げると運動量が上がります。" },
-  { category:"経済",   source:"店内サンプル配信", title:"家計の見直しは、まず固定費から",
-    summary:"通信費・保険・サブスクリプションなど毎月自動で出ていく支出は、一度見直すと効果が続きます。使っていないサービスの棚卸しから始めるのがおすすめです。" },
-  { category:"グルメ", source:"店内サンプル配信", title:"珈琲とお菓子、相性の合わせ方",
-    summary:"酸味のある浅煎りにはフルーツ系のタルト、コクの深い深煎りにはチョコレートやナッツ。同じ方向の風味を重ねると、どちらの持ち味も引き立ちます。" },
-  { category:"文化",   source:"店内サンプル配信", title:"待ち時間のおともに、短編集という選択",
-    summary:"数ページで読み切れる短編は、待ち合わせやひと休みの時間にぴったり。読みかけを気にせず閉じられるので、気持ちの切り替えにも向いています。" },
-  { category:"健康",   source:"店内サンプル配信", title:"水分補給は「のどが渇く前」に",
-    summary:"のどの渇きを感じた時点で、体はすでに水分が不足ぎみとされています。コップ一杯を数回に分けて、こまめにとるのが体にやさしい飲み方です。" },
-  { category:"地域",   source:"店内サンプル配信", title:"香川の秋、うどんの先にある名物めぐり",
-    summary:"和三盆を使った干菓子や瀬戸内のオリーブ製品など、土地の恵みを生かした品が並ぶ季節。道の駅や朝市をのぞくと、その日ならではの出会いがあります。" },
-  { category:"科学",   source:"店内サンプル配信", title:"地平線近くの月が大きく見えるわけ",
-    summary:"実際の大きさはほとんど変わりませんが、建物や山と並ぶことで脳が大きさを比較し、大きく感じられると考えられています。目の錯覚のひとつです。" },
-  { category:"くらし", source:"店内サンプル配信", title:"衣替えは、しまう前のひと手間で差がつく",
-    summary:"洗って完全に乾かしてから収納すると、においや黄ばみを防ぎやすくなります。防虫剤は衣類の上に置くと、成分が下へ広がって効きやすいとされています。" }
-];
+/* ---------------------------------------------------------------------------
+   天気の取得先（香川県さぬき市）
+   ・Open-Meteo は APIキー不要・非商用は無料なので費用ゼロのまま使えます
+   ・取得できない場合は下の WEATHER_DEMO（7月30日の実測値）を表示します
+   ・緯度経度を変えれば別の市町に切り替わります
+--------------------------------------------------------------------------- */
+const WEATHER_PLACE = "香川県さぬき市";
+const WEATHER_ENDPOINT =
+  "https://api.open-meteo.com/v1/forecast?latitude=34.3231&longitude=134.1699"
+  + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code"
+  + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+  + "&hourly=temperature_2m&timezone=Asia%2FTokyo&forecast_days=2";
+
+/* ---------------------------------------------------------------------------
+   組み込みニュース（取得失敗時のフォールバック）
+   2026年7月30日の日本経済新聞の見出しです。title / sub はいずれも紙面の
+   主見出し・副見出しをそのまま使っており、url は各記事の実際のページです。
+   タップすると日経新聞の記事ページが開きます。
+--------------------------------------------------------------------------- */
+const NEWS_DEMO = {
+  economy: [
+    { title:"産総研、蓄電池研究者300人に倍増", sub:"データセンター向け高出力を開発",
+      time:"7月30日 5:00", url:"https://www.nikkei.com/article/DGXZQOUA069F10W6A700C2000000/" },
+    { title:"薬剤師いなくてもロキソニン購入可に", sub:"厚労省調査会が条件付きで了承",
+      time:"7月29日 19:23", url:"https://www.nikkei.com/article/DGXZQOUA292BK0Z20C26A7000000/" },
+    { title:"日本の人口減、外国人労働者が和らげる", sub:"国外から転入72万人で最多に",
+      time:"7月29日 18:15", url:"https://www.nikkei.com/article/DGXZQOUA286Q80Y6A720C2000000/" },
+    { title:"パスワード761万人分漏洩、KDDIを行政指導", sub:"総務省",
+      time:"7月29日 19:20", url:"https://www.nikkei.com/article/DGXZQOUA284JE0Y6A720C2000000/" }
+  ],
+  sports: [
+    { title:"松澤寛政、NFLレイダーズでキャンプ開始", sub:"開幕ロースター目指す",
+      time:"7月30日 7:55", url:"https://www.nikkei.com/article/DGXZQOKC300AZ0Q6A730C2000000/" },
+    { title:"ネリー・コルダ、生涯グランドスラムに再挑戦", sub:"全英女子オープン開幕",
+      time:"7月30日 2:00", url:"https://www.nikkei.com/article/DGXZQODH170Y50X10C26A7000000/" },
+    { title:"C大阪・香川、古巣ドルトムント戦で躍動", sub:"18歳山本にエール",
+      time:"7月29日 23:02", url:"https://www.nikkei.com/article/DGXZQODH29BCO0Z20C26A7000000/" },
+    { title:"ゴルフ「ママでもV」目指す女子プロたち", sub:"テレサ・ルーに福田真未ら",
+      time:"7月30日 2:00", url:"https://www.nikkei.com/article/DGXZQODH191AL0Z10C26A7000000/" }
+  ],
+  world: [
+    { title:"日本事業売却検討の米スタバ", sub:"構造改革効果で4〜6月87%増益",
+      time:"7月30日 6:13", url:"https://www.nikkei.com/article/DGXZQOGN29CAE0Z20C26A7000000/" },
+    { title:"Microsoft、4〜6月3割増益", sub:"AIクラウド4年ぶりの増収率",
+      time:"7月30日 6:25", url:"https://www.nikkei.com/article/DGXZQOGN297180Z20C26A7000000/" },
+    { title:"NASA、8月末に宇宙望遠鏡打ち上げ", sub:"謎の「暗黒物質」に迫る",
+      time:"7月30日 5:48", url:"https://www.nikkei.com/article/DGXZQOGN29CUF0Z20C26A7000000/" },
+    { title:"メタの4〜6月純利益14%減", sub:"研究開発や訴訟費用増加、株価一時11%安",
+      time:"7月30日 7:26", url:"https://www.nikkei.com/article/DGXZQOGN28BS90Y6A720C2000000/" }
+  ]
+};
+
+/* 組み込み天気（2026年7月30日 7:45時点のさぬき市の実測・予報値） */
+const WEATHER_DEMO = {
+  code:2, temp:28.3, feels:33.0, humidity:81,
+  max:37.2, min:26.6, pop:4,
+  hours: [["9時", 30.3], ["12時", 35.6], ["15時", 37.1], ["18時", 34.0], ["21時", 30.4]],
+  tomorrow: { code:3, max:36.5, min:25.2, pop:0 },
+  asof: "7月30日 7:45時点"
+};
 
 /* ===========================================================================
    1. オプション定義
@@ -1560,48 +1695,238 @@ function toast(msg){
 }
 
 /* ===========================================================================
-   14. ニュース画面（3分間の無操作で表示）
+   14. ニュース画面（1分間の無操作で表示・経済／スポーツ／海外／天気の4分割）
    =========================================================================== */
-let newsList = FALLBACK_NEWS.slice();   // 表示中の記事
-let newsIdx = 0, newsOn = false;
-let idleTimer = null, clockTimer = null, rotateTimer = null, closedAt = 0;
+const NEWS_PANELS = [
+  { key:"economy", label:"経済" },
+  { key:"sports",  label:"スポーツ" },
+  { key:"world",   label:"海外" }
+];
+let newsData   = { economy:[], sports:[], world:[] };
+let panelIdx   = { economy:0,  sports:0,  world:0 };
+let weather    = null;
+let newsIsLive = false, weatherIsLive = false;
+let newsOn = false;
+let idleTimer = null, clockTimer = null, weatherTimer = null, panelTimers = [];
+let closedAt = 0;
 
-/* --- 取得処理（差し替え可能な部分はここだけ） --- */
+const esc = t => String(t == null ? "" : t)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// 記事URLは http/https のみ許可（差し替えたJSONに変なURLが来ても踏まないように）
+const safeUrl = u => (/^https?:\/\//i.test(String(u || "")) ? String(u) : "");
+
+/* ---------------------------------------------------------------------------
+   ニュースの取得（失敗したら NEWS_DEMO にフォールバック）
+--------------------------------------------------------------------------- */
 async function fetchNews(){
   for(const url of NEWS_ENDPOINTS){
     try{
       const res = await fetch(url, { cache:"no-store" });
       if(!res.ok) throw new Error("HTTP " + res.status);
-      const list = normalizeNews(await res.json());
-      if(list.length) return list;
+      const d = normalizeNews(await res.json());
+      if(d) return d;
     }catch(err){
       console.info("[news] 取得できませんでした:", url, err && err.message);
     }
   }
-  return null;   // すべて失敗
+  return null;
 }
-// 取得したJSONを {title, summary, category, source} の配列にそろえる
+// 取得したJSONを {economy:[], sports:[], world:[]} にそろえる
 function normalizeNews(data){
-  const arr = Array.isArray(data) ? data
-            : Array.isArray(data && data.articles) ? data.articles
-            : Array.isArray(data && data.items)    ? data.items
-            : [];
-  return arr.map(a => ({
-    title   : String(a.title || a.headline || "").trim(),
-    summary : String(a.summary || a.description || a.content || "").trim(),
-    category: String(a.category || a.section || "ニュース").trim(),
-    source  : String((a.source && a.source.name) || a.source || a.provider || "").trim() || "提供元不明"
-  })).filter(a => a.title);
+  const CAT = { economy:"economy", 経済:"economy", sports:"sports", スポーツ:"sports",
+                world:"world", international:"world", 海外:"world", 国際:"world" };
+  const one = a => ({
+    title : String(a.title || a.headline || "").trim(),
+    sub   : String(a.sub || a.summary || a.description || "").trim(),
+    time  : String(a.time || a.published || a.date || "").trim(),
+    source: String((a.source && a.source.name) || a.source || "日本経済新聞").trim(),
+    url   : safeUrl(a.url || a.link)
+  });
+  const out = { economy:[], sports:[], world:[] };
+  if(data && !Array.isArray(data) && (data.economy || data.sports || data.world)){
+    Object.keys(out).forEach(k => { out[k] = (data[k] || []).map(one).filter(a => a.title); });
+  }else{
+    const arr = Array.isArray(data) ? data
+              : Array.isArray(data && data.articles) ? data.articles
+              : Array.isArray(data && data.items)    ? data.items : [];
+    arr.forEach(a => {
+      const k = CAT[String(a.category || a.section || "").trim()] || "economy";
+      const v = one(a);
+      if(v.title) out[k].push(v);
+    });
+  }
+  return (out.economy.length || out.sports.length || out.world.length) ? out : null;
 }
-// 取得を試み、だめなら組み込みサンプルへフォールバック
 async function loadNews(){
-  const list = await fetchNews();
-  newsList = (list && list.length) ? list : FALLBACK_NEWS.slice();
-  if(newsIdx >= newsList.length) newsIdx = 0;
+  const d = await fetchNews();
+  newsIsLive = !!d;
+  const src = d || NEWS_DEMO;
+  newsData = {
+    economy: (src.economy || []).slice(),
+    sports : (src.sports  || []).slice(),
+    world  : (src.world   || []).slice()
+  };
+  NEWS_PANELS.forEach(p => { if(panelIdx[p.key] >= newsData[p.key].length) panelIdx[p.key] = 0; });
+  renderNote();
   renderTicker();
 }
 
-/* --- 描画 --- */
+/* ---------------------------------------------------------------------------
+   天気の取得（失敗したら WEATHER_DEMO にフォールバック）
+--------------------------------------------------------------------------- */
+async function fetchWeather(){
+  if(!WEATHER_ENDPOINT) return null;
+  try{
+    const res = await fetch(WEATHER_ENDPOINT, { cache:"no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    const c = d.current || {}, dy = d.daily || {}, hr = d.hourly || {};
+    // 9・12・15・18・21時の気温を拾う
+    const hours = [];
+    ["09:00", "12:00", "15:00", "18:00", "21:00"].forEach(hh => {
+      const i = (hr.time || []).findIndex(t => String(t).endsWith("T" + hh));
+      if(i >= 0) hours.push([parseInt(hh, 10) + "時", hr.temperature_2m[i]]);
+    });
+    const now = new Date();
+    return {
+      code    : c.weather_code, temp: c.temperature_2m, feels: c.apparent_temperature,
+      humidity: c.relative_humidity_2m,
+      max     : (dy.temperature_2m_max || [])[0], min: (dy.temperature_2m_min || [])[0],
+      pop     : (dy.precipitation_probability_max || [])[0],
+      hours   : hours,
+      tomorrow: { code:(dy.weather_code || [])[1], max:(dy.temperature_2m_max || [])[1],
+                  min:(dy.temperature_2m_min || [])[1], pop:(dy.precipitation_probability_max || [])[1] },
+      asof    : String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + " 現在"
+    };
+  }catch(err){
+    console.info("[weather] 取得できませんでした:", err && err.message);
+    return null;
+  }
+}
+async function loadWeather(){
+  const w = await fetchWeather();
+  weatherIsLive = !!(w && isFinite(w.temp));
+  weather = weatherIsLive ? w : WEATHER_DEMO;
+  renderWeather();
+  renderNote();
+}
+
+/* ---------------------------------------------------------------------------
+   天気の表記とアイコン（WMO天気コード）
+--------------------------------------------------------------------------- */
+const WMO_TEXT = {
+  0:"晴れ", 1:"おおむね晴れ", 2:"晴れ時々くもり", 3:"くもり",
+  45:"霧", 48:"霧", 51:"弱い霧雨", 53:"霧雨", 55:"強い霧雨",
+  61:"弱い雨", 63:"雨", 65:"強い雨", 66:"みぞれ", 67:"みぞれ",
+  71:"弱い雪", 73:"雪", 75:"強い雪", 77:"雪", 80:"にわか雨", 81:"にわか雨", 82:"激しいにわか雨",
+  85:"にわか雪", 86:"にわか雪", 95:"雷雨", 96:"雷を伴う雨", 99:"激しい雷雨"
+};
+const WX = {
+  sun  : '<circle cx="12" cy="12" r="4.6"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/>',
+  part : '<circle cx="8.6" cy="8.6" r="3.4"/><path d="M8.6 2.4v1.8M2.4 8.6h1.8M4.2 4.2l1.3 1.3M13 4.2l-1.3 1.3"/><path d="M8 20h9.4a3.3 3.3 0 0 0 .3-6.6A4.6 4.6 0 0 0 9 12.6A3.7 3.7 0 0 0 8 20z"/>',
+  cloud: '<path d="M7 19h10.4a3.6 3.6 0 0 0 .3-7.2A5 5 0 0 0 8.2 10.4A4 4 0 0 0 7 19z"/>',
+  rain : '<path d="M7 15.4h10.4a3.6 3.6 0 0 0 .3-7.2A5 5 0 0 0 8.2 6.8A4 4 0 0 0 7 15.4z"/><path d="M9 18.4l-.8 2.4M13 18.4l-.8 2.4M17 18.4l-.8 2.4"/>',
+  storm: '<path d="M7 14.4h10.4a3.6 3.6 0 0 0 .3-7.2A5 5 0 0 0 8.2 5.8A4 4 0 0 0 7 14.4z"/><path d="M13.4 16.4l-3 3.4h2.6l-1 2.6"/>',
+  snow : '<path d="M7 15.4h10.4a3.6 3.6 0 0 0 .3-7.2A5 5 0 0 0 8.2 6.8A4 4 0 0 0 7 15.4z"/><path d="M9.4 19h.02M12.4 21h.02M15.4 19h.02M12.4 18h.02"/>',
+  fog  : '<path d="M7 12.6h10.4a3.6 3.6 0 0 0 .3-7.2A5 5 0 0 0 8.2 4A4 4 0 0 0 7 12.6z"/><path d="M5 16.4h14M7 20h10"/>'
+};
+function wxIcon(code){
+  const c = Number(code);
+  let k = "cloud";
+  if(c === 0 || c === 1) k = "sun";
+  else if(c === 2) k = "part";
+  else if(c === 3) k = "cloud";
+  else if(c === 45 || c === 48) k = "fog";
+  else if(c >= 95) k = "storm";
+  else if(c >= 71 && c <= 86) k = "snow";
+  else if(c >= 51) k = "rain";
+  return '<svg viewBox="0 0 24 24" aria-hidden="true">' + WX[k] + "</svg>";
+}
+const t1 = v => (isFinite(v) ? Number(v).toFixed(1) : "--");
+const t0 = v => (isFinite(v) ? Math.round(v) : "--");
+
+function renderWeather(){
+  const w = weather; if(!w) return;
+  $("nwWPlace").textContent = WEATHER_PLACE;
+  $("nwWAsof").textContent  = (weatherIsLive ? "" : "デモ表示／") + (w.asof || "");
+  const warn = (w.max >= 35) ? "猛暑日の予想です。冷たいお飲み物と水分補給をどうぞ。"
+             : (w.max >= 30) ? "暑くなります。こまめな水分補給をどうぞ。"
+             : (w.min <= 5)  ? "冷え込みます。あたたかいお飲み物をどうぞ。" : "";
+  $("nwWBody").innerHTML =
+      '<div class="nw-wnow">'
+    +   '<div class="nw-wicon">' + wxIcon(w.code) + "</div>"
+    +   "<div>"
+    +     '<div class="nw-temp">' + t1(w.temp) + '<span class="u">℃</span></div>'
+    +     '<div class="nw-wdesc">' + esc(WMO_TEXT[Number(w.code)] || "—")
+    +       (isFinite(w.feels) ? "　体感 " + t1(w.feels) + "℃" : "") + "</div>"
+    +   "</div>"
+    + "</div>"
+    + '<div class="nw-wmeta">'
+    +   '<span class="nw-wm hi">最高<b>' + t0(w.max) + "℃</b></span>"
+    +   '<span class="nw-wm lo">最低<b>' + t0(w.min) + "℃</b></span>"
+    +   '<span class="nw-wm">降水<b>' + t0(w.pop) + "%</b></span>"
+    +   (isFinite(w.humidity) ? '<span class="nw-wm">湿度<b>' + t0(w.humidity) + "%</b></span>" : "")
+    +   (w.tomorrow && isFinite(w.tomorrow.max)
+        ? '<span class="nw-wm">明日<b>' + t0(w.tomorrow.max) + "/" + t0(w.tomorrow.min) + "℃</b></span>" : "")
+    + "</div>"
+    + (warn ? '<div class="nw-warn">' + warn + "</div>" : "")
+    + ((w.hours && w.hours.length)
+      ? '<div class="nw-hours">' + w.hours.map(h =>
+          '<div class="nw-hr">' + esc(h[0]) + "<b>" + t0(h[1]) + "℃</b></div>").join("") + "</div>"
+      : "");
+}
+
+/* ---------------------------------------------------------------------------
+   各パネルの描画
+--------------------------------------------------------------------------- */
+function renderPanel(key, animate){
+  const list = newsData[key] || [];
+  const box  = $("nwA-" + key);
+  if(!box || !list.length) return;
+  const draw = function(){
+    const i = panelIdx[key] % list.length, a = list[i];
+    const u = safeUrl(a.url);
+    if(u){ box.setAttribute("href", u); } else { box.removeAttribute("href"); }
+    box.innerHTML =
+        '<div class="nw-h serif">' + esc(a.title) + "</div>"
+      + (a.sub ? '<div class="nw-s">' + esc(a.sub) + "</div>" : "")
+      + '<div class="nw-src"><span>' + esc(a.source || "日本経済新聞") + "</span>"
+      + (a.time ? '<span class="dot"></span><span>' + esc(a.time) + "</span>" : "")
+      + (u ? '<span class="nw-read">記事を読む'
+           + '<svg class="svgi" viewBox="0 0 24 24"><path d="M14 5h5v5"/><path d="M19 5l-8 8"/>'
+           + '<path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg></span>' : "")
+      + "</div>";
+    $("nwD-" + key).innerHTML =
+      list.map((_, n) => "<i" + (n === i ? ' class="on"' : "") + "></i>").join("");
+  };
+  if(animate){
+    box.classList.add("fade");
+    setTimeout(function(){ draw(); box.classList.remove("fade"); }, 450);
+  }else{
+    draw();
+    box.classList.remove("fade");
+  }
+}
+function renderAllPanels(animate){ NEWS_PANELS.forEach(p => renderPanel(p.key, animate)); }
+
+function renderNote(){
+  // 組み込みデータを使っているときだけ「デモ表示」と明示する
+  const demo = [];
+  if(!newsIsLive)    demo.push("2026年7月30日の紙面見出し");
+  if(!weatherIsLive) demo.push("天気は7月30日の実測値");
+  $("nwNote").textContent = demo.length ? "デモ表示：" + demo.join("／") : "";
+  $("nwNote").style.display = demo.length ? "" : "none";
+}
+function renderTicker(){
+  const all = NEWS_PANELS.reduce((acc, p) => acc.concat(newsData[p.key] || []), []);
+  const line = all.map(a => "<span>" + esc(a.title) + "　●　</span>").join("");
+  $("nwTicker").innerHTML = line + line;          // 途切れないように2周ぶん並べる
+  $("nwTicker").style.animationDuration = CONFIG.TICKER_SECONDS + "s";
+}
+
+/* ---------------------------------------------------------------------------
+   時計
+--------------------------------------------------------------------------- */
 const WD = ["日", "月", "火", "水", "木", "金", "土"];
 function renderClock(){
   const d = new Date();
@@ -1609,55 +1934,64 @@ function renderClock(){
   $("nwTime").innerHTML = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0")
     + '<span class="sec">' + String(d.getSeconds()).padStart(2, "0") + "</span>";
 }
-function renderArticle(){
-  const a = newsList[newsIdx] || FALLBACK_NEWS[0];
-  $("nwCat").textContent   = a.category;
-  $("nwSrc").textContent   = a.source;
-  $("nwTitle").textContent = a.title;
-  $("nwSum").textContent   = a.summary;
-  $("nwDots").innerHTML    = newsList.map((_, i) => "<i" + (i === newsIdx ? ' class="on"' : "") + "></i>").join("");
-}
-function rotateArticle(){
-  const box = $("nwArt");
-  box.classList.add("fade");                     // フェードアウト
-  setTimeout(() => {
-    newsIdx = (newsIdx + 1) % newsList.length;
-    renderArticle();
-    box.classList.remove("fade");                // フェードイン
-  }, 450);
-}
-function renderTicker(){
-  const line = newsList.map(a => "<span>" + a.title + "　●　</span>").join("");
-  $("nwTicker").innerHTML = line + line;         // 途切れないように2周ぶん並べる
-  $("nwTicker").style.animationDuration = CONFIG.TICKER_SECONDS + "s";
-}
 
-/* --- 表示・復帰 --- */
+/* ---------------------------------------------------------------------------
+   表示・復帰
+--------------------------------------------------------------------------- */
+function startPanels(){
+  stopPanels();
+  NEWS_PANELS.forEach(function(p, n){
+    // パネルごとに切り替えの位相をずらす（4枚が同時に動かないように）
+    const kick = setTimeout(function(){
+      const iv = setInterval(function(){
+        const len = (newsData[p.key] || []).length;
+        if(len > 1){ panelIdx[p.key] = (panelIdx[p.key] + 1) % len; renderPanel(p.key, true); }
+      }, CONFIG.NEWS_ROTATE_SECONDS * 1000);
+      panelTimers.push(["i", iv]);
+    }, n * CONFIG.PANEL_STAGGER_SECONDS * 1000);
+    panelTimers.push(["t", kick]);
+  });
+}
+function stopPanels(){
+  panelTimers.forEach(x => (x[0] === "i" ? clearInterval(x[1]) : clearTimeout(x[1])));
+  panelTimers = [];
+}
 function showNews(){
   if(newsOn) return;
   newsOn = true;
-  newsIdx = 0;
-  renderArticle(); renderTicker(); renderClock();
+  NEWS_PANELS.forEach(p => { panelIdx[p.key] = 0; });
+  renderClock(); renderAllPanels(false); renderWeather(); renderNote(); renderTicker();
   $("news").classList.add("on");
-  clockTimer  = setInterval(renderClock, 1000);                         // 時計は1秒ごと
-  rotateTimer = setInterval(rotateArticle, CONFIG.NEWS_ROTATE_SECONDS * 1000);
-  // 表示のたびに最新ニュースを取り直す（失敗してもサンプルで表示継続）
-  loadNews().then(() => { if(newsOn){ renderArticle(); } });
+  clockTimer = setInterval(renderClock, 1000);        // 時計は1秒ごと
+  startPanels();
+  // 表示のたびに最新を取り直す（失敗しても組み込みデータで表示継続）
+  loadNews().then(() => { if(newsOn) renderAllPanels(false); });
+  loadWeather();
+  weatherTimer = setInterval(loadWeather, CONFIG.NEWS_REFRESH_MINUTES * 60 * 1000);
 }
 function hideNews(){
   if(!newsOn) return;
   newsOn = false;
   closedAt = Date.now();                 // 直後のクリックを無効化するための時刻
-  clearInterval(clockTimer); clearInterval(rotateTimer);
+  clearInterval(clockTimer); clearInterval(weatherTimer); stopPanels();
   $("news").classList.remove("on");
-  $("nwArt").classList.remove("fade");
+  NEWS_PANELS.forEach(p => $("nwA-" + p.key).classList.remove("fade"));
   resetIdle();                           // カートの中身はそのまま。無操作タイマーだけ再スタート
 }
-// ニュース画面はどこをタッチしても即座にメニューへ戻る
-$("news").addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); hideNews(); }, true);
-$("news").addEventListener("touchstart",  e => { e.stopPropagation(); hideNews(); }, true);
-// 復帰直後の click が下のボタンに届いてしまうのを防ぐ
-document.addEventListener("click", e => {
+// ニュース画面はどこをタッチしてもメニューへ戻る。ただし記事リンクはそのまま開く
+function newsTap(e){
+  if(e.target.closest("a[data-article][href]")) return;   // 日経の記事ページへ
+  e.preventDefault(); e.stopPropagation();
+  hideNews();
+}
+$("news").addEventListener("pointerdown", newsTap, true);
+$("news").addEventListener("touchstart", function(e){
+  if(e.target.closest("a[data-article][href]")) return;
+  e.stopPropagation(); hideNews();
+}, true);
+// 復帰直後の click が下のボタンに届いてしまうのを防ぐ（記事リンクは除く）
+document.addEventListener("click", function(e){
+  if(e.target.closest("a[data-article][href]")) return;
   if(closedAt && Date.now() - closedAt < 450){ e.preventDefault(); e.stopPropagation(); }
 }, true);
 
@@ -1701,8 +2035,8 @@ $("menuArea").addEventListener("click", e => {
   renderMenu();
   renderCart();
   renderHistory();
-  renderTicker();
-  loadNews();     // 起動時に一度ニュースを取得（失敗時はサンプルのまま）
+  loadNews();     // 起動時に一度ニュースを取得（失敗時は組み込みデータのまま）
+  loadWeather();  // 天気も先に取っておく（失敗時は7月30日の実測値）
   setInterval(loadNews, CONFIG.NEWS_REFRESH_MINUTES * 60 * 1000);
   resetIdle();
 })();

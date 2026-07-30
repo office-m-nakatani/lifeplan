@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<!-- 検索結果に出さない（関係者にURLを渡して見てもらうためのデモ公開） -->
+<!-- 携帯でも読めるように拡大を許可（タブレット設置時に拡大させたくない場合は maximum-scale=1, user-scalable=no に戻す） -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="喫茶店向けタブレット・セルフオーダー端末のデモ（試作）です。実際の注文は入りません。">
-<title>スマイル珈琲｜セルフオーダー端末デモ</title>
+<meta name="description" content="喫茶店向けセルフオーダー端末のデモ（試作）です。実際の注文は入りません。タブレットでも携帯でも見られます。">
+<title>珈琲｜セルフオーダー端末デモ</title>
 </head>
 <body>
 <style>
@@ -488,13 +488,290 @@ button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:n
   .nw-a{transition:none;}
 }
 
-/* ちいさな画面（横向き想定外）での最低限の保険 */
-@media (max-width:1100px){
-  .cart{flex-basis:310px;}
-  .catrail{flex-basis:180px;}
-  .nw-title{font-size:38px;}
-  .nw-time{font-size:54px;}
+/* ===========================================================================
+   6. 画面幅への対応
+   ・既定（821px以上）＝ 10インチタブレット横向き。3カラムのまま
+   ・820px以下（携帯・縦）＝ 縦積み。カテゴリは横スクロールのタブ、
+     商品は写真つきの1列リスト、カートは下からのシートに変わる
+   ・高さ560px以下（携帯・横）＝ ニュース画面を2x2に戻して詰める
+   =========================================================================== */
+
+/* --- 携帯以外では隠しておく部品 --- */
+.cart-close, .mcartbar, .cart-back{display:none;}
+
+@media (max-width:1100px) and (min-width:821px){
+  .cart{flex-basis:312px;}
+  .catrail{flex-basis:182px;}
 }
+
+/* ===================== 携帯（縦・横とも） =====================
+   幅が狭いとき、または高さが足りないとき（携帯を横にした状態）に縦積みへ切り替える */
+@media (max-width:820px), (max-height:560px){
+  body{font-size:16px;}
+
+  /* 上部バー：情報を絞ってアイコン中心に */
+  .topbar{height:58px;gap:9px;padding:0 12px;}
+  .logo-mark{width:36px;height:36px;border-radius:10px;}
+  .logo-mark svg{width:22px;height:22px;}
+  .logo-name{font-size:20px;letter-spacing:.1em;}
+  .logo-sub, .topbar-info{display:none;}
+  .table-chip{padding:7px 13px;font-size:14px;}
+  .table-chip .svgi{width:18px;height:18px;}
+  .top-btn{min-height:48px;padding:0 13px;gap:7px;}
+  .top-btn > span:not(.cnt){display:none;}   /* 「注文履歴」の文字は省略 */
+  .top-btn .svgi{width:21px;height:21px;}
+
+  /* 縦積みにする */
+  .main{flex-direction:column;min-height:0;}
+
+  /* カテゴリ：横スクロールのタブ */
+  .catrail{
+    flex:0 0 auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;
+    gap:8px;padding:9px 12px;border-bottom:1px solid rgba(250,245,236,.14);
+    -webkit-overflow-scrolling:touch;
+  }
+  .catrail::-webkit-scrollbar{height:0;}
+  .cat-btn{flex:0 0 auto;min-height:52px;padding:0 15px;border-radius:12px;gap:9px;}
+  .cat-btn .svgi{width:22px;height:22px;}
+  .cat-btn .cb-t{font-size:16px;}
+  .cat-btn .cb-s, .rail-note{display:none;}
+  .cat-btn br{display:none;}
+
+  /* 商品：写真つきの1列リスト（横並びカード） */
+  .menuarea{padding:12px 12px 100px;}   /* 下部のカートバー分をあける */
+  .notice{padding:9px 13px;border-radius:12px;margin-bottom:12px;border-left-width:5px;}
+  .notice p{font-size:15px;line-height:1.55;}
+  .group{margin-bottom:18px;}
+  .group-title{font-size:17px;margin-bottom:9px;gap:9px;}
+  .group-title .gt-note{font-size:12px;}
+  .grid{grid-template-columns:1fr;gap:9px;}
+  .card{flex-direction:row;border-radius:14px;}
+  .art{width:112px;height:auto;min-height:98px;flex:0 0 auto;}
+  .art svg{width:96px;height:66px;}
+  .badges{left:5px;top:5px;gap:3px;}
+  .badge{font-size:10px;padding:2px 6px;}
+  .card-body{padding:9px 12px;gap:3px;justify-content:center;}
+  .card-name{font-size:18px;line-height:1.3;}
+  .card-desc{font-size:14px;line-height:1.45;flex:0 1 auto;}
+  .card-price{font-size:20px;}
+  .card-price .u, .card-price .pre{font-size:12.5px;}
+
+  /* カート：下から出てくるシート */
+  .cart{
+    position:fixed;left:0;right:0;bottom:0;top:auto;z-index:66;
+    flex:0 0 auto;width:100%;max-height:88vh;border-left:0;
+    border-top:1px solid var(--line);border-radius:18px 18px 0 0;
+    transform:translateY(101%);transition:transform .26s ease;
+    box-shadow:0 -10px 30px rgba(40,25,15,.32);
+  }
+  body.cart-open .cart{transform:none;}
+  .cart-back{
+    display:block;position:fixed;inset:0;z-index:65;background:rgba(35,22,14,.5);
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  body.cart-open .cart-back{opacity:1;pointer-events:auto;}
+  .cart-close{
+    display:flex;width:44px;height:44px;margin:-9px -6px -9px 8px;border-radius:10px;
+    align-items:center;justify-content:center;color:var(--text-sub);flex:0 0 auto;
+  }
+  .cart-close:active{background:var(--cream-2);}
+  .cart-list{max-height:42vh;padding:11px 13px;}
+  .cart-title .n{font-size:15px;}
+  .taxseg button{min-height:54px;font-size:14.5px;}
+  .qty button{width:52px;height:52px;}
+  .btn-order{min-height:62px;font-size:20px;}
+  .btn-clear{min-height:52px;}
+  .trow.total{font-size:23px;}
+
+  /* 画面下のカートバー（カートが空のときは出さない） */
+  .mcartbar{
+    display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:60;
+    min-height:60px;align-items:center;gap:11px;padding:0 16px;border-radius:14px;
+    background:var(--accent);color:#fff;font-size:17px;font-weight:700;
+    box-shadow:0 6px 18px rgba(60,30,20,.35);
+  }
+  .mcartbar .svgi{width:23px;height:23px;}
+  .mcartbar .go{
+    margin-left:auto;background:rgba(255,255,255,.22);border-radius:9px;
+    padding:7px 13px;font-size:15px;
+  }
+  body.cart-open .mcartbar, body.cart-empty .mcartbar{display:none;}
+
+  /* 店員呼び出し：カートバーの上に重ねる */
+  .callbtn{right:12px;bottom:84px;min-height:56px;padding:0 17px;font-size:15px;gap:8px;border-width:1px;}
+  .callbtn .svgi{width:23px;height:23px;}
+  body.cart-empty .callbtn{bottom:12px;}
+  body.cart-open .callbtn{display:none;}
+
+  /* モーダル：全画面に */
+  .back{padding:0;align-items:flex-end;}
+  .sheet{max-width:none;width:100%;max-height:100vh;height:100%;border-radius:0;}
+  .sheet-head{padding:11px 13px;gap:11px;}
+  .sheet-head .h-art{width:64px;height:50px;}
+  .sheet-title{font-size:20px;}
+  .sheet-sub{font-size:14px;}
+  .sheet-x{width:52px;height:52px;}
+  .sheet-body{padding:14px 13px 18px;}
+  .optg{margin-bottom:15px;}
+  .optg-t{font-size:16px;}
+  .chip{min-height:56px;min-width:84px;font-size:16px;padding:7px 14px;}
+  .chip .d{font-size:12px;}
+  .drinkpick{max-height:210px;}
+  .dp-i{min-height:56px;padding:7px 12px;}
+  .dp-i .nm{font-size:16px;}
+  .dp-i .pr{font-size:15px;}
+  .hintbox{font-size:13.5px;}
+  .sheet-foot{flex-wrap:wrap;gap:10px;padding:11px 13px;}
+  .qty-big button{width:52px;height:52px;}
+  .qty-big .v{min-width:44px;font-size:21px;}
+  .foot-price .v{font-size:23px;}
+  .foot-price .lb{font-size:12px;}
+  .btn-main{flex:1 0 100%;order:3;min-height:60px;font-size:19px;padding:0 18px;}
+  .btn-sub{min-height:56px;font-size:17px;padding:0 18px;}
+  .conf-i{padding:10px 12px;}
+  .conf-i .n b{font-size:17px;}
+  .conf-i .p{font-size:17px;min-width:78px;}
+  .conf-i .q{font-size:16px;min-width:44px;}
+
+  /* 履歴パネル：全幅 */
+  .hpanel{width:100%;max-width:none;}
+  .hp-head{padding:12px 13px;}
+  .hp-head .t{font-size:19px;}
+  .hp-body{padding:13px;}
+  .hp-foot{padding:12px 13px;}
+  .hp-foot .v{font-size:23px;}
+
+  /* 完了画面 */
+  .done h1{font-size:27px;}
+  .done p{font-size:16px;padding:0 24px;}
+  .done-mark{width:92px;height:92px;margin-bottom:10px;}
+  .done-mark .svgi{width:48px;height:48px;}
+  .done .no{font-size:17px;padding:8px 20px;margin-top:14px;}
+  .done .no b{font-size:24px;}
+  .done-bar{width:220px;margin-top:20px;}
+
+  /* トースト */
+  .toast{left:12px;right:12px;transform:translateY(16px);bottom:84px;padding:13px 18px;font-size:16px;justify-content:center;}
+  .toast.on{transform:translateY(0);}
+
+  /* ニュース画面：4分割を縦1列に積む（上から経済・スポーツ・海外・天気） */
+  .nw-head{height:56px;padding:0 13px;gap:9px;}
+  .nw-shop{gap:9px;}
+  .nw-shop .m{width:34px;height:34px;border-radius:9px;}
+  .nw-shop .m svg{width:21px;height:21px;}
+  .nw-shop .n{font-size:17px;letter-spacing:.06em;}
+  .nw-shop .s{display:none;}
+  .nw-note{font-size:11px;padding:3px 8px;border-radius:5px;}
+  .nw-clock{gap:9px;}
+  .nw-date{font-size:12.5px;}
+  .nw-time{font-size:26px;}
+  .nw-time .sec{font-size:15px;}
+  .nw-grid{grid-template-columns:1fr;grid-template-rows:1fr 1fr 1fr 1.22fr;gap:8px;padding:8px 12px;}
+  .nw-card{padding:10px 13px 9px;border-radius:12px;}
+  .nw-card::before{height:2px;}
+  .nw-chead{margin-bottom:7px;gap:8px;}
+  .nw-chip{font-size:11.5px;padding:3px 9px;letter-spacing:.1em;}
+  .nw-cmeta{font-size:11px;}
+  .nw-a{gap:5px;}
+  .nw-h{
+    font-size:18px;line-height:1.36;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .nw-s{
+    font-size:13px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .nw-src{font-size:11.5px;gap:6px;padding-top:2px;}
+  .nw-read{font-size:11.5px;}
+  .nw-read .svgi{width:13px;height:13px;}
+  .nw-dots{margin-top:6px;gap:4px;}
+  .nw-dots i{width:5px;height:5px;}
+  .nw-dots i.on{width:16px;}
+  .nw-wnow{gap:11px;}
+  .nw-wicon{width:46px;height:46px;}
+  .nw-temp{font-size:36px;}
+  .nw-temp .u{font-size:16px;}
+  .nw-wdesc{font-size:13px;}
+  .nw-wmeta{gap:5px;margin-top:7px;}
+  .nw-wm{font-size:11.5px;padding:4px 8px;border-radius:6px;}
+  .nw-wm b{font-size:13px;margin-left:3px;}
+  .nw-warn{font-size:12px;padding:6px 9px;margin-top:6px;border-radius:6px;}
+  .nw-hours{padding-top:6px;}
+  .nw-hr{font-size:10.5px;}
+  .nw-hr b{font-size:13px;}
+  .nw-foot{height:52px;padding:0 12px;justify-content:center;}
+  .ticker{display:none;}            /* 見出しは各パネルに出ているので携帯では省略 */
+  .nw-hint{font-size:13px;letter-spacing:.04em;}
+}
+
+/* ===================== 携帯（横）・高さの狭い画面 ===================== */
+@media (max-height:560px) and (max-width:900px){
+  .nw-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+  .nw-head{height:46px;}
+  .nw-time{font-size:20px;}
+  .nw-date{font-size:11px;}
+  .nw-h{font-size:15px;line-height:1.32;}
+  .nw-s{display:none;}
+  .nw-dots{margin-top:4px;}
+  .nw-temp{font-size:28px;}
+  .nw-wicon{width:36px;height:36px;}
+  .nw-wdesc{font-size:12px;}
+  .nw-hours, .nw-warn{display:none;}
+  .nw-foot{height:42px;}
+  .nw-hint{font-size:12px;}
+  .art{min-height:84px;}
+
+  /* カートは高さが取れないので全画面のパネルにして、余白を詰める */
+  .cart{max-height:100vh;height:100vh;border-radius:0;}
+  .cart-head{padding:9px 13px 8px;}
+  .cart-title{font-size:17px;}
+  .taxseg{margin-top:7px;padding:3px;}
+  .taxseg button{min-height:44px;font-size:13.5px;}
+  .taxseg button .r{font-size:11px;}
+  .cart-list{max-height:none;padding:9px 12px;gap:8px;}
+  .citem{padding:9px 10px;}
+  .citem-name{font-size:16px;}
+  .citem-opt{font-size:13px;}
+  .qty button{width:46px;height:46px;}
+  .citem-del{width:46px;height:46px;}
+  .cart-foot{padding:8px 13px 10px;}
+  .trow{font-size:14px;margin-bottom:2px;}
+  .trow.total{font-size:19px;margin:5px 0 8px;}
+  .btn-order{min-height:52px;font-size:17px;}
+  .btn-clear{display:none;}
+
+  /* 商品オプションも詰める */
+  .sheet-head{padding:8px 12px;}
+  .sheet-head .h-art{width:54px;height:42px;}
+  .sheet-title{font-size:18px;}
+  .sheet-sub{display:none;}
+  .sheet-body{padding:11px 12px 14px;}
+  .optg{margin-bottom:12px;}
+  .chip{min-height:48px;min-width:76px;font-size:15px;padding:5px 12px;}
+  .drinkpick{max-height:130px;}
+  .dp-i{min-height:48px;}
+  .qty-big button{width:46px;height:46px;}
+  .btn-main{min-height:52px;font-size:17px;}
+  .btn-sub{min-height:48px;font-size:16px;}
+  .done h1{font-size:22px;}
+  .done-mark{width:64px;height:64px;margin-bottom:6px;}
+  .done-mark .svgi{width:34px;height:34px;}
+  .done .no{font-size:15px;padding:6px 16px;margin-top:10px;}
+  .done .no b{font-size:20px;}
+  .done-bar{margin-top:14px;}
+}
+
+/* ===================== ごく狭い画面 ===================== */
+@media (max-width:359px){
+  .art{width:96px;min-height:90px;}
+  .card-name{font-size:16.5px;}
+  .card-desc{font-size:13px;}
+  .card-price{font-size:18px;}
+  .table-chip{display:none;}
+  .mcartbar{font-size:15px;padding:0 12px;gap:8px;}
+  .mcartbar .go{padding:6px 10px;font-size:13.5px;}
+}
+
 
 /* --- 公開用：デモであることを明示する細いバー --------------------------- */
 .demobar{
@@ -507,7 +784,12 @@ button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:n
   border-radius:4px;padding:2px 9px;
 }
 .demobar .sep{color:rgba(217,198,166,.4);}
-@media (max-width:820px){ .demobar .opt{display:none;} }
+/* 携帯では文字数を絞って1行に収める */
+@media (max-width:820px), (max-height:560px){
+  .demobar{height:26px;gap:8px;padding:0 10px;font-size:11px;white-space:nowrap;overflow:hidden;}
+  .demobar .tag{font-size:9.5px;padding:2px 7px;letter-spacing:.1em;}
+  .demobar .opt, .demobar .long{display:none;}
+}
 
 /* --- 公開用：閲覧側のテーマ色が透けないよう土台を固定 ------------------- */
 html,body{background:var(--cream);}
@@ -516,8 +798,8 @@ html,body{background:var(--cream);}
   <!-- 公開用：デモであることの明示 -->
   <div class="demobar">
     <span class="tag">DEMO</span>
-    <span>お客様が操作するタブレット注文画面の試作です</span>
-    <span class="sep">|</span>
+    <span class="long">お客様が操作するセルフオーダー画面の試作です</span>
+    <span class="sep long">|</span>
     <span>実際の注文は入りません</span>
     <span class="sep opt">|</span>
     <span class="opt">商品写真はサンプルです</span>
@@ -532,7 +814,7 @@ html,body{background:var(--cream);}
         </svg>
       </div>
       <div>
-        <div class="logo-name serif" id="shopName">スマイル珈琲</div>
+        <div class="logo-name serif" id="shopName">珈琲</div>
         <div class="logo-sub">PREMIUM COFFEE</div>
       </div>
     </div>
@@ -561,6 +843,9 @@ html,body{background:var(--cream);}
         <div class="cart-title">
           <svg class="svgi" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.55L21 7H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>
           <span>ご注文カート</span><span class="n" id="cartCnt">0点</span>
+          <button class="cart-close" id="cartClose" aria-label="カートを閉じる">
+            <svg class="svgi" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
         </div>
         <div class="taxseg">
           <button id="taxIn" class="on">店内でお召し上がり<span class="r">消費税 10%</span></button>
@@ -586,6 +871,15 @@ html,body{background:var(--cream);}
 <button class="callbtn" id="btnCall">
   <svg class="svgi" viewBox="0 0 24 24"><path d="M5 17h14"/><path d="M6.5 17a5.5 5.5 0 0 1 11 0"/><path d="M12 6.2V4.5"/><path d="M3.5 20h17"/><path d="M18.5 9.5l1.2-1.2M5.5 9.5L4.3 8.3"/></svg>
   <span id="callLabel">店員呼び出し</span>
+</button>
+
+<!-- ===================== 携帯用：画面下のカートバー ===================== -->
+<div class="cart-back" id="cartBack"></div>
+<button class="mcartbar" id="mCartBar">
+  <svg class="svgi" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.55L21 7H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>
+  <span id="mCartCnt">0点</span>
+  <span id="mCartTotal">¥0</span>
+  <span class="go">カートを見る</span>
 </button>
 
 <!-- ===================== 商品オプション モーダル ===================== -->
@@ -702,7 +996,7 @@ html,body{background:var(--cream);}
     <div class="nw-shop">
       <div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.6a2.7 2.7 0 0 1 0 5.4H17"/><path d="M8 5.4c-.7-1 .7-1.6 0-2.6M12 5.4c-.7-1 .7-1.6 0-2.6"/><path d="M3 21.2h15"/></svg></div>
       <div>
-        <div class="n serif" id="nwShop">スマイル珈琲</div>
+        <div class="n serif" id="nwShop">珈琲</div>
         <div class="s">PREMIUM COFFEE</div>
       </div>
     </div>
@@ -774,7 +1068,7 @@ const CONFIG = {
 
 // 店舗情報（メニュー写真の記載どおり）
 const SHOP = {
-  name : "スマイル珈琲",
+  name : "珈琲",
   hours: "営業時間 7:00 - 17:00 ／ 定休日 火曜日",
   tel  : "087-868-0808",
   table: "テーブル 5"       // 端末ごとに書き換えて設置します
@@ -922,7 +1216,7 @@ const MENU = [
     desc:"甘い香りとまろやかなコク。いちばん親しみやすい味わい。" },
   { id:"c05", photo:"hotcup_e", cats:["coffee"], group:"日替わり・ドリップ珈琲", name:"モカブレンド", price:600, art:"hotcup", refill:true, temp:true, size:true, cond:true,
     desc:"モカらしい華やかな香りと、やさしい酸味が広がります。" },
-  { id:"c06", photo:"hotcup_a", cats:["coffee"], group:"日替わり・ドリップ珈琲", name:"スマイルブレンド", price:600, art:"hotcup", refill:true, temp:true, size:true, cond:true,
+  { id:"c06", photo:"hotcup_a", cats:["coffee"], group:"日替わり・ドリップ珈琲", name:"自家ブレンド", price:600, art:"hotcup", refill:true, temp:true, size:true, cond:true,
     desc:"当店の看板ブレンド。深いコクと後味の余韻をお楽しみください。" },
   { id:"c07", photo:"hotcup_c", cats:["coffee"], group:"日替わり・ドリップ珈琲", name:"フレンチブレンド", price:600, art:"hotcup", refill:true, temp:true, size:true, cond:true,
     desc:"深煎りのしっかりした苦みとコク。ミルクとの相性も抜群です。" },
@@ -1533,6 +1827,11 @@ function renderCart(){
   $("sumTotal").textContent = yen(t.total);
   $("taxLabel").textContent = "消費税（" + Math.round(taxRate() * 100) + "%）";
   $("btnOrder").disabled = cnt === 0;
+  // 携帯の下部カートバー
+  $("mCartCnt").textContent   = cnt + "点";
+  $("mCartTotal").textContent = yen(t.total);
+  document.body.classList.toggle("cart-empty", cnt === 0);
+  if(cnt === 0) setCartOpen(false);
 }
 $("cartList").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
@@ -1543,6 +1842,12 @@ $("cartList").addEventListener("click", e => {
   if(b.dataset.m){ state.cart[i].qty--; if(state.cart[i].qty <= 0) state.cart.splice(i, 1); }
   renderCart();
 });
+/* --- 携帯：カートを下からのシートとして開閉する --- */
+function setCartOpen(v){ document.body.classList.toggle("cart-open", !!v); }
+$("mCartBar").addEventListener("click", () => setCartOpen(true));
+$("cartClose").addEventListener("click", () => setCartOpen(false));
+$("cartBack").addEventListener("click", () => setCartOpen(false));
+
 $("btnClear").addEventListener("click", () => {
   if(!state.cart.length) return;
   state.cart = []; renderCart(); toast("カートを空にしました");
@@ -1562,6 +1867,7 @@ $("taxOut").addEventListener("click", () => setTakeout(true));
    =========================================================================== */
 $("btnOrder").addEventListener("click", () => {
   if(!state.cart.length) return;
+  setCartOpen(false);
   const t = cartTotals();
   $("cBody").innerHTML =
       '<div class="conf-list">' + state.cart.map(l => {
@@ -1593,6 +1899,7 @@ $("cGo").addEventListener("click", () => {
     mode  : state.takeout ? "お持ち帰り" : "店内"
   });
   state.cart = [];
+  setCartOpen(false);
   renderCart(); renderHistory();
   closeBack("confBack");
   showDone(no);
@@ -1914,7 +2221,9 @@ function renderNote(){
   const demo = [];
   if(!newsIsLive)    demo.push("2026年7月30日の紙面見出し");
   if(!weatherIsLive) demo.push("天気は7月30日の実測値");
-  $("nwNote").textContent = demo.length ? "デモ表示：" + demo.join("／") : "";
+  const narrow = window.innerWidth <= 820;   // 携帯は幅が足りないので短く
+  $("nwNote").textContent = demo.length
+    ? (narrow ? "デモ表示" : "デモ表示：" + demo.join("／")) : "";
   $("nwNote").style.display = demo.length ? "" : "none";
 }
 function renderTicker(){
@@ -2041,6 +2350,6 @@ $("menuArea").addEventListener("click", e => {
   resetIdle();
 })();
 </script>
-<script>/* 共有リンク用：タブ名にもデモであることを残す */document.title="スマイル珈琲｜セルフオーダー端末デモ";</script>
+<script>/* 共有リンク用：タブ名にもデモであることを残す */document.title="珈琲｜セルフオーダー端末デモ";</script>
 </body>
 </html>

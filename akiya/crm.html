@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 外部送信の遮断（万一のスクリプト混入でもfetch/XHR/WSで顧客データを外に出せない） -->
+<meta http-equiv="Content-Security-Policy" content="connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; img-src data:;">
 <title>空き家サポート 顧客管理（社内用）｜香川あんしん空き家サポート</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,13 +43,19 @@ tailwind.config = {
       </div>
     </div>
     <nav id="tabs" class="flex items-center gap-1 ml-auto text-xs sm:text-sm font-bold overflow-x-auto">
+      <button data-view="today"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">今日</button>
       <button data-view="inbox"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
       <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">解体パイプライン</button>
       <button data-view="partner"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">分野別ボード</button>
       <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
     </nav>
+    <div class="relative shrink-0 hidden md:block">
+      <input id="searchBox" placeholder="氏名・電話・市町で検索" autocomplete="off"
+        class="w-40 lg:w-56 text-sm border border-line rounded-full px-3.5 py-1.5 bg-paper focus:outline-none focus:border-grn">
+      <div id="searchDrop" class="hidden absolute right-0 mt-1 w-80 bg-white border border-line rounded-xl softshadow p-1 z-50 max-h-96 overflow-y-auto"></div>
+    </div>
     <div class="flex items-center gap-1.5 shrink-0">
-      <label class="hidden sm:flex items-center gap-1 text-[10px] text-sub font-bold">表示役割
+      <label id="roleWrap" class="hidden sm:flex items-center gap-1 text-[10px] text-sub font-bold">表示役割
         <select id="roleSel" onchange="setRole(this.value)" class="text-xs font-bold border border-line rounded-full px-2.5 py-1.5 bg-paper"></select>
       </label>
       <button id="newBtn" onclick="openNew()" class="bg-grn text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-full hover:opacity-90 whitespace-nowrap">＋ 新規案件</button>
@@ -60,10 +68,12 @@ tailwind.config = {
           <button onclick="openShareModal()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先へ送る（分野を選んで書き出し）</button>
           <button onclick="document.getElementById('receiveFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先データを受け取る（担当モードで開く）</button>
           <button onclick="document.getElementById('returnFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先からの更新を反映（社内）</button>
+          <button onclick="openShareLog()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">共有履歴（提供記録）</button>
           <div class="border-t border-line my-1"></div>
           <p class="text-[10px] text-sub font-bold px-3 pt-0.5 pb-0.5">データ</p>
           <button onclick="exportJSON()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">全データをJSONで書き出し（バックアップ）</button>
           <button onclick="document.getElementById('importFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONを読み込み（統合）</button>
+          <button onclick="restorePrev()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">直前のデータに戻す（受信前へ復元）</button>
           <button onclick="loadSeed(true)" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">デモ用サンプルを再読み込み</button>
           <button onclick="wipe()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper text-red">全データを消去</button>
         </div>
@@ -98,10 +108,21 @@ tailwind.config = {
 <div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
   <div class="bg-white rounded-2xl w-full max-w-lg softshadow my-4">
     <div class="flex items-center justify-between px-5 py-3 border-b border-line">
-      <p class="font-black">提携先へデータを送る</p>
+      <p class="font-black">提携先との共有</p>
       <button onclick="closeShare()" class="text-sub hover:text-ink text-xl leading-none">×</button>
     </div>
     <div id="shareBody" class="p-5"></div>
+  </div>
+</div>
+
+<!-- ===== お客様ご紹介モーダル（提携先→解体チーム） ===== -->
+<div id="referralModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-lg softshadow my-4">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-line">
+      <p class="font-black">お客様をご紹介（解体チームへお繋ぎ）</p>
+      <button onclick="closeReferral()" class="text-sub hover:text-ink text-xl leading-none">×</button>
+    </div>
+    <div id="referralBody" class="p-5"></div>
   </div>
 </div>
 
@@ -140,8 +161,8 @@ const DOMAINS = [
     stages:['未判定','査定','売り方決定','媒介契約','売買契約','決済・完了'] },
   { key:'construction_ext',label:'エクステリア・造成・新築', role:'自社/工務店', color:'#4FA6D5',
     stages:['未判定','活用意向・再建築可否','プラン提示','見積・設計','契約','着手・完了'] },
-  { key:'fp',              label:'資金・補助金（FP）', role:'FP', color:'#F59E0B',
-    stages:['未判定','資金ヒアリング','補助金の該当確認','資金計画','資金確保完了'] },
+  { key:'fp',              label:'資金・保険・補助金（FP）', role:'FP・保険', color:'#F59E0B',
+    stages:['未判定','資金ヒアリング','保険の確認','補助金の該当確認','資金計画','資金確保完了'] },
 ];
 const domainMeta = k => DOMAINS.find(d => d.key === k);
 
@@ -177,9 +198,40 @@ const L = {
   owner:{ self:'ご本人', deceased:'故人のまま', unknown:'不明' },
   exit:{ sell:'売却', use:'活用', undecided:'未定' },
   urgencyLevel:{ '高':'高', '中':'中', '低':'低' },
+  insuranceStatus:{ unknown:'未確認', active:'加入中', cancelPlanned:'解約予定日あり', cancelled:'解約済' },
+  rightType:{ '':'不明', '所有権':'所有権', '借地':'借地' },
 };
 const lab = (grp,k) => (L[grp] && L[grp][k]) || k || '—';
 const urgColor = lv => lv==='高' ? '#E5484D' : lv==='中' ? '#F0862B' : '#2E9E68';
+const uscore = c => c.urgencyScore!=null ? c.urgencyScore : ({'高':80,'中':50,'低':20}[c.urgencyLevel]||0);
+
+/* ==== 共通ヘルパー（ID採番・電話正規化・入力検証・期限計算） ==== */
+function newId(prefix){ return (prefix||'AK')+'-'+new Date().getFullYear()+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function nrmPhone(p){ return String(p||'').replace(/[^0-9]/g,''); }
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function sanitizeCase(c){
+  if(!c || typeof c!=='object') return c;
+  ['nextActionDate','inheritanceStartDate','demolitionDate','insuranceCancelDate','createdAt','referredAt'].forEach(k=>{ if(c[k] && !DATE_RE.test(String(c[k]))) c[k]=''; });
+  if(c.urgencyLevel && !['高','中','低'].includes(c.urgencyLevel)) c.urgencyLevel='中';
+  ['urgencyScore','estimateRangeLow','estimateRangeHigh','finalEstimate','builtYear','landArea','salePriceEstimate','tsubo'].forEach(k=>{ if(c[k]!=null && c[k]!==''){ const n=Number(c[k]); c[k]=isNaN(n)?null:n; } });
+  (c.followHistory||[]).forEach(h=>{ if(h && h.date && !DATE_RE.test(String(h.date))) h.date=''; });
+  Object.values(c.domains||{}).forEach(d=>{ if(d && d.nextDate && !DATE_RE.test(String(d.nextDate))) d.nextDate=''; });
+  return c;
+}
+function calcJokoDeadline(c){  // 空き家3000万円特別控除の期限（相続開始から3年目の12/31）
+  if(!(c.exit==='sell' && c.owner==='deceased' && c.inheritanceStartDate)) return null;
+  const y = new Date(c.inheritanceStartDate+'T00:00:00').getFullYear();
+  const deadline = new Date(y+3, 11, 31);
+  return { dateStr:(y+3)+'-12-31', left: Math.ceil((deadline - Date.now())/86400000) };
+}
+function kyuTaishin(c){  // 旧耐震(1981/5/31以前)の判定シグナル：実建築年を最優先
+  if(c.builtYear){ if(c.builtYear <= 1980) return {key:'yes', label:'旧耐震の可能性大（築'+c.builtYear+'年）', color:'#E5484D', bg:'#FDECEC'};
+    if(c.builtYear === 1981) return {key:'check', label:'1981年築＝5/31前後の確認要', color:'#B45309', bg:'#FFF7E6'};
+    return {key:'no', label:'新耐震（築'+c.builtYear+'年）', color:'#16794C', bg:'#DCF1E5'}; }
+  if(c.era==='old') return {key:'check', label:'実建築年 未確認（1989年以前築）', color:'#B45309', bg:'#FFF7E6'};
+  return null;
+}
+function addDaysISO(n){ const d=new Date(Date.now()+n*86400000); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
 /* ============================================================
    ストレージ
@@ -193,7 +245,21 @@ function load(){
   if(!DB.length) loadSeed(false);
 }
 function getC(id){ return DB.find(c => c.id === id); }
-function upsert(c){ const i = DB.findIndex(x => x.id===c.id); if(i>=0) DB[i]=c; else DB.push(c); save(); }
+function upsert(c){
+  c.updatedAt = new Date().toISOString();
+  const i = DB.findIndex(x => x.id===c.id);
+  if(i>=0){
+    const old = DB[i];
+    // ID衝突の防波堤：同IDなのに氏名も電話も不一致なら別人の可能性
+    if(old.name && c.name && old.name!==c.name && nrmPhone(old.phone) && nrmPhone(c.phone) && nrmPhone(old.phone)!==nrmPhone(c.phone)){
+      if(!confirm('同じID（'+c.id+'）に別のお客様（'+c.name+'）を上書きしようとしています。\nOK＝上書き／キャンセル＝別IDで追加して両方残す')){
+        c.id = newId(); DB.push(c); save(); return;
+      }
+    }
+    DB[i]=c;
+  } else DB.push(c);
+  save();
+}
 
 /* ============================================================
    役割（アクセス制御）— 社内は全権、提携先は自分の分野だけ編集可
@@ -205,7 +271,7 @@ const ROLE_DEFS = {
   tax:              { label:'税理士',              domain:'tax',              color:'#F0862B' },
   realestate:       { label:'不動産',              domain:'realestate',       color:'#8B5CF6' },
   construction_ext: { label:'エクステリア・造成',  domain:'construction_ext', color:'#4FA6D5' },
-  fp:               { label:'FP（資金・補助金）',  domain:'fp',               color:'#F59E0B' },
+  fp:               { label:'FP・保険',            domain:'fp',               color:'#F59E0B' },
 };
 let ROLE = localStorage.getItem('akiya_crm_role') || 'admin';
 if(!ROLE_DEFS[ROLE]) ROLE = 'admin';
@@ -213,17 +279,19 @@ function isAdmin(){ return ROLE === 'admin'; }
 function roleDomain(){ return ROLE_DEFS[ROLE].domain; }
 function canEditDomain(dkey){ return isAdmin() || roleDomain() === dkey; }
 function canEditCore(){ return isAdmin(); }               // 商談ステージ・お客様情報・注意点は社内のみ
-/* 提携先には「自分の分野が必要」な案件だけを見せる */
-function scope(){ if(isAdmin()) return DB; const dk = roleDomain(); return DB.filter(c => c.domains?.[dk]?.need==='required'); }
+/* 提携先には「自分の分野が必要」な案件＋自分が紹介した案件を見せる */
+function scope(){ if(isAdmin()) return DB; const dk = roleDomain(); return DB.filter(c => c.domains?.[dk]?.need==='required' || c.referredBy===ROLE); }
 
 function setRole(r){
   if(!ROLE_DEFS[r]) return;
+  if(localStorage.getItem('akiya_crm_locked_role') && r!==localStorage.getItem('akiya_crm_locked_role')){ toast('この端末は提携先モードに固定されています'); applyRoleUI(); return; }
   if(r!=='admin' && !confirm(ROLE_DEFS[r].label+'モードに切り替えます。\n自分の分野（'+(domainMeta(ROLE_DEFS[r].domain)?.label||'')+'）以外は閲覧のみになります。よろしいですか？')) { applyRoleUI(); return; }
   ROLE = r; localStorage.setItem('akiya_crm_role', r);
   applyRoleUI(); if(openId){ renderDetail(); } render();
 }
 function applyRoleUI(){
   const sel = document.getElementById('roleSel'); if(sel) sel.value = ROLE;
+  const wrap = document.getElementById('roleWrap'); if(wrap) wrap.style.display = localStorage.getItem('akiya_crm_locked_role') ? 'none' : '';
   const nb = document.getElementById('newBtn'); if(nb) nb.style.display = isAdmin() ? '' : 'none';
   const bar = document.getElementById('roleBar');
   if(bar){
@@ -234,8 +302,11 @@ function applyRoleUI(){
       bar.style.background = d.color;
       bar.innerHTML = `<div class="max-w-[1400px] mx-auto px-4 py-2 flex items-center gap-2 text-sm font-bold flex-wrap">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        ${d.label}モードで表示中：<span class="font-normal">担当分野「${domainMeta(d.domain)?.label||''}」のみ編集できます。他はすべて閲覧のみです。</span>
-        <button onclick="exportReturn()" class="ml-auto bg-white/20 hover:bg-white/30 rounded-full px-4 py-1.5">自分の更新を書き出して返信</button>
+        ${d.label}モード：<span class="font-normal">担当分野「${domainMeta(d.domain)?.label||''}」のみ編集可。他は閲覧のみ。</span>
+        <span class="ml-auto flex items-center gap-1.5 flex-wrap">
+          <button onclick="openReferralModal()" class="bg-white text-ink hover:opacity-90 rounded-full px-4 py-1.5">＋ お客様をご紹介</button>
+          <button onclick="exportReturn()" class="bg-white/20 hover:bg-white/30 rounded-full px-4 py-1.5">自分の更新を書き出して返信</button>
+        </span>
       </div>`;
     }
   }
@@ -249,10 +320,48 @@ function download(text, name){
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download = name; a.click();
 }
-/* 社内→提携先：指定分野が必要な案件だけを、役割タグ付きで書き出す */
-function shareToPartner(role, cases){
-  const payload = { type:'akiya_crm_share', role, exportedAt: todayISO(), cases: JSON.parse(JSON.stringify(cases)) };
-  download(JSON.stringify(payload,null,2), '空き家CRM_'+(ROLE_DEFS[role]?.label||role)+'_'+todayISO()+'.json');
+/* 役割別ホワイトリスト：渡してよい項目だけを抽出（個人情報の最小化） */
+const CONTACT_ROLES = ['inheritance_reg','realestate','fp','tax'];   // 顧客接触が業務上必要な役割のみ連絡先を渡せる
+function pickForRole(c, role, opts){
+  opts = opts || {};
+  const domainsSummary = {};
+  Object.keys(c.domains||{}).forEach(k=>{
+    if(k===role) return;
+    const ph = domainPhase(k, c.domains[k]);
+    domainsSummary[k] = { phase: ph.label, reason: c.domains[k].need==='not_required' ? (c.domains[k].reason||'') : undefined };
+  });
+  const roleLabel = ROLE_DEFS[role].label;
+  const out = {
+    id:c.id, name:c.name, city:c.city, stage:c.stage, createdAt:c.createdAt,
+    owner:c.owner, exit:c.exit, era:c.era, structure:c.structure, tsubo:c.tsubo, floors:c.floors,
+    builtYear:c.builtYear??null, address:c.address||'', chiban:c.chiban||'', landArea:c.landArea??null, rightType:c.rightType||'',
+    inheritanceStartDate:c.inheritanceStartDate||null, demolitionDate:c.demolitionDate||null,
+    subsidyApplicable:c.subsidyApplicable, insuranceStatus:c.insuranceStatus||'unknown', insuranceCancelDate:c.insuranceCancelDate||null,
+    referredBy:c.referredBy||null,
+    domains: { [role]: JSON.parse(JSON.stringify(c.domains?.[role]||{need:'required',stage:'未判定',assignee:'',next:'',reason:''})) },
+    domainsSummary,
+    followHistory: (c.followHistory||[]).filter(h => h.memo && (h.memo.startsWith('【'+roleLabel+'】') || !h.memo.startsWith('【'))).slice(0,30),
+  };
+  if(opts.teamNote) out.teamNote = c.teamNote||'';
+  if(opts.contacts && CONTACT_ROLES.includes(role)){ out.phone = c.phone; out.email = c.email; }
+  if(opts.estimate){ out.estimateRangeLow=c.estimateRangeLow; out.estimateRangeHigh=c.estimateRangeHigh; out.finalEstimate=c.finalEstimate; }
+  return out;
+  // notes（社内メモ）・緊急度スコアは常に共有しない
+}
+/* 社内→提携先：ホワイトリスト書き出し＋提供記録（個情法29条対応の運用ログ） */
+function shareToPartner(role, cases, opts){
+  opts = opts || {};
+  const payload = { type:'akiya_crm_share', direction:'share', role, exportedAt: todayISO(),
+    cases: cases.map(c => pickForRole(c, role, opts)) };
+  download(JSON.stringify(payload,null,2), '空き家CRM_'+(ROLE_DEFS[role]?.label||role)+'宛_'+todayISO()+'.json');
+  // 提供記録ログ
+  let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
+  log.unshift({ date:todayISO(), role, roleLabel:ROLE_DEFS[role].label, count:cases.length,
+    names:cases.map(c=>c.name||c.id), withContacts:!!opts.contacts, withTeamNote:!!opts.teamNote, withEstimate:!!opts.estimate });
+  localStorage.setItem('akiya_crm_sharelog', JSON.stringify(log.slice(0,200)));
+  // 各案件のフォロー履歴にも共有の事実を残す
+  cases.forEach(sc=>{ const cc=getC(sc.id); if(cc){ cc.followHistory=cc.followHistory||[];
+    cc.followHistory.unshift({date:todayISO(), type:'共有', memo:'【共有】'+ROLE_DEFS[role].label+'向けに書き出し'+(opts.contacts?'（連絡先含む）':'')}); upsert(cc); } });
   toast(ROLE_DEFS[role].label+'向けに'+cases.length+'件を書き出しました');
 }
 function openShareModal(caseId){
@@ -260,6 +369,13 @@ function openShareModal(caseId){
   const only = caseId ? getC(caseId) : null;
   document.getElementById('shareBody').innerHTML = `
     <p class="text-sm text-sub mb-3">${only?('「'+esc(only.name||'')+'様」の案件を、'):'該当案件を'}選んだ提携先へ送るファイルを作成します。<br>提携先はそのファイルを顧客管理ページで読み込むと、<strong class="text-ink">自分の分野だけ編集できる状態</strong>で開きます。</p>
+    <div class="bg-paper rounded-xl p-3 mb-3">
+      <p class="text-xs font-bold mb-1.5">共有する個人情報の範囲（必要な分だけチェック）</p>
+      <label class="flex items-center gap-2 text-sm py-1 cursor-pointer"><input type="checkbox" id="sh-contacts" class="accent-[#2E9E68] w-4 h-4" onchange="updateSharePreview()">電話・メールを含める<span class="text-[11px] text-sub">（顧客対応が必要な士業のみ有効）</span></label>
+      <label class="flex items-center gap-2 text-sm py-1 cursor-pointer"><input type="checkbox" id="sh-teamnote" class="accent-[#2E9E68] w-4 h-4" onchange="updateSharePreview()">チーム共有の注意点を含める</label>
+      <label class="flex items-center gap-2 text-sm py-1 cursor-pointer"><input type="checkbox" id="sh-estimate" class="accent-[#2E9E68] w-4 h-4" onchange="updateSharePreview()">概算・見積額を含める</label>
+      <p id="sh-preview" class="text-[11px] text-sub mt-1.5 leading-relaxed"></p>
+    </div>
     <div class="space-y-1.5">
       ${DOMAINS.map(dm=>{
         const n = (caseId?[only]:DB).filter(c=>c && c.domains?.[dm.key]?.need==='required').length;
@@ -271,8 +387,17 @@ function openShareModal(caseId){
         </button>`;
       }).join('')}
     </div>
-    <p class="text-[11px] text-sub mt-3">※ ファイルにはお客様情報が含まれます。送付先を確認のうえ、メール等でお送りください（このツールから自動送信はしません）。</p>`;
+    <p class="text-[11px] text-sub mt-3">※ 社内メモ（notes）は常に含まれません。他分野の詳細は進捗ラベルのみに縮約されます。送付先を確認のうえ、メール等でお送りください。</p>`;
+  updateSharePreview();
   document.getElementById('shareModal').classList.remove('hidden');
+}
+function updateSharePreview(){
+  const el = document.getElementById('sh-preview'); if(!el) return;
+  const items = ['氏名','市町','商談ステージ','建物情報（構造・坪数・築年・地番等）','担当分野の詳細','他分野の進捗ラベル','担当分野宛のメモ'];
+  if(document.getElementById('sh-contacts')?.checked) items.push('電話・メール');
+  if(document.getElementById('sh-teamnote')?.checked) items.push('チーム注意点');
+  if(document.getElementById('sh-estimate')?.checked) items.push('概算・見積額');
+  el.textContent = 'このファイルに含まれる項目：'+items.join('／');
 }
 let shareCaseId = null;
 function closeShare(){ document.getElementById('shareModal').classList.add('hidden'); }
@@ -280,49 +405,151 @@ function doShare(role){
   const base = shareCaseId ? [getC(shareCaseId)] : DB;
   const cases = base.filter(c => c && c.domains?.[role]?.need==='required');
   if(!cases.length){ toast('該当案件がありません'); return; }
-  shareToPartner(role, cases);
+  const opts = {
+    contacts: !!document.getElementById('sh-contacts')?.checked,
+    teamNote: !!document.getElementById('sh-teamnote')?.checked,
+    estimate: !!document.getElementById('sh-estimate')?.checked,
+  };
+  // 第三者提供の同意ガード
+  const noConsent = cases.filter(c => !(c.thirdPartyConsent && c.thirdPartyConsent.obtained));
+  let finalCases = cases;
+  if(noConsent.length){
+    const names = noConsent.map(c=>c.name||c.id).join('、');
+    if(confirm('第三者提供の同意が未記録の案件があります：'+names+'\n\nOK＝未同意の案件を除外して書き出す\nキャンセル＝全件このまま書き出す（口頭同意済み等の場合）')){
+      finalCases = cases.filter(c => c.thirdPartyConsent && c.thirdPartyConsent.obtained);
+      if(!finalCases.length){ toast('書き出す案件がありません（全件が同意未記録）'); return; }
+    }
+  }
+  shareToPartner(role, finalCases, opts);
   closeShare();
 }
-/* 提携先が受け取る：役割つきファイルを読み込み、担当モードで開く */
+function openShareLog(){
+  let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
+  document.getElementById('shareBody').innerHTML = `
+    <p class="font-black text-sm mb-2">共有履歴（第三者提供の記録）</p>
+    ${log.length ? `<div class="max-h-96 overflow-y-auto divide-y divide-line">${log.map(l=>`
+      <div class="py-2 text-sm">
+        <p class="font-bold">${esc(l.date)}　→ ${esc(l.roleLabel)}　${l.count}件${l.withContacts?'（連絡先含む）':''}</p>
+        <p class="text-[11px] text-sub">${(l.names||[]).map(esc).join('、')}</p>
+      </div>`).join('')}</div>`
+    : '<p class="text-sm text-sub py-4">共有履歴はまだありません。</p>'}
+    <p class="text-[11px] text-sub mt-3">※ 個人情報保護法の提供記録（29条）に対応する運用ログです。バックアップJSONには含まれません（この端末に保存）。</p>`;
+  document.getElementById('shareModal').classList.remove('hidden');
+  toggleMenu();
+}
+/* 提携先が受け取る：全置換せずマージし、直前状態を自動退避。端末は担当モードに固定 */
 function receiveShare(e){
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{ try {
     const p = JSON.parse(r.result);
     if(p.type!=='akiya_crm_share' || !Array.isArray(p.cases) || !ROLE_DEFS[p.role]) throw 0;
-    if(!confirm(ROLE_DEFS[p.role].label+'として'+p.cases.length+'件を受け取ります。\nこの端末の表示データは受け取った内容に置き換わります（元に戻す場合はサンプル再読み込み）。続けますか？')) return;
-    DB = p.cases; save();
+    if(p.direction==='return'){ toast('これは提携先からの返信ファイルです。「提携先からの更新を反映」からお使いください'); return; }
+    if(isAdmin() && DB.length){
+      if(!confirm('⚠ これは提携先の端末で使う機能です。\n社内端末で読み込むと表示データが置き換わり、この端末は提携先モードに固定されます。\n（提携先の返信を反映したい場合は「提携先からの更新を反映」を使ってください）\n\n本当に続行しますか？')) return;
+    }
+    if(localStorage.getItem('akiya_crm_dirty')){
+      if(!confirm('未返信の更新があります。先に「自分の更新を書き出して返信」してから受信することをおすすめします。\nこのまま続行しますか？')) return;
+    }
+    if(!confirm(ROLE_DEFS[p.role].label+'として'+p.cases.length+'件を受け取ります。\n直前の状態にはメニューの「直前のデータに戻す」で復帰できます。続けますか？')) return;
+    // 直前状態の自動退避（1スロット）＋バックアップの自動ダウンロード
+    localStorage.setItem('akiya_crm_prev', JSON.stringify({savedAt:todayISO(), cases:DB}));
+    if(DB.length) download(JSON.stringify(DB,null,2), '受信前バックアップ_'+todayISO()+'.json');
+    const dk = ROLE_DEFS[p.role].domain;
+    p.cases.forEach(pc=>{
+      sanitizeCase(pc);
+      const i = DB.findIndex(x=>x.id===pc.id);
+      if(i>=0){
+        const local = DB[i];
+        // 自分の分野の編集とローカルのフォロー履歴は温存して統合
+        const mine = local.domains?.[dk];
+        pc.domains = pc.domains || {};
+        if(mine && mine.updatedAt && (!pc.domains[dk]?.updatedAt || pc.domains[dk].updatedAt < mine.updatedAt)) pc.domains[dk] = mine;
+        const seen = new Set((pc.followHistory||[]).map(h=>h.date+'|'+h.memo));
+        (local.followHistory||[]).forEach(h=>{ if(!seen.has(h.date+'|'+h.memo)) (pc.followHistory=pc.followHistory||[]).push(h); });
+        DB[i] = pc;
+      } else DB.push(pc);
+      // 受信ファイルに無いローカル案件（自分の紹介など）は削除せず温存
+    });
+    save();
     ROLE = p.role; localStorage.setItem('akiya_crm_role', ROLE);
+    localStorage.setItem('akiya_crm_locked_role', p.role);   // 端末を担当モードに固定（解除は正規の全データJSON読み込み）
     applyRoleUI(); setView('partner');
     toast(ROLE_DEFS[p.role].label+'モードで'+p.cases.length+'件を読み込みました');
   } catch(err){ toast('この共有ファイルを読み込めませんでした'); } };
   r.readAsText(f); e.target.value=''; toggleMenu();
 }
-/* 提携先→社内：自分の更新を書き出す（自分の分野のみが後で反映される） */
+/* 直前のデータに戻す（受信前の自動退避から復元） */
+function restorePrev(){
+  try {
+    const p = JSON.parse(localStorage.getItem('akiya_crm_prev'));
+    if(!p || !Array.isArray(p.cases)){ toast('復元できる退避データがありません'); toggleMenu(); return; }
+    if(!confirm(p.savedAt+' 時点のデータ（'+p.cases.length+'件）に戻します。現在の表示データは失われます。よろしいですか？')) return;
+    DB = p.cases; save(); render(); toggleMenu(); toast('直前のデータに戻しました');
+  } catch(e){ toast('復元に失敗しました'); }
+}
+/* 提携先→社内：自分の分野の更新＋自分からの紹介案件を返信ファイルに */
 function exportReturn(){
   if(isAdmin()){ toast('提携先モードのときに使えます'); return; }
   const dk = roleDomain();
-  const cases = DB.filter(c => c.domains?.[dk]?.need==='required');
-  shareToPartner(ROLE, cases);
+  const roleLabel = ROLE_DEFS[ROLE].label;
+  const mine = DB.filter(c => c.domains?.[dk]?.need==='required' && c.referredBy!==ROLE);
+  const referrals = DB.filter(c => c.referredBy===ROLE);
+  const payload = { type:'akiya_crm_share', direction:'return', role:ROLE, exportedAt:todayISO(),
+    cases: mine.map(c => ({
+      id:c.id,
+      domains:{ [dk]: c.domains[dk] },
+      followHistory:(c.followHistory||[]).filter(h=>h.memo && h.memo.startsWith('【'+roleLabel+'】')),
+      inheritanceStartDate:c.inheritanceStartDate||null
+    })).concat(referrals.map(c=>JSON.parse(JSON.stringify(c)))) };
+  download(JSON.stringify(payload,null,2), '空き家CRM_'+roleLabel+'_返信_'+todayISO()+'.json');
+  localStorage.removeItem('akiya_crm_dirty');
+  toast('返信ファイルを書き出しました（更新'+mine.length+'件・ご紹介'+referrals.length+'件）。メール等で解体会社へお送りください');
 }
-/* 社内が反映：提携先の返信ファイルから「その分野だけ」を安全にマージ（他分野は上書きしない） */
+/* 社内が反映：返信ファイルから「その分野だけ」安全にマージ＋紹介案件を新規受入 */
 function applyReturn(e){
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{ try {
     const p = JSON.parse(r.result);
     if(p.type!=='akiya_crm_share' || !Array.isArray(p.cases) || !ROLE_DEFS[p.role]) throw 0;
-    const dk = ROLE_DEFS[p.role].domain; let upd=0, notes=0;
+    if(p.direction && p.direction!=='return'){ toast('これは社内→提携先の送付ファイルです。反映には提携先の「返信」ファイルを選んでください'); return; }
+    const dk = ROLE_DEFS[p.role].domain; let upd=0, conflict=0, notes=0, refs=0;
     p.cases.forEach(pc=>{
-      const c = getC(pc.id); if(!c) return;
-      if(dk && pc.domains?.[dk]){ c.domains[dk] = pc.domains[dk]; upd++; }
+      sanitizeCase(pc);
+      const c = getC(pc.id);
+      if(!c){
+        if(pc.referredBy){   // 提携先からの紹介案件を新規リードとして受入
+          const dup = pc.phone && DB.find(x => nrmPhone(x.phone) && nrmPhone(x.phone)===nrmPhone(pc.phone));
+          if(dup){
+            dup.followHistory = dup.followHistory||[];
+            dup.followHistory.unshift({date:todayISO(), type:'メモ', memo:'【紹介】'+ROLE_DEFS[p.role].label+'から紹介あり（既存案件と同一電話番号のため統合）'});
+            upsert(dup);
+          } else {
+            pc.stage = pc.stage || 'lead';
+            pc.domains = pc.domains || {};
+            deriveDomains(pc);
+            DB.push(pc); save(); refs++;
+          }
+        }
+        return;
+      }
+      if(dk && pc.domains?.[dk]){
+        const localU = c.domains?.[dk]?.updatedAt, remoteU = pc.domains[dk].updatedAt;
+        if(localU && remoteU && remoteU < localU){ conflict++; }   // 社内の方が新しい→巻き戻さない
+        else { c.domains[dk] = pc.domains[dk]; upd++; }
+      }
+      if(!c.inheritanceStartDate && pc.inheritanceStartDate) c.inheritanceStartDate = pc.inheritanceStartDate;   // 戸籍を見る専門家の記入を取り込む
       (pc.followHistory||[]).forEach(h=>{
         if(!(c.followHistory||[]).some(x=>x.date===h.date && x.memo===h.memo)){ c.followHistory.unshift(h); notes++; }
       });
       upsert(c);
     });
     render();
-    toast(ROLE_DEFS[p.role].label+'の更新を反映：'+upd+'件（新規メモ'+notes+'件）');
+    toast(ROLE_DEFS[p.role].label+'の更新を反映：'+upd+'件'
+      +(conflict?('／競合'+conflict+'件は社内が新しいため未反映'):'')
+      +(refs?('／ご紹介の新規受入'+refs+'件'):'')
+      +'（新規メモ'+notes+'件）');
   } catch(err){ toast('この返信ファイルを反映できませんでした'); } };
   r.readAsText(f); e.target.value=''; toggleMenu();
 }
@@ -357,9 +584,9 @@ function deriveDomains(c){
   else if(c.exit==='sell') set('construction_ext',{ need:'not_required', reason:'更地渡し・売却のため活用なし' });
   else set('construction_ext',{ need:'undetermined', next: c.garden==='many' ? '外構多め＝再整備需要のシグナル' : '' });
 
-  // FP（資金・補助金）
-  const high = (Number(c.estimateRangeLow)||0) >= 150 || c.urgencyLevel==='高';
-  if(high) set('fp',{ need:'required', stage:d.fp?.stage||'資金ヒアリング', next:'解体費と自己資金・補助金の確認' });
+  // FP（資金・保険・補助金）— 高額/緊急に加え、相続・売却・補助金該当も資金と保険の確認が要る
+  const high = (Number(c.estimateRangeLow)||0) >= 150 || c.urgencyLevel==='高' || c.owner==='deceased' || c.exit==='sell' || c.subsidyApplicable==='該当あり';
+  if(high) set('fp',{ need:'required', stage:d.fp?.stage||'資金ヒアリング', next:'解体費・火災保険・補助金の確認' });
   else set('fp',{ need:'undetermined', next:'' });
 
   c.domains = d;
@@ -385,8 +612,10 @@ function strategyFor(c){
     out.push({lv:'高', t:'現地調査の結果（地中埋設物・石綿・私道掘削承諾・残置物）を反映した「確定レンジ見積」へ更新。診断概算からの差分理由を明示。'});
   if(c.exit==='sell')
     out.push({lv:'高', t:'即解体に走らず、不動産査定（現況／更地）と税理士の3000万円控除の可否判定を並行で起票。更地渡しか古家付きかで自社解体の要否を確定。'});
-  if(c.exit==='sell' && c.era==='old' && c.owner==='deceased')
+  if(c.exit==='sell' && (c.builtYear ? c.builtYear<=1981 : c.era==='old') && c.owner==='deceased')
     out.push({lv:'高', t:'被相続人居住用財産3000万円特別控除の本命。相続開始から3年目の年末を逆算し、相続登記→解体→滅失→売買のクリティカルパスを設定。実建築年（1981/5/31以前か）を現地確認のうえ税理士へ。'});
+  if(stageIndex(c.stage)>=stageIndex('contract') && (c.insuranceStatus||'unknown')==='unknown' && c.stage!=='closed_lost')
+    out.push({lv:'高', t:'解体前に火災保険の解約時期と解約返戻金を確認（建物滅失後は請求できません）。返戻金は資金計画の原資に。FP・保険担当へ。'});
   if(c.exit==='use')
     out.push({lv:'中', t:'エクステリア／造成／新築を起票。解体〜造成を同一重機・仮設で連結受注し原価圧縮。着手前に再建築可否（接道2m・セットバック・用途地域・調整区域）を確認。'});
   if((Number(c.estimateRangeLow)||0) >= 150 && c.urgencyLevel==='高')
@@ -418,7 +647,7 @@ function alertsFor(c){
     else if(!contacted && d!==null && d>=1) a.push({lv:'amber', t:'新規リードが24時間以上未接触'});
   }
   if(open && c.nextActionDate && c.nextActionDate < todayISO())
-    a.push({lv:'amber', t:'次アクション日を超過（'+c.nextActionDate+'）'});
+    a.push({lv:'amber', t:'次アクション日を超過（'+esc(c.nextActionDate)+'）'});
   if((c.owner==='deceased'||c.owner==='unknown') && si>=stageIndex('contract') && c.domains?.inheritance_reg?.stage!=='完了')
     a.push({lv:'red', t:'名義が未解決のまま契約以降へ進行（着工不可ブロック）'});
   if((c.stage==='completed'||c.stage==='aftercare') && c.demolitionDate){
@@ -428,13 +657,28 @@ function alertsFor(c){
       else if(d!==null && d>=20) a.push({lv:'amber', t:'滅失登記の期限が接近（完工＋1ヶ月）'});
     }
   }
-  if(c.exit==='sell' && c.owner==='deceased' && c.inheritanceStartDate){
-    const y = new Date(c.inheritanceStartDate+'T00:00:00').getFullYear();
-    const deadline = new Date(y+3, 11, 31);
-    const left = Math.ceil((deadline - Date.now())/86400000);
-    if(left<=30) a.push({lv:'red', t:'3000万円控除の期限が残り'+left+'日'});
-    else if(left<=90) a.push({lv:'amber', t:'3000万円控除の期限が残り'+left+'日'});
+  const joko = calcJokoDeadline(c);
+  if(joko && open){
+    if(joko.left<=90) a.push({lv:'red', t:'3000万円控除の期限（'+joko.dateStr+'）まで残り'+joko.left+'日'});
+    else if(joko.left<=365) a.push({lv:'amber', t:'3000万円控除の期限（'+joko.dateStr+'）まで残り'+joko.left+'日'});
   }
+  // 相続登記の申請義務（2024年義務化・相続を知った日から3年・過料あり）
+  if(open && c.owner==='deceased' && c.inheritanceStartDate && c.domains?.inheritance_reg?.stage!=='完了'){
+    const d0 = new Date(c.inheritanceStartDate+'T00:00:00');
+    const dl = new Date(d0); dl.setFullYear(d0.getFullYear()+3);
+    const left = Math.ceil((dl - Date.now())/86400000);
+    if(left<=90) a.push({lv:'red', t:'相続登記の申請義務（3年）まで残り'+left+'日'});
+    else if(left<=180) a.push({lv:'amber', t:'相続登記の申請義務（3年）まで残り'+left+'日'});
+  }
+  // 火災保険（滅失後は請求不可・工事前の無保険リスク）
+  if(open && c.insuranceStatus==='cancelPlanned' && c.insuranceCancelDate && c.insuranceCancelDate <= todayISO() && stageIndex(c.stage) < stageIndex('construction'))
+    a.push({lv:'amber', t:'火災保険の解約予定日を過ぎています（着工前の建物が無保険の恐れ）'});
+  // 分野期日の超過
+  DOMAINS.forEach(dm => {
+    const d = c.domains?.[dm.key];
+    if(open && d && d.need==='required' && d.nextDate && d.nextDate < todayISO() && domainPhase(dm.key,d).key!=='done')
+      a.push({lv:'amber', t:dm.label+'の期日を超過（'+esc(d.nextDate)+'）'});
+  });
   // 必要分野が未着手
   DOMAINS.forEach(dm => {
     const d = c.domains?.[dm.key];
@@ -468,7 +712,7 @@ function bannerHTML(){
 }
 function mapLead(l){
   const c = {
-    id:'AK-'+new Date().getFullYear()+'-'+String(l.ts||Date.now()).slice(-5),
+    id: newId(),
     createdAt: l.date || todayISO(),
     source: l.kind==='form' ? '問い合わせフォーム' : '60秒診断',
     name:l.name||'', phone:l.phone||'', email:l.email||'', city:l.city||'',
@@ -481,9 +725,11 @@ function mapLead(l){
     estimateRangeLow: l.total ? Math.round(l.total*0.85/10000) : null,
     estimateRangeHigh: l.total ? Math.round(l.total*1.15/10000) : null,
     finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
-    demolitionDate:null, inheritanceStartDate:null, domains:{},
+    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
+    demolitionDate:null, inheritanceStartDate:null, thirdPartyConsent:{obtained:false,date:'',method:''}, domains:{},
     followHistory:[{date:todayISO(), type:'メモ', memo:'LP診断からの自動読み取りで起票'}], lostReason:null, notes:''
   };
+  sanitizeCase(c);
   deriveDomains(c);
   return c;
 }
@@ -508,11 +754,155 @@ document.getElementById('tabs').addEventListener('click', e => { const b=e.targe
 function render(){
   const app = document.getElementById('app');
   let html = '';
-  if(VIEW==='inbox') html = renderInbox();
+  if(VIEW==='today') html = renderToday();
+  else if(VIEW==='inbox') html = renderInbox();
   else if(VIEW==='kanban') html = renderKanban();
   else if(VIEW==='partner') html = renderPartner();
   else if(VIEW==='dashboard') html = renderDashboard();
   app.innerHTML = bannerHTML() + html;
+}
+
+/* ---- 今日やること（期日消し込みビュー） ---- */
+function renderToday(){
+  const t = todayISO();
+  const rows = [];
+  scope().forEach(c=>{
+    if(c.stage==='closed_lost') return;
+    const al = alertsFor(c);
+    const hasRed = al.some(x=>x.lv==='red');
+    if(isAdmin() && c.nextActionDate && c.nextActionDate<=t)
+      rows.push({c, kind:'core', kindLabel:'商談', color:'#243B33', date:c.nextActionDate, what:c.nextAction||'次アクション', who:c.assignee||'', red:hasRed});
+    DOMAINS.forEach(dm=>{
+      if(!isAdmin() && roleDomain()!==dm.key) return;
+      const d = c.domains?.[dm.key];
+      if(d && d.need==='required' && d.nextDate && d.nextDate<=t && domainPhase(dm.key,d).key!=='done')
+        rows.push({c, kind:dm.key, kindLabel:dm.label, color:dm.color, date:d.nextDate, what:d.next||dm.label, who:d.assignee||'', red:hasRed});
+    });
+    if(hasRed && !rows.some(r=>r.c.id===c.id))
+      rows.push({c, kind:'alert', kindLabel:'警告', color:'#E5484D', date:t, what:al.find(x=>x.lv==='red').t, who:c.assignee||'', red:true});
+  });
+  rows.sort((a,b)=> a.date!==b.date ? (a.date<b.date?-1:1) : (b.red?1:0)-(a.red?1:0));
+  const list = rows.map(r=>{
+    const over = Math.max(0, Math.floor((Date.now()-new Date(r.date+'T00:00:00'))/86400000));
+    return `<div class="bg-white border border-line rounded-xl px-4 py-3 mb-2 flex items-center gap-3 flex-wrap hover:border-grn cursor-pointer" onclick="openDetail('${r.c.id}')">
+      <span class="text-xs font-black px-2 py-0.5 rounded-full shrink-0" style="color:#fff;background:${r.color}">${r.kindLabel}</span>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-sm truncate">${esc(r.c.name||'（無名）')} <span class="text-xs text-sub font-normal">${esc(r.c.city||'')}・${stageMeta(r.c.stage).label}</span></p>
+        <p class="text-[13px] text-ink truncate">${esc(r.what)}</p>
+      </div>
+      <span class="text-xs font-bold shrink-0 ${over>0?'text-red':'text-sub'}">${over>0?('期日超過 '+over+'日'):'今日'}</span>
+      ${r.c.phone?`<a href="tel:${esc(r.c.phone)}" onclick="event.stopPropagation()" class="shrink-0 border border-grn text-grn text-xs font-bold rounded-full px-3 py-1.5 hover:bg-grnL">電話</a>`:''}
+      ${r.kind!=='alert'?`<button onclick="completeAndNext('${r.c.id}','${r.kind}',event)" class="shrink-0 bg-grn text-white text-xs font-bold rounded-full px-3 py-1.5 hover:opacity-90">完了→次回</button>`:''}
+    </div>`;
+  }).join('');
+  return `
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-black text-lg">今日やること <span class="text-sub text-sm font-bold">${rows.length}件</span></h2>
+    <p class="text-[11px] text-sub">期日超過→今日の順。「完了→次回」で消し込みと次回設定が1タップで終わります。</p>
+  </div>
+  ${list || '<div class="bg-white border border-line rounded-2xl p-10 text-center text-sub">今日やることはありません。おつかれさまです。</div>'}`;
+}
+function completeAndNext(id, kind, ev){
+  ev.stopPropagation();
+  const c = getC(id); if(!c) return;
+  const memo = prompt('完了メモ（フォロー履歴に残ります）','対応済み');
+  if(memo===null) return;
+  const next = prompt('次の期日（YYYY-MM-DD／空欄で期日なし）', addDaysISO(7));
+  if(next===null) return;
+  const nd = (next && DATE_RE.test(next.trim())) ? next.trim() : '';
+  c.followHistory = c.followHistory||[];
+  const who = isAdmin() ? '' : '【'+ROLE_DEFS[ROLE].label+'】';
+  c.followHistory.unshift({date:todayISO(), type:'メモ', memo: who+memo});
+  if(kind==='core'){ if(canEditCore()) c.nextActionDate = nd; }
+  else if(domainMeta(kind) && canEditDomain(kind)){ const d=c.domains[kind]; if(d){ d.nextDate = nd; d.updatedAt = new Date().toISOString(); } }
+  markDirty(); upsert(c); render(); toast('✓ 消し込みました'+(nd?('（次回 '+nd+'）'):''));
+}
+
+/* ---- お客様ご紹介（提携先→解体チーム） ---- */
+function openReferralModal(){
+  if(isAdmin()){ toast('提携先モードで使う機能です（社内は「＋新規案件」を使用）'); return; }
+  document.getElementById('referralBody').innerHTML = `
+    <p class="text-sm text-sub mb-3">あなたのお客様を解体チームへお繋ぎします。登録後、<strong class="text-ink">「自分の更新を書き出して返信」</strong>で解体会社へ送ると正式に共有されます。</p>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="text-[11px] text-sub font-bold">お名前 <span class="text-red">*</span><input id="rf-name" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+      <label class="text-[11px] text-sub font-bold">電話<input id="rf-phone" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+      <label class="text-[11px] text-sub font-bold">所在地（市町）<input id="rf-city" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
+      <label class="text-[11px] text-sub font-bold">建物の名義
+        <select id="rf-owner" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5">
+          <option value="self">ご本人</option><option value="deceased">故人のまま</option><option value="unknown" selected>不明</option>
+        </select></label>
+      <label class="text-[11px] text-sub font-bold">解体後の出口
+        <select id="rf-exit" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5">
+          <option value="undecided" selected>未定</option><option value="sell">売却</option><option value="use">活用</option>
+        </select></label>
+    </div>
+    <label class="text-[11px] text-sub font-bold block mt-3">ご相談内容<textarea id="rf-consult" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5" placeholder="例）相続相談で来られたお客様。実家が空き家で解体を検討中"></textarea></label>
+    <label class="text-[11px] text-sub font-bold block mt-3">あなたの分野の所見（チームに共有）<textarea id="rf-note" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5" placeholder="例）相続人は2名・遺産分割協議はこれから"></textarea></label>
+    <p class="text-[11px] text-sub mt-3">※ ご紹介にあたり、お客様ご本人に情報共有の同意を得てください。</p>
+    <div class="flex justify-end gap-2 mt-4">
+      <button onclick="closeReferral()" class="text-sm font-bold px-5 py-2.5 rounded-full border border-line">キャンセル</button>
+      <button onclick="submitReferral()" class="bg-grn text-white text-sm font-bold px-6 py-2.5 rounded-full">紹介案件として登録</button>
+    </div>`;
+  document.getElementById('referralModal').classList.remove('hidden');
+}
+function closeReferral(){ document.getElementById('referralModal').classList.add('hidden'); }
+function submitReferral(){
+  const name = (document.getElementById('rf-name').value||'').trim();
+  if(!name){ toast('お名前を入力してください'); return; }
+  const g = id => document.getElementById(id).value;
+  const roleLabel = ROLE_DEFS[ROLE].label;
+  const c = {
+    id: newId('REF'), createdAt: todayISO(), source:'紹介（'+roleLabel+'）',
+    referredBy: ROLE, referredAt: todayISO(),
+    name, phone:g('rf-phone'), email:'', city:g('rf-city'),
+    desiredConsult:g('rf-consult'), assignee:'', teamNote: g('rf-note') ? ('【'+roleLabel+'の所見】'+g('rf-note')) : '',
+    stage:'lead', nextAction:'紹介案件の一次架電・ご挨拶', nextActionDate: todayISO(),
+    structure:'wood', tsubo:null, floors:'2f', era:'unknown', road:'unknown', garden:'normal', zanchi:'half',
+    owner:g('rf-owner'), exit:g('rf-exit'),
+    urgencyLevel:'中', urgencyScore:null, estimateRangeLow:null, estimateRangeHigh:null,
+    finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
+    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
+    demolitionDate:null, inheritanceStartDate:null, domains:{},
+    followHistory:[{date:todayISO(), type:'メモ', memo:'【'+roleLabel+'】からのご紹介で起票'}],
+    lostReason:null, notes:'', thirdPartyConsent:{obtained:false, date:'', method:''}
+  };
+  deriveDomains(c);
+  DB.push(c); save();
+  localStorage.setItem('akiya_crm_dirty', todayISO());
+  closeReferral(); render();
+  toast('紹介案件を登録しました。「自分の更新を書き出して返信」で解体会社へお送りください');
+}
+
+/* ---- 検索（全ビュー共通・役割スコープ内） ---- */
+function searchCases(q){
+  q = (q||'').trim(); if(!q) return [];
+  const qp = q.replace(/[-\s]/g,'');
+  const isNum = /^[0-9]+$/.test(qp);
+  return scope().filter(c =>
+    (c.name||'').includes(q) || (c.city||'').includes(q) || (c.id||'').toLowerCase().includes(q.toLowerCase()) ||
+    (isNum && qp.length>=3 && nrmPhone(c.phone).includes(qp))
+  ).slice(0,8);
+}
+function renderSearchDrop(){
+  const box = document.getElementById('searchBox'), drop = document.getElementById('searchDrop');
+  const q = box.value;
+  const hits = searchCases(q);
+  if(!q.trim() || !hits.length){ drop.classList.add('hidden'); drop.innerHTML=''; return; }
+  drop.innerHTML = hits.map(c=>`
+    <div class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-paper cursor-pointer" onclick="openFromSearch('${c.id}')">
+      <span class="w-2 h-2 rounded-full shrink-0" style="background:${urgColor(c.urgencyLevel)}"></span>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-sm truncate">${esc(c.name||'（無名）')}</p>
+        <p class="text-[11px] text-sub truncate">${esc(c.city||'')}・${esc(c.phone||'')}</p>
+      </div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style="color:#fff;background:${stageMeta(c.stage).color}">${stageMeta(c.stage).label}</span>
+    </div>`).join('');
+  drop.classList.remove('hidden');
+}
+function openFromSearch(id){
+  const box = document.getElementById('searchBox'), drop = document.getElementById('searchDrop');
+  box.value=''; drop.classList.add('hidden'); drop.innerHTML='';
+  openDetail(id);
 }
 
 function badge(text, color, bg){ return `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full" style="color:${color};background:${bg}">${text}</span>`; }
@@ -533,11 +923,12 @@ function alertPip(c){
 
 /* ---- 受信リード（トリアージ） ---- */
 function renderInbox(){
-  const leads = scope().filter(c=>c.stage==='lead').sort((a,b)=> (b.urgencyScore||0)-(a.urgencyScore||0));
+  const leads = scope().filter(c=>c.stage==='lead').sort((a,b)=> uscore(b)-uscore(a));
   const rows = leads.map(c=>{
     const al = alertsFor(c);
+    const refBadge = c.referredBy ? badge('紹介','#fff',ROLE_DEFS[c.referredBy]?.color||'#8B5CF6')+' ' : '';
     return `<tr class="border-t border-line hover:bg-paper cursor-pointer" onclick="openDetail('${c.id}')">
-      <td class="px-3 py-2.5"><div class="font-bold">${esc(c.name||'（無名）')}</div><div class="text-[11px] text-sub">${esc(c.city||'')}・${lab('source',c.source)||esc(c.source||'')}</div></td>
+      <td class="px-3 py-2.5"><div class="font-bold">${refBadge}${esc(c.name||'（無名）')}</div><div class="text-[11px] text-sub">${esc(c.city||'')}・${lab('source',c.source)||esc(c.source||'')}</div></td>
       <td class="px-3 py-2.5">${badge('緊急度 '+(c.urgencyLevel||'—'), '#fff', urgColor(c.urgencyLevel))}</td>
       <td class="px-3 py-2.5 whitespace-nowrap">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):'—'}</td>
       <td class="px-3 py-2.5">${lab('owner',c.owner)} / 出口:${lab('exit',c.exit)}</td>
@@ -562,15 +953,44 @@ function renderInbox(){
   </div>`;
 }
 
-/* ---- 解体パイプライン・カンバン ---- */
+/* ---- 解体パイプライン・カンバン（列折り畳み・期日順・ワンタップ前進） ---- */
+let KANBAN_COLLAPSED = new Set();
+try { KANBAN_COLLAPSED = new Set(JSON.parse(localStorage.getItem('akiya_crm_kanban_collapsed'))||[]); } catch(e){}
+function toggleCol(k, ev){
+  ev && ev.stopPropagation();
+  KANBAN_COLLAPSED.has(k) ? KANBAN_COLLAPSED.delete(k) : KANBAN_COLLAPSED.add(k);
+  localStorage.setItem('akiya_crm_kanban_collapsed', JSON.stringify([...KANBAN_COLLAPSED]));
+  render();
+}
+function nextStage(id, ev){
+  ev.stopPropagation();
+  if(!canEditCore()) return;
+  const c = getC(id); const i = stageIndex(c.stage);
+  if(i>=0 && i<OPEN_STAGES.length-1){
+    c.stage = OPEN_STAGES[i+1].key;
+    upsert(c); render(); toast(esc(c.name||'案件')+'様 → 「'+stageMeta(c.stage).label+'」へ進めました');
+  }
+}
 function renderKanban(){
   const base = scope();
   const cols = OPEN_STAGES.map(s=>{
-    const items = base.filter(c=>c.stage===s.key);
+    const items = base.filter(c=>c.stage===s.key)
+      .sort((a,b)=> (a.nextActionDate||'9999-99-99') < (b.nextActionDate||'9999-99-99') ? -1 : 1);
+    const collapsed = KANBAN_COLLAPSED.has(s.key);
+    if(collapsed){
+      return `<div class="shrink-0 w-[64px]">
+        <button onclick="toggleCol('${s.key}',event)" title="${s.label}を開く" class="w-full bg-white border border-line rounded-xl px-1 py-3 flex flex-col items-center gap-2 hover:border-grn">
+          <span class="w-2.5 h-2.5 rounded-full" style="background:${s.color}"></span>
+          <span class="text-[10px] font-bold [writing-mode:vertical-rl] leading-tight">${s.label}</span>
+          <span class="text-xs font-black">${items.length}</span>
+        </button>
+      </div>`;
+    }
     const cards = items.map(c=>{
+      const canAdvance = canEditCore() && stageIndex(c.stage) < OPEN_STAGES.length-1;
       return `<div class="bg-white rounded-xl border border-line p-3 mb-2 cursor-pointer hover:border-grn" onclick="openDetail('${c.id}')">
         <div class="flex items-center justify-between gap-2 mb-1">
-          <p class="font-bold text-sm truncate">${esc(c.name||'（無名）')}</p>
+          <p class="font-bold text-sm truncate">${c.referredBy?badge('紹介','#fff',ROLE_DEFS[c.referredBy]?.color||'#8B5CF6')+' ':''}${esc(c.name||'（無名）')}</p>
           ${alertPip(c)}
         </div>
         <p class="text-[11px] text-sub mb-2">${esc(c.city||'')}・${lab('structure',c.structure)}・約${c.tsubo||'?'}坪</p>
@@ -581,15 +1001,18 @@ function renderKanban(){
         <div class="flex items-center gap-1 mb-2">${domainDots(c)}</div>
         ${c.teamNote?`<p class="text-[11px] font-bold rounded-lg px-2 py-1 mb-1 line-clamp-2" style="color:#B45309;background:#FFF7E6">⚠ ${esc(c.teamNote)}</p>`:''}
         ${c.nextAction?`<p class="text-[11px] text-ink mt-1 line-clamp-2">${esc(c.nextAction)}</p>`:''}
-        ${c.nextActionDate?`<p class="text-[10px] mt-1 ${c.nextActionDate<todayISO()?'text-red font-bold':'text-sub'}">次: ${c.nextActionDate}</p>`:''}
+        <div class="flex items-center justify-between mt-1.5">
+          ${c.nextActionDate?`<p class="text-[10px] ${c.nextActionDate<todayISO()?'text-red font-bold':'text-sub'}">次: ${esc(c.nextActionDate)}</p>`:'<span></span>'}
+          ${canAdvance?`<button onclick="nextStage('${c.id}',event)" title="次のステージへ進める" class="text-[10px] font-black text-grn border border-grn rounded-full px-2 py-0.5 hover:bg-grnL">▶ 次へ</button>`:''}
+        </div>
       </div>`;
     }).join('');
     return `<div class="shrink-0 w-[250px]">
-      <div class="flex items-center gap-2 mb-2 sticky top-0">
+      <button onclick="toggleCol('${s.key}',event)" title="クリックで折り畳み" class="w-full flex items-center gap-2 mb-2 hover:opacity-70">
         <span class="w-2.5 h-2.5 rounded-full" style="background:${s.color}"></span>
         <p class="font-bold text-sm">${s.label}</p>
         <span class="text-[11px] text-sub ml-auto">${items.length}</span>
-      </div>
+      </button>
       <div class="min-h-[40px]">${cards||'<p class="text-[11px] text-sub px-1">—</p>'}</div>
     </div>`;
   }).join('');
@@ -597,7 +1020,7 @@ function renderKanban(){
   return `
   <div class="flex items-center justify-between mb-3">
     <h2 class="font-black text-lg">解体パイプライン</h2>
-    <p class="text-[11px] text-sub">カードの色ドット＝6分野の状態（濃い色＝必要）。⚠＝チーム共有の注意点。失注/保留：${lost}件</p>
+    <p class="text-[11px] text-sub">列名クリックで折り畳み。「▶次へ」でワンタップ前進。カード内は期日の早い順。失注/保留：${lost}件</p>
   </div>
   <div class="kanban flex gap-3 overflow-x-auto pb-4">${cols}</div>`;
 }
@@ -611,17 +1034,22 @@ function renderPartner(){
     rel.forEach(c=>{ const p = domainPhase(dm.key, c.domains[dm.key]); (groups[p.key]||(groups[p.key]=[])).push(c); });
     const chip = (c)=>{
       const d = c.domains[dm.key];
+      const overdue = d.nextDate && d.nextDate < todayISO();
       return `<div class="bg-white border border-line rounded-lg px-3 py-2 mb-1.5 cursor-pointer hover:border-grn" onclick="openDetail('${c.id}')">
         <div class="flex items-center justify-between gap-2">
-          <p class="font-bold text-sm truncate">${esc(c.name||'')}</p>
+          <p class="font-bold text-sm truncate">${c.referredBy===dm.key?badge('ご紹介','#fff',dm.color)+' ':''}${esc(c.name||'')}</p>
           <span class="text-[10px] text-sub">${stageMeta(c.stage).label}</span>
         </div>
         <p class="text-[11px] text-sub">${esc(c.city||'')}／担当:${esc(d.assignee||'未割当')}</p>
         ${d.next?`<p class="text-[11px] text-ink mt-0.5">→ ${esc(d.next)}</p>`:''}
-        <p class="text-[10px] mt-0.5" style="color:${dm.color}">分野ステージ: ${esc(d.stage||'未判定')}</p>
+        <div class="flex items-center justify-between mt-0.5">
+          <p class="text-[10px]" style="color:${dm.color}">ステージ: ${esc(d.stage||'未判定')}</p>
+          ${d.nextDate?`<p class="text-[10px] font-bold ${overdue?'text-red':'text-sub'}">期日 ${esc(d.nextDate)}${overdue?'（超過）':''}</p>`:''}
+        </div>
       </div>`;
     };
-    const section = (title,col,arr)=> arr.length?`<div class="mb-2"><p class="text-[11px] font-bold mb-1" style="color:${col}">${title}（${arr.length}）</p>${arr.map(chip).join('')}</div>`:'';
+    const byDate = (a,b)=> ((a.domains[dm.key].nextDate||'9999') < (b.domains[dm.key].nextDate||'9999') ? -1 : 1);
+    const section = (title,col,arr)=> arr.length?`<div class="mb-2"><p class="text-[11px] font-bold mb-1" style="color:${col}">${title}（${arr.length}）</p>${arr.slice().sort(byDate).map(chip).join('')}</div>`:'';
     return `<div class="bg-paper rounded-2xl border border-line p-3">
       <div class="flex items-center gap-2 mb-3 flex-wrap">
         <span class="w-3 h-3 rounded-full" style="background:${dm.color}"></span>
@@ -690,12 +1118,14 @@ function renderDashboard(){
 
   return `
   <h2 class="font-black text-lg mb-3">ダッシュボード</h2>
-  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
     ${tile('受信リード（未対応）', leads+'件', '要初回接触', leads?'#E5484D':'#2E9E68')}
     ${tile('進行中の案件', open.length+'件','','#243B33')}
     ${tile('パイプライン概算', '¥'+pipelineYen+'万','下限合計','#2E9E68')}
     ${tile('成約率', rate+'%', '成約'+won+'／失注'+lost)}
     ${tile('緊急度「高」', urgent+'件','', urgent?'#E5484D':'#2E9E68')}
+    ${(()=>{ const refs=base.filter(c=>c.referredBy); const byRole={}; refs.forEach(c=>{ const l=ROLE_DEFS[c.referredBy]?.label||c.referredBy; byRole[l]=(byRole[l]||0)+1; });
+      return tile('提携先からのご紹介', refs.length+'件', Object.entries(byRole).map(([k,v])=>k+v).join('・')||'双方向お繋ぎの実績', '#8B5CF6'); })()}
   </div>
   <div class="grid lg:grid-cols-3 gap-3">
     <div class="bg-white rounded-2xl border border-line p-4 lg:col-span-1">
@@ -719,9 +1149,54 @@ function openDetail(id){ openId = id; document.getElementById('detail').classLis
 function closeDetail(){ document.getElementById('detail').classList.add('hidden'); openId=null; render(); }
 document.getElementById('detail').addEventListener('click', e=>{ if(e.target.id==='detail') closeDetail(); });
 
+function markDirty(){ if(!isAdmin()) localStorage.setItem('akiya_crm_dirty', todayISO()); }
+/* 診断値の変更→分野の要否を再判定（手動の判断は壊さないガード付き） */
+function rederiveDomains(c){
+  const keep = JSON.parse(JSON.stringify(c.domains||{}));
+  deriveDomains(c);
+  Object.keys(keep).forEach(k=>{
+    const was = keep[k], now = c.domains[k];
+    if(!was || !now) return;
+    if(was.need==='required' && now.need!=='required'){ c.domains[k]=was; return; }   // 手動/既定の「必要」は降格させない
+    if(was.need==='hold'){ c.domains[k]=was; return; }                                 // 手動保留は維持
+    ['assignee','next','nextDate','data','updatedAt'].forEach(p=>{ if(was[p]!=null && was[p]!=='' && (now[p]==null||now[p]==='')) now[p]=was[p]; });
+    if(was.stage && was.stage!=='未判定' && now.need==='required') now.stage = was.stage;
+    if(was.need==='not_required' && now.need==='not_required' && was.reason) now.reason = was.reason;
+  });
+  return c;
+}
+function coreSelect(id,key,value){
+  if(!canEditCore()) return;
+  const c=getC(id); c[key]=value;
+  rederiveDomains(c);
+  upsert(c); savedFlash(); renderDetail();
+}
+function insField(id,key,value){   // 火災保険は社内＋FPが編集できる
+  if(!(canEditCore()||canEditDomain('fp'))) return;
+  const c=getC(id); c[key]=value; markDirty(); upsert(c); savedFlash(); renderDetail();
+}
+function dateFieldShared(id,key,value){   // 相続開始日は社内＋税理士＋司法書士が編集できる
+  if(!(canEditCore()||canEditDomain('tax')||canEditDomain('inheritance_reg'))) return;
+  const c=getC(id); c[key]=value; markDirty(); upsert(c); savedFlash(); renderDetail();
+}
 function field(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); renderDetail(); }
 function fieldNoRerender(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); }
-function domField(id,dkey,prop,value){ if(!canEditDomain(dkey)) return; const c=getC(id); c.domains[dkey]=c.domains[dkey]||{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''}; c.domains[dkey][prop]=value; upsert(c); savedFlash(); renderDetail(); }
+function domField(id,dkey,prop,value){
+  if(!canEditDomain(dkey)) return;
+  const c=getC(id);
+  c.domains[dkey]=c.domains[dkey]||{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+  c.domains[dkey][prop]=value;
+  c.domains[dkey].updatedAt=new Date().toISOString();
+  markDirty(); upsert(c); savedFlash(); renderDetail();
+}
+function domData(id,dkey,prop,value){
+  if(!canEditDomain(dkey)) return;
+  const c=getC(id);
+  const d=c.domains[dkey]; if(!d) return;
+  d.data=d.data||{}; d.data[prop]=value;
+  d.updatedAt=new Date().toISOString();
+  markDirty(); upsert(c); savedFlash();
+}
 function addFollow(id){
   const c=getC(id);
   const type=document.getElementById('fh-type').value;
@@ -730,11 +1205,60 @@ function addFollow(id){
   c.followHistory=c.followHistory||[];
   const who = isAdmin() ? '' : '【'+ROLE_DEFS[ROLE].label+'】';
   c.followHistory.unshift({date:todayISO(), type, memo: who+memo});
-  upsert(c); savedFlash(); renderDetail();
+  markDirty(); upsert(c); savedFlash(); renderDetail();
 }
 
+/* 分野ごとの追加情報（税務=控除期限/旧耐震/可否、不動産=査定・媒介、FP=補助金額） */
+function domainExtras(c, dm, d, editable){
+  if(d.need!=='required') return '';
+  const data = d.data||{};
+  const inp = (prop,label,ph,type)=> editable
+    ? `<label class="text-xs text-sub font-bold">${label}<input type="${type||'text'}" value="${esc(data[prop]??'')}" onchange="domData('${c.id}','${dm.key}','${prop}',this.value)" placeholder="${ph||''}" class="w-full border border-line rounded-lg px-2.5 py-2 text-sm mt-1"></label>`
+    : `<div><p class="text-xs text-sub font-bold">${label}</p><p class="mt-1 text-sm px-2.5 py-2 rounded-lg bg-paper">${data[prop]!=null&&data[prop]!==''?esc(data[prop]):'—'}</p></div>`;
+  const sel = (prop,label,opts)=> editable
+    ? `<label class="text-xs text-sub font-bold">${label}<select onchange="domData('${c.id}','${dm.key}','${prop}',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-sm mt-1">${opts.map(o=>`<option ${data[prop]===o?'selected':''}>${o}</option>`).join('')}</select></label>`
+    : `<div><p class="text-xs text-sub font-bold">${label}</p><p class="mt-1 text-sm px-2.5 py-2 rounded-lg bg-paper">${esc(data[prop]||'—')}</p></div>`;
+  if(dm.key==='tax'){
+    const joko = calcJokoDeadline(c);
+    const kt = kyuTaishin(c);
+    return `<div class="mt-2.5 pt-2.5 border-t border-line">
+      <div class="flex items-center gap-2 flex-wrap mb-2">
+        ${joko?badge('3000万控除の期限 '+joko.dateStr+'（残'+joko.left+'日）', '#fff', joko.left<=90?'#E5484D':joko.left<=365?'#F0862B':'#2E9E68'):''}
+        ${kt?badge(kt.label, kt.color, kt.bg):''}
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">${sel('控除可否判定','3000万円特別控除の判定',['未判定','適用できる見込み','適用不可','要件確認中'])}${inp('固定資産税試算','解体後の固定資産税（年額・円）','試算額を入力','text')}</div>
+    </div>`;
+  }
+  if(dm.key==='realestate'){
+    return `<div class="mt-2.5 pt-2.5 border-t border-line grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+      ${inp('査定額現況','査定額・現況（万円）','古家付きの査定','number')}
+      ${inp('査定額更地','査定額・更地（万円)','更地化後の査定','number')}
+      ${sel('媒介種別','媒介種別',['未定','一般媒介','専任媒介','専属専任'])}
+      ${inp('成約価格','成約価格（万円）','','number')}
+    </div>`;
+  }
+  if(dm.key==='fp'){
+    return `<div class="mt-2.5 pt-2.5 border-t border-line grid grid-cols-2 gap-2.5">
+      ${inp('補助金額','補助金の見込額（万円）','市町の制度確認後に入力','number')}
+      ${sel('ローン要否','解体ローンの要否',['未確認','不要（自己資金）','検討中','申込み予定','承認済み'])}
+    </div>`;
+  }
+  return '';
+}
+
+function setConsent(id,prop,value){
+  if(!canEditCore()) return;
+  const c=getC(id);
+  c.thirdPartyConsent = c.thirdPartyConsent||{obtained:false,date:'',method:''};
+  c.thirdPartyConsent[prop]=value;
+  if(prop==='obtained' && value && !c.thirdPartyConsent.date) c.thirdPartyConsent.date=todayISO();
+  upsert(c); savedFlash(); renderDetail();
+}
 function renderDetail(){
   const c = getC(openId); if(!c) return;
+  // フォローメモの下書きを退避（再描画で消えないように）
+  const fhDraft = document.getElementById('fh-memo')?.value || '';
+  const fhTypeSel = document.getElementById('fh-type')?.value || '';
   const si = stageIndex(c.stage);
   const sMeta = stageMeta(c.stage);
   const isLost = c.stage==='closed_lost';
@@ -773,12 +1297,12 @@ function renderDetail(){
     const dim = (d.need==='not_required') ? 'opacity-70' : '';
     let controls;
     if(editable){
-      controls = `<div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+      controls = `<div class="grid grid-cols-2 xl:grid-cols-5 gap-2.5">
         <label class="text-xs text-sub font-bold">要否
           <select onchange="domField('${c.id}','${dm.key}','need',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">${needSel}</select>
         </label>
         ${d.need==='not_required' ? `
-        <label class="text-xs text-sub font-bold col-span-1 xl:col-span-3">不要の理由（チームに共有）
+        <label class="text-xs text-sub font-bold col-span-1 xl:col-span-4">不要の理由（チームに共有）
           <input value="${esc(d.reason||'')}" onchange="domField('${c.id}','${dm.key}','reason',this.value)" placeholder="例）名義がご本人のため登記不要／売却しないため不動産不要" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
         </label>` : `
         <label class="text-xs text-sub font-bold">進捗ステージ
@@ -789,14 +1313,17 @@ function renderDetail(){
         </label>
         <label class="text-xs text-sub font-bold">次アクション
           <input value="${esc(d.next||'')}" onchange="domField('${c.id}','${dm.key}','next',this.value)" placeholder="次にやること" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+        </label>
+        <label class="text-xs text-sub font-bold">期日
+          <input type="date" value="${esc(d.nextDate||'')}" onchange="domField('${c.id}','${dm.key}','nextDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1 ${d.nextDate&&d.nextDate<todayISO()?'text-red font-bold':''}">
         </label>`}
-      </div>`;
+      </div>${domainExtras(c, dm, d, editable)}`;
     } else {
-      controls = `<div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+      controls = `<div class="grid grid-cols-2 xl:grid-cols-5 gap-2.5">
         ${ro('要否', NEEDS[d.need]?.label)}
-        ${d.need==='not_required' ? `<div class="col-span-1 xl:col-span-3">${ro('不要の理由', d.reason)}</div>`
-          : `${ro('進捗ステージ', d.stage)}${ro('担当', d.assignee)}${ro('次アクション', d.next)}`}
-      </div>`;
+        ${d.need==='not_required' ? `<div class="col-span-1 xl:col-span-4">${ro('不要の理由', d.reason)}</div>`
+          : `${ro('進捗ステージ', d.stage)}${ro('担当', d.assignee)}${ro('次アクション', d.next)}${ro('期日', d.nextDate)}`}
+      </div>${domainExtras(c, dm, d, editable)}`;
     }
     return `<div class="bg-white rounded-xl border-l-4 border p-4 ${dim}" style="border-left-color:${dm.color};${mine?'border-color:'+dm.color+';box-shadow:0 0 0 2px '+dm.color+'33':'border-color:#E2E9E3'}">
       <div class="flex items-center gap-2 flex-wrap mb-3">
@@ -917,6 +1444,20 @@ function renderDetail(){
             <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">発生日</span><span class="font-bold">${esc(c.createdAt||'—')}</span></div>
           </div>
           ${c.desiredConsult?`<div class="mt-3 bg-paper rounded-xl px-3.5 py-2.5"><p class="text-[10px] text-sub mb-1">ご相談内容（お客様の言葉）</p><p class="text-sm leading-relaxed">${esc(c.desiredConsult)}</p></div>`:''}
+          <div class="mt-3 pt-3 border-t border-line">
+            <p class="text-xs text-sub font-bold mb-1.5">第三者提供の同意（提携先へ共有する前に）</p>
+            ${canEditCore()?`
+            <div class="flex items-center gap-2 flex-wrap text-sm">
+              <label class="flex items-center gap-1.5 cursor-pointer font-bold ${c.thirdPartyConsent?.obtained?'text-grn':''}">
+                <input type="checkbox" ${c.thirdPartyConsent?.obtained?'checked':''} onchange="setConsent('${c.id}','obtained',this.checked)" class="accent-[#2E9E68] w-4 h-4">同意取得済み
+              </label>
+              <input type="date" value="${esc(c.thirdPartyConsent?.date||'')}" onchange="setConsent('${c.id}','date',this.value)" class="border border-line rounded-lg px-2 py-1.5 text-xs">
+              <select onchange="setConsent('${c.id}','method',this.value)" class="border border-line rounded-lg px-2 py-1.5 text-xs">
+                ${['','口頭','書面','フォーム'].map(o=>`<option value="${o}" ${ (c.thirdPartyConsent?.method||'')===o?'selected':''}>${o||'取得方法'}</option>`).join('')}
+              </select>
+            </div>`
+            :`<p class="text-sm ${c.thirdPartyConsent?.obtained?'text-grn font-bold':'text-sub'}">${c.thirdPartyConsent?.obtained?('取得済み（'+esc(c.thirdPartyConsent.date||'')+'・'+esc(c.thirdPartyConsent.method||'')+'）'):'未記録'}</p>`}
+          </div>
         </div>
 
         <!-- 建物・診断データ -->
@@ -928,19 +1469,49 @@ function renderDetail(){
             <p class="font-black text-lg text-grn">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'万〜'+c.estimateRangeHigh+'万'):'—'} <span class="text-xs text-sub font-bold">／ 緊急度 ${c.urgencyLevel||'—'}${c.urgencyScore?('（'+c.urgencyScore+'点）'):''}</span></p>
           </div>
           ${canEditCore()?`<div class="grid grid-cols-2 gap-2.5">
-            <label class="text-xs text-sub font-bold">確定見積（万円）<input type="number" value="${c.finalEstimate??''}" onchange="fieldNoRerender('${c.id}','finalEstimate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
-            <label class="text-xs text-sub font-bold">補助金該当
-              <select onchange="fieldNoRerender('${c.id}','subsidyApplicable',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+            <label class="text-xs text-sub font-bold">名義（再判定される）
+              <select onchange="coreSelect('${c.id}','owner',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                ${Object.keys(L.owner).map(k=>`<option value="${k}" ${c.owner===k?'selected':''}>${L.owner[k]}</option>`).join('')}
+              </select></label>
+            <label class="text-xs text-sub font-bold">出口（再判定される）
+              <select onchange="coreSelect('${c.id}','exit',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                ${Object.keys(L.exit).map(k=>`<option value="${k}" ${c.exit===k?'selected':''}>${L.exit[k]}</option>`).join('')}
+              </select></label>
+            <label class="text-xs text-sub font-bold">実建築年<span class="font-normal">（西暦・控除の1981判定）</span><input type="number" value="${c.builtYear??''}" placeholder="現地調査時に確認" onchange="field('${c.id}','builtYear',this.value?Number(this.value):null)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">土地面積（㎡）<input type="number" value="${c.landArea??''}" placeholder="査定に必要" onchange="fieldNoRerender('${c.id}','landArea',this.value?Number(this.value):null)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold col-span-2">住所（番地まで）<input value="${esc(c.address||'')}" placeholder="初回架電時に確認（査定・登記に必要）" onchange="fieldNoRerender('${c.id}','address',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">地番<input value="${esc(c.chiban||'')}" placeholder="登記簿の地番" onchange="fieldNoRerender('${c.id}','chiban',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">権利
+              <select onchange="fieldNoRerender('${c.id}','rightType',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                ${['不明','所有権','借地'].map(o=>`<option ${(c.rightType||'不明')===o?'selected':''}>${o}</option>`).join('')}
+              </select></label>
+            <label class="text-xs text-sub font-bold">確定見積（万円）<input type="number" value="${c.finalEstimate??''}" onchange="fieldNoRerender('${c.id}','finalEstimate',this.value?Number(this.value):null)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">補助金該当（再判定される）
+              <select onchange="coreSelect('${c.id}','subsidyApplicable',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
                 ${['未確認','該当あり','該当なし'].map(o=>`<option ${c.subsidyApplicable===o?'selected':''}>${o}</option>`).join('')}
               </select></label>
             <label class="text-xs text-sub font-bold">解体完了日<span class="font-normal">（滅失登記の起点）</span><input type="date" value="${esc(c.demolitionDate||'')}" onchange="field('${c.id}','demolitionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
-            <label class="text-xs text-sub font-bold">相続開始日<span class="font-normal">（控除の起算）</span><input type="date" value="${esc(c.inheritanceStartDate||'')}" onchange="field('${c.id}','inheritanceStartDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
           </div>`:`<div class="grid grid-cols-2 gap-2.5 text-[15px]">
-            <div><p class="text-xs text-sub font-bold">確定見積（万円）</p><p class="mt-1">${c.finalEstimate??'—'}</p></div>
+            <div><p class="text-xs text-sub font-bold">実建築年</p><p class="mt-1">${c.builtYear??'—'}</p></div>
+            <div><p class="text-xs text-sub font-bold">土地面積</p><p class="mt-1">${c.landArea?c.landArea+'㎡':'—'}</p></div>
+            <div><p class="text-xs text-sub font-bold">住所</p><p class="mt-1">${esc(c.address||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">地番／権利</p><p class="mt-1">${esc(c.chiban||'—')}／${esc(c.rightType||'不明')}</p></div>
             <div><p class="text-xs text-sub font-bold">補助金該当</p><p class="mt-1">${esc(c.subsidyApplicable||'—')}</p></div>
             <div><p class="text-xs text-sub font-bold">解体完了日</p><p class="mt-1">${esc(c.demolitionDate||'—')}</p></div>
-            <div><p class="text-xs text-sub font-bold">相続開始日</p><p class="mt-1">${esc(c.inheritanceStartDate||'—')}</p></div>
           </div>`}
+          <div class="grid grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-line">
+            ${(canEditCore()||canEditDomain('fp'))?`
+            <label class="text-xs text-sub font-bold">火災保険<span class="font-normal">（滅失後は請求不可）</span>
+              <select onchange="insField('${c.id}','insuranceStatus',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                ${Object.keys(L.insuranceStatus).map(k=>`<option value="${k}" ${(c.insuranceStatus||'unknown')===k?'selected':''}>${L.insuranceStatus[k]}</option>`).join('')}
+              </select></label>
+            <label class="text-xs text-sub font-bold">保険の解約予定日<input type="date" value="${esc(c.insuranceCancelDate||'')}" onchange="insField('${c.id}','insuranceCancelDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>`
+            :`<div><p class="text-xs text-sub font-bold">火災保険</p><p class="mt-1 text-[15px]">${lab('insuranceStatus', c.insuranceStatus||'unknown')}</p></div>
+            <div><p class="text-xs text-sub font-bold">保険の解約予定日</p><p class="mt-1 text-[15px]">${esc(c.insuranceCancelDate||'—')}</p></div>`}
+            ${(canEditCore()||canEditDomain('tax')||canEditDomain('inheritance_reg'))?`
+            <label class="text-xs text-sub font-bold">相続開始日<span class="font-normal">（控除・登記義務の起算）</span><input type="date" value="${esc(c.inheritanceStartDate||'')}" onchange="dateFieldShared('${c.id}','inheritanceStartDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>`
+            :`<div><p class="text-xs text-sub font-bold">相続開始日</p><p class="mt-1 text-[15px]">${esc(c.inheritanceStartDate||'—')}</p></div>`}
+          </div>
         </div>
 
         <!-- フォロー履歴 -->
@@ -950,7 +1521,7 @@ function renderDetail(){
             <select id="fh-type" class="border border-line rounded-lg px-2 py-2 text-sm shrink-0">
               ${['架電','来店','メール','LINE','現地','面談','メモ'].map(t=>`<option>${t}</option>`).join('')}
             </select>
-            <input id="fh-memo" placeholder="対応内容を入力してEnter不要→追加" class="flex-1 border border-line rounded-lg px-3 py-2 text-sm min-w-0">
+            <input id="fh-memo" placeholder="対応内容を入力してEnterで追加" onkeydown="if(event.key==='Enter'){event.preventDefault();addFollow('${c.id}')}" class="flex-1 border border-line rounded-lg px-3 py-2 text-sm min-w-0">
             <button onclick="addFollow('${c.id}')" class="bg-grn text-white text-sm font-bold px-4 rounded-lg shrink-0">追加</button>
           </div>
           <div class="max-h-64 overflow-y-auto mb-3">${follow}</div>
@@ -961,6 +1532,9 @@ function renderDetail(){
       </div>
     </div>
   </div>`;
+  // フォローメモの下書きを復元
+  const fm = document.getElementById('fh-memo'); if(fm && fhDraft) fm.value = fhDraft;
+  const ft = document.getElementById('fh-type'); if(ft && fhTypeSel) ft.value = fhTypeSel;
 }
 
 function delCustomer(id){ if(!canEditCore()) return; if(!confirm('この案件を削除しますか？')) return; DB=DB.filter(c=>c.id!==id); save(); closeDetail(); }
@@ -1044,7 +1618,7 @@ function parsePaste(){
   toast('診断テキストから全項目を取り込みました（内容をご確認ください）');
 }
 function createCustomer(){
-  const id = 'AK-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-5);
+  const id = newId();
   const c = {
     id, createdAt: todayISO(), source: val('n-source')||'手入力',
     name: val('n-name'), phone: val('n-phone'), email: val('n-email'), city: val('n-city'),
@@ -1056,7 +1630,8 @@ function createCustomer(){
     urgencyLevel: val('n-urg'), urgencyScore: null,
     estimateRangeLow: Number(val('n-lo'))||null, estimateRangeHigh: Number(val('n-hi'))||null,
     finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
-    demolitionDate:null, inheritanceStartDate:null,
+    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
+    demolitionDate:null, inheritanceStartDate:null, thirdPartyConsent:{obtained:false,date:'',method:''},
     domains:{}, followHistory:[{date:todayISO(),type:'メモ',memo:'新規起票（'+(val('n-source')||'手入力')+'）'}], lostReason:null, notes:''
   };
   deriveDomains(c);
@@ -1077,8 +1652,20 @@ function importJSON(e){
   r.onload = ()=>{ try {
     const arr = JSON.parse(r.result); if(!Array.isArray(arr)) throw 0;
     const ids = new Set(DB.map(c=>c.id));
-    let add=0,upd=0; arr.forEach(c=>{ if(ids.has(c.id)){ const i=DB.findIndex(x=>x.id===c.id); DB[i]=c; upd++; } else { DB.push(c); add++; } });
-    save(); render(); toast(`統合：新規${add}件・更新${upd}件`);
+    let add=0,upd=0,skip=0;
+    arr.forEach(c=>{
+      sanitizeCase(c);
+      if(ids.has(c.id)){
+        const i=DB.findIndex(x=>x.id===c.id);
+        if(DB[i].updatedAt && c.updatedAt && c.updatedAt < DB[i].updatedAt){ skip++; return; }   // 古いデータで巻き戻さない
+        DB[i]=c; upd++;
+      } else { DB.push(c); add++; }
+    });
+    save();
+    localStorage.removeItem('akiya_crm_locked_role');   // 正規の全データ読み込み＝役割ロック解除
+    localStorage.removeItem('akiya_crm_dirty');
+    applyRoleUI(); render();
+    toast(`統合：新規${add}件・更新${upd}件`+(skip?('・古いためスキップ'+skip+'件'):''));
   } catch(err){ toast('読み込みに失敗しました（JSON形式をご確認ください）'); } };
   r.readAsText(f); e.target.value=''; toggleMenu();
 }
@@ -1098,7 +1685,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
    デモ用サンプル
    ============================================================ */
 function seedData(){
-  const mk = (o)=>{ const c=Object.assign({ finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施', demolitionDate:null, inheritanceStartDate:null, lostReason:null, notes:'', followHistory:[] }, o); if(!c.domains||!Object.keys(c.domains).length) deriveDomains(c); return c; };
+  const mk = (o)=>{ const c=Object.assign({ finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施', demolitionDate:null, inheritanceStartDate:null, lostReason:null, notes:'', followHistory:[], insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null, referredBy:null, thirdPartyConsent:{obtained:false,date:'',method:''} }, o); if(!c.domains||!Object.keys(c.domains).length) deriveDomains(c); return c; };
   return [
     mk({ id:'AK-2026-0007', createdAt:'2026-07-14', source:'60秒診断', name:'高松 太郎', phone:'090-1111-2222', email:'taro@example.com',
       desiredConsult:'父名義のままの実家を解体して売却したい。相続の手続きも不安。', assignee:'中谷',
@@ -1106,7 +1693,8 @@ function seedData(){
       stage:'survey', nextAction:'現地調査を実施し確定レンジ見積。司法書士と相続登記見積をセット準備', nextActionDate:'2026-07-18',
       city:'高松市', structure:'wood', tsubo:38, floors:'2f', era:'old', road:'mid', garden:'many', zanchi:'full',
       owner:'deceased', exit:'sell', urgencyLevel:'高', urgencyScore:78, estimateRangeLow:160, estimateRangeHigh:230,
-      inheritanceStartDate:'2024-09-10', asbestosSurvey:'調査中',
+      inheritanceStartDate:'2024-09-10', asbestosSurvey:'調査中', builtYear:1978, insuranceStatus:'active',
+      thirdPartyConsent:{obtained:true, date:'2026-07-14', method:'書面'},
       notes:'3000万控除の本命。相続開始2024/9→控除期限2027末。相続登記→解体→滅失→売買のクリティカルパスを共有中。',
       followHistory:[{date:'2026-07-14',type:'メモ',memo:'診断完了→起票。緊急度高・名義故人・売却フラグ'},{date:'2026-07-14',type:'架電',memo:'当日接触。父名義のまま・相続未了。現地調査7/18に設定'}],
       domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'提携司法書士（森）',next:'戸籍収集・相続人確定',reason:''},
@@ -1155,9 +1743,20 @@ function loadSeed(force){
    ============================================================ */
 // 役割セレクタを生成
 document.getElementById('roleSel').innerHTML = Object.keys(ROLE_DEFS).map(k=>`<option value="${k}">${ROLE_DEFS[k].label}</option>`).join('');
+// 検索の配線（150msデバウンス・Enterで1件目を開く・Escで閉じる）
+(function(){
+  const box = document.getElementById('searchBox');
+  let t;
+  box.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(renderSearchDrop, 150); });
+  box.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ const hits=searchCases(box.value); if(hits.length) openFromSearch(hits[0].id); }
+    if(e.key==='Escape'){ document.getElementById('searchDrop').classList.add('hidden'); box.blur(); }
+  });
+  document.addEventListener('click', e=>{ if(!e.target.closest('#searchBox') && !e.target.closest('#searchDrop')) document.getElementById('searchDrop').classList.add('hidden'); });
+})();
 load();
 applyRoleUI();
-setView(isAdmin() ? 'inbox' : 'partner');
+setView(isAdmin() ? 'today' : 'partner');
 </script>
 </body>
 </html>

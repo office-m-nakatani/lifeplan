@@ -219,6 +219,10 @@
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
     .loan-monthly-box{ margin-top:14px; padding:14px 14px 12px; background:var(--blue-pale); border:1px solid var(--blue-pale2); border-radius:12px; }
+    /* もしもの検証（ストレステスト）：注意色の枠・ON中のチップは警告色 */
+    .stress-box{ margin-top:14px; padding:14px 14px 12px; background:#fffdf6; border:1.5px dashed var(--warn); border-radius:12px; }
+    .stress-box .lp-title{ font-size:.85rem; font-weight:700; color:#a06a10; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+    .stress-box .ex-mode-btn.active{ background:var(--warn); border-color:var(--warn); color:#fff; }
     .loan-monthly-box .lp-title{ font-size:.85rem; font-weight:700; color:var(--blue-deep); margin-bottom:12px; display:flex; align-items:center; gap:7px; }
     .loan-monthly-result{ margin-top:10px; padding:11px 13px; background:#fff; border:1px solid var(--blue-pale2); border-radius:10px; font-size:.86rem; line-height:1.7; color:var(--ink); }
     .loan-monthly-result b{ color:var(--blue-deep); }
@@ -772,9 +776,13 @@
     .pdf-mode #pdf-all-advice .adv-detail{ margin-top:14px; break-inside:avoid; }
     .pdf-mode #pdf-all-advice .adv-detail:first-child{ margin-top:0; }
 
+    /* 印刷・PDFに「どちらのプランの資料か」を明記するヘッダ（画面では非表示） */
+    #print-plan-header{ display:none; font-weight:800; font-size:1.02rem; color:#1f3328; padding:4px 0 8px; border-bottom:2px solid #3f9d7a; margin-bottom:12px; }
+    .pdf-mode #print-plan-header{ display:block !important; }
     @media print{
       @page{ size:A4 portrait; margin:10mm; }
       html, body{ background:#fff !important; }
+      #print-plan-header{ display:block !important; }
       .no-print, .jump-result, .hero-actions-top, .btn-add, .btn-del,
       .acc-chev, #chat-card, #open-asset-modal{ display:none !important; }
       .wrap{ max-width:none; padding:0; }
@@ -817,6 +825,16 @@
     </div>
   </section>
 
+  <!-- 自動保存ドラフトの復元バナー（誤リロード対策） -->
+  <div class="wrap no-print hidden" id="draft-banner">
+    <div class="note" style="background:var(--blue-pale); border:1.5px solid var(--blue-pale2); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <i class="fa-solid fa-clock-rotate-left" style="color:var(--blue-deep);"></i>
+      <span style="flex:1; min-width:200px;"><b>前回の入力データがあります</b><span id="draft-when"></span>。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※入力内容はこの端末のブラウザ内にのみ自動保存されます（外部への送信はありません）。共用の端末では「破棄して新規」をご利用ください。</span></span>
+      <button class="btn btn-primary btn-sm" type="button" id="draft-restore"><i class="fa-solid fa-rotate-left"></i> 復元する</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="draft-discard">破棄して新規</button>
+    </div>
+  </div>
+
   <!-- ============================= プラン切替（現状 ⇔ 将来）============================= -->
   <div class="wrap plan-wrap no-print">
     <div class="plan-bar">
@@ -830,6 +848,7 @@
 
   <!-- ============================= MAIN ============================= -->
   <div class="wrap">
+    <div id="print-plan-header"></div>
     <div class="layout">
 
       <!-- ===================== 入力パネル ===================== -->
@@ -1013,8 +1032,8 @@
                 </div>
                 <div class="lp-title" style="margin-top:16px;"><i class="fa-solid fa-chart-line"></i> 金利タイプ</div>
                 <div class="seg seg-wrap" id="loan-ratetype-seg">
-                  <button type="button" data-ratetype="fixed" class="active">固定金利</button>
-                  <button type="button" data-ratetype="step5">5年ごと変動</button>
+                  <button type="button" data-ratetype="fixed">固定金利</button>
+                  <button type="button" data-ratetype="step5" class="active">5年ごと変動</button>
                   <button type="button" data-ratetype="step10">10年ごと変動</button>
                 </div>
                 <div id="loan-rate-fixed-note" style="margin-top:10px;">
@@ -1034,10 +1053,17 @@
               <!-- 毎月のローン返済額（自動計算）＋ボーナス払い -->
               <div class="loan-monthly-box">
                 <div class="lp-title"><i class="fa-solid fa-calculator"></i> 毎月のローン返済額（自動計算）</div>
-                <div class="field" style="max-width:340px;">
-                  <label>ボーナス月の加算返済（1回分）</label>
-                  <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
-                  <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
+                <div class="grid2">
+                  <div class="field">
+                    <label>ボーナス月の加算返済（1回分）</label>
+                    <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
+                    <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
+                  </div>
+                  <div class="field">
+                    <label>団信の上乗せ金利（がん団信・ワイド団信など）</label>
+                    <div class="input-unit"><input type="number" id="dansin-extra" value="0" min="0" max="1" step="0.05"><span class="u">％</span></div>
+                    <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算します。</span>
+                  </div>
                 </div>
                 <div class="loan-monthly-result" id="loan-monthly-result">毎月の返済額：計算中…</div>
               </div>
@@ -1045,6 +1071,21 @@
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
                 <span>毎月のローン返済額は金利・期間から自動計算します。住宅ローン控除（年末残高×0.7%）も最大13年分、自動で反映します。</span>
+              </div>
+
+              <!-- もしもの検証（ストレステスト）：表示のみ・保存対象外 -->
+              <div class="stress-box no-print" id="stress-box">
+                <div class="lp-title"><i class="fa-solid fa-bolt"></i> もしもの検証（ストレステスト）</div>
+                <div class="ex-period-seg">
+                  <button type="button" class="ex-mode-btn" id="stress-rate1">金利 +1%</button>
+                  <button type="button" class="ex-mode-btn" id="stress-rate2">金利 +2%</button>
+                  <button type="button" class="ex-mode-btn" id="stress-inc">世帯収入 −20%</button>
+                </div>
+                <span class="hint" style="display:block; margin-top:6px;">タップすると、そのシナリオを<b>資産推移のグラフ・表・返済負担率に一時反映</b>します（もう一度タップで解除・保存はされません）。金利上乗せは全期間、収入減は給与収入だけに適用します。厳しめのシナリオでも家計がどう見えるかをその場で確認できます（<b>実際の金利・収入の変動がこの範囲に収まることを示すものではありません</b>）。</span>
+                <div class="note hidden" id="stress-banner" style="margin-top:8px; background:var(--warn-pale); border-color:var(--warn);">
+                  <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
+                  <span><b>ストレスシナリオ表示中：</b><span id="stress-desc"></span>。資産推移のグラフ・表・返済負担率にこの前提を反映しています（AIチャット・必要保障額の診断は通常の前提のままです）。</span>
+                </div>
               </div>
 
               <!-- 住宅ローンの組み方（万一の保障の計算に反映）-->
@@ -1707,15 +1748,16 @@
       <details class="premise">
         <summary>計算の前提と限界を見る</summary>
         <ul>
-          <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
-          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から物価スライドを簡易反映して計上します。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
-          <li><b>遺族年金</b>：ご家族構成と年収から遺族基礎年金＋遺族厚生年金を概算します（中高齢寡婦加算を考慮。実際の受給額は加入記録により変わります）。</li>
+          <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>年収106万円未満は社会保険の本人負担なし（扶養内）</b>として計算します（2026年10月に予定される106万円要件の撤廃など、成立済み・予定の制度改正は未反映です）。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
+          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から計上します。物価スライドには<b>マクロ経済スライドによる調整（物価上昇率−0.6%ポイント・下限0）</b>を簡易反映し、年金にかかる<b>税・社会保険料（国保・介護保険料等）を年金額に応じて約3〜12%概算控除</b>した手取り相当額を使います。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
+          <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
+          <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
           <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、耐震等級3（一条工務店の家を選択時）＝50%割引、一般住宅＝新築の建築年割引10%で計算します（等級割引の適用には確認資料が必要）。</li>
-          <li><b>住宅ローン控除</b>：2026年入居の性能別上限を簡易反映しています（一条選択時＝ZEH水準31.5万円／一般住宅＝省エネ基準適合21万円。認定住宅は35万円・子育て世帯優遇あり）。控除額は納税額（所得税＋住民税の一部）が上限のため、<b>全額を使いきれない場合があります</b>（本試算は上限まで控除できた前提）。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
+          <li><b>住宅ローン控除</b>：年末残高×0.7%・最大13年を、<b>住宅性能×子育て世帯等（入居時に18歳以下のお子さま、または夫婦いずれか40歳未満）</b>の上限（一条選択時＝ZEH水準31.5万円/24.5万円、一般住宅＝省エネ基準28万円/21万円）と、<b>名義人ごとの納税額（所得税＋住民税の控除対象分・上限9.75万円）の概算</b>の両方でキャップして計上します。ペアローンはご夫婦それぞれの割合・枠・納税額で計算します（控除枠が実質2人分）。子育て世帯の上限特例は2025年入居の制度水準で、以降の延長は制度改正をご確認ください。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
           <!-- 【一条フック】一条向け免責 -->
           <li><b>一条工務店の家（30年比較）</b>：光熱費・売電・メンテ費は、一条工務店の公表値および実例・公的統計をもとにした<b>概算の目安</b>です。居住地域・家族構成・電力料金・FIT制度改定・使用状況で大きく変わります。売電単価は2026年度FITの区分（<b>10kW未満＝24円が4年間／10kW以上＝19円が5年間、以降8.3円→卒FIT8円</b>）で計算し、自家消費は<b>買電単価32円の節約として実際の電気代の範囲まで</b>を計上しています。建築費・仕様は年により改定されます。太陽光・タイル等の<b>初期費用は別途</b>で、比較の金額はそれと相殺してご検討ください。個別の見積り・実額を保証するものではありません。</li>
           <li><b>火災保険・地震保険の記載</b>は制度の一般的な説明であり、特定の損害保険商品の募集・推奨を目的とするものではありません。損害保険の詳細は取扱代理店・保険会社にご確認ください。税制・社会保険の記載も概要であり、<b>詳細は最新の制度をご確認ください</b>。</li>
@@ -2397,6 +2439,11 @@
       document.querySelectorAll('[data-buy-only]').forEach(el=> el.classList.toggle('hidden', houseType!=='buy'));
       document.querySelectorAll('[data-owned-only]').forEach(el=> el.classList.toggle('hidden', houseType!=='owned'));
       if(typeof updateLoanRateUI==='function') updateLoanRateUI();
+      // 賃貸に切り替えるとストレステストのチップ・バナーが隠れるため、適用だけ残らないよう自動解除
+      if(houseType==='rent' && typeof STRESS!=='undefined' && (STRESS.rateBump>0 || STRESS.incomeCut>0)){
+        STRESS.rateBump = 0; STRESS.incomeCut = 0;
+        if(typeof updateStressUI==='function') updateStressUI();
+      }
     }
 
     /* ══════════════════════════════════════════════════════════════════
@@ -2615,6 +2662,7 @@
         + `・<b>自家消費の節約</b>は実際の電気代の8割程度を上限に計上しています（基本料金や夜間の買電は残るため）。<br>`
         + `・<b>出典</b>：一般住宅の光熱費は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
         + `・<b>比較に含めないもの</b>：一条側の設備更新費（約270〜390万円の施主試算）も、一般住宅側の給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。<br>`
+        + `・<b>③の「修繕費」欄との関係</b>：本体試算の修繕費（既定：一般15万円/年＝30年で約450万円）は<b>設備の交換・室内の補修まで含めた家全体の維持費</b>です。この比較カードのメンテ費は<b>外壁・屋根の塗替え分だけ</b>を取り出したもの（一般約300万円/30年）のため、金額の範囲が異なります（矛盾ではありません）。<br>`
         + `<span style="color:var(--ink-soft);">一条工務店非公式・Office-M（生命保険募集人）試算</span>`;
     }
     function drawIchijoChart(genTotal, ichTotal){
@@ -2738,11 +2786,38 @@
       if(monthlyRate===0) return principal/months;
       return principal*monthlyRate*Math.pow(1+monthlyRate,months) / (Math.pow(1+monthlyRate,months)-1);
     }
+    /* ---------- ストレステスト（もしもの検証・表示のみ／保存対象外）----------
+       rateBump＝全期間の金利に上乗せ（%）、incomeCut＝給与収入の減少率（0.2＝−20%）。
+       年金・児童手当・退職金には適用しない（給与だけの下振れを見る） */
+    const STRESS = { rateBump: 0, incomeCut: 0 };
+    const stressGross = (g)=> g * (1 - STRESS.incomeCut);
+    function updateStressUI(){
+      const set = (id, on)=>{ const el=$(id); if(el) el.classList.toggle('active', on); };
+      set('stress-rate1', STRESS.rateBump===1);
+      set('stress-rate2', STRESS.rateBump===2);
+      set('stress-inc', STRESS.incomeCut>0);
+      const parts = [];
+      if(STRESS.rateBump>0) parts.push(`金利 +${STRESS.rateBump}%`);
+      if(STRESS.incomeCut>0) parts.push(`世帯収入 −${Math.round(STRESS.incomeCut*100)}%`);
+      const banner = $('stress-banner');
+      if(banner){ banner.classList.toggle('hidden', !parts.length); const d=$('stress-desc'); if(d) d.textContent = parts.join('＋'); }
+      if(typeof updatePrintHeader==='function') updatePrintHeader();   // 印刷・PDFにもストレス前提を明記
+    }
+    // チップ配線（+1%と+2%は排他・もう一度タップで解除）。リスナーは初期化時に一度だけ
+    [['stress-rate1',()=>{ STRESS.rateBump = STRESS.rateBump===1 ? 0 : 1; }],
+     ['stress-rate2',()=>{ STRESS.rateBump = STRESS.rateBump===2 ? 0 : 2; }],
+     ['stress-inc',  ()=>{ STRESS.incomeCut = STRESS.incomeCut>0 ? 0 : 0.2; }]].forEach(([id,fn])=>{
+      const el = $(id);
+      if(el) el.addEventListener('click', ()=>{ fn(); updateStressUI(); recompute(); });
+    });
+
     function getLoanRateSchedule(totalMonths){
       const type = loanRateType();
+      // 金利への上乗せ：ストレステスト＋団信の上乗せ金利（がん団信・ワイド団信等）を全期間に適用
+      const bump = (STRESS.rateBump + num('dansin-extra',0))/100/12;
       const arr = [];
       if(type==='fixed'){
-        const r = num('loan-rate',0)/100/12;
+        const r = num('loan-rate',0)/100/12 + bump;
         for(let i=0;i<totalMonths;i++) arr.push(r);
         return arr;
       }
@@ -2752,7 +2827,7 @@
       const rates = [];
       for(let i=0;i<n;i++){
         const el = $('rate_'+type+'_'+i);
-        rates.push(el ? (parseFloat(el.value)||0)/100/12 : num('loan-rate',0)/100/12);
+        rates.push((el ? (parseFloat(el.value)||0)/100/12 : num('loan-rate',0)/100/12) + bump);
       }
       for(let i=0;i<totalMonths;i++){
         const idx = Math.min(Math.floor(i/stepMonths), rates.length-1);
@@ -2968,7 +3043,9 @@
     }
     function grossToNet(gross){                // 額面 → 手取り（万円）
       if(gross <= 0) return 0;
-      const social = socialInsurance(gross);
+      // 106万円の壁：年収106万円未満は社会保険の適用外（配偶者の扶養＝第3号被保険者等）として本人負担ゼロ。
+      // 扶養内パートの手取りが一律15%目減りしていた誤差を解消（会社員世帯前提の簡易判定）
+      const social = gross < 106 ? 0 : socialInsurance(gross);
       const empDed = employmentDeduction(gross);
       const taxableIncome   = Math.max(gross - empDed - social - 58, 0); // 所得税：基礎控除58万（令和7年度改正・一般的な所得帯の値。低所得帯の上乗せは簡易計算のため未反映）
       const taxableResident = Math.max(gross - empDed - social - 43, 0); // 住民税：基礎控除43万（改正なし）
@@ -3019,6 +3096,33 @@
       const payoffBalance = manualBal>0 ? manualBal : autoBalAtPayoff;
       const willPayoff = (payoffMode==='lumpsum') && (principal>0) && (payoffYears < loanTerm);
 
+      // ---- 住宅ローン控除（年末残高×0.7%・最大13年）----
+      // 上限は「住宅性能×子育て世帯等」で分岐し、さらに名義人ごとの納税額（所得税＋住民税の
+      // 控除対象分・上限9.75万円）でキャップ。ペアローンは夫婦それぞれの割合・枠・納税額で計算
+      const kosodateAtBuy = (()=>{   // 子育て世帯＝入居時に18歳以下の子がいる／若者夫婦世帯＝夫婦いずれかが40歳未満（単身は対象外）
+        const dy = buyAge - hAge0;
+        const hasKid = children.some(c=>{ const a = c.age + dy; return a >= 0 && a <= 18; });   // 入居時にまだ生まれていない子は対象外
+        const youngCouple = !single && (buyAge < 40 || (wAge0 + dy) < 40);
+        return hasKid || youngCouple;
+      })();
+      const dedLimitPerPerson = (typeof htype!=='undefined' && htype==='ichijo')
+        ? (kosodateAtBuy ? 31.5 : 24.5)   // 【一条フック】ZEH水準以上：借入限度4,500万/3,500万×0.7%
+        : (kosodateAtBuy ? 28   : 21);    // 省エネ基準適合：借入限度4,000万/3,000万×0.7%
+      const dedTaxCap = (gross)=>{        // その年の納税額の概算（所得税＋住民税の控除対象＝課税総所得×5%・上限9.75万円）
+        if(gross<=0) return 0;
+        const social = gross < 106 ? 0 : socialInsurance(gross);
+        const empDed = employmentDeduction(gross);
+        const incTax = incomeTax(Math.max(gross - empDed - social - 58, 0));
+        const resTaxCap = Math.min(Math.max(gross - empDed - social - 43, 0) * 0.05, 9.75);   // 2022年以降入居の住民税控除上限
+        return incTax + resTaxCap;
+      };
+      const loanDeductionAt = (bal, t2, hAgeT, wAgeT)=>{
+        const hGross = stressGross(hAgeT < hRetire ? hIncome0 * Math.pow(1+hRaise, t2) : 0);
+        const wGross = stressGross(single ? 0 : (wifeWorklifeOn() ? wifeWorkAmountAt(wAgeT) : (wAgeT < wRetire ? wIncome0 * Math.pow(1+wRaise, t2) : 0)));
+        const per = (share, gross)=> share<=0 ? 0 : Math.min(bal*share*0.007, dedLimitPerPerson, dedTaxCap(gross));
+        return per(loanShareOf('h'), hGross) + per(loanShareOf('w'), wGross);
+      };
+
       // ZEH（省エネ住宅）：売電収入・光熱費削減
       const zeh = $('zeh-on') ? $('zeh-on').checked : false;
       const zehSell = num('zeh-sell',0);   // 売電収入（年・万円）
@@ -3050,14 +3154,34 @@
 
         /* ---- 収入 ---- */
         let income = 0;
-        if(hAge < hRetire) income += grossToNet(hIncome0 * Math.pow(1+hRaise, t)); // 額面→手取り
+        if(hAge < hRetire) income += grossToNet(stressGross(hIncome0 * Math.pow(1+hRaise, t))); // 額面→手取り（ストレス時は減額）
         if(wifeWorklifeOn()){
           const wa = wifeWorkAmountAt(wAge);   // 働き方を変える予定：期間表で妻の年収を決める（範囲外は0＝無収入）
-          if(wa>0) income += grossToNet(wa);
+          if(wa>0) income += grossToNet(stressGross(wa));
         } else if(wAge < wRetire){
-          income += grossToNet(wIncome0 * Math.pow(1+wRaise, t));
+          income += grossToNet(stressGross(wIncome0 * Math.pow(1+wRaise, t)));
         }
-        if(hAge >= pensionAge) income += pensionAnnual * inflF;    // 年金（夫婦合計・物価スライドを簡易反映）
+        if(hAge >= pensionAge){
+          // 公的年金：物価スライドにマクロ経済スライド調整（物価−0.6%pt・下限0）を反映し、
+          // 税・社会保険料（国保/介護/所得税/住民税）を年金額に応じた概算率で控除した「手取り」を計上
+          const pIndexF = Math.pow(1 + Math.max(infl - 0.006, 0), t);
+          const pGross = pensionAnnual * pIndexF;
+          // 税社保の概算率は「一人当たり」の年金額水準で判定（158万以下＝公的年金等控除内でほぼ非課税・国保介護のみ）
+          const perHead = pGross / (single ? 1 : 2);
+          const pTaxRate = perHead <= 158 ? 0.03 : (perHead <= 330 ? 0.08 : 0.12);
+          income += pGross * (1 - pTaxRate);
+        }
+        // 児童手当（2024年10月拡充・所得制限なし）：3歳未満1.5万/月・3歳〜高校生年代1万/月・第3子以降3万/月
+        // 第3子カウントは22歳までの子を年長順（同年齢＝双子等は入力順）に並べて3番目以降（簡易判定）
+        {
+          const ranked = children.map((c,i)=> ({ a: c.age + t, i }))
+            .filter(k=> k.a>=0 && k.a<=22)
+            .sort((x,y)=> y.a - x.a || x.i - y.i);
+          ranked.forEach((k, rank)=>{
+            if(k.a>18) return;                             // 手当の支給は高校生年代（18歳）まで
+            income += rank>=2 ? 36 : (k.a<3 ? 18 : 12);    // 年長から3番目以降＝第3子加算
+          });
+        }
         if(hAge === hRetire){ income += hBonus; eventList.push({label:hNameH()+' 退職金', type:'family'}); }
         if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wNameH()+' 退職金', type:'family'}); }
 
@@ -3095,7 +3219,7 @@
                 expense += loanPaymentForYear(loanSchedule, yearsOwned);   // ローン返済（固定/変動金利・ボーナス払いを反映）
                 if(yearsOwned<13){
                   const bal = loanBalanceAt(loanSchedule, yearsOwned+1);
-                  loanDeduction = Math.min(bal*0.007, (typeof htype!=='undefined' && htype==='ichijo') ? 31.5 : 21);   // 【一条フック】2026年入居の性能別上限：ZEH水準31.5万/省エネ基準適合21万（認定住宅なら35万・前提欄参照）
+                  loanDeduction = loanDeductionAt(bal, t, hAge, wAge);   // 性能×子育て上限＋名義人の納税額キャップ（ペアは2人分）
                 }
               } else if(hAge===payoffAge){
                 expense += payoffBalance;                 // 残債を一括返済
@@ -3103,10 +3227,10 @@
               }
             } else if(yearsOwned>=0 && yearsOwned<loanTerm){
               expense += loanPaymentForYear(loanSchedule, yearsOwned);     // ローン返済（固定/変動金利・ボーナス払いを反映）
-              // 住宅ローン控除（年末残高×0.7%、最大13年・年35万円上限の簡易）
+              // 住宅ローン控除（年末残高×0.7%・最大13年）
               if(yearsOwned<13){
                 const bal = loanBalanceAt(loanSchedule, yearsOwned+1);
-                loanDeduction = Math.min(bal*0.007, (typeof htype!=='undefined' && htype==='ichijo') ? 31.5 : 21);   // 【一条フック】2026年入居の性能別上限：ZEH水準31.5万/省エネ基準適合21万（認定住宅なら35万・前提欄参照）
+                loanDeduction = loanDeductionAt(bal, t, hAge, wAge);   // 性能×子育て上限＋名義人の納税額キャップ（ペアは2人分）
               }
             }
             expense += (propTax + maint)*Math.pow(1+infl, Math.max(hAge-buyAge,0)); // 維持費はインフレ
@@ -3281,15 +3405,26 @@
         html += extra;
       }
       // 返済負担率（手取り比）＝「破綻しない住宅購入」の入口指標。AI診断と同じ式（当初返済額×12÷世帯手取り年収）
-      const netY = grossToNet(num('h-income',0)) + (isSingle() ? 0 : grossToNet(num('w-income',0)));
+      // ストレステスト中は減額後の収入で判定。変動金利は「見直し後の最大返済額」の負担率も併記（最悪期の見える化）
+      const netY = grossToNet(stressGross(num('h-income',0))) + (isSingle() ? 0 : grossToNet(stressGross(num('w-income',0))));
       if(netY > 0 && first.payment > 0){
-        const ratio = Math.round(first.payment*12/netY*100);
-        const lv = ratio<=25 ? {c:'var(--good)', bg:'var(--good-pale, #e9f5ef)', label:'無理のない範囲', icon:'fa-circle-check'}
+        const levelOf = (ratio)=> ratio<=25 ? {c:'var(--good)', bg:'var(--good-pale, #e9f5ef)', label:'無理のない範囲', icon:'fa-circle-check'}
                  : ratio<=30 ? {c:'#a06a10', bg:'var(--warn-pale)', label:'やや重め（目安は25%以内）', icon:'fa-triangle-exclamation'}
                  :             {c:'var(--bad)', bg:'var(--bad-pale)', label:'要注意：家計を圧迫するおそれ', icon:'fa-circle-exclamation'};
+        const ratio = Math.round(first.payment*12/netY*100);
+        const lv = levelOf(ratio);
         html += `<span class="lm-sub lm-ratio" style="margin-top:7px; padding:7px 10px; border-radius:8px; background:${lv.bg}; color:${lv.c}; font-weight:700;">`
-              + `<i class="fa-solid ${lv.icon}"></i> 返済負担率：手取りの約${ratio}%（${lv.label}）</span>`
-              + `<span class="lm-sub">安心の目安は手取りの20〜25%以内。「借りられる額」より「無理なく返せる額」で。詳しくは結果のAI診断へ</span>`;
+              + `<i class="fa-solid ${lv.icon}"></i> 返済負担率：手取りの約${ratio}%（${lv.label}）</span>`;
+        if(type!=='fixed'){
+          const maxPay = Math.max(...normalRows.map(r=> r.payment));
+          const maxRatio = Math.round(maxPay*12/netY*100);
+          if(maxRatio > ratio){
+            const lm = levelOf(maxRatio);
+            html += `<span class="lm-sub lm-ratio-max" style="margin-top:4px; padding:6px 10px; border-radius:8px; background:${lm.bg}; color:${lm.c}; font-weight:700;">`
+                  + `<i class="fa-solid ${lm.icon}"></i> 金利見直し後の最大（入力した金利シナリオ内）：約${fmt(maxPay)}万円/月（負担率 約${maxRatio}%・${lm.label}）</span>`;
+          }
+        }
+        html += `<span class="lm-sub">安心の目安は手取りの20〜25%以内。「借りられる額」より「無理なく返せる額」で。詳しくは結果のAI診断へ</span>`;
       }
       el.innerHTML = html;
     }
@@ -3381,6 +3516,55 @@
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
+      scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
+    }
+
+    /* ---------- 自動保存（ドラフト）：誤リロード・タブ閉じでも入力が消えないように ----------
+       recomputeのたびに1秒デバウンスで両プランをlocalStorageへ保存。起動時にドラフトがあれば
+       復元バナーを表示（復元/破棄をユーザーが選ぶまでは上書き保存しない） */
+    const DRAFT_KEY = 'lifeplan_ichijo_draft_v1';
+    const DRAFT_TTL_MS = 7*24*60*60*1000;                     // ドラフトの有効期限：7日（古い顧客情報を残さない）
+    const SHARED_VIEW = location.hash.indexOf('#share=') === 0;   // 共有リンク閲覧＝顧客データを端末に自動保存しない
+    let draftHold = false;        // 復元バナー表示中は自動保存を止める（デモ初期値でドラフトを潰さない）
+    let demoSnapshot = null;      // 起動直後のデモ初期値のスナップショット（無編集なら保存しない）
+    let draftTimer = null;
+    function scheduleDraftSave(){
+      if(SHARED_VIEW || draftHold || _refreshingSum) return;
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(()=>{
+        if(draftHold) return;                                  // タイマー発火時に再チェック（初期化競合でドラフトを潰さない）
+        try{
+          const plans = collectPlans();
+          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集のデモ初期値は保存しない
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ plans, savedAt: Date.now() }));
+        }catch(e){}
+      }, 1000);
+    }
+    function initDraftRestore(){
+      try{ demoSnapshot = JSON.stringify(collectPlans()); }catch(e){}
+      if(SHARED_VIEW) return;   // 共有リンクで開いたときは共有データを優先（自動保存も無効）
+      let d = null;
+      try{ d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); }catch(e){}
+      if(!d || !d.plans){ return; }
+      if(d.savedAt && (Date.now() - d.savedAt) > DRAFT_TTL_MS){   // 期限切れは削除して新規スタート
+        try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+        return;
+      }
+      draftHold = true;
+      const banner = $('draft-banner');
+      if(!banner){ draftHold = false; return; }
+      const when = d.savedAt ? new Date(d.savedAt) : null;
+      const label = when ? `${when.getMonth()+1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2,'0')}` : '';
+      const wEl = $('draft-when'); if(wEl && label) wEl.textContent = `（${label}保存）`;
+      banner.classList.remove('hidden');
+      $('draft-restore').addEventListener('click', ()=>{
+        banner.classList.add('hidden'); draftHold = false;
+        applyPlans(d);
+      });
+      $('draft-discard').addEventListener('click', ()=>{
+        banner.classList.add('hidden'); draftHold = false;
+        try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+      });
     }
 
     /* ============================================================
@@ -3774,6 +3958,18 @@
       if(hint) hint.innerHTML = PLANS.active==='genjo'
         ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
         : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span >／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。';
+      updatePrintHeader();
+    }
+    // 印刷・PDFの1行目：どちらのプランか・作成日・ストレスシナリオ適用中ならその前提を必ず明記
+    function updatePrintHeader(){
+      const ph = $('print-plan-header'); if(!ph) return;
+      const d = new Date();
+      let txt = `ライフプラン試算資料［${PLANS.active==='mirai' ? '将来プラン' : '現状プラン'}］　作成日：${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日　計算基準：2026年8月改定版`;
+      const sp = [];
+      if(STRESS.rateBump>0) sp.push(`金利+${STRESS.rateBump}%`);
+      if(STRESS.incomeCut>0) sp.push(`世帯収入−${Math.round(STRESS.incomeCut*100)}%`);
+      if(sp.length) txt += `　※ストレスシナリオ適用中（${sp.join('・')}）＝通常試算より厳しい前提の数字です`;
+      ph.textContent = txt;
     }
 
     function switchPlan(p){
@@ -4611,14 +4807,44 @@
                assetsNow: cashNow+investNow, hNet, wNet, eduByChild, eduRemain, yearsToLastIndep };
     }
 
-    /* 遺族年金の年額目安（万円）。deceased='h'|'w'、子の人数、遺族の年齢で概算 */
-    function izokuPerYear(deceased, kids, survivorAge){
-      // 遺族基礎年金：子のある家庭に、末子18歳まで（約 年81万＋子加算 約23万/人）
-      const kiso = kids>0 ? (81 + 23*Math.min(kids,3)) : 0;
-      // 遺族厚生年金：夫死亡→妻は受給可（約 年45万の概算）。
-      //   妻死亡→夫は「55歳以上」でないと受給できず支給も60歳から（若い夫は原則ゼロ）＝制度の盲点
-      const kosei = (deceased==='h') ? 45 : (survivorAge>=55 ? 30 : 0);
-      return { kiso, kosei, total: kiso + kosei };
+    /* 遺族年金の年次モデル（万円・2025年度水準）。deceased='h'|'w'、childrenは{age}の配列、dGross=亡くなった方の年収（額面）
+       ・遺族基礎年金：18歳以下の子がいる年だけ支給（基礎83万＋子加算：第1・2子 各24万・第3子以降 各8万。子の成長で逓減）
+       ・遺族厚生年金：亡くなった方の年収から概算（平均標準報酬×5.481/1000×みなし300月×3/4 ≒ 年収×約10.3%）
+           - 夫死亡→妻：本計算では妻65歳まで計上（以降はご自身の老齢年金との併給調整があるため見込まない）。
+             死亡時に子がなく妻30歳未満は5年の有期給付
+           - 妻死亡→夫：死亡時55歳以上のみ受給資格があり、支給は60歳から（若い夫は原則ゼロ）＝制度の盲点
+       ・中高齢寡婦加算：夫死亡時、妻が40〜64歳で遺族基礎の対象外の期間に年約63万
+       ※2028年4月改正（子のない60歳未満は男女とも5年有期・寡婦加算の段階縮小）は本計算に未反映（注記対応） */
+    function izokuYearAt(deceased, children, surAge, dGross, y){
+      const n = children.map(c=> c.age + y).filter(a=> a>=0 && a<=18).length;
+      const kiso = n>0 ? 83 + 24*Math.min(n,2) + 8*Math.max(n-2,0) : 0;
+      const koseiYear = Math.round(dGross*0.103*10)/10;
+      const sa = surAge + y;
+      let kosei = 0, kafu = 0;
+      if(deceased==='h'){
+        const only5 = (children.length===0 && surAge<30);      // 死亡時に子がない30歳未満の妻＝5年有期
+        if(sa < 65 && (!only5 || y<5)) kosei = koseiYear;
+        // 中高齢寡婦加算の受給要件：夫死亡時（子なし）または遺族基礎年金の失権時（子あり＝末子18歳到達）に
+        // 妻が40歳以上であること。遺族厚生年金への加算のため、遺族厚生の受給がある年だけ支給
+        const minKidAge = children.length ? Math.min(...children.map(c=> c.age)) : null;
+        const kisoEndWifeAge = (minKidAge==null) ? surAge : surAge + Math.max(19 - minKidAge, 0);
+        const kafuOK = kisoEndWifeAge >= 40 && kisoEndWifeAge < 65;
+        if(kafuOK && kosei>0 && n===0 && sa>=40 && sa<65) kafu = 63;
+      } else {
+        if(surAge>=55 && sa>=60) kosei = koseiYear;            // 夫：55歳以上のみ・60歳から
+      }
+      return { kiso, kosei, kafu, total: kiso + kosei + kafu };
+    }
+    function izokuPerYear(deceased, children, surAge, dGross){   // 初年度の年額内訳（表示用）
+      return izokuYearAt(deceased, children, surAge, dGross, 0);
+    }
+    function izokuTotal(deceased, children, surAge, dGross, yrs){   // yrs年間の受給総額（必要保障額用）
+      let t=0, kiso=0, kosei=0, kafu=0;
+      for(let y=0; y<yrs; y++){
+        const r = izokuYearAt(deceased, children, surAge, dGross, y);
+        t += r.total; kiso += r.kiso; kosei += r.kosei; kafu += r.kafu;
+      }
+      return { total:Math.round(t), kiso:Math.round(kiso), kosei:Math.round(kosei), kafu:Math.round(kafu) };
     }
 
     /* どちらかに万一があったときの必要保障額。deceased='h'（夫死亡）|'w'（妻死亡）。単身はnull */
@@ -4638,19 +4864,24 @@
       const childcare = (!survivorIsWife && youngKidYears>0) ? 30*Math.min(yrs, youngKidYears) : 0;
       // ② 教育費（残り全額）
       const edu = p.eduRemain;
-      // ③ 住居費：賃貸は家賃、持ち家は「亡くなった人の団信で消えない側」の残債が残る
-      let housing = 0, loanRemain = 0, loanErased = 0, loanBal = 0;
+      // ③ 住居費：賃貸は家賃、持ち家は「亡くなった人の団信で消えない側」の残債＋遺族が住み続ける間の維持費
+      let housing = 0, loanRemain = 0, loanErased = 0, loanBal = 0, upkeep = 0;
       if(houseType==='rent'){ housing = num('rent',0)*12*yrs; }
       else {
         loanBal = currentLoanBalance();
         loanErased = loanBal * loanShareOf(deceased);   // 亡くなった人の団信で消える分
         loanRemain = loanBal - loanErased;              // 残る借入（遺族が返済を続ける）
-        housing = loanRemain;
+        upkeep = (num('prop-tax',0) + num('maint',0)) * yrs;   // 固定資産税＋修繕費（遺族が家を維持する分）
+        housing = loanRemain + upkeep;
       }
-      const spend = living + childcare + edu + housing;
-      // ④ 遺族の資源：遺族年金＋遺族の勤労収入＋いまの資産
-      const iz = izokuPerYear(deceased, p.children.length, surAge);
-      const pension = iz.total * yrs;                    // 概算：年額×年数
+      // ④ 葬儀・死亡整理資金（葬儀・墓・諸手続きの目安）
+      const funeral = 250;
+      const spend = living + childcare + edu + housing + funeral;
+      // ⑤ 遺族の資源：遺族年金（年次モデルの受給総額）＋遺族の勤労収入＋いまの資産
+      const dGross = deceased==='h' ? num('h-income',0) : num('w-income',0);
+      const izT = izokuTotal(deceased, p.children, surAge, dGross, yrs);
+      const iz = izokuPerYear(deceased, p.children, surAge, dGross);   // 初年度の内訳（表示用）
+      const pension = izT.total;
       const workYears = Math.max(0, Math.min(yrs, surRetire - surAge));
       const income = surNet * workYears;
       const cover = pension + income + p.assetsNow;
@@ -4663,9 +4894,9 @@
       return { deceased, survivorIsWife, need, rawNeed, ins, over,
                insHasIncome: insInfo.hasIncome, insSimple: insInfo.simple, yrs,
                spend:Math.round(spend), living:Math.round(living+childcare), childcare:Math.round(childcare),
-               edu:Math.round(edu), housing:Math.round(housing),
+               edu:Math.round(edu), housing:Math.round(housing), upkeep:Math.round(upkeep), funeral,
                loanBal:Math.round(loanBal), loanErased:Math.round(loanErased), loanRemain:Math.round(loanRemain),
-               pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei,
+               pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei, pensionKafu:izT.kafu,
                income:Math.round(income), workYears, assets:p.assetsNow, cover:Math.round(cover),
                surNet, surAge, p };
     }
@@ -4717,9 +4948,11 @@
           parts.push(`生活費 ${fmt(r.living)}万円`);
           if(r.edu>0) parts.push(`教育費 ${fmt(r.edu)}万円`);
           parts.push(houseType==='rent' ? `家賃 ${fmt(r.housing)}万円`
-            : (r.loanRemain>0 ? `残るローン ${fmt(r.loanRemain)}万円（団信で消える分 ${fmt(r.loanErased)}万円を除く）` : `住居費 0万円（残債は団信で全額ゼロ）`));
+            : (r.loanRemain>0 ? `残るローン ${fmt(r.loanRemain)}万円（団信で消える分 ${fmt(r.loanErased)}万円を除く）` : `住居費 ${fmt(r.upkeep)}万円（残債は団信で全額ゼロ・維持費のみ）`));
+          if(houseType!=='rent' && r.loanRemain>0 && r.upkeep>0) parts.push(`家の維持費 ${fmt(r.upkeep)}万円`);
+          parts.push(`葬儀・整理資金 ${fmt(r.funeral)}万円`);
           const spendLine = `<b>必要資金 約${fmt(r.spend)}万円</b>＝ ${parts.join(' ＋ ')}`;
-          const pensionLine = `<b>遺族年金 約${fmt(r.pensionYear)}万円/年</b>（遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}）× ${r.yrs}年 ＝ 約${fmt(r.pension)}万円`
+          const pensionLine = `<b>遺族年金 受給総額 約${fmt(r.pension)}万円</b>（初年度 約${fmt(r.pensionYear)}万円/年＝遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}。お子さまの成長・年齢で年ごとに変動${r.pensionKafu>0 ? `。中高齢寡婦加算 計約${fmt(r.pensionKafu)}万円を含む` : ''}）`
             + (r.deceased==='w' && r.pensionKosei===0 ? `<br><span style="color:#bf5656">※ 妻が亡くなった場合、55歳未満の夫には<b>遺族厚生年金が支給されません</b>（制度の盲点）。夫死亡時より保障が手薄になりやすい点に注意です。</span>` : '');
           const coverLine = `<b>用意できる資金 約${fmt(r.cover)}万円</b>＝ 遺族年金 約${fmt(r.pension)}＋${esc(survivorName)}の収入 約${fmt(r.income)}（${r.workYears}年分）＋いまの資産 ${fmt(r.assets)}`;
           const workNote = (r.income>0 && r.p.children.length)
@@ -4769,15 +5002,19 @@
       /* 老後資金は足りる？ */
       nenkin(){
         const p = buildProfile();
-        const pensionM = num('pension-monthly',0), retLiving = num('e-retire-living',24);
+        const pensionGrossM = num('pension-monthly',0), retLiving = num('e-retire-living',24);
         const pensionAge = num('pension-age',65);
+        // 資産推移グラフと同じ「手取り相当」でカバー率を計算（一人当たり水準で税社保3〜12%を概算控除）
+        const perHeadY = pensionGrossM*12 / (p.single ? 1 : 2);
+        const pTaxRate = perHeadY <= 158 ? 0.03 : (perHeadY <= 330 ? 0.08 : 0.12);
+        const pensionM = Math.round(pensionGrossM * (1 - pTaxRate) * 10) / 10;
         const gapM = retLiving - pensionM;
         const coverage = retLiving>0 ? Math.round(Math.min(pensionM/retLiving,1)*100) : 100;
         const yearsAfterPension = Math.max(p.endAge - pensionAge, 0);
         const shortfallTotal = Math.round(Math.max(gapM,0)*12*yearsAfterPension);
         const facts = [ famFact(p),
-          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionM)}万円</b>（${pensionAge}歳〜）`,
-          `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金は生活費の<b>約${coverage}%をカバー</b>（不足 月${fmt(Math.max(gapM,0))}万円）`,
+          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionGrossM)}万円</b>（${pensionAge}歳〜・手取り 約${fmt(pensionM)}万円で計算）`,
+          `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金（手取り）は生活費の<b>約${coverage}%をカバー</b>（不足 月${fmt(Math.max(gapM,0))}万円）`,
           gapM>0 ? `不足分の目安総額：<b>約${fmt(shortfallTotal)}万円</b>（${pensionAge}〜${p.endAge}歳の${yearsAfterPension}年間・単純計算）` : `年金だけで生活費をまかなえる見込みです`,
           `退職時（${p.hRetire}歳）の金融資産見込み：<b>${fmt(p.retireRow.net)}万円</b>` ];
         if(p.depletion){
@@ -4980,8 +5217,8 @@
           `診断：遺族年金は「遺されたご家族」に支給される制度です。`,
           `単身の方の場合、支給対象となるご遺族（生計を共にする配偶者・お子さま）がいないため、原則として遺族年金は発生しません。ご自身の備えとしては、病気やケガで働けなくなったときの<b>障害年金・傷病手当金</b>のほうが重要です。`);
       }
-      const ih = izokuPerYear('h', p.children.length, p.wAge);   // 夫に万一→妻が受給
-      const iw = izokuPerYear('w', p.children.length, p.hAge);   // 妻に万一→夫が受給
+      const ih = izokuPerYear('h', p.children, p.wAge, num('h-income',0));   // 夫に万一→妻が受給
+      const iw = izokuPerYear('w', p.children, p.hAge, num('w-income',0));   // 妻に万一→夫が受給
       const yrsKids = p.children.length ? Math.max(...p.children.map(c=> Math.max(18-c.age,0))) : 0;
       const perMonth = (y)=> (Math.round(y/12*10)/10).toLocaleString('ja-JP');
       const facts = [ famFact(p),
@@ -4991,10 +5228,10 @@
         `遺族年金は<b>非課税</b>です（所得税・住民税はかかりません）` ];
       const line = (name, r, extra)=> `<div style="margin:8px 0;padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:10px;">`
         + `<b>■ ${esc(name)}に万一のとき</b><br>`
-        + `遺族基礎年金 約${fmt(r.kiso)}万円/年 ＋ 遺族厚生年金 約${fmt(r.kosei)}万円/年<br>`
+        + `遺族基礎年金 約${fmt(r.kiso)}万円/年 ＋ 遺族厚生年金 約${fmt(r.kosei)}万円/年${r.kafu>0 ? ` ＋ 中高齢寡婦加算 約${fmt(r.kafu)}万円/年` : ''}<br>`
         + `＝ <b>合計 約${fmt(r.total)}万円/年（月 約${perMonth(r.total)}万円）</b>` + (extra||'') + `</div>`;
       const body = `<b>【受給額の目安】</b>ご入力の家族構成で概算しています。`
-        + line(hNameH(), ih, p.children.length ? `<br><span style="font-size:.82em;color:var(--ink-soft)">末子が18歳になると遺族基礎年金は終了。その後、${esc(wNameH())}が40〜65歳の間は<b>中高齢寡婦加算（年約61万円）</b>が遺族厚生年金に上乗せされる場合があります。</span>` : '')
+        + line(hNameH(), ih, p.children.length ? `<br><span style="font-size:.82em;color:var(--ink-soft)">末子が18歳になると遺族基礎年金は終了。その後、${esc(wNameH())}が40〜65歳の間は<b>中高齢寡婦加算（年約63万円）</b>が上乗せされる場合があります（本試算では、失権時に40歳以上などの要件を満たす場合に織り込んでいます）。遺族厚生年金は${esc(hNameH())}の年収から概算しています。</span>` : `<br><span style="font-size:.82em;color:var(--ink-soft)">${esc(wNameH())}が死亡時に40歳以上なら<b>中高齢寡婦加算（年約63万円）</b>の対象になる場合があります。遺族厚生年金は${esc(hNameH())}の年収から概算しています。</span>`)
         + line(wNameH(), iw, iw.kosei===0 ? `<br><span style="font-size:.82em;color:#bf5656">※ 55歳未満の${esc(hNameH())}には<b>遺族厚生年金が支給されません</b>（制度の盲点）。${esc(wNameH())}に万一の場合の公的保障は手薄になります。なお2028年4月の制度改正で男女差は解消され、男女とも「子のない60歳未満は5年間の有期給付」に統一される予定です。</span>` : '')
         + `実際の受給額は厚生年金の加入記録（平均標準報酬額）で変わります。「ねんきん定期便」をもとにした正確な試算は、無料相談で承ります。`;
       return diagBox(facts, 'ok',
@@ -5111,7 +5348,7 @@
         probes:['資産運用を始めたいのですね。投資のご経験はありますか？どのくらいの期間で考えていますか？','毎月いくらくらい、当面使わない余裕資金から回せそうですか？'],
         concl:'一般的には、<b>生活防衛資金を確保→新NISAでインデックス投信を少額から積立</b>が王道です。値動きに動じず長く続けることが最大の成功要因です。' },
       izoku:{ label:'遺族年金・公的保障', re:/遺族|寡婦|万一|万が一|死亡保障|亡くなっ/,   /* 団信・団体信用はhokenへ移設（団信の要否は必要保障額診断DIAG.hokenが正解のため） */
-        facts:['遺族年金は<b>遺族基礎年金＋遺族厚生年金</b>の2階建てです。','遺族基礎年金は<b>子のある配偶者</b>に、年約81万円＋子の加算（約23万円/人）が末子18歳の年度末まで支給されます。','遺族厚生年金は、亡くなった方の厚生年金記録に応じて<b>報酬比例部分の約4分の3</b>が支給されます。','<b>妻を亡くした55歳未満の夫</b>には遺族厚生年金が支給されないなど、男女で差があります（制度の盲点）。','子のない30歳未満の妻への遺族厚生年金は<b>5年間の有期</b>です。','40〜65歳の妻には<b>中高齢寡婦加算（年約61万円）</b>が上乗せされる場合があります。','団信（団体信用生命保険）付きの住宅ローンは、万一の際<b>残債がゼロ</b>になり、遺族の住居費負担が大きく軽くなります。','遺族年金は<b>非課税</b>で、所得税・住民税はかかりません。'],
+        facts:['遺族年金は<b>遺族基礎年金＋遺族厚生年金</b>の2階建てです。','遺族基礎年金は<b>子のある配偶者</b>に、年約83万円＋子の加算（第1・2子 各約24万円・第3子以降 各約8万円）が末子18歳の年度末まで支給されます。','遺族厚生年金は、亡くなった方の厚生年金記録に応じて<b>報酬比例部分の約4分の3</b>が支給されます。','<b>妻を亡くした55歳未満の夫</b>には遺族厚生年金が支給されないなど、男女で差があります（制度の盲点）。','子のない30歳未満の妻への遺族厚生年金は<b>5年間の有期</b>です。','40〜65歳の妻には<b>中高齢寡婦加算（年約63万円）</b>が上乗せされる場合があります。','団信（団体信用生命保険）付きの住宅ローンは、万一の際<b>残債がゼロ</b>になり、遺族の住居費負担が大きく軽くなります。','遺族年金は<b>非課税</b>で、所得税・住民税はかかりません。'],
         probes:['ご家族の万一への備えを確認したいのですね。ご家族構成（配偶者・お子さまの人数）を教えていただけますか？','住宅ローンの団信の有無と、いまの貯蓄額もわかると目安が出せます。'],
         concl:'一般的には、<b>遺族年金でカバーされる分を差し引いた不足分だけ</b>を、掛け捨ての保険で備えるのが合理的です。上の「保険は必要？」で、ご入力データから自動計算できます。' },
       shaho:{ label:'社会保険・公的制度', re:/傷病手当|高額療養|出産|育休|産休|育児休業|失業|雇用保険|労災|介護保険|健康保険|社会保険|障害年金|働けなくなった/,
@@ -5547,7 +5784,10 @@
       else if(e.target.closest('[data-chatno]')){ addMsg('bot','承知しました。いつでもまたご質問くださいね。気になることが出てきたら、お気軽にどうぞ。'); }
     });
     $('chat-send').addEventListener('click', ()=> sendChat($('chat-text').value));
-    $('chat-text').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat($('chat-text').value); });
+    $('chat-text').addEventListener('keydown', (e)=>{
+      if(e.isComposing || e.keyCode===229) return;   // 日本語IMEの変換確定Enterでは送信しない
+      if(e.key==='Enter') sendChat($('chat-text').value);
+    });
     // ワンタップ質問（チップ）→ そのまま質問として送信
     if($('chat-quick')) $('chat-quick').addEventListener('click', (e)=>{
       const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
@@ -5682,6 +5922,7 @@
       // 旧保存データ（⑦追加前）読込時に、前のお客様の保険入力が残らないようリセット（新しい保存はこの後のfields復元で上書きされる）
       if($('ins-total-h')) $('ins-total-h').value = 0;
       if($('ins-total-w')) $('ins-total-w').value = 0;
+      if($('dansin-extra')) $('dansin-extra').value = 0;   // 団信上乗せ金利も同様（この欄がない旧保存で前のお客様の値が残らないように）
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy')));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
@@ -5711,7 +5952,7 @@
       if(s.kasaiQuakeMode) setKasaiQuakeMode(s.kasaiQuakeMode);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }
       if(s.loanType && loanTypeSeg){ [...loanTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.loantype===s.loanType)); }
-      if(s.loanRateType && loanRateTypeSeg){ [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ratetype===s.loanRateType)); }
+      if(loanRateTypeSeg){ const rt = s.loanRateType || 'fixed'; [...loanRateTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ratetype===rt)); }   // 金利タイプ未保存の旧データは従来どおり固定金利で復元（既定変更の影響を受けない）
       if(s.loanRepayType && loanRepayTypeSeg){ [...loanRepayTypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.repaytype===s.loanRepayType)); }
       if(typeof updateLoanRateUI==='function') updateLoanRateUI();   // 金利タイプに応じて期間ごとの金利欄を作り直す
       // 動的に作られた期間ごとの金利欄に、保存値を反映（上で作り直した直後に上書き）
@@ -6084,6 +6325,7 @@
     // ② プラン比較の初期化：読み込み時は「現状プラン」から
     PLANS.genjo.state = collectState();
     updatePlanTabs();
+    initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
 
     // お客様専用ページ：共有リンク（#share=...）で開いた場合、パスワード入力後に内容を復元する
     (function(){

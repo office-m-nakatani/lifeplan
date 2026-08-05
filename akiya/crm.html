@@ -150,6 +150,8 @@ const stageMeta  = k => STAGES.find(s => s.key === k) || STAGES[0];
 const OPEN_STAGES = STAGES.filter(s => s.key !== 'closed_lost');
 
 /* 6分野（解体は背骨なので別扱い。順不同で動く支援ドメイン） */
+/* 分野ごとの規定の担当（担当セレクトの2択目。定義が無い分野は自由入力のみ） */
+const DOM_ASSIGNEE = { inheritance_reg:'二朗さん', realestate:'瀬尾さん', construction_ext:'植原さん', fp:'中谷' };
 const DOMAINS = [
   { key:'inheritance_reg', label:'相続登記', role:'司法書士', color:'#2E9E68',
     stages:['未判定','名義確認','相続人確定','遺産分割協議','相続登記申請','完了'] },
@@ -1181,6 +1183,11 @@ function dateFieldShared(id,key,value){   // 相続開始日は社内＋税理�
 }
 function field(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); renderDetail(); }
 function fieldNoRerender(id,key,value){ if(!canEditCore()) return; const c=getC(id); c[key]=value; upsert(c); savedFlash(); }
+function assigneePick(id,dkey,v){
+  if(!canEditDomain(dkey)) return;
+  if(v==='__other__'){ const inp=document.getElementById('asg-'+dkey); if(inp){ inp.classList.remove('hidden'); inp.focus(); } return; }
+  domField(id,dkey,'assignee',v);
+}
 function domField(id,dkey,prop,value){
   if(!canEditDomain(dkey)) return;
   const c=getC(id);
@@ -1309,7 +1316,15 @@ function renderDetail(){
           <select onchange="domField('${c.id}','${dm.key}','stage',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1" ${d.need!=='required'?'disabled':''}>${stageSel}</select>
         </label>
         <label class="text-xs text-sub font-bold">担当
-          <input value="${esc(d.assignee||'')}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者・提携先" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+          ${(()=>{ const def=DOM_ASSIGNEE[dm.key];
+            if(!def) return `<input value="${esc(d.assignee||'')}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者名" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">`;
+            const other=!!(d.assignee&&d.assignee!==def);
+            return `<select onchange="assigneePick('${c.id}','${dm.key}',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">
+              <option value="" ${!d.assignee?'selected':''}>未割当</option>
+              <option value="${esc(def)}" ${d.assignee===def?'selected':''}>${esc(def)}</option>
+              <option value="__other__" ${other?'selected':''}>その他</option>
+            </select>
+            <input id="asg-${dm.key}" value="${other?esc(d.assignee):''}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者名を入力" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1 ${other?'':'hidden'}">`; })()}
         </label>
         <label class="text-xs text-sub font-bold">次アクション
           <input value="${esc(d.next||'')}" onchange="domField('${c.id}','${dm.key}','next',this.value)" placeholder="次にやること" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
@@ -1697,12 +1712,12 @@ function seedData(){
       thirdPartyConsent:{obtained:true, date:'2026-07-14', method:'書面'},
       notes:'3000万控除の本命。相続開始2024/9→控除期限2027末。相続登記→解体→滅失→売買のクリティカルパスを共有中。',
       followHistory:[{date:'2026-07-14',type:'メモ',memo:'診断完了→起票。緊急度高・名義故人・売却フラグ'},{date:'2026-07-14',type:'架電',memo:'当日接触。父名義のまま・相続未了。現地調査7/18に設定'}],
-      domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'提携司法書士（森）',next:'戸籍収集・相続人確定',reason:''},
-        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
-        tax:{need:'required',stage:'3000万控除の判定',assignee:'提携税理士（山田）',next:'控除の可否判定（2027末を逆算）',reason:''},
-        realestate:{need:'required',stage:'査定',assignee:'提携不動産（讃岐住販）',next:'現況／更地の両建て査定',reason:''},
+      domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'二朗さん',next:'戸籍収集・相続人確定',reason:''},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
+        tax:{need:'required',stage:'3000万控除の判定',assignee:'山田さん',next:'控除の可否判定（2027末を逆算）',reason:''},
+        realestate:{need:'required',stage:'査定',assignee:'瀬尾さん',next:'現況／更地の両建て査定',reason:''},
         construction_ext:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'更地渡し・売却のため活用なし'},
-        fp:{need:'required',stage:'資金ヒアリング',assignee:'提携FP（大西）',next:'解体費160万超・自己資金と補助金確認',reason:''} } }),
+        fp:{need:'required',stage:'資金ヒアリング',assignee:'中谷',next:'解体費160万超・自己資金と補助金確認',reason:''} } }),
     mk({ id:'AK-2026-0009', createdAt:'2026-07-15', source:'問い合わせフォーム', name:'丸亀 花子', phone:'080-3333-4444', email:'hanako@example.com',
       desiredConsult:'自分名義の古い倉庫を解体して駐車場か新築を検討。費用が心配。', assignee:'中谷',
       teamNote:'費用重視のお客様。見積は内訳を丁寧に説明する。日中はお仕事のためSMS連絡が確実。',
@@ -1712,11 +1727,11 @@ function seedData(){
       notes:'self名義で相続登記不要。再建築可否を確認中。解体〜造成〜新築の連結受注でLTV最大化狙い。',
       followHistory:[{date:'2026-07-15',type:'メモ',memo:'フォーム送信→起票。self名義・活用フラグ'},{date:'2026-07-15',type:'架電',memo:'接触。駐車場か新築で迷い。現調済で見積段階へ'}],
       domains:{ inheritance_reg:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'名義がご本人のため登記不要'},
-        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
         tax:{need:'undetermined',stage:'未判定',assignee:'',next:'活用（非売却）。固定資産税のみ後続確認',reason:''},
         realestate:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'活用予定のため売却不要'},
-        construction_ext:{need:'required',stage:'プラン提示',assignee:'自社エクステリア',next:'駐車場/新築の比較・再建築可否確認',reason:''},
-        fp:{need:'required',stage:'資金計画',assignee:'提携FP（大西）',next:'解体＋造成資金のローン候補提示',reason:''} } }),
+        construction_ext:{need:'required',stage:'プラン提示',assignee:'植原さん',next:'駐車場/新築の比較・再建築可否確認',reason:''},
+        fp:{need:'required',stage:'資金計画',assignee:'中谷',next:'解体＋造成資金のローン候補提示',reason:''} } }),
     mk({ id:'AK-2026-0011', createdAt:'2026-07-16', source:'60秒診断', name:'坂出 次郎', phone:'090-5555-6666', email:'jiro@example.com',
       desiredConsult:'名義が誰か分からない祖父の家。近所から苦情が来ている。', assignee:'未割当',
       teamNote:'⚠近隣から苦情あり＝近隣対応は最優先で丁寧に。前面道路は私道の可能性（掘削承諾の要確認）。',
@@ -1725,8 +1740,8 @@ function seedData(){
       owner:'unknown', exit:'undecided', urgencyLevel:'高', urgencyScore:85, estimateRangeLow:180, estimateRangeHigh:260,
       notes:'最上流ゲート案件。名義不明→登記簿取得が最優先。私道接道で掘削承諾も要確認。出口未定。緊急度高で放置厳禁。',
       followHistory:[{date:'2026-07-16',type:'メモ',memo:'診断完了→起票。緊急度85（老朽・私道・名義不明・満載）。近隣苦情=特定空家リスク'}],
-      domains:{ inheritance_reg:{need:'required',stage:'名義確認',assignee:'提携司法書士（森）',next:'登記簿取得で名義確定',reason:''},
-        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'提携土地家屋調査士（田村）',next:'解体完了待ち',reason:''},
+      domains:{ inheritance_reg:{need:'required',stage:'名義確認',assignee:'二朗さん',next:'登記簿取得で名義確定',reason:''},
+        demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
         tax:{need:'undetermined',stage:'未判定',assignee:'',next:'出口未定のため保留',reason:''},
         realestate:{need:'undetermined',stage:'未判定',assignee:'',next:'査定で出口確定後に判断',reason:''},
         construction_ext:{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''},

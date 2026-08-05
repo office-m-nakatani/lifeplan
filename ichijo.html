@@ -3280,6 +3280,17 @@
         });
         html += extra;
       }
+      // 返済負担率（手取り比）＝「破綻しない住宅購入」の入口指標。AI診断と同じ式（当初返済額×12÷世帯手取り年収）
+      const netY = grossToNet(num('h-income',0)) + (isSingle() ? 0 : grossToNet(num('w-income',0)));
+      if(netY > 0 && first.payment > 0){
+        const ratio = Math.round(first.payment*12/netY*100);
+        const lv = ratio<=25 ? {c:'var(--good)', bg:'var(--good-pale, #e9f5ef)', label:'無理のない範囲', icon:'fa-circle-check'}
+                 : ratio<=30 ? {c:'#a06a10', bg:'var(--warn-pale)', label:'やや重め（目安は25%以内）', icon:'fa-triangle-exclamation'}
+                 :             {c:'var(--bad)', bg:'var(--bad-pale)', label:'要注意：家計を圧迫するおそれ', icon:'fa-circle-exclamation'};
+        html += `<span class="lm-sub lm-ratio" style="margin-top:7px; padding:7px 10px; border-radius:8px; background:${lv.bg}; color:${lv.c}; font-weight:700;">`
+              + `<i class="fa-solid ${lv.icon}"></i> 返済負担率：手取りの約${ratio}%（${lv.label}）</span>`
+              + `<span class="lm-sub">安心の目安は手取りの20〜25%以内。「借りられる額」より「無理なく返せる額」で。詳しくは結果のAI診断へ</span>`;
+      }
       el.innerHTML = html;
     }
 

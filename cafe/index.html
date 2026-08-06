@@ -259,9 +259,18 @@ button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:n
 .chip.on .d{color:var(--accent-2);}
 .chip:active{transform:scale(.97);}
 
+/* セットのドリンク選択。48品を狭い窓に入れると、外側（モーダル本文）と内側の
+   どちらが動くか分からない「入れ子スクロール」になり、ご高齢の方が最も詰まります。
+   窓を大きく取り、上の絞り込みで件数自体を減らします。 */
 .drinkpick{
-  border:1px solid var(--line);border-radius:var(--r-m);background:#fff;max-height:236px;overflow-y:auto;
+  border:1px solid var(--line);border-radius:var(--r-m);background:#fff;
+  max-height:min(46vh,380px);overflow-y:auto;overscroll-behavior:contain;
 }
+.dp-filter{display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap;}
+.dp-filter button{min-height:46px;padding:0 15px;border-radius:999px;border:2px solid var(--line);
+  background:#fff;font-size:16px;font-weight:700;color:var(--text-sub);}
+.dp-filter button.on{border-color:var(--accent);background:#fff6f1;color:var(--accent);}
+.dp-count{font-size:14px;color:var(--text-sub);margin-left:auto;align-self:center;}
 .dp-g{font-size:13.5px;font-weight:700;color:var(--text-sub);background:var(--cream-2);padding:5px 14px;position:sticky;top:0;}
 .dp-i{
   width:100%;min-height:60px;display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid #f0e8db;text-align:left;
@@ -358,7 +367,7 @@ button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:n
 .toast .svgi{width:24px;height:24px;color:#9ad3ab;}
 
 /* ===========================================================================
-   5. ニュース画面（1分無操作で全画面表示・4分割）
+   5. ニュース画面（無操作が続くと全画面表示・4分割）
    ・見出しは明朝（新聞の紙面らしさ）、数値はゴシック＋等幅数字で読み違えを防ぐ
    ・カテゴリは色そのものが意味を持つ（経済=金／スポーツ=緑／海外=青／天気=橙）
    =========================================================================== */
@@ -858,6 +867,17 @@ body.finding .findbox{border-color:var(--accent);}
 body.finding .findbox #findClear{display:flex;}
 .jumps{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;}
 .jumps::-webkit-scrollbar{display:none;}
+/* 【重要】横に並ぶ帯（カテゴリ・種類ジャンプ）は、画面の右端で切らずに少し覗かせる。
+   ぴったり切れていると「まだ続きがある」ことに気づけません（携帯でスイーツとモーニングが
+   画面外にあり、スクロールバーも出ないため存在に気づけませんでした）。 */
+.catrail,.jumps{-webkit-overflow-scrolling:touch;}
+@media (max-width:820px),(max-height:560px){
+  .catrail,.jumps{
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);
+            mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);
+  }
+  .catrail::after,.jumps::after{content:"";flex:0 0 22px;}   /* 末尾に余白＝最後の項目まで送れる */
+}
 .jump{flex:0 0 auto;min-height:44px;padding:0 15px;border-radius:999px;background:var(--cream-2);
   border:1px solid var(--line);font-size:15px;font-weight:700;color:var(--text-sub);white-space:nowrap;}
 .jump:active{background:var(--beige);}
@@ -1048,6 +1068,11 @@ body.finding .findbox #findClear{display:flex;}
 .chk .nm{flex:1;font-size:16.5px;font-weight:700;}
 .chk .got{display:block;font-size:14.5px;font-weight:400;color:var(--text-sub);margin-top:2px;}
 .chk .fix{display:block;font-size:14.5px;font-weight:400;color:var(--accent);margin-top:3px;}
+.chk.info .mk{background:var(--cream-2);color:var(--text-sub);}
+.chk.info .fix{color:var(--text-sub);}
+/* 一覧に常時出すアレルギーの注意書き（見落とされないよう他の注意書きより強く） */
+.notice .alg-p{background:#fbeae6;border:1px solid #e6bfb4;border-radius:var(--r-s);
+  padding:10px 13px;color:#7d3324;}
 
 /* 設定 */
 .sv-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -1378,7 +1403,7 @@ html,body{background:var(--cream);}
 
 <!-- ===================== ニュース画面より前に置く（重なり順のため） ===================== -->
 
-<!-- ===================== ニュース画面（3分無操作） ===================== -->
+<!-- ===================== ニュース画面（無操作が続いたとき。既定2分／ご注文中は7分） ===================== -->
 <div id="news">
   <div class="nw-head">
     <div class="nw-shop">
@@ -1466,16 +1491,15 @@ const CONFIG = {
 
   /* --- 店舗モード（スタッフ用画面） --- */
   STAFF_PIN     : "2648", // 初期の暗証番号。設置後に店舗モードの「設定」から必ず変更してください
-  ORDER_CHIME   : true,   // 注文が入ったとき、この端末から音を鳴らして厨房・カウンターに知らせる
-  SEAT_IDLE_MIN : 0       // 0以外にすると、その分数だけ操作が無いとき来客セッションを自動で終了します
+  ORDER_CHIME   : true,   // 注文・呼び出しのときに音を鳴らすかの初期値（店舗モードの設定で変更できます）
 };
 
 // 店舗情報（メニュー写真の記載どおり）
 const SHOP = {
   name : "珈琲",
   hours: "営業時間 7:00 - 17:00 ／ 定休日 火曜日",
-  tel  : "087-000-0000",    // デモ用のダミー番号（局番000は実在しない）。実店舗導入時に差し替え
-  table: "テーブル 5"       // 端末ごとに書き換えて設置します
+  tel  : "087-000-0000"     // デモ用のダミー番号（局番000は実在しない）。実店舗導入時に差し替え
+  // ※ テーブル番号はここではなく、店舗モードの「設定」タブで端末ごとに決めます
 };
 
 /* ---------------------------------------------------------------------------
@@ -1982,7 +2006,8 @@ const LS = {
   DAY     : "cafe.day.v1.",     // + YYYYMMDD
   SOLDOUT : "cafe.soldout.v1",
   ALLERGEN: "cafe.allergen.v1", // 店舗が入力したアレルギー情報
-  MERGED  : "cafe.merged.v1."   // + YYYYMMDD（他の端末から取り込んだ売上）
+  MERGED  : "cafe.merged.v1.",  // + YYYYMMDD（他の端末から取り込んだ売上）
+  SEQ     : "cafe.seq.v1"       // 受付番号の連番（その営業日を通した通し番号）
 };
 // 営業日キー。深夜0時をまたぐ営業でも「その日の売上」がねじれないよう、
 // 朝5時を境目にします（4:59の注文は前日の売上として扱う）。
@@ -2004,7 +2029,8 @@ function lsDel(key){ try{ localStorage.removeItem(key); }catch(err){ /* 保存�
 
 /* --- この端末の設定（テーブル番号・暗証番号・文字サイズ）。設置時に一度だけ決めます --- */
 function deviceGet(){
-  return Object.assign({ table:"", pin:CONFIG.STAFF_PIN, fontStep:0, enforceTime:CONFIG.ENFORCE_TIME },
+  return Object.assign({ table:"", pin:CONFIG.STAFF_PIN, fontStep:0,
+                         enforceTime:CONFIG.ENFORCE_TIME, chime:CONFIG.ORDER_CHIME },
                        lsGet(LS.DEVICE, {}));
 }
 function deviceSet(patch){ lsSet(LS.DEVICE, Object.assign(deviceGet(), patch)); }
@@ -2021,6 +2047,25 @@ function tablePrefix(){
 function tableLabel(){
   const t = String(deviceGet().table || "").trim();
   return t ? "テーブル " + t : "テーブル未設定";
+}
+
+/* --- 受付番号の連番 ---
+   【重要】お会計しても 0 に戻してはいけません。
+   以前は来客ごとに 1 から振り直していたため、同じ日に T5-001 が何枚も出て、
+   ・呼び出す番号が重なる
+   ・「提供済み」が別のお客様の注文に効く
+   ・取り消しが、先に会計を済ませた別のお客様の売上まで消す
+   という事故が起きていました。営業日ごとに、その端末を通した通し番号にします。 */
+function nextSeq(){
+  const s = lsGet(LS.SEQ, null);
+  const cur = (s && s.day === bizDateKey()) ? Number(s.n) || 0 : 0;
+  const n = cur + 1;
+  lsSet(LS.SEQ, { day:bizDateKey(), n:n });
+  return n;
+}
+function peekSeq(){
+  const s = lsGet(LS.SEQ, null);
+  return (s && s.day === bizDateKey()) ? Number(s.n) || 0 : 0;
 }
 
 /* --- アレルギー情報（店舗モードの「アレルギー」タブで入力します） ---
@@ -2106,9 +2151,10 @@ function endSeat(){
   state.cart     = [];
   state.history  = [];
   state.takeout  = false;
-  state.orderSeq = 0;
+  state.orderSeq = 0;      // この席での注文回数だけを戻します
   state.seatId   = newSeatId();
   lsDel(LS.SEAT);
+  // ※ 受付番号の通し番号（LS.SEQ）はここで戻しません。戻すと番号が重複します。
 }
 
 /* ===========================================================================
@@ -2210,8 +2256,13 @@ function renderMenu(){
     if(!g){ g = { name:i.group, items:[] }; groups.push(g); }
     g.items.push(i);
   });
-  const notice = q ? '<div class="notice"><p>※ 「' + esc(q) + '」で ' + items.length + ' 件見つかりました（カテゴリをまたいで探しています）</p></div>'
-                   : '<div class="notice">' + cat.notes.map(n => "<p>※ "+n+"</p>").join("") + "</div>";
+  // アレルギー情報が未入力のあいだは、一覧を眺めている段階でも必ず目に入るようにします
+  // （商品カードのバッジだけだと、乳製品ドリンクなど対象外の品で気づけません）
+  const algNote = algReady() ? ""
+    : '<p class="alg-p">※ <b>アレルギー情報は準備中です。</b>アレルギーをお持ちのお客様は、'
+      + 'ご注文の前に必ずスタッフへお尋ねください（右下の「店員呼び出し」からもお呼びいただけます）。</p>';
+  const notice = q ? '<div class="notice">' + algNote + '<p>※ 「' + esc(q) + '」で ' + items.length + ' 件見つかりました（カテゴリをまたいで探しています）</p></div>'
+                   : '<div class="notice">' + algNote + cat.notes.map(n => "<p>※ "+n+"</p>").join("") + "</div>";
   const body   = groups.map((g, gi) =>
       '<section class="group" id="grp' + gi + '"><h2 class="group-title">'+g.name+"</h2>"
     + '<div class="grid">' + g.items.map(cardHTML).join("") + "</div></section>"
@@ -2286,7 +2337,7 @@ const isDrinkItem = it => it.cats.indexOf("coffee") >= 0 || it.cats.indexOf("tea
    （実際に 通常¥500を追加→半額¥250×2を追加→通常を削除 で半額だけ注文できた）
    状態を変えるだけの関数にしてあります。描画は呼び出し側で行ってください。 */
 function revalidateRefills(){
-  if(drinkUnitsSoFar() >= 1) return 0;        // 通常価格のドリンクがあるso半額は有効
+  if(drinkUnitsSoFar() >= 1) return 0;        // 通常価格のドリンクがあるので半額は有効
   let fixed = 0;
   state.cart.forEach(l => {
     if(!l.refill) return;
@@ -2334,23 +2385,12 @@ function openItem(id){
 
   /* --- モーニングセット：ドリンク選択 --- */
   if(it.type === "set"){
-    const drinks = MENU.filter(d => isDrinkItem(d));
-    const gs = [];
-    drinks.forEach(d => {
-      let g = gs.filter(x => x.name === d.group)[0];
-      if(!g){ g = { name:d.group, items:[] }; gs.push(g); }
-      g.items.push(d);
-    });
     html.push('<div class="optg"><div class="optg-t">セットにするドリンクをお選びください<span class="req">必須</span></div>'
-      + '<div class="drinkpick" id="dPick">'
-      + gs.map(g => '<div class="dp-g">'+g.name+"</div>"
-          + g.items.map(d =>
-              '<button class="dp-i" data-drink="'+d.id+'">'
-              + '<span class="mk"><svg class="svgi" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>'
-              + '<span class="nm">'+d.name+"</span>"
-              + '<span class="pr">'+yen(grossOf(d.price))+"</span></button>").join("")
-        ).join("")
-      + "</div></div>");
+      + '<div class="dp-filter" id="dpFilter">'
+      + '<button data-dpf="coffee" class="on">コーヒー</button>'
+      + '<button data-dpf="tea">紅茶・その他</button>'
+      + '<span class="dp-count" id="dpCount"></span></div>'
+      + '<div class="drinkpick" id="dPick"></div></div>');
   }
 
   /* --- ホット / アイス --- */
@@ -2401,8 +2441,31 @@ function openItem(id){
   }
   $("mBody").innerHTML = html.join("");
   $("mBody").scrollTop = 0;
+  if(it.type === "set"){ dpCat = "coffee"; renderDrinkPick(); }
   updateItemModal();
   openBack("itemBack");
+}
+
+/* セットのドリンク一覧。コーヒー／紅茶で分けて、一度に見せる件数を半分にします */
+let dpCat = "coffee";
+function renderDrinkPick(){
+  const box = $("dPick"); if(!box) return;
+  const drinks = MENU.filter(d => d.cats.indexOf(dpCat) >= 0 && isDrinkItem(d) && !isSold(d.id));
+  const gs = [];
+  drinks.forEach(d => {
+    let g = gs.filter(x => x.name === d.group)[0];
+    if(!g){ g = { name:d.group, items:[] }; gs.push(g); }
+    g.items.push(d);
+  });
+  box.innerHTML = gs.map(g => '<div class="dp-g">' + esc(g.name) + "</div>"
+    + g.items.map(d =>
+        '<button class="dp-i' + (M.drink && M.drink.id === d.id ? " on" : "") + '" data-drink="' + d.id + '">'
+        + '<span class="mk"><svg class="svgi" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>'
+        + '<span class="nm">' + esc(d.name) + "</span>"
+        + '<span class="pr">' + yen(grossOf(d.price)) + "</span></button>").join("")
+    ).join("");
+  $("dpCount").textContent = drinks.length + " 品";
+  $("dpFilter").querySelectorAll("[data-dpf]").forEach(b => b.classList.toggle("on", b.dataset.dpf === dpCat));
 }
 
 /* アレルギーの表示。店舗の確認が済むまでは、断定せずスタッフへ確認をお願いする文言を出します。
@@ -2465,6 +2528,7 @@ function updateItemModal(){
 /* --- モーダル内の操作（イベント委譲） --- */
 $("mBody").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.dpf !== undefined){ dpCat = b.dataset.dpf; renderDrinkPick(); return; }
   if(b.dataset.drink !== undefined){
     M.drink = MENU.filter(x => x.id === b.dataset.drink)[0];
     $("dPick").querySelectorAll(".dp-i").forEach(x => x.classList.remove("on"));
@@ -2646,9 +2710,10 @@ $("cGo").addEventListener("click", () => {
     return;                                    // 金額が変わったので、確認画面からやり直していただく
   }
   const t = cartTotals();
-  state.orderSeq++;
-  // 受付番号はテーブル番号を接頭辞にする。複数台を置いても番号がぶつかりません
-  const no = tablePrefix() + "-" + String(state.orderSeq).padStart(3, "0");
+  state.orderSeq++;                       // この席で何回目のご注文か（画面表示用）
+  // 受付番号は「テーブル番号＋その日の通し番号」。
+  // 複数台でも、同じ席にお客様が入れ替わっても、番号は重なりません
+  const no = tablePrefix() + "-" + String(nextSeq()).padStart(3, "0");
   const order = {
     no    : no,
     time  : new Date(),
@@ -2747,9 +2812,12 @@ $("hBody").addEventListener("click", e => {
       toast("取り消しできる時間を過ぎました。スタッフにお声掛けください"); renderHistory(); return;
     }
     state.history.splice(i, 1);
-    daySave(dayOrders().filter(o => o.no !== no));   // 本日の売上からも取り除く
+    daySave(dayOrders().filter(o => o.no !== no));   // 本日の売上からも取り除く（受付番号は一意）
+    // 1杯目の注文を取り消したときは、カートに残っている半額も検算し直します
+    const fixed = revalidateRefills();
     saveSeat();
     renderHistory(); renderCart();
+    if(fixed) toast("1杯目が無くなったため、カートのお代わり半額を通常価格に戻しました");
     toast("ご注文 " + no + " を取り消しました");
   }
 });
@@ -2784,7 +2852,7 @@ $("callGo").addEventListener("click", () => {
   // 【重要】サーバーを持たないため、他の端末へ通知を飛ばすことはできません。
   // 「呼び出し中」と表示するだけで誰も来ない、では機能が無いより悪いので、
   // この端末から実際に音を鳴らしてスタッフに気づいてもらう作りにしています。
-  // 店内が広く音が届かない場合は、店舗モードの設定で音を切り、
+  // 店内が広く音が届かない場合は、店舗モードの「設定」タブで音を切り、
   // 卓上の呼び出しベルを併用してください。
   callChime();
   toast("スタッフがまいります（ご用件：" + callReason + "）");
@@ -2796,7 +2864,7 @@ $("callGo").addEventListener("click", () => {
 });
 // 呼び出し音（注文音とは違う響きにして、聞き分けられるようにしています）
 function callChime(){
-  if(!CONFIG.ORDER_CHIME) return;
+  if(!deviceGet().chime) return;
   try{
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if(audioCtx.state === "suspended") audioCtx.resume();
@@ -2853,7 +2921,7 @@ function toast(msg){
 }
 
 /* ===========================================================================
-   14. ニュース画面（1分間の無操作で表示・経済／スポーツ／海外／天気の4分割）
+   14. ニュース画面（無操作が続くと表示。既定2分・ご注文中は7分／経済・スポーツ・海外・天気の4分割）
    =========================================================================== */
 const NEWS_PANELS = [
   { key:"economy", label:"経済" },
@@ -3227,7 +3295,7 @@ let staffTab = "orders";
 /* --- 注文が入ったことを音で知らせる（外部の音源ファイルを使わずに合成します） --- */
 let audioCtx = null;
 function chime(){
-  if(!CONFIG.ORDER_CHIME) return;
+  if(!deviceGet().chime) return;
   try{
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if(audioCtx.state === "suspended") audioCtx.resume();
@@ -3275,7 +3343,8 @@ function openStaff(){
   clearTimeout(idleTimer);            // 作業中にニュース画面へ切り替わらないように
   hideNews();
   $("staff").classList.add("on"); syncInert();
-  staffTab = "orders";
+  staffTab   = "orders";
+  checkCache = null;                  // 開くたびに検査し直す（バッジを最新にするため）
   renderStaff();
 }
 function closeStaff(){
@@ -3313,12 +3382,13 @@ function renderStaff(){
   $("svSoldN").textContent = soldCount();
   $("svTabs").querySelectorAll(".sv-tab").forEach(t => t.classList.toggle("on", t.dataset.tab === staffTab));
   const body = $("svBody");
-  $("svAlgN").textContent = MENU.length - algDone();
+  $("svAlgN").textContent   = MENU.length - algDone();
+  $("svCheckN").textContent = checkFailCount();   // タブを開く前からバッジに出す
   if(staffTab === "orders")        body.innerHTML = svOrders(orders);
   else if(staffTab === "checkout") body.innerHTML = svCheckout();
   else if(staffTab === "sold")     body.innerHTML = svSold();
   else if(staffTab === "allergen") body.innerHTML = svAllergen();
-  else if(staffTab === "sales")    body.innerHTML = svSales(orders);
+  else if(staffTab === "sales")    body.innerHTML = svSales();
   else if(staffTab === "sync")     body.innerHTML = svSync();
   else if(staffTab === "check")    body.innerHTML = svCheck();
   else                             body.innerHTML = svSetting();
@@ -3399,8 +3469,15 @@ function svSold(){
 }
 
 /* 売上 */
-function svSales(orders){
-  if(!orders.length) return '<div class="sv-empty">本日の売上はまだありません。</div>';
+function svSales(){
+  const merged = mergedGet();
+  const seg = '<div class="sv-seg" style="margin-bottom:16px" id="salesSeg">'
+    + '<button data-scope="own"' + (salesScope === "own" ? ' class="on"' : "") + ">この端末ぶん</button>"
+    + '<button data-scope="all"' + (salesScope === "all" ? ' class="on"' : "") + ">全台の合算</button></div>"
+    + (merged.orders.length ? "" : '<div class="sv-scope">ほかの端末の売上はまだ取り込まれていません。'
+        + '「引き継ぎ」タブで各台のデータを取り込むと、ここで合算できます。</div>');
+  const orders = salesOrders();
+  if(!orders.length) return seg + '<div class="sv-empty">本日の売上はまだありません。</div>';
   const total = orders.reduce((s, o) => s + o.total, 0);
   const net   = orders.reduce((s, o) => s + o.net, 0);
   const tax   = orders.reduce((s, o) => s + o.tax, 0);
@@ -3419,7 +3496,8 @@ function svSales(orders){
   }));
   const items = Object.keys(byItem).map(k => ({ name:k, qty:byItem[k].qty, amount:byItem[k].amount }))
                       .sort((a, b) => b.qty - a.qty);
-  return svScopeNote() + '<div class="sv-h">本日の売上 <span class="sub">' + bizDateKey().replace(/(\d{4})(\d{2})(\d{2})/, "$1年$2月$3日") + "（この端末ぶん）</span></div>"
+  return seg + '<div class="sv-h">本日の売上 <span class="sub">'
+    + bizDateKey().replace(/(\d{4})(\d{2})(\d{2})/, "$1年$2月$3日") + "／" + esc(salesScopeLabel()) + "</span></div>"
     + '<div class="sv-kpi">'
     +   '<div class="sv-k"><div class="l">売上（税込）</div><div class="v">' + yen(total) + "</div></div>"
     +   '<div class="sv-k"><div class="l">ご注文</div><div class="v">' + orders.length + "<span style=\"font-size:16px\"> 件</span></div></div>"
@@ -3492,6 +3570,21 @@ function svAllergen(){
    =========================================================================== */
 function mergedKey(){ return LS.MERGED + bizDateKey(); }
 function mergedGet(){ return lsGet(mergedKey(), { orders:[], from:[] }); }
+/* 集計の対象。「この端末だけ」と「全台の合算」を切り替えます。
+   取り込んだのに売上へ反映されない、では取り込む意味がありません。 */
+let salesScope = "own";
+function salesOrders(){
+  const own = dayOrders();
+  if(salesScope === "own") return own;
+  const have = {}; own.forEach(o => { have[o.no] = 1; });
+  return own.concat(mergedGet().orders.filter(o => !have[o.no]));   // 受付番号で重複を除く
+}
+function salesScopeLabel(){
+  const m = mergedGet();
+  return salesScope === "own"
+    ? "この端末ぶん"
+    : "全台の合算（取り込み済み: " + (m.from.filter(f => f.kind === "day").map(f => f.table).join("・") || "なし") + "）";
+}
 function svSync(){
   const m = mergedGet();
   return '<div class="sv-h">引き継ぎ <span class="sub">複数台に置いたときだけ使います</span></div>'
@@ -3536,9 +3629,18 @@ function solidBgOf(el){
   }
   return [255, 255, 255];
 }
+let checkCache = null;
+// 開店前の合否件数。タブを開く前でもバッジに出すため、店舗モードに入った時点で1回走らせます
+function checkFailCount(){
+  if(!checkCache) checkCache = runChecks();
+  return checkCache.filter(r => !r.pass && !r.info).length;
+}
 function runChecks(){
   const R = [];
-  const add = (name, pass, got, fix) => R.push({ name:name, pass:pass, got:got, fix:fix });
+  // info:true は「できていれば良い」項目で、合否には数えません
+  // （任意の項目を不合格に数えると、設置を全部終えても赤い警告が残り続けて信用されなくなります）
+  const add  = (name, pass, got, fix) => R.push({ name:name, pass:pass, got:got, fix:fix });
+  const info = (name, pass, got, fix) => R.push({ name:name, pass:pass, got:got, fix:fix, info:true });
 
   // (1) 文字サイズが「大きくすると必ず大きくなる」か
   (function(){
@@ -3607,12 +3709,12 @@ function runChecks(){
         "実写真 " + withPhoto + " 品 / イラスト " + withArt + " 品（重複表示 " + wrong + " 件）",
         "1つの写真は1商品にだけ割り当ててください");
   })();
-  // (5b) 写真の充足（実運用では実写真に差し替えたい）
+  // (5b) 写真の充足（あれば良い項目。合否には数えません）
   (function(){
     const withPhoto = MENU.filter(i => photoFor(i)).length;
-    add("全品に商品写真がある", withPhoto === MENU.length,
-        withPhoto + " / " + MENU.length + " 品",
-        "残りの商品はイラスト表示です。実写真を PHOTO に追加すると見分けやすくなります（任意）");
+    info("【任意】全品に商品写真がある", withPhoto === MENU.length,
+        withPhoto + " / " + MENU.length + " 品（残りはイラスト表示）",
+        "実写真を PHOTO に追加すると見分けやすくなります。無くても営業には支障ありません");
   })();
 
   // (6) 価格を文字で直書きしている箇所（持ち帰りに切り替えると食い違う）
@@ -3669,18 +3771,22 @@ function runChecks(){
   return R;
 }
 function svCheck(){
-  const R = runChecks();
-  const ng = R.filter(r => !r.pass).length;
+  checkCache = runChecks();
+  const R  = checkCache;
+  const req = R.filter(r => !r.info);
+  const ng  = req.filter(r => !r.pass).length;
   $("svCheckN").textContent = ng;
-  return '<div class="sv-h">開店前の診断 <span class="sub">合格 ' + (R.length - ng) + " / " + R.length + " 件</span></div>"
-    + (ng ? '<div class="sv-warn">不合格が ' + ng + ' 件あります。お客様に出す前にご確認ください。</div>'
-          : '<div class="sv-warn" style="background:#eef7f1;border-color:#bcdcc8;color:#2f6b45">すべて合格しています。お客様にお出しいただけます。</div>')
+  return '<div class="sv-h">開店前の診断 <span class="sub">合格 ' + (req.length - ng) + " / " + req.length + " 件（ほかに任意 " + (R.length - req.length) + " 件）</span></div>"
+    + (ng ? '<div class="sv-warn">お客様に出す前に直したい項目が ' + ng + ' 件あります。</div>'
+          : '<div class="sv-warn" style="background:#eef7f1;border-color:#bcdcc8;color:#2f6b45">必須の項目はすべて合格しています。お客様にお出しいただけます。</div>')
     + '<div style="margin:14px 0"><button class="sv-btn" id="chkAgain">もう一度検査する</button></div>'
     + R.map(r =>
-        '<div class="chk' + (r.pass ? " ok" : "") + '">'
+        '<div class="chk' + (r.pass ? " ok" : (r.info ? " info" : "")) + '">'
         + '<span class="mk">' + (r.pass
             ? '<svg class="svgi" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>'
-            : '<svg class="svgi" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>') + "</span>"
+            : (r.info
+              ? '<svg class="svgi" viewBox="0 0 24 24"><path d="M12 8h.01M11 12h1v5h1"/><circle cx="12" cy="12" r="9"/></svg>'
+              : '<svg class="svgi" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>')) + "</span>"
         + '<span class="nm">' + esc(r.name) + '<span class="got">' + esc(r.got) + "</span>"
         + (r.pass ? "" : '<span class="fix">→ ' + esc(r.fix) + "</span>") + "</span></div>").join("");
 }
@@ -3700,6 +3806,12 @@ function svSetting(){
     +   '<div class="sv-seg" id="svTime">'
     +     '<button data-t="1"' + (d.enforceTime ? ' class="on"' : "") + ">とめる</button>"
     +     '<button data-t="0"' + (!d.enforceTime ? ' class="on"' : "") + ">とめない</button></div></div>"
+    + '<div class="sv-row"><div class="lb"><b>注文・呼び出しの音</b>'
+    +   '<span>この端末のスピーカーから鳴ります。ほかの端末や厨房には届きません。'
+    +   '音が届かない広さのお店では切って、卓上の呼び出しベルをお使いください</span></div>'
+    +   '<div class="sv-seg" id="svChime">'
+    +     '<button data-ch="1"' + (d.chime ? ' class="on"' : "") + ">鳴らす</button>"
+    +     '<button data-ch="0"' + (!d.chime ? ' class="on"' : "") + ">鳴らさない</button></div></div>"
     + '<div class="sv-row"><div class="lb"><b>ニュースの記事を開けるようにする</b>'
     +   '<span>客席に置く端末では「開かない」のままにしてください。開くとお客様が外部サイトに出てしまい、'
     +   '注文画面に戻れなくなります</span></div>'
@@ -3757,11 +3869,17 @@ $("svBody").addEventListener("click", e => {
     A.map[id] = cur; algSet(A); renderStaff(); return;
   }
   if(b.dataset.algnone !== undefined){
+    const it = MENU.filter(x => x.id === b.dataset.algnone)[0];
+    // 「使用なし」はお客様への断言になるので、押し間違いをここで止めます
+    if(!confirm((it ? it.name : "この商品") + " に、えび・かに・小麦・そば・卵・乳・落花生・くるみ の\n"
+              + "いずれも使っていない、で確定します。よろしいですか？")) return;
     const A = algGet(); A.map[b.dataset.algnone] = []; algSet(A); renderStaff(); return;
   }
   if(b.id === "algPublish"){
     const A = algGet();
     if(!A.confirmed && algDone() !== MENU.length){ toast("全品の入力が終わってから表示を開始してください"); return; }
+    if(!A.confirmed && !confirm("入力した内容を、お客様の商品画面に表示します。\n"
+        + "誤りがあるとアレルギー事故につながります。実際の材料と照らして確認済みですか？")) return;
     A.confirmed = !A.confirmed; algSet(A);
     renderStaff();
     toast(A.confirmed ? "お客様画面にアレルギー情報を表示します" : "お客様画面への表示を止めました");
@@ -3829,8 +3947,10 @@ $("svBody").addEventListener("click", e => {
     return;
   }
 
+  if(b.dataset.scope !== undefined){ salesScope = b.dataset.scope; renderStaff(); return; }
+
   /* --- 診断 --- */
-  if(b.id === "chkAgain"){ renderStaff(); toast("もう一度検査しました"); return; }
+  if(b.id === "chkAgain"){ checkCache = null; renderStaff(); toast("もう一度検査しました"); return; }
 
   if(b.id === "svPrint"){ printCheck(); return; }
   if(b.id === "svPrintSales"){ printSales(); return; }
@@ -3847,6 +3967,12 @@ $("svBody").addEventListener("click", e => {
   if(b.dataset.nl !== undefined){
     deviceSet({ newsLinks:b.dataset.nl === "1" });
     renderStaff(); return;
+  }
+  if(b.dataset.ch !== undefined){
+    deviceSet({ chime:b.dataset.ch === "1" });
+    renderStaff();
+    if(b.dataset.ch === "1") chime();          // 実際に鳴らして音量を確かめられるように
+    return;
   }
   if(b.id === "svSave"){
     const tbl = $("svTableIn").value.replace(/[^0-9]/g, "").slice(0, 3);
@@ -3916,7 +4042,7 @@ function printCheck(){
 }
 // 本日の売上日報
 function printSales(){
-  const orders = dayOrders();
+  const orders = salesOrders();   // 画面で選んでいる集計対象に合わせます
   if(!orders.length){ toast("本日の売上がありません"); return; }
   const total = orders.reduce((s, o) => s + o.total, 0);
   const net   = orders.reduce((s, o) => s + o.net, 0);
@@ -3945,13 +4071,13 @@ function printSales(){
     + '<table><thead><tr><th>商品</th><th class="r">数量</th><th class="r">金額</th></tr></thead><tbody>'
     + items.map(i => "<tr><td>" + esc(i.name) + '</td><td class="r">' + i.qty + '</td><td class="r">' + yen(i.amount) + "</td></tr>").join("")
     + "</tbody></table>"
-    + '<div class="pr-note">※ この端末に入ったご注文のみを集計しています。</div>'
+    + '<div class="pr-note">※ 集計対象：' + esc(salesScopeLabel()) + '</div>'
   );
 }
 
 /* --- 売上CSV（Excelで開けるようBOM付き。外部ライブラリは使いません） --- */
 function exportCsv(){
-  const orders = dayOrders();
+  const orders = salesOrders();   // 画面で選んでいる集計対象に合わせます
   if(!orders.length){ toast("本日の売上がありません"); return; }
   const rows = [["受付番号","日時","テーブル","お召し上がり","商品名","オプション","お代わり半額","数量","金額(税込)","注文計(税込)","注文計(税抜)","消費税"]];
   orders.forEach(o => {
@@ -3973,7 +4099,7 @@ function exportCsv(){
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href = url;
-    a.download = "売上_" + bizDateKey() + (deviceGet().table ? "_T" + deviceGet().table : "") + ".csv";
+    a.download = "売上_" + bizDateKey() + (salesScope === "all" ? "_全台" : (deviceGet().table ? "_T" + deviceGet().table : "")) + ".csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast("CSVを書き出しました");

@@ -1081,10 +1081,10 @@
                   <button type="button" class="ex-mode-btn" id="stress-rate2">金利 +2%</button>
                   <button type="button" class="ex-mode-btn" id="stress-inc">世帯収入 −20%</button>
                 </div>
-                <span class="hint" style="display:block; margin-top:6px;">タップすると、そのシナリオを<b>資産推移のグラフ・表・返済負担率に一時反映</b>します（もう一度タップで解除・保存はされません）。金利上乗せは全期間、収入減は給与収入だけに適用します。厳しめのシナリオでも家計がどう見えるかをその場で確認できます（<b>実際の金利・収入の変動がこの範囲に収まることを示すものではありません</b>）。</span>
+                <span class="hint" style="display:block; margin-top:6px;">タップすると、そのシナリオを<b>いま表示中のプランの結果に一時反映</b>します（もう一度タップで解除・保存はされません。現状⇔将来の比較カードは解除してからご覧ください）。金利上乗せは全期間、収入減は給与収入だけに適用します。厳しめのシナリオでも家計がどう見えるかをその場で確認できます（<b>実際の金利・収入の変動がこの範囲に収まることを示すものではありません</b>）。</span>
                 <div class="note hidden" id="stress-banner" style="margin-top:8px; background:var(--warn-pale); border-color:var(--warn);">
                   <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
-                  <span><b>ストレスシナリオ表示中：</b><span id="stress-desc"></span>。資産推移のグラフ・表・返済負担率にこの前提を反映しています（AIチャット・必要保障額の診断は通常の前提のままです）。</span>
+                  <span><b>ストレスシナリオ表示中：</b><span id="stress-desc"></span>。この前提は<b>いま表示中のプラン</b>の資産推移のグラフ・表・返済負担率・AI診断・チャット診断に反映されます。<b>「現状と将来をくらべる」などの比較カードは、もう一方のプランがこの前提で計算されていないため、表示中は差額が正しく出ません</b>（比較は解除してからご覧ください）。保存・共有リンクには含まれず、解除すれば元の数字に戻ります。</span>
                 </div>
               </div>
 
@@ -3388,7 +3388,9 @@
       let html = repayType==='gankin'
         ? `毎月の返済額：約<b>${fmt(first.payment)}万円</b> 〜 約<b>${fmt(last.payment)}万円</b>（元金均等・徐々に減少）`
         : `毎月の返済額：約<b>${fmt(first.payment)}万円</b>`;
-      html += type==='fixed' ? `（金利${num('loan-rate',0)}%・固定金利・${num('loan-term',35)}年）`
+      // 金利の表示は必ず「実際に計算に使った金利」（first.annualRatePct）を出す。
+      // 入力欄の生値だと、団信の上乗せ金利・ストレステストの上乗せが反映されず、返済額だけ増えて理由が説明できなくなる
+      html += type==='fixed' ? `（金利${first.annualRatePct.toFixed(2)}%・固定金利・${num('loan-term',35)}年）`
                               : `（${type==='step5'?'5年':'10年'}ごと見直しの変動金利、当初${first.annualRatePct.toFixed(2)}%）`;
       if(bonusPay>0) html += `<span class="lm-sub">＋ボーナス月（年2回）に1回あたり 約${fmt(bonusPay)}万円 を加算返済（毎月の返済額に反映済み）</span>`;
       if(type!=='fixed'){
@@ -3404,24 +3406,28 @@
         });
         html += extra;
       }
-      // 返済負担率（手取り比）＝「破綻しない住宅購入」の入口指標。AI診断と同じ式（当初返済額×12÷世帯手取り年収）
-      // ストレステスト中は減額後の収入で判定。変動金利は「見直し後の最大返済額」の負担率も併記（最悪期の見える化）
+      // 返済負担率（手取り比）＝「破綻しない住宅購入」の入口指標。
+      // 分子は「その年に実際に払う12か月分の合計」＝ボーナス払いも含める（通常月×12だと年2回のボーナス返済が抜け、
+      // ボーナス併用ほど負担率が低く出て判定色が甘くなる）。ストレステスト中は減額後の収入で判定。
       const netY = grossToNet(stressGross(num('h-income',0))) + (isSingle() ? 0 : grossToNet(stressGross(num('w-income',0))));
-      if(netY > 0 && first.payment > 0){
+      const annualPayAt = (startIdx)=> schedule.rows.slice(startIdx, startIdx+12).reduce((a,r)=> a + r.payment, 0);
+      const firstAnnual = annualPayAt(0);
+      if(netY > 0 && firstAnnual > 0){
         const levelOf = (ratio)=> ratio<=25 ? {c:'var(--good)', bg:'var(--good-pale, #e9f5ef)', label:'無理のない範囲', icon:'fa-circle-check'}
                  : ratio<=30 ? {c:'#a06a10', bg:'var(--warn-pale)', label:'やや重め（目安は25%以内）', icon:'fa-triangle-exclamation'}
                  :             {c:'var(--bad)', bg:'var(--bad-pale)', label:'要注意：家計を圧迫するおそれ', icon:'fa-circle-exclamation'};
-        const ratio = Math.round(first.payment*12/netY*100);
+        const ratio = Math.round(firstAnnual/netY*100);
         const lv = levelOf(ratio);
         html += `<span class="lm-sub lm-ratio" style="margin-top:7px; padding:7px 10px; border-radius:8px; background:${lv.bg}; color:${lv.c}; font-weight:700;">`
-              + `<i class="fa-solid ${lv.icon}"></i> 返済負担率：手取りの約${ratio}%（${lv.label}）</span>`;
+              + `<i class="fa-solid ${lv.icon}"></i> 返済負担率：手取りの約${ratio}%（${lv.label}）${bonusPay>0 ? '＝ボーナス返済を含む年間返済額で計算' : ''}</span>`;
         if(type!=='fixed'){
-          const maxPay = Math.max(...normalRows.map(r=> r.payment));
-          const maxRatio = Math.round(maxPay*12/netY*100);
+          let maxAnnual = 0;
+          for(let i=0; i<schedule.rows.length; i+=12) maxAnnual = Math.max(maxAnnual, annualPayAt(i));
+          const maxRatio = Math.round(maxAnnual/netY*100);
           if(maxRatio > ratio){
             const lm = levelOf(maxRatio);
             html += `<span class="lm-sub lm-ratio-max" style="margin-top:4px; padding:6px 10px; border-radius:8px; background:${lm.bg}; color:${lm.c}; font-weight:700;">`
-                  + `<i class="fa-solid ${lm.icon}"></i> 金利見直し後の最大（入力した金利シナリオ内）：約${fmt(maxPay)}万円/月（負担率 約${maxRatio}%・${lm.label}）</span>`;
+                  + `<i class="fa-solid ${lm.icon}"></i> 金利見直し後の最大（入力した金利シナリオ内）：年 約${fmt(maxAnnual)}万円（月あたり 約${fmt(maxAnnual/12)}万円・負担率 約${maxRatio}%・${lm.label}）</span>`;
           }
         }
         html += `<span class="lm-sub">安心の目安は手取りの20〜25%以内。「借りられる額」より「無理なく返せる額」で。詳しくは結果のAI診断へ</span>`;
@@ -4277,7 +4283,9 @@
         const schedule = buildLoanSchedule();
         const principal = schedule.principal;
         const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
-        const netY=p.hNet+p.wNet; const ratio=netY>0?Math.round(mPay*12/netY*100):0;
+        // 負担率の分子は「12か月分の実額合計」＝ボーナス返済（年2回）も含める（通常月×12だと抜けて負担率が低く出る）
+        const annualPay = schedule.rows.slice(0,12).reduce((a,r)=> a + r.payment, 0);
+        const netY=p.hNet+p.wNet; const ratio=netY>0?Math.round(annualPay/netY*100):0;
         const zeh=$('zeh-on')&&$('zeh-on').checked;
         const rateType = loanRateType();
         // 退職前後のローン残高（③の「残債を確認する年齢」設定を使用。手入力があれば優先）
@@ -4792,8 +4800,9 @@
       const living = readLivingMonthly();                                     // 生活費（月・万円）
       const cashNow = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
       const investNow = invs.reduce((a,v)=> a + (v.start<=hAge ? v.lump : 0), 0);
-      const hNet = grossToNet(num('h-income',0));
-      const wNet = single ? 0 : grossToNet(num('w-income',0));
+      // ストレステスト中は収入も減額後で統一（simulateの資産推移は減額後・診断の手取りだけ通常額だと前提が混在するため）
+      const hNet = grossToNet(stressGross(num('h-income',0)));
+      const wNet = single ? 0 : grossToNet(stressGross(num('w-income',0)));
       // 教育費の残り（お子さまごと。独立＝進学終了年齢）
       const indepAge = (c)=> 19 + ((HIGHED[c.highEd]?.years) || 0);
       const eduByChild = children.map(c=>{
@@ -4896,7 +4905,8 @@
                spend:Math.round(spend), living:Math.round(living+childcare), childcare:Math.round(childcare),
                edu:Math.round(edu), housing:Math.round(housing), upkeep:Math.round(upkeep), funeral,
                loanBal:Math.round(loanBal), loanErased:Math.round(loanErased), loanRemain:Math.round(loanRemain),
-               pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei, pensionKafu:izT.kafu,
+               pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei,
+               pensionKafu:iz.kafu, pensionKafuTotal:izT.kafu,   // Kafu＝初年度の年額／KafuTotal＝期間中の累計（単位が違うので混ぜない）
                income:Math.round(income), workYears, assets:p.assetsNow, cover:Math.round(cover),
                surNet, surAge, p };
     }
@@ -4952,7 +4962,7 @@
           if(houseType!=='rent' && r.loanRemain>0 && r.upkeep>0) parts.push(`家の維持費 ${fmt(r.upkeep)}万円`);
           parts.push(`葬儀・整理資金 ${fmt(r.funeral)}万円`);
           const spendLine = `<b>必要資金 約${fmt(r.spend)}万円</b>＝ ${parts.join(' ＋ ')}`;
-          const pensionLine = `<b>遺族年金 受給総額 約${fmt(r.pension)}万円</b>（初年度 約${fmt(r.pensionYear)}万円/年＝遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}。お子さまの成長・年齢で年ごとに変動${r.pensionKafu>0 ? `。中高齢寡婦加算 計約${fmt(r.pensionKafu)}万円を含む` : ''}）`
+          const pensionLine = `<b>遺族年金 受給総額 約${fmt(r.pension)}万円</b>（初年度 約${fmt(r.pensionYear)}万円/年＝遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}${r.pensionKafu>0 ? `＋中高齢寡婦加算 ${fmt(r.pensionKafu)}` : ''}。お子さまの成長・年齢で年ごとに変動${r.pensionKafuTotal>0 ? `。受給総額には中高齢寡婦加算 累計 約${fmt(r.pensionKafuTotal)}万円を含みます` : ''}）`
             + (r.deceased==='w' && r.pensionKosei===0 ? `<br><span style="color:#bf5656">※ 妻が亡くなった場合、55歳未満の夫には<b>遺族厚生年金が支給されません</b>（制度の盲点）。夫死亡時より保障が手薄になりやすい点に注意です。</span>` : '');
           const coverLine = `<b>用意できる資金 約${fmt(r.cover)}万円</b>＝ 遺族年金 約${fmt(r.pension)}＋${esc(survivorName)}の収入 約${fmt(r.income)}（${r.workYears}年分）＋いまの資産 ${fmt(r.assets)}`;
           const workNote = (r.income>0 && r.p.children.length)
@@ -5090,9 +5100,13 @@
         const principal = schedule.principal;
         const mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
         const netY = p.hNet + p.wNet;
-        const ratio = netY>0 ? Math.round(mPay*12/netY*100) : 0;
+        // 負担率の分子は「12か月分の実額合計」＝ボーナス返済（年2回）も含める（通常月×12だと抜けて負担率が低く出る）
+        const annualPay = schedule.rows.slice(0,12).reduce((a,r)=> a + r.payment, 0);
+        const ratio = netY>0 ? Math.round(annualPay/netY*100) : 0;
         const rateType = loanRateType();
-        const rateLabel = rateType==='fixed' ? `金利${num('loan-rate',0)}%・固定金利` : `${rateType==='step5'?'5年':'10年'}ごと見直しの変動金利（当初${schedule.rows.length?schedule.rows[0].annualRatePct.toFixed(2):'-'}%）`;
+        // 金利は入力欄の生値ではなく、実際に計算に使った金利（団信の上乗せ・ストレステスト込み）を表示する
+        const rate1 = schedule.rows.length ? schedule.rows[0].annualRatePct.toFixed(2) : '-';
+        const rateLabel = rateType==='fixed' ? `金利${rate1}%・固定金利` : `${rateType==='step5'?'5年':'10年'}ごと見直しの変動金利（当初${rate1}%）`;
         // 退職前後（③で設定した年齢）のローン残高と、その扱い
         const buyA = (houseType==='owned') ? num('owned-age',p.hAge) : num('buy-age',p.hAge);
         const term = num('loan-term',35), payAge = num('loan-payoff-age',65);

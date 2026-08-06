@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 外部送信の遮断（万一のスクリプト混入でもfetch/XHR/WSで顧客データを外に出せない） -->
 <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; img-src data:;">
-<title>空き家サポート 顧客管理（社内用）｜香川あんしん空き家サポート</title>
+<title>士業ワンストップ 顧客管理｜お客様を登録して必要な専門家へお繋ぎ</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -38,14 +38,14 @@ tailwind.config = {
     <div class="flex items-center gap-2 shrink-0">
       <svg class="w-7 h-7 text-grn" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
       <div class="leading-tight">
-        <p class="font-black text-sm sm:text-base">空き家サポート 顧客管理</p>
-        <p class="text-[10px] text-sub -mt-0.5">社内用・チーム連携ボード</p>
+        <p class="font-black text-sm sm:text-base">士業ワンストップ 顧客管理</p>
+        <p class="text-[10px] text-sub -mt-0.5">お客様を登録して、必要な専門家へお繋ぎ</p>
       </div>
     </div>
     <nav id="tabs" class="order-last sm:order-none w-full sm:w-auto flex items-center gap-1 sm:ml-auto text-xs sm:text-sm font-bold overflow-x-auto">
       <button data-view="today"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">今日</button>
       <button data-view="inbox"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
-      <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">解体パイプライン</button>
+      <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">進捗ボード</button>
       <button data-view="partner"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">分野別ボード</button>
       <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
     </nav>
@@ -94,9 +94,11 @@ tailwind.config = {
 </div>
 
 <!-- ===== 新規/取り込みモーダル ===== -->
-<div id="newModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
-  <div class="bg-white rounded-2xl w-full max-w-2xl softshadow my-4">
-    <div class="flex items-center justify-between px-5 py-3 border-b border-line sticky top-0 bg-white rounded-t-2xl">
+<!-- ⚠ items-center にすると縦長の中身のとき上端が画面外へ出てスクロールで戻れなくなる（お名前欄に到達できない事故があった）。
+     常に items-start ＋ カード側を max-h/overflow-y-auto にして、中身が伸びてもフォーム先頭に必ず到達できるようにする -->
+<div id="newModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-2xl softshadow my-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-line sticky top-0 bg-white rounded-t-2xl z-10">
       <p id="newTitle" class="font-black">新規案件を追加</p>
       <button onclick="closeNew()" class="text-sub hover:text-ink text-xl leading-none">×</button>
     </div>
@@ -105,8 +107,8 @@ tailwind.config = {
 </div>
 
 <!-- ===== 提携先へ送るモーダル ===== -->
-<div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
-  <div class="bg-white rounded-2xl w-full max-w-lg softshadow my-4">
+<div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-lg softshadow my-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
     <div class="flex items-center justify-between px-5 py-3 border-b border-line">
       <p class="font-black">提携先との共有</p>
       <button onclick="closeShare()" class="text-sub hover:text-ink text-xl leading-none">×</button>
@@ -121,29 +123,45 @@ tailwind.config = {
 /* ============================================================
    設定（統合仕様より）
    ============================================================ */
+/* お客様の進捗（どの士業が入口でも共通。解体固有の工程は「解体工事」分野の中に持つ） */
 const STAGES = [
-  { key:'lead',        label:'反響・リード',   color:'#6B7280' },
+  { key:'lead',        label:'相談受付',       color:'#6B7280' },
   { key:'contact',     label:'初回接触',       color:'#0EA5E9' },
-  { key:'survey',      label:'現地調査',       color:'#14B8A6' },
-  { key:'estimate',    label:'見積提出',       color:'#F59E0B' },
-  { key:'negotiation', label:'商談・条件調整', color:'#F97316' },
-  { key:'contract',    label:'契約',           color:'#8B5CF6' },
-  { key:'pre_work',    label:'着工前準備',     color:'#6366F1' },
-  { key:'construction',label:'施工中',         color:'#3B82F6' },
-  { key:'completed',   label:'完工・引渡',     color:'#10B981' },
+  { key:'hearing',     label:'ヒアリング・現状把握', color:'#14B8A6' },
+  { key:'proposal',    label:'提案・お見積',   color:'#F59E0B' },
+  { key:'contract',    label:'受任・ご契約',   color:'#8B5CF6' },
+  { key:'progress',    label:'対応中',         color:'#3B82F6' },
+  { key:'completed',   label:'完了・お引渡し', color:'#10B981' },
   { key:'aftercare',   label:'アフター・横展開',color:'#22C55E' },
-  { key:'closed_lost', label:'失注・長期保留', color:'#DC2626' },
+  { key:'closed_lost', label:'終了・長期保留', color:'#DC2626' },
 ];
-const stageIndex = k => STAGES.findIndex(s => s.key === k);
-const stageMeta  = k => STAGES.find(s => s.key === k) || STAGES[0];
+/* 旧（解体専用）ステージからの読み替え。既存データを壊さず移行する */
+const STAGE_ALIAS = { survey:'hearing', estimate:'proposal', negotiation:'proposal', pre_work:'progress', construction:'progress' };
+const normStage = k => STAGE_ALIAS[k] || k;
+const stageIndex = k => STAGES.findIndex(s => s.key === normStage(k));
+const stageMeta  = k => STAGES.find(s => s.key === normStage(k)) || STAGES[0];
 const OPEN_STAGES = STAGES.filter(s => s.key !== 'closed_lost');
 
-/* 6分野（解体は背骨なので別扱い。順不同で動く支援ドメイン） */
+/* ご相談の入口（複数選択可）。どの士業から入っても、ここから必要なチームを推奨する */
+const CONSULT_TYPES = [
+  { key:'inherit',  label:'相続・遺産分割',       color:'#2E9E68' },
+  { key:'regist',   label:'登記（相続・滅失）',   color:'#0EA5E9' },
+  { key:'tax',      label:'税務・確定申告',       color:'#F0862B' },
+  { key:'sell',     label:'売却・査定',           color:'#8B5CF6' },
+  { key:'demolish', label:'解体・空き家',         color:'#243B33' },
+  { key:'use',      label:'活用・新築・外構',     color:'#4FA6D5' },
+  { key:'money',    label:'資金・保険・補助金',   color:'#F59E0B' },
+  { key:'other',    label:'その他のご相談',       color:'#8A98A5' },
+];
+
+/* 支援分野（すべて対等。解体もその1つ。順不同で動く） */
 /* 分野ごとの規定の担当（担当セレクトの2択目。定義が無い分野は自由入力のみ） */
 const DOM_ASSIGNEE = { inheritance_reg:'二朗さん', realestate:'瀬尾さん', construction_ext:'植原さん', fp:'中谷' };
 const DOMAINS = [
   { key:'inheritance_reg', label:'相続登記', role:'司法書士', color:'#2E9E68',
     stages:['未判定','名義確認','相続人確定','遺産分割協議','相続登記申請','完了'] },
+  { key:'demolition',      label:'解体工事', role:'解体業者・工務店', color:'#243B33',
+    stages:['未判定','現地調査','見積提示','契約','着工前準備','施工中','完工'] },
   { key:'demolition_reg',  label:'滅失登記', role:'土地家屋調査士', color:'#0EA5E9',
     stages:['未判定','解体完了待ち','書類交付','申請（完工＋1ヶ月）','完了'] },
   { key:'tax',             label:'税務', role:'税理士', color:'#F0862B',
@@ -192,7 +210,8 @@ const L = {
   insuranceStatus:{ unknown:'未確認', active:'加入中', cancelPlanned:'解約予定日あり', cancelled:'解約済' },
   rightType:{ '':'不明', '所有権':'所有権', '借地':'借地' },
 };
-const lab = (grp,k) => (L[grp] && L[grp][k]) || k || '—';
+/* 表示用ラベル。辞書に無いキー（流入経路など自由入力）はそのまま出るので、必ずエスケープして返す */
+const lab = (grp,k) => esc((L[grp] && L[grp][k]) || k || '—');
 const urgColor = lv => lv==='高' ? '#E5484D' : lv==='中' ? '#F0862B' : '#2E9E68';
 const uscore = c => c.urgencyScore!=null ? c.urgencyScore : ({'高':80,'中':50,'低':20}[c.urgencyLevel]||0);
 
@@ -204,7 +223,14 @@ const ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 function sanitizeCase(c){
   if(!c || typeof c!=='object') return c;
   if(!ID_RE.test(String(c.id||''))) c.id = newId();   // idはonclick属性に埋まるため、取込データは必ず安全な形へ再採番
-  ['nextActionDate','inheritanceStartDate','demolitionDate','insuranceCancelDate','createdAt','referredAt'].forEach(k=>{ if(c[k] && !DATE_RE.test(String(c[k]))) c[k]=''; });
+  ['nextActionDate','inheritanceStartDate','demolitionDate','insuranceCancelDate','createdAt','referredAt','birthday'].forEach(k=>{ if(c[k] && !DATE_RE.test(String(c[k]))) c[k]=''; });
+  if(c.stage) c.stage = normStage(c.stage);                                    // 旧（解体専用）ステージを読み替え
+  if(!STAGES.some(s=>s.key===c.stage)) c.stage = 'lead';
+  if(!Array.isArray(c.consultTypes)) c.consultTypes = [];
+  c.consultTypes = c.consultTypes.filter(k => CONSULT_TYPES.some(t=>t.key===k)).slice(0,8);
+  c.hasProperty = c.hasProperty === undefined ? !!(c.structure || c.owner || c.tsubo) : !!c.hasProperty;   // 旧データは物件ありとみなす
+  if(c.family && typeof c.family==='object'){ c.family.spouse = !!c.family.spouse; c.family.children = Number(c.family.children)||0; c.family.note = String(c.family.note||'').slice(0,200); }
+  ['kana','gender','mobile','zip','job','relation'].forEach(k=>{ if(c[k]!=null) c[k] = String(c[k]).slice(0,100); });
   if(c.urgencyLevel && !['高','中','低'].includes(c.urgencyLevel)) c.urgencyLevel='中';
   ['urgencyScore','estimateRangeLow','estimateRangeHigh','finalEstimate','builtYear','landArea','salePriceEstimate','tsubo'].forEach(k=>{ if(c[k]!=null && c[k]!==''){ const n=Number(c[k]); c[k]=isNaN(n)?null:n; } });
   (c.followHistory||[]).forEach(h=>{ if(h && h.date && !DATE_RE.test(String(h.date))) h.date=''; });
@@ -252,6 +278,27 @@ function load(){
   try { DB = JSON.parse(localStorage.getItem(KEY)) || []; }
   catch(e){ DB = []; }
   if(!DB.length) loadSeed(false);
+  else {
+    // 旧バージョン（解体専用ステージ・お客様マスタなし・解体分野なし）のデータを新形式へ移行
+    let changed = false;
+    const OLD_STAGE_TO_DEMO = { survey:'現地調査', estimate:'見積提示', negotiation:'見積提示', contract:'契約', pre_work:'着工前準備', construction:'施工中', completed:'完工', aftercare:'完工' };
+    DB.forEach(c=>{
+      const before = c.stage;
+      const wasDemolitionCase = !!(c.domains && c.domains.demolition_reg && !c.domains.demolition);   // 旧版は全件が解体案件
+      const oldStage = c.stage;
+      sanitizeCase(c);
+      if(before!==c.stage) changed = true;
+      if(wasDemolitionCase){
+        // 解体を1分野に格下げしたため、旧案件には解体工事のドメインを補って解体業者から見えるようにする
+        c.domains.demolition = { need:'required', manualNeed:true, stage: OLD_STAGE_TO_DEMO[oldStage] || '未判定',
+          assignee:'', next: c.nextAction||'', reason:'', nextDate: c.nextActionDate||'' };
+        if(!Array.isArray(c.consultTypes) || !c.consultTypes.length) c.consultTypes = ['demolish'];
+        if(c.address && !c.propertyAddress) c.propertyAddress = c.address;   // 旧 address は物件所在地だった
+        changed = true;
+      }
+    });
+    if(changed) save();
+  }
 }
 function getC(id){ return DB.find(c => c.id === id); }
 function upsert(c){
@@ -274,8 +321,9 @@ function upsert(c){
    役割（アクセス制御）— 社内は全権、提携先は自分の分野だけ編集可
    ============================================================ */
 const ROLE_DEFS = {
-  admin:            { label:'社内（全権）',        domain:null,               color:'#243B33' },
+  admin:            { label:'事務局（全権）',      domain:null,               color:'#243B33' },
   inheritance_reg:  { label:'司法書士',            domain:'inheritance_reg',  color:'#2E9E68' },
+  demolition:       { label:'解体業者・工務店',    domain:'demolition',       color:'#4B5563' },
   demolition_reg:   { label:'土地家屋調査士',      domain:'demolition_reg',   color:'#0EA5E9' },
   tax:              { label:'税理士',              domain:'tax',              color:'#F0862B' },
   realestate:       { label:'不動産',              domain:'realestate',       color:'#8B5CF6' },
@@ -310,13 +358,13 @@ function applyRoleUI(){
   const bar = document.getElementById('roleBar');
   if(bar){
     if(isAdmin() && !localStorage.getItem('akiya_crm_role')){
-      // 初回起動：立場を選ばないまま提携先が登録すると解体チームへ届かないため、最初に選んでもらう
+      // 初回起動：立場を選ばないまま提携先が登録すると事務局へ届かないため、最初に選んでもらう
       bar.className = 'bg-white border-b border-line';
       bar.innerHTML = `<div class="max-w-[1400px] mx-auto px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap">
         <span class="font-black">はじめに、あなたの立場を選んでください</span>
-        <span class="text-[11px] text-sub">提携先の方は自分の分野を選ぶと、お客様の登録が解体チームへ届く形になります</span>
+        <span class="text-[11px] text-sub">提携先の方は自分の分野を選ぶと、お客様の登録が事務局へ届く形になります</span>
         <span class="ml-auto flex items-center gap-1.5 flex-wrap">
-          <button onclick="setRole('admin')" class="text-white rounded-full px-4 py-1.5 font-bold" style="background:#243B33">社内（解体チーム）</button>
+          <button onclick="setRole('admin')" class="text-white rounded-full px-4 py-1.5 font-bold" style="background:#243B33">事務局（本部）</button>
           ${Object.keys(ROLE_DEFS).filter(k=>k!=='admin').map(k=>`<button onclick="setRole('${k}')" class="rounded-full px-3 py-1.5 font-bold border" style="color:${ROLE_DEFS[k].color};border-color:${ROLE_DEFS[k].color}">${ROLE_DEFS[k].label}</button>`).join('')}
         </span>
       </div>`;
@@ -349,7 +397,7 @@ function download(text, name){
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 /* 役割別ホワイトリスト：渡してよい項目だけを抽出（個人情報の最小化） */
-const CONTACT_ROLES = ['inheritance_reg','realestate','fp','tax'];   // 顧客接触が業務上必要な役割のみ連絡先を渡せる
+const CONTACT_ROLES = ['inheritance_reg','realestate','fp','tax','demolition'];   // 顧客接触が業務上必要な役割のみ連絡先を渡せる
 function pickForRole(c, role, opts){
   opts = opts || {};
   const domainsSummary = {};
@@ -360,9 +408,13 @@ function pickForRole(c, role, opts){
   });
   const roleLabel = ROLE_DEFS[role].label;
   const out = {
-    id:c.id, name:c.name, city:c.city, stage:c.stage, createdAt:c.createdAt,
+    id:c.id, name:c.name, kana:c.kana||'', city:c.city, stage:c.stage, createdAt:c.createdAt,
+    // 何のご相談かは、動く専門家に必ず必要（お客様のプロフィール＝生年月日・職業・家族構成・自宅住所は渡さない）
+    consultTypes: Array.isArray(c.consultTypes)?c.consultTypes.slice():[], hasProperty: !!c.hasProperty,
+    desiredConsult: (c.desiredConsult||'').slice(0,400),
     owner:c.owner, exit:c.exit, era:c.era, structure:c.structure, tsubo:c.tsubo, floors:c.floors,
-    builtYear:c.builtYear??null, address:c.address||'', chiban:c.chiban||'', landArea:c.landArea??null, rightType:c.rightType||'',
+    // 物件の所在地は「不動産のご相談がある案件」のときだけ（お客様の自宅住所 c.address は共有しない）
+    builtYear:c.builtYear??null, propertyAddress: c.hasProperty ? (c.propertyAddress||'') : '', chiban:c.chiban||'', landArea:c.landArea??null, rightType:c.rightType||'',
     inheritanceStartDate:c.inheritanceStartDate||null, demolitionDate:c.demolitionDate||null,
     subsidyApplicable:c.subsidyApplicable, insuranceStatus:c.insuranceStatus||'unknown', insuranceCancelDate:c.insuranceCancelDate||null,
     referredBy:c.referredBy||null,
@@ -371,7 +423,7 @@ function pickForRole(c, role, opts){
     followHistory: (c.followHistory||[]).filter(h => h.memo && (h.memo.startsWith('【'+roleLabel+'】') || !h.memo.startsWith('【'))).slice(0,30),
   };
   if(opts.teamNote) out.teamNote = c.teamNote||'';
-  if(opts.contacts && CONTACT_ROLES.includes(role)){ out.phone = c.phone; out.email = c.email; }
+  if(opts.contacts && CONTACT_ROLES.includes(role)){ out.phone = c.phone; out.mobile = c.mobile||''; out.email = c.email; }
   if(opts.estimate){ out.estimateRangeLow=c.estimateRangeLow; out.estimateRangeHigh=c.estimateRangeHigh; out.finalEstimate=c.finalEstimate; }
   return out;
   // notes（社内メモ）・緊急度スコアは常に共有しない
@@ -393,7 +445,7 @@ function shareToPartner(role, cases, opts){
   toast(ROLE_DEFS[role].label+'向けに'+cases.length+'件を書き出しました');
 }
 function openShareModal(caseId){
-  if(!isAdmin()){ toast('提携先への書き出しは社内（解体チーム）が行います'); return; }
+  if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
   shareCaseId = caseId || null;
   const only = caseId ? getC(caseId) : null;
   document.getElementById('shareBody').innerHTML = `
@@ -436,7 +488,7 @@ function updateSharePreview(){
 let shareCaseId = null;
 function closeShare(){ document.getElementById('shareModal').classList.add('hidden'); }
 function doShare(role){
-  if(!isAdmin()){ toast('提携先への書き出しは社内（解体チーム）が行います'); return; }
+  if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
   const base = shareCaseId ? [getC(shareCaseId)] : DB;
   const cases = base.filter(c => c && c.domains?.[role]?.need==='required');
   if(!cases.length){ toast('該当案件がありません'); return; }
@@ -460,7 +512,7 @@ function doShare(role){
 }
 /* 関わるチーム全員ぶんを一括書き出し（各社には各社の分だけ） */
 function shareToAll(){
-  if(!isAdmin()){ toast('提携先への書き出しは社内（解体チーム）が行います'); return; }
+  if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
   const base = (shareCaseId ? [getC(shareCaseId)] : DB).filter(Boolean);
   const opts = {
     contacts: !!document.getElementById('sh-contacts')?.checked,
@@ -534,7 +586,9 @@ function receiveShare(e){
         if(mine && mine.updatedAt && (!pc.domains[dk]?.updatedAt || pc.domains[dk].updatedAt < mine.updatedAt)) pc.domains[dk] = mine;
         const seen = new Set((pc.followHistory||[]).map(h=>h.date+'|'+h.memo));
         (local.followHistory||[]).forEach(h=>{ if(!seen.has(h.date+'|'+h.memo)) (pc.followHistory=pc.followHistory||[]).push(h); });
-        DB[i] = pc;
+        // 共有ファイルに無い項目（自分で登録したお客様のフリガナ・生年月日・ご家族など）はローカルを残す。
+        // 全置換にすると、自分が登録したお客様の情報が痩せた共有版で消える
+        DB[i] = Object.assign({}, local, pc);
       } else DB.push(pc);
       // 受信ファイルに無いローカル案件（自分の紹介など）は削除せず温存
     });
@@ -552,7 +606,8 @@ function restorePrev(){
     const p = JSON.parse(localStorage.getItem('akiya_crm_prev'));
     if(!p || !Array.isArray(p.cases)){ toast('復元できる退避データがありません'); toggleMenu(); return; }
     if(!confirm(p.savedAt+' 時点のデータ（'+p.cases.length+'件）に戻します。現在の表示データは失われます。よろしいですか？')) return;
-    DB = p.cases; save(); render(); toggleMenu(); toast('直前のデータに戻しました');
+    DB = p.cases; DB.forEach(sanitizeCase);   // 旧形式のスナップショットも新形式へ揃えてから保存する
+    save(); render(); toggleMenu(); toast('直前のデータに戻しました');
   } catch(e){ toast('復元に失敗しました'); }
 }
 /* 提携先→社内：自分の分野の更新＋自分からの紹介案件を返信ファイルに */
@@ -572,9 +627,9 @@ function exportReturn(){
       referrals = referrals.filter(c=>!ex.has(c.id));
     }
   }
-  if(referrals.length){   // 提携先側にも提供記録（誰の情報をいつ解体チームへ渡したか）
+  if(referrals.length){   // 提携先側にも提供記録（誰の情報をいつ事務局へ渡したか）
     let log=[]; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
-    log.unshift({ date:todayISO(), role:'admin', roleLabel:'解体チーム（社内）', count:referrals.length,
+    log.unshift({ date:todayISO(), role:'admin', roleLabel:'事務局', count:referrals.length,
       names:referrals.map(c=>c.name||c.id), withContacts:true, withTeamNote:true, withEstimate:false });
     localStorage.setItem('akiya_crm_sharelog', JSON.stringify(log.slice(0,200)));
   }
@@ -587,11 +642,11 @@ function exportReturn(){
     })).concat(referrals.map(c=>JSON.parse(JSON.stringify(c)))) };
   download(JSON.stringify(payload,null,2), '空き家CRM_'+roleLabel+'_返信_'+todayISO()+'.json');
   localStorage.removeItem('akiya_crm_dirty');
-  toast('返信ファイルを書き出しました（更新'+mine.length+'件・ご紹介'+referrals.length+'件）。メール等で解体会社へお送りください');
+  toast('返信ファイルを書き出しました（更新'+mine.length+'件・ご紹介'+referrals.length+'件）。メール等で事務局へお送りください');
 }
 /* 社内が反映：返信ファイルから「その分野だけ」安全にマージ＋紹介案件を新規受入 */
 function applyReturn(e){
-  if(!isAdmin()){ toast('返信の反映は社内（解体チーム）が行います'); e.target.value=''; return; }
+  if(!isAdmin()){ toast('返信の反映は事務局が行います'); e.target.value=''; return; }
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{ try {
@@ -655,36 +710,59 @@ function savedFlash(){ toast('✓ 保存しました'); }
 function deriveDomains(c){
   const d = c.domains || {};
   const set = (k,v) => d[k] = Object.assign({ need:'undetermined', stage:'未判定', assignee:'', next:'', reason:'' }, d[k], v);
+  const types = Array.isArray(c.consultTypes) ? c.consultTypes : [];
+  const has  = k => types.includes(k);
+  const prop = !!c.hasProperty;   // 不動産（空き家等）のご相談があるか
+
+  // 解体工事
+  if(has('demolish')) set('demolition',{ need:'required', stage:d.demolition?.stage||'現地調査', next:'現地調査の日程調整' });
+  else set('demolition',{ need:'undetermined', next: prop?'建物の解体意向を確認':'' });
+
+  // 滅失登記（土地家屋調査士）＝解体するときに必ず後工程で発生
+  if(has('demolish')) set('demolition_reg',{ need:'required', stage:d.demolition_reg?.stage||'解体完了待ち', next:'解体完了を待って申請（完工＋1ヶ月）' });
+  else if(has('regist') && prop) set('demolition_reg',{ need:'undetermined', next:'滅失登記の要否を確認' });
+  else set('demolition_reg',{ need:'undetermined', next:'' });
 
   // 相続登記（司法書士）
-  if(c.owner==='deceased') set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next:'戸籍収集・相続人確定' });
-  else if(c.owner==='unknown') set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next:'登記簿取得で名義確定' });
-  else set('inheritance_reg',{ need:'not_required', reason:'名義がご本人のため登記不要' });
-
-  // 滅失登記（土地家屋調査士）＝建物ありは必ず後工程で発生
-  set('demolition_reg',{ need:'required', stage:d.demolition_reg?.stage||'解体完了待ち', next:'解体完了を待って申請（完工＋1ヶ月）' });
+  if(has('inherit') || has('regist') || c.owner==='deceased')
+    set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next: c.owner==='deceased'?'戸籍収集・相続人確定':'相続関係の確認・登記の要否判定' });
+  else if(c.owner==='unknown')
+    set('inheritance_reg',{ need:'required', stage:d.inheritance_reg?.stage||'名義確認', next:'登記簿取得で名義確定' });
+  else if(prop && c.owner==='self') set('inheritance_reg',{ need:'not_required', reason:'名義がご本人のため登記不要' });
+  else set('inheritance_reg',{ need:'undetermined', next:'' });
 
   // 税務（税理士）
-  if(c.exit==='sell' || c.owner==='deceased') set('tax',{ need:'required', stage:d.tax?.stage||'課税論点の洗い出し', next:'3000万控除の可否・固定資産税の確認' });
-  else set('tax',{ need:'undetermined', next:'固定資産税（住宅用地特例の解除）は後続で確認' });
+  if(has('tax') || has('inherit') || has('sell') || c.exit==='sell' || c.owner==='deceased')
+    set('tax',{ need:'required', stage:d.tax?.stage||'課税論点の洗い出し', next: has('inherit')?'相続税の要否・特例の確認':'3000万控除の可否・固定資産税の確認' });
+  else set('tax',{ need:'undetermined', next: prop?'固定資産税（住宅用地特例の解除）は後続で確認':'' });
 
   // 不動産
-  if(c.exit==='sell') set('realestate',{ need:'required', stage:d.realestate?.stage||'査定', next:'現況／更地の両建て査定' });
+  if(has('sell') || c.exit==='sell') set('realestate',{ need:'required', stage:d.realestate?.stage||'査定', next:'現況／更地の両建て査定' });
   else if(c.exit==='use') set('realestate',{ need:'not_required', reason:'活用予定のため売却不要' });
-  else set('realestate',{ need:'undetermined', next:'出口未定。査定を見て判断' });
+  else set('realestate',{ need:'undetermined', next: prop?'出口未定。査定を見て判断':'' });
 
   // エクステリア・造成・新築
-  if(c.exit==='use') set('construction_ext',{ need:'required', stage:d.construction_ext?.stage||'活用意向・再建築可否', next:'活用プランと再建築可否の確認' });
+  if(has('use') || c.exit==='use') set('construction_ext',{ need:'required', stage:d.construction_ext?.stage||'活用意向・再建築可否', next:'活用プランと再建築可否の確認' });
   else if(c.exit==='sell') set('construction_ext',{ need:'not_required', reason:'更地渡し・売却のため活用なし' });
   else set('construction_ext',{ need:'undetermined', next: c.garden==='many' ? '外構多め＝再整備需要のシグナル' : '' });
 
   // FP（資金・保険・補助金）— 高額/緊急に加え、相続・売却・補助金該当も資金と保険の確認が要る
-  const high = (Number(c.estimateRangeLow)||0) >= 150 || c.urgencyLevel==='高' || c.owner==='deceased' || c.exit==='sell' || c.subsidyApplicable==='該当あり';
-  if(high) set('fp',{ need:'required', stage:d.fp?.stage||'資金ヒアリング', next:'解体費・火災保険・補助金の確認' });
+  const high = has('money') || has('inherit') || (Number(c.estimateRangeLow)||0) >= 150 || c.urgencyLevel==='高' || c.owner==='deceased' || c.exit==='sell' || c.subsidyApplicable==='該当あり';
+  if(high) set('fp',{ need:'required', stage:d.fp?.stage||'資金ヒアリング', next: has('inherit')?'相続後の資金計画・保険の確認':'資金・火災保険・補助金の確認' });
   else set('fp',{ need:'undetermined', next:'' });
 
   c.domains = d;
   return c;
+}
+/* 生年月日→年齢 */
+function ageOf(birthday){
+  if(!birthday || !DATE_RE.test(birthday)) return null;
+  const b = new Date(birthday+'T00:00:00'); if(isNaN(b)) return null;
+  const now = new Date();
+  let a = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if(m < 0 || (m === 0 && now.getDate() < b.getDate())) a--;
+  return (a>=0 && a<130) ? a : null;
 }
 
 /* ============================================================
@@ -693,31 +771,41 @@ function deriveDomains(c){
 function strategyFor(c){
   const out = [];
   const si = stageIndex(c.stage);
-  const contacted = (c.followHistory||[]).some(h => h.type && h.type!=='自動起票');
+  const contacted = (c.followHistory||[]).some(h => h && !h.auto && CONTACT_TYPES.includes(h.type));
   const pastNext = c.nextActionDate && c.nextActionDate < todayISO();
 
-  if(c.stage==='lead' && c.urgencyLevel==='高' && !contacted)
-    out.push({lv:'高', t:'当日中（緊急度「高」は4時間以内）に一次架電。不通ならSMS＋メールで現地調査の候補日を提示。相見積が始まる前に押さえる。'});
+  const types = Array.isArray(c.consultTypes) ? c.consultTypes : [];
+  const hasT  = k => types.includes(k);
+  const demo  = c.domains?.demolition?.need==='required' || hasT('demolish');
+
+  if(c.stage==='lead' && !contacted)
+    out.push({lv: c.urgencyLevel==='高'?'高':'中', t:'まず一次ご連絡（緊急度「高」は4時間以内）。ご相談の全体像とご希望の期限をうかがい、必要な専門家の顔ぶれを確定する。'});
+  if(hasT('inherit'))
+    out.push({lv:'高', t:'相続案件。①相続人の確定（司法書士）②相続税の申告要否と期限＝相続開始から10ヶ月（税理士）③遺産の全体像（不動産・預貯金・保険）を並行で確認。期限が最も短い論点から着手する。'});
+  if(hasT('money') && !hasT('demolish'))
+    out.push({lv:'中', t:'資金・保険のご相談。現状の保険と収支を棚卸しし、他分野（相続・不動産）の結論が出る前でも着手できる部分から進める。'});
   if(c.owner==='deceased' && si < stageIndex('contract'))
     out.push({lv:'高', t:'名義が故人のまま。相続登記（司法書士）を前工程で先行し、名義が片付く／相続人全員の同意が取れるまで契約・着工はブロック。現地調査に司法書士を同席。'});
   if(c.owner==='unknown')
     out.push({lv:'高', t:'名義が不明。まず司法書士が登記簿を取得して名義を確定。確定まで契約は保留。'});
-  if(c.stage==='survey')
+  if(c.stage==='hearing' && demo)
     out.push({lv:'高', t:'現地調査の結果（地中埋設物・石綿・私道掘削承諾・残置物）を反映した「確定レンジ見積」へ更新。診断概算からの差分理由を明示。'});
   if(c.exit==='sell')
-    out.push({lv:'高', t:'即解体に走らず、不動産査定（現況／更地）と税理士の3000万円控除の可否判定を並行で起票。更地渡しか古家付きかで自社解体の要否を確定。'});
+    out.push({lv:'高', t:'即解体に走らず、不動産査定（現況／更地）と税理士の3000万円控除の可否判定を並行で起票。更地渡しか古家付きかで解体の要否を確定。'});
   if(c.exit==='sell' && (c.builtYear ? c.builtYear<=1981 : c.era==='old') && c.owner==='deceased')
     out.push({lv:'高', t:'被相続人居住用財産3000万円特別控除の本命。相続開始から3年目の年末を逆算し、相続登記→解体→滅失→売買のクリティカルパスを設定。実建築年（1981/5/31以前か）を現地確認のうえ税理士へ。'});
-  if(stageIndex(c.stage)>=stageIndex('contract') && (c.insuranceStatus||'unknown')==='unknown' && c.stage!=='closed_lost')
+  if(demo && stageIndex(c.stage)>=stageIndex('contract') && (c.insuranceStatus||'unknown')==='unknown' && c.stage!=='closed_lost')
     out.push({lv:'高', t:'解体前に火災保険の解約時期と解約返戻金を確認（建物滅失後は請求できません）。返戻金は資金計画の原資に。FP・保険担当へ。'});
   if(c.exit==='use')
     out.push({lv:'中', t:'エクステリア／造成／新築を起票。解体〜造成を同一重機・仮設で連結受注し原価圧縮。着手前に再建築可否（接道2m・セットバック・用途地域・調整区域）を確認。'});
   if((Number(c.estimateRangeLow)||0) >= 150 && c.urgencyLevel==='高')
     out.push({lv:'中', t:'資金ネックの典型パターン。FPを起票し、空き家解体ローン＋市町補助金の該当を着工前に確認（交付決定前の着工は対象外）。'});
-  if((c.stage==='estimate'||c.stage==='negotiation') && pastNext)
-    out.push({lv:'中', t:'見積提出後にサイレントの懸念。値引き合戦ではなく工期確約・登記/補助金ワンストップ・産廃適正処理で追客。'});
-  if(c.stage==='completed')
+  if(c.stage==='proposal' && pastNext)
+    out.push({lv:'中', t:'ご提案後に音信が途絶えている懸念。値引き合戦ではなく、期限のある論点（相続登記・控除期限）とワンストップの手間削減を伝えて再アプローチ。'});
+  if(c.stage==='completed' && demo)
     out.push({lv:'高', t:'完工。滅失登記（土地家屋調査士）を完工＋1ヶ月以内で起票、税理士へ固定資産税（住宅用地特例の解除）を通知、出口（売却／活用）へ引継ぎ。3つ同時に発火。'});
+  else if(c.stage==='completed')
+    out.push({lv:'中', t:'完了。関わった他分野に結果を共有し、次に出番のある専門家（税務・資金・不動産）へバトンを渡す。お客様には次にやることを1枚で案内する。'});
   if(c.subsidyApplicable==='該当あり')
     out.push({lv:'中', t:'補助金は交付決定後に着工する工程で組む（着工後は申請不可の自治体が多い）。着工前準備に「補助金申請済？」ゲートを立てる。'});
 
@@ -728,12 +816,14 @@ function strategyFor(c){
 /* ============================================================
    フォロー漏れアラート
    ============================================================ */
+/* 実際にお客様と接触した記録の種別（自動生成メモを『接触済み』と誤判定しないため） */
+const CONTACT_TYPES = ['架電','来店','メール','LINE','現地','面談'];
 function daysSince(iso){ if(!iso) return null; return Math.floor((Date.now() - new Date(iso+'T00:00:00').getTime())/86400000); }
 function alertsFor(c){
   const a = [];
   const open = c.stage !== 'closed_lost';
   const si = stageIndex(c.stage);
-  const contacted = (c.followHistory||[]).some(h => h.type && h.type!=='自動起票');
+  const contacted = (c.followHistory||[]).some(h => h && !h.auto && CONTACT_TYPES.includes(h.type));
 
   if(c.stage==='lead' && open){
     const d = daysSince(c.createdAt);
@@ -765,7 +855,7 @@ function alertsFor(c){
     else if(left<=180) a.push({lv:'amber', t:'相続登記の申請義務（3年）まで残り'+left+'日'});
   }
   // 火災保険（滅失後は請求不可・工事前の無保険リスク）
-  if(open && c.insuranceStatus==='cancelPlanned' && c.insuranceCancelDate && c.insuranceCancelDate <= todayISO() && stageIndex(c.stage) < stageIndex('construction'))
+  if(open && c.insuranceStatus==='cancelPlanned' && c.insuranceCancelDate && c.insuranceCancelDate <= todayISO() && (c.domains?.demolition?.stage||'') !== '完工')
     a.push({lv:'amber', t:'火災保険の解約予定日を過ぎています（着工前の建物が無保険の恐れ）'});
   // 分野期日の超過
   DOMAINS.forEach(dm => {
@@ -819,9 +909,17 @@ function mapLead(l){
     estimateRangeLow: l.total ? Math.round(l.total*0.85/10000) : null,
     estimateRangeHigh: l.total ? Math.round(l.total*1.15/10000) : null,
     finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
-    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
+    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', propertyAddress:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
     demolitionDate:null, inheritanceStartDate:null, thirdPartyConsent:{obtained:false,date:'',method:''}, domains:{},
-    followHistory:[{date:todayISO(), type:'メモ', memo:'LP診断からの自動読み取りで起票'}], lostReason:null, notes:''
+    // LPの空き家診断＝解体のご相談。ここを立てないと解体工事・滅失登記が起票されない
+    hasProperty:true,
+    consultTypes: (()=>{ const t=['demolish']; const txt=(l.consult||'')+' '+(l.exit||'');
+      if(l.owner==='deceased' || /相続|亡く|遺産/.test(txt)) t.push('inherit');
+      if(l.exit==='sell' || /売却|売りたい/.test(txt)) t.push('sell');
+      if(l.exit==='use' || /活用|新築|駐車場/.test(txt)) t.push('use');
+      if(/資金|ローン|補助金|保険/.test(txt)) t.push('money');
+      return t; })(),
+    followHistory:[{date:todayISO(), type:'メモ', auto:true, memo:'LP診断からの自動読み取りで起票'}], lostReason:null, notes:''
   };
   sanitizeCase(c);
   deriveDomains(c);
@@ -996,7 +1094,7 @@ function renderInbox(){
   </div>`;
 }
 
-/* ---- 解体パイプライン・カンバン（列折り畳み・期日順・ワンタップ前進） ---- */
+/* ---- 進捗ボード・カンバン（列折り畳み・期日順・ワンタップ前進） ---- */
 let KANBAN_COLLAPSED = new Set();
 try { KANBAN_COLLAPSED = new Set(JSON.parse(localStorage.getItem('akiya_crm_kanban_collapsed'))||[]); } catch(e){}
 function toggleCol(k, ev){
@@ -1042,11 +1140,11 @@ function renderKanban(){
           <span class="text-[11px] text-sub">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):''}</span>
         </div>
         <div class="flex items-center gap-1 mb-2">${domainDots(c)}</div>
-        ${c.teamNote?`<p class="text-[11px] font-bold rounded-lg px-2 py-1 mb-1 line-clamp-2" style="color:#B45309;background:#FFF7E6">⚠ ${esc(c.teamNote)}</p>`:''}
+        ${c.teamNote?`<p class="text-[11px] font-bold rounded-lg px-2 py-1 mb-1 line-clamp-2" style="color:#B45309;background:#FFF7E6"><svg class="w-3.5 h-3.5 inline-block shrink-0 -mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.3 3.4a2 2 0 001.74 2.85h15.12a2 2 0 001.74-2.85L13.74 4.94a2 2 0 00-3.48 0L2.7 16.15zM12 17h.01"/></svg> ${esc(c.teamNote)}</p>`:''}
         ${c.nextAction?`<p class="text-[11px] text-ink mt-1 line-clamp-2">${esc(c.nextAction)}</p>`:''}
         <div class="flex items-center justify-between mt-1.5">
           ${c.nextActionDate?`<p class="text-[10px] ${c.nextActionDate<todayISO()?'text-red font-bold':'text-sub'}">次: ${esc(c.nextActionDate)}</p>`:'<span></span>'}
-          ${canAdvance?`<button onclick="nextStage('${c.id}',event)" title="次のステージへ進める" class="text-[10px] font-black text-grn border border-grn rounded-full px-2 py-0.5 hover:bg-grnL">▶ 次へ</button>`:''}
+          ${canAdvance?`<button onclick="nextStage('${c.id}',event)" title="次のステージへ進める" class="text-[10px] font-black text-grn border border-grn rounded-full px-2 py-0.5 hover:bg-grnL"><svg class="w-3 h-3 inline-block -mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg> 次へ</button>`:''}
         </div>
       </div>`;
     }).join('');
@@ -1062,8 +1160,8 @@ function renderKanban(){
   const lost = base.filter(c=>c.stage==='closed_lost').length;
   return `
   <div class="flex items-center justify-between mb-3">
-    <h2 class="font-black text-lg">解体パイプライン</h2>
-    <p class="text-[11px] text-sub">列名クリックで折り畳み。「▶次へ」でワンタップ前進。カード内は期日の早い順。失注/保留：${lost}件</p>
+    <h2 class="font-black text-lg">進捗ボード</h2>
+    <p class="text-[11px] text-sub">列名クリックで折り畳み。「次へ」ボタンでワンタップ前進。カード内は期日の早い順。失注/保留：${lost}件</p>
   </div>
   <div class="kanban flex gap-3 overflow-x-auto pb-4">${cols}</div>`;
 }
@@ -1230,7 +1328,7 @@ function declineDomain(id,dkey){
   if(!canEditDomain(dkey) || isAdmin()) return;
   const c = getC(id); if(!c) return;
   const meta = domainMeta(dkey);
-  const r = prompt(meta.label+'について「当方では対応不要」と解体チームへ申し送ります。\n理由をご記入ください（この内容はチームに共有されます）。', '');
+  const r = prompt(meta.label+'について「当方では対応不要」と事務局へ申し送ります。\n理由をご記入ください（この内容はチームに共有されます）。', '');
   if(r===null) return;
   const d = c.domains[dkey] = c.domains[dkey] || {need:'required',stage:'未判定',assignee:'',next:'',reason:''};
   d.decline = { reason:(r||'').trim()||'当方では対応不要', date:todayISO(), by:ROLE };
@@ -1238,7 +1336,7 @@ function declineDomain(id,dkey){
   c.followHistory = c.followHistory || [];
   c.followHistory.unshift({date:todayISO(), type:'メモ', memo:'【'+ROLE_DEFS[ROLE].label+'】当方では対応不要として申し送り：'+d.decline.reason});
   markDirty(); upsert(c); savedFlash(); renderDetail();
-  toast('申し送りを記録しました。「自分の更新を書き出して返信」で解体チームへお送りください');
+  toast('申し送りを記録しました。「自分の更新を書き出して返信」で事務局へお送りください');
 }
 /* 社内が申し送りを確認済みにする（共有を外すかは別途チームチップで判断） */
 function clearDecline(id,dkey){
@@ -1267,7 +1365,7 @@ function toggleTeam(id,dkey){
   d.manualNeed = true;
   d.updatedAt = new Date().toISOString();
   c.followHistory = c.followHistory || [];
-  c.followHistory.unshift({date:todayISO(), type:'メモ', memo:'【共有範囲】'+meta.label+'を'+(d.need==='required'?'共有ONに変更':'共有OFFに変更（'+d.reason+'）')});
+  c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true, memo:'【共有範囲】'+meta.label+'を'+(d.need==='required'?'共有ONに変更':'共有OFFに変更（'+d.reason+'）')});
   markDirty(); upsert(c); savedFlash(); renderDetail();
 }
 function assigneePick(id,dkey,v){
@@ -1341,6 +1439,19 @@ function domainExtras(c, dm, d, editable){
   return '';
 }
 
+/* 途中から不動産のご相談になった場合に、物件の入力欄を出す */
+function enableProperty(id){
+  if(!canEditCore()) return;
+  const c = getC(id); if(!c) return;
+  c.hasProperty = true;
+  if(!c.structure) c.structure = 'wood';
+  if(!c.floors) c.floors = '2f';
+  if(!c.era) c.era = 'unknown';
+  rederiveDomains(c);
+  c.followHistory = c.followHistory || [];
+  c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true, memo:'【変更】不動産のご相談として物件情報の管理を開始'});
+  upsert(c); savedFlash(); renderDetail();
+}
 function setConsent(id,prop,value){
   if(!canEditCore()) return;
   const c=getC(id);
@@ -1472,7 +1583,7 @@ function renderDetail(){
   ].map(([k,v])=>`<div class="bg-paper rounded-lg px-3 py-2"><p class="text-[10px] text-sub">${k}</p><p class="text-sm font-bold">${v}</p></div>`).join('');
 
   const follow = (c.followHistory||[]).map(h=>`<div class="flex gap-2 text-sm py-2 border-b border-line last:border-0">
-    <span class="text-xs text-sub w-20 shrink-0 pt-0.5">${h.date}</span>
+    <span class="text-xs text-sub w-20 shrink-0 pt-0.5">${esc(h.date||"")}</span>
     <span class="text-xs font-bold w-12 shrink-0 pt-0.5" style="color:#2E9E68">${esc(h.type)}</span>
     <span class="flex-1 leading-relaxed">${esc(h.memo)}</span></div>`).join('') || '<p class="text-sm text-sub">記録なし</p>';
 
@@ -1516,13 +1627,13 @@ function renderDetail(){
     </div>
 
     <div class="grid xl:grid-cols-5 gap-4">
-      <!-- 左：進捗と戦略 -->
-      <div class="xl:col-span-3 space-y-4">
+      <!-- 左：進捗と戦略（min-w-0 が無いとステッパーの min-content 幅でカードが広がり、スマホで横スクロールする） -->
+      <div class="xl:col-span-3 space-y-4 min-w-0">
 
-        <!-- 解体ステージ -->
+        <!-- ご相談の進捗 -->
         <div class="bg-white rounded-2xl border border-line p-5">
           <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
-            <p class="font-black text-sm text-sub">解体の商談ステージ</p>
+            <p class="font-black text-sm text-sub">ご相談の進捗</p>
             ${canEditCore()?`<select onchange="field('${c.id}','stage',this.value)" class="border border-line rounded-lg px-3 py-2 text-sm font-bold">${stageOpts}</select>`:''}
           </div>
           <div class="flex items-end gap-3 mb-2">
@@ -1532,11 +1643,11 @@ function renderDetail(){
           <div class="h-2.5 bg-paper rounded-full overflow-hidden mb-5"><div class="h-2.5 rounded-full transition-all" style="width:${isLost?100:prog}%;background:${sMeta.color}"></div></div>
           <div class="flex items-start overflow-x-auto pb-2">${stepper}</div>
           ${canEditCore()?`<div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line">
-            <label class="text-xs text-sub font-bold">自社担当<input value="${esc(c.assignee||'')}" onchange="fieldNoRerender('${c.id}','assignee',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold">事務局の担当<input value="${esc(c.assignee||'')}" onchange="fieldNoRerender('${c.id}','assignee',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">次アクション<input value="${esc(c.nextAction||'')}" onchange="fieldNoRerender('${c.id}','nextAction',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">次アクション日<input type="date" value="${esc(c.nextActionDate||'')}" onchange="field('${c.id}','nextActionDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
           </div>`:`<div class="grid sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-line text-[15px]">
-            <div><p class="text-xs text-sub font-bold">自社担当</p><p class="mt-1">${esc(c.assignee||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">事務局の担当</p><p class="mt-1">${esc(c.assignee||'—')}</p></div>
             <div><p class="text-xs text-sub font-bold">次アクション</p><p class="mt-1">${esc(c.nextAction||'—')}</p></div>
             <div><p class="text-xs text-sub font-bold">次アクション日</p><p class="mt-1">${esc(c.nextActionDate||'—')}</p></div>
           </div>`}
@@ -1557,29 +1668,39 @@ function renderDetail(){
             <p class="font-black text-[15px]">この案件に関わるチーム（共有範囲）</p>
             ${canEditCore()?`<button onclick="openShareModal('${c.id}')" class="text-xs font-bold border border-grn text-grn rounded-full px-3.5 py-1.5 whitespace-nowrap">この案件を関係者へ書き出す</button>`:''}
           </div>
-          <p class="text-[11px] text-sub mb-3">色つき＝共有中（この専門家がお客様情報を見られます）／グレー＝共有しない。${canEditCore()?'ボタンで切り替えできます。':'変更は解体チーム（社内）が行います。'}<br>※ 共有をOFFにしても、すでにお渡し済みのファイルは相手の手元に残ります（今後の共有を止める設定です）。</p>
+          <p class="text-[11px] text-sub mb-3">色つき＝共有中（この専門家がお客様情報を見られます）／グレー＝共有しない。${canEditCore()?'ボタンで切り替えできます。':'変更は事務局が行います。'}<br>※ 共有をOFFにしても、すでにお渡し済みのファイルは相手の手元に残ります（今後の共有を止める設定です）。</p>
           <div class="flex flex-wrap gap-1.5">${teamChips}</div>
         </div>
 
         <!-- 6分野 -->
         <div>
-          <p class="font-black text-[15px] mb-2">6分野の連携状況 <span class="text-xs text-sub font-bold">（解体以降は順不同・不要は理由を記録して共有）</span></p>
+          <p class="font-black text-[15px] mb-2">各分野の連携状況 <span class="text-xs text-sub font-bold">（順不同で並行して動く・不要は理由を記録して共有）</span></p>
           <div class="space-y-2.5">${domainRows}</div>
         </div>
       </div>
 
       <!-- 右：お客様情報・記録 -->
-      <div class="xl:col-span-2 space-y-4">
+      <div class="xl:col-span-2 space-y-4 min-w-0">
 
         <!-- お客様情報 -->
         <div class="bg-white rounded-2xl border border-line p-5">
           <p class="font-black text-sm text-sub mb-3">お客様情報</p>
-          <div class="space-y-2 text-[15px]">
-            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">電話</span>${c.phone?`<a href="tel:${esc(c.phone)}" class="font-black text-grn">${esc(c.phone)}</a>`:'—'}</div>
-            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">メール</span>${c.email?`<a href="mailto:${esc(c.email)}" class="font-bold underline break-all">${esc(c.email)}</a>`:'—'}</div>
-            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">流入</span><span class="font-bold">${esc(c.source||'—')}</span></div>
-            <div class="flex items-center gap-2"><span class="text-xs text-sub w-14 shrink-0">発生日</span><span class="font-bold">${esc(c.createdAt||'—')}</span></div>
-          </div>
+          ${(() => { const age = ageOf(c.birthday);
+            const row = (l,v) => `<div class="flex items-start gap-2"><span class="text-xs text-sub w-14 shrink-0 mt-0.5">${l}</span><span class="font-bold break-all">${v}</span></div>`;
+            const fam = c.family ? [c.family.spouse?'配偶者あり':'', (Number(c.family.children)||0)>0?('お子様'+c.family.children+'名'):''].filter(Boolean).join('・') : '';
+            return `<div class="space-y-2 text-[15px]">
+              ${c.kana?row('カナ', esc(c.kana)):''}
+              ${(c.birthday||c.gender)?row('生年月日', (c.birthday?esc(c.birthday):'—')+(age!=null?`<span class="text-grn">（${age}歳）</span>`:'')+(c.gender?('　'+esc(c.gender)):'')):''}
+              <div class="flex items-start gap-2"><span class="text-xs text-sub w-14 shrink-0 mt-0.5">電話</span><span class="font-black">${c.phone?`<a href="tel:${esc(c.phone)}" class="text-grn">${esc(c.phone)}</a>`:'—'}${c.mobile?`　<a href="tel:${esc(c.mobile)}" class="text-grn">${esc(c.mobile)}</a>`:''}</span></div>
+              <div class="flex items-start gap-2"><span class="text-xs text-sub w-14 shrink-0 mt-0.5">メール</span><span class="font-bold break-all">${c.email?`<a href="mailto:${esc(c.email)}" class="underline">${esc(c.email)}</a>`:'—'}</span></div>
+              ${(c.zip||c.address||c.city)?row('ご住所', (c.zip?('〒'+esc(c.zip)+' '):'')+esc(c.city||'')+esc(c.address||'')):''}
+              ${c.job?row('ご職業', esc(c.job)):''}
+              ${fam?row('ご家族', esc(fam)):''}
+              ${c.relation?row('ご関係', esc(c.relation)):''}
+              ${row('きっかけ', esc(c.source||'—'))}
+              ${row('登録日', esc(c.createdAt||'—'))}
+            </div>`; })()}
+          ${(Array.isArray(c.consultTypes)&&c.consultTypes.length)?`<div class="mt-3 flex flex-wrap gap-1">${c.consultTypes.map(k=>{ const t=CONSULT_TYPES.find(x=>x.key===k); return t?`<span class="text-[11px] font-bold px-2.5 py-1 rounded-full text-white" style="background:${t.color}">${t.label}</span>`:''; }).join('')}</div>`:''}
           ${c.desiredConsult?`<div class="mt-3 bg-paper rounded-xl px-3.5 py-2.5"><p class="text-[10px] text-sub mb-1">ご相談内容（お客様の言葉）</p><p class="text-sm leading-relaxed">${esc(c.desiredConsult)}</p></div>`:''}
           <div class="mt-3 pt-3 border-t border-line">
             <p class="text-xs text-sub font-bold mb-1.5">第三者提供の同意（提携先へ共有する前に）</p>
@@ -1600,7 +1721,12 @@ function renderDetail(){
           </div>
         </div>
 
-        <!-- 建物・診断データ -->
+        <!-- 建物・診断データ（不動産のご相談がある案件だけ） -->
+        ${!c.hasProperty ? `<div class="bg-white rounded-2xl border border-line p-5">
+          <p class="font-black text-sm text-sub mb-2">不動産・物件の情報</p>
+          <p class="text-sm text-sub">このお客様は不動産のご相談として登録されていません。${canEditCore()?'物件のお話が出たら、下のボタンで入力欄を出せます。':''}</p>
+          ${canEditCore()?`<button onclick="enableProperty('${c.id}')" class="mt-3 text-xs font-bold border border-grn text-grn rounded-full px-4 py-2">不動産の情報を追加する</button>`:''}
+        </div>` : `
         <div class="bg-white rounded-2xl border border-line p-5">
           <p class="font-black text-sm text-sub mb-3">建物・診断データ</p>
           <div class="grid grid-cols-2 gap-2 mb-3">${diag}</div>
@@ -1611,15 +1737,17 @@ function renderDetail(){
           ${canEditCore()?`<div class="grid grid-cols-2 gap-2.5">
             <label class="text-xs text-sub font-bold">名義（再判定される）
               <select onchange="coreSelect('${c.id}','owner',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                <option value="" ${!c.owner?'selected':''}>未確認</option>
                 ${Object.keys(L.owner).map(k=>`<option value="${k}" ${c.owner===k?'selected':''}>${L.owner[k]}</option>`).join('')}
               </select></label>
             <label class="text-xs text-sub font-bold">出口（再判定される）
               <select onchange="coreSelect('${c.id}','exit',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+                <option value="" ${!c.exit?'selected':''}>未確認</option>
                 ${Object.keys(L.exit).map(k=>`<option value="${k}" ${c.exit===k?'selected':''}>${L.exit[k]}</option>`).join('')}
               </select></label>
             <label class="text-xs text-sub font-bold">実建築年<span class="font-normal">（西暦・控除の1981判定）</span><input type="number" value="${c.builtYear??''}" placeholder="現地調査時に確認" onchange="field('${c.id}','builtYear',this.value?Number(this.value):null)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">土地面積（㎡）<input type="number" value="${c.landArea??''}" placeholder="査定に必要" onchange="fieldNoRerender('${c.id}','landArea',this.value?Number(this.value):null)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
-            <label class="text-xs text-sub font-bold col-span-2">住所（番地まで）<input value="${esc(c.address||'')}" placeholder="初回架電時に確認（査定・登記に必要）" onchange="fieldNoRerender('${c.id}','address',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
+            <label class="text-xs text-sub font-bold col-span-2">物件の所在地（番地まで）<span class="font-normal">※お客様のご住所とは別に管理します</span><input value="${esc(c.propertyAddress||'')}" placeholder="初回架電時に確認（査定・登記に必要）" onchange="fieldNoRerender('${c.id}','propertyAddress',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">地番<input value="${esc(c.chiban||'')}" placeholder="登記簿の地番" onchange="fieldNoRerender('${c.id}','chiban',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>
             <label class="text-xs text-sub font-bold">権利
               <select onchange="fieldNoRerender('${c.id}','rightType',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
@@ -1634,7 +1762,7 @@ function renderDetail(){
           </div>`:`<div class="grid grid-cols-2 gap-2.5 text-[15px]">
             <div><p class="text-xs text-sub font-bold">実建築年</p><p class="mt-1">${c.builtYear??'—'}</p></div>
             <div><p class="text-xs text-sub font-bold">土地面積</p><p class="mt-1">${c.landArea?c.landArea+'㎡':'—'}</p></div>
-            <div><p class="text-xs text-sub font-bold">住所</p><p class="mt-1">${esc(c.address||'—')}</p></div>
+            <div><p class="text-xs text-sub font-bold">物件の所在地</p><p class="mt-1">${esc(c.propertyAddress||'—')}</p></div>
             <div><p class="text-xs text-sub font-bold">地番／権利</p><p class="mt-1">${esc(c.chiban||'—')}／${esc(c.rightType||'不明')}</p></div>
             <div><p class="text-xs text-sub font-bold">補助金該当</p><p class="mt-1">${esc(c.subsidyApplicable||'—')}</p></div>
             <div><p class="text-xs text-sub font-bold">解体完了日</p><p class="mt-1">${esc(c.demolitionDate||'—')}</p></div>
@@ -1652,7 +1780,7 @@ function renderDetail(){
             <label class="text-xs text-sub font-bold">相続開始日<span class="font-normal">（控除・登記義務の起算）</span><input type="date" value="${esc(c.inheritanceStartDate||'')}" onchange="dateFieldShared('${c.id}','inheritanceStartDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1"></label>`
             :`<div><p class="text-xs text-sub font-bold">相続開始日</p><p class="mt-1 text-[15px]">${esc(c.inheritanceStartDate||'—')}</p></div>`}
           </div>
-        </div>
+        </div>`}
 
         <!-- フォロー履歴 -->
         <div class="bg-white rounded-2xl border border-line p-5">
@@ -1685,14 +1813,16 @@ function delCustomer(id){ if(!canEditCore()) return; if(!confirm('この案件�
 function openNew(){ openIntake(); }
 function openIntake(){
   const t = document.getElementById('newTitle');
-  if(t) t.textContent = isAdmin() ? '新規案件を追加' : 'お客様を登録（チームへ共有）';
+  if(t) t.textContent = isAdmin() ? 'お客様を登録' : 'お客様を登録（チームへ共有）';
   document.getElementById('newModal').classList.remove('hidden');
   renderIntake();
+  setTimeout(()=>{ const n=document.getElementById('n-name'); if(n) n.focus(); }, 30);
 }
 function closeNew(){ document.getElementById('newModal').classList.add('hidden'); }
 document.getElementById('newModal').addEventListener('click', e=>{ if(e.target.id==='newModal') closeNew(); });
 
-function sel(id,grp,cur){ return `<select id="${id}" class="w-full border border-line rounded-lg px-2 py-2 text-sm">${Object.keys(L[grp]).map(k=>`<option value="${k}" ${cur===k?'selected':''}>${L[grp][k]}</option>`).join('')}</select>`; }
+function sel(id,grp,cur){ return `<select id="${id}" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px]">${Object.keys(L[grp]).map(k=>`<option value="${k}" ${cur===k?'selected':''}>${L[grp][k]}</option>`).join('')}</select>`; }
+const fld = (id,label,ph,type) => `<label class="text-xs text-sub font-bold">${label}<input id="${id}" ${type?`type="${type}"`:''} ${ph?`placeholder="${ph}"`:''} class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1"></label>`;
 
 /* 登録フォームで「関わるチーム」を手で切り替えた分野は、自動推奨で上書きしない */
 let intakeTouched = new Set();
@@ -1703,64 +1833,105 @@ function renderIntake(){
   const roleLabel = ROLE_DEFS[ROLE].label;
   document.getElementById('newBody').innerHTML = `
   ${partner ? `<div class="rounded-xl p-3 mb-4 text-sm" style="background:${ROLE_DEFS[ROLE].color}14;border:1px solid ${ROLE_DEFS[ROLE].color}55">
-    <p class="font-black" style="color:${ROLE_DEFS[ROLE].color}">${esc(roleLabel)}として登録します</p>
-    <p class="text-[11px] text-sub mt-0.5">登録後、上のバーの<strong class="text-ink">「自分の更新を書き出して返信」</strong>でファイルを解体チームへ送ると、チーム全体に共有されます。</p>
+    <p class="font-black" style="color:${ROLE_DEFS[ROLE].color}">${esc(roleLabel)}として、あなたのお客様を登録します</p>
+    <p class="text-[11px] text-sub mt-0.5">登録後、上のバーの<strong class="text-ink">「自分の更新を書き出して返信」</strong>でファイルを事務局へ送ると、選んだ専門家へワンストップでお繋ぎします。</p>
   </div>` : ''}
-  <div class="bg-skyL rounded-xl p-3 mb-4">
-    <p class="text-[11px] font-bold mb-1">診断データを貼り付けて自動入力（任意）</p>
-    <p class="text-[10px] text-sub mb-2">LP「香川あんしん空き家サポート」の診断結果テキスト、または診断JSONを貼り付け→「取り込む」。診断内容から関わるチームを自動で推奨します。</p>
-    <textarea id="paste" rows="3" class="w-full border border-line rounded-lg px-3 py-2 text-sm" placeholder="診断結果テキスト or JSON を貼り付け"></textarea>
-    <button onclick="parsePaste()" class="mt-2 text-xs font-bold border border-sky text-sky rounded-full px-4 py-1.5">取り込む</button>
-  </div>
-  <p class="font-black text-xs text-sub mb-1.5">お客様情報</p>
-  <div class="grid sm:grid-cols-2 gap-3">
-    <label class="text-[11px] text-sub font-bold">お名前 <span class="text-red">*</span><input id="n-name" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">電話<input id="n-phone" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">メール<input id="n-email" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">所在地（市町）<input id="n-city" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">流入経路<input id="n-source" value="${partner?esc('紹介（'+roleLabel+'）'):'60秒診断'}" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">${partner?'貴事務所のご担当':'自社担当'}<input id="n-assignee" value="${partner?esc(DOM_ASSIGNEE[myKey]||''):''}" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-  </div>
-  <p class="font-black text-xs text-sub mb-1.5 mt-4">建物・ご意向（分かる範囲で。あとから編集できます）</p>
-  <div class="grid sm:grid-cols-2 gap-3">
-    <label class="text-[11px] text-sub font-bold">構造${sel('n-structure','structure','wood')}</label>
-    <label class="text-[11px] text-sub font-bold">階数${sel('n-floors','floors','2f')}</label>
-    <label class="text-[11px] text-sub font-bold">延床（坪）<input id="n-tsubo" type="number" ${partner?'':'value="30"'} class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">築年${sel('n-era','era','unknown')}</label>
-    <label class="text-[11px] text-sub font-bold">接道${sel('n-road','road','unknown')}</label>
-    <label class="text-[11px] text-sub font-bold">外構${sel('n-garden','garden','normal')}</label>
-    <label class="text-[11px] text-sub font-bold">残置物${sel('n-zanchi','zanchi','half')}</label>
-    <label class="text-[11px] text-sub font-bold">名義${sel('n-owner','owner',partner?'unknown':'self')}</label>
-    <label class="text-[11px] text-sub font-bold">出口${sel('n-exit','exit','undecided')}</label>
-    <label class="text-[11px] text-sub font-bold">緊急度${sel('n-urg','urgencyLevel','中')}</label>
-    <label class="text-[11px] text-sub font-bold">概算下限（万円）<input id="n-lo" type="number" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-    <label class="text-[11px] text-sub font-bold">概算上限（万円）<input id="n-hi" type="number" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5"></label>
-  </div>
-  <label class="text-[11px] text-sub font-bold block mt-3">ご相談内容<textarea id="n-consult" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5" placeholder="例）相続相談で来られたお客様。実家が空き家で解体を検討中"></textarea></label>
-  <label class="text-[11px] text-sub font-bold block mt-3">${partner?'あなたの分野の所見（チーム共有の注意点になります）':'チーム共有の注意点'}<textarea id="n-note" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm mt-0.5" placeholder="例）相続人は2名・遺産分割協議はこれから／連絡は夕方以降が繋がりやすい"></textarea></label>
 
-  <div class="rounded-xl border-2 p-3 mt-4" style="border-color:#2E9E68;background:#F2FAF5">
+  <p class="font-black text-sm mb-2 flex items-center gap-2"><span class="w-1.5 h-4 rounded-full bg-grn"></span>お客様情報</p>
+  <div class="grid sm:grid-cols-2 gap-3">
+    ${fld('n-name','お名前 <span class="text-red">*</span>','例）山田 太郎')}
+    ${fld('n-kana','フリガナ','例）ヤマダ タロウ')}
+    <label class="text-xs text-sub font-bold">生年月日
+      <div class="flex items-center gap-2">
+        <input id="n-birthday" type="date" onchange="showAge()" class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1">
+        <span id="n-age" class="text-[15px] font-bold whitespace-nowrap mt-1 text-sub"></span>
+      </div>
+    </label>
+    <label class="text-xs text-sub font-bold">性別
+      <select id="n-gender" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+        <option value="">未選択</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option>
+      </select>
+    </label>
+    ${fld('n-phone','電話（固定）','例）087-000-0000','tel')}
+    ${fld('n-mobile','携帯','例）090-0000-0000','tel')}
+    ${fld('n-email','メール','例）sample@example.com','email')}
+    ${fld('n-zip','郵便番号','例）760-0000')}
+    ${fld('n-city','市町 <span class="text-red">*</span>','例）高松市')}
+  </div>
+  ${fld('n-address','ご住所','例）高松市○○町1-2-3').replace('<label class="text-xs','<label class="block mt-3 text-xs')}
+  <div class="grid sm:grid-cols-3 gap-3 mt-3">
+    ${fld('n-job','ご職業・勤務先','例）会社員／自営')}
+    <label class="text-xs text-sub font-bold">ご家族
+      <div class="flex items-center gap-2 mt-1">
+        <label class="flex items-center gap-1.5 text-[13px] whitespace-nowrap"><input type="checkbox" id="n-spouse" class="accent-[#2E9E68] w-4 h-4">配偶者</label>
+        <input id="n-children" type="number" min="0" placeholder="お子様" class="w-full border border-line rounded-lg px-2 py-2 text-[15px]">
+      </div>
+    </label>
+    ${fld('n-relation','ご相談者の立場','例）ご本人／長男／相続人')}
+  </div>
+
+  <p class="font-black text-sm mb-2 mt-5 flex items-center gap-2"><span class="w-1.5 h-4 rounded-full bg-org"></span>ご相談の入口（あてはまるものを選択）</p>
+  <div class="flex flex-wrap gap-1.5" id="ct-wrap">
+    ${CONSULT_TYPES.map(t=>`<button type="button" id="ct-${t.key}" data-on="0" onclick="toggleConsult('${t.key}')"
+      class="text-[13px] font-bold px-3.5 py-2 rounded-full border-2" style="border-color:#E2E9E3;color:#5C6B60;background:#fff">${t.label}</button>`).join('')}
+  </div>
+  <label class="flex items-center gap-2 text-sm cursor-pointer mt-3 bg-paper rounded-xl px-3 py-2.5">
+    <input type="checkbox" id="n-hasprop" onchange="toggleProperty()" class="accent-[#2E9E68] w-4 h-4">
+    <span class="font-bold">不動産（空き家・実家など）のご相談がある</span>
+    <span class="text-[11px] text-sub">チェックすると建物の情報を入力できます</span>
+  </label>
+
+  <div id="propBox" class="hidden mt-3">
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="text-xs text-sub font-bold">構造${sel('n-structure','structure','wood')}</label>
+      <label class="text-xs text-sub font-bold">階数${sel('n-floors','floors','2f')}</label>
+      ${fld('n-tsubo','延床（坪）','例）30','number')}
+      <label class="text-xs text-sub font-bold">築年${sel('n-era','era','unknown')}</label>
+      <label class="text-xs text-sub font-bold">接道${sel('n-road','road','unknown')}</label>
+      <label class="text-xs text-sub font-bold">外構${sel('n-garden','garden','normal')}</label>
+      <label class="text-xs text-sub font-bold">残置物${sel('n-zanchi','zanchi','half')}</label>
+      <label class="text-xs text-sub font-bold">建物の名義${sel('n-owner','owner',partner?'unknown':'self')}</label>
+      <label class="text-xs text-sub font-bold">今後のご意向${sel('n-exit','exit','undecided')}</label>
+      <label class="text-xs text-sub font-bold">緊急度${sel('n-urg','urgencyLevel','中')}</label>
+      ${fld('n-lo','解体概算 下限（万円）','','number')}
+      ${fld('n-hi','解体概算 上限（万円）','','number')}
+    </div>
+    <div class="bg-skyL rounded-xl p-3 mt-3">
+      <p class="text-[11px] font-bold mb-1">空き家診断のデータを貼り付けて自動入力（任意）</p>
+      <textarea id="paste" rows="2" class="w-full border border-line rounded-lg px-3 py-2 text-sm" placeholder="診断結果テキスト or JSON を貼り付け"></textarea>
+      <button type="button" onclick="parsePaste()" class="mt-2 text-xs font-bold border border-sky text-sky rounded-full px-4 py-1.5">取り込む</button>
+    </div>
+  </div>
+
+  <label class="text-xs text-sub font-bold block mt-4">ご相談内容（お客様の言葉）<textarea id="n-consult" rows="2" class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1" placeholder="例）父が亡くなり実家をどうするか決めかねている。相続の手続きも不安"></textarea></label>
+  <label class="text-xs text-sub font-bold block mt-3">${partner?'あなたの所見（チーム共有の注意点になります）':'チーム共有の注意点'}<textarea id="n-note" rows="2" class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1" placeholder="例）相続人は2名・遺産分割協議はこれから／連絡は夕方以降が繋がりやすい"></textarea></label>
+  <div class="grid sm:grid-cols-2 gap-3 mt-3">
+    ${fld('n-source','きっかけ・流入経路','例）ご紹介／HP診断')}
+    ${fld('n-assignee', partner?'貴事務所のご担当':'事務局の担当','')}
+  </div>
+
+  <div class="rounded-xl border-2 p-3 mt-5" style="border-color:#2E9E68;background:#F2FAF5">
     <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
       <p class="text-xs font-black">この案件に関わるチーム（チェックした専門家だけが、このお客様の情報を見られます）</p>
-      <button onclick="intakeRecommend(false)" class="text-[11px] font-bold border border-grn text-grn rounded-full px-3 py-1 whitespace-nowrap">入力内容から推奨をセット</button>
+      <button type="button" onclick="intakeRecommend(false)" class="text-[11px] font-bold border border-grn text-grn rounded-full px-3 py-1 whitespace-nowrap">入力内容から推奨をセット</button>
     </div>
-    <p class="text-[10px] text-sub mb-2">チェックを外した分野には共有されません（例：今回は税理士を使わない）。名義・出口などを選ぶと推奨が自動更新されます（手で変えた分野はそのまま／「推奨をセット」を押すと手動の指定は解除されます）。あとから詳細画面でも変更できます。</p>
+    <p class="text-[10px] text-sub mb-2">チェックを外した分野には共有されません（例：今回は税理士を使わない）。上の「ご相談の入口」を選ぶと推奨が自動更新されます（手で変えた分野はそのまま）。あとから詳細画面でも変更できます。</p>
     ${DOMAINS.map(dm=>{
       const mine = partner && myKey===dm.key;
       return `<div class="py-0.5">
-        <label class="flex items-center gap-2 text-sm cursor-pointer py-1">
-          <input type="checkbox" id="sv-${dm.key}" class="accent-[#2E9E68] w-4 h-4" ${mine?'checked disabled':''} onchange="intakeToggle('${dm.key}')">
+        <label class="flex items-center gap-2 text-sm cursor-pointer py-2">
+          <input type="checkbox" id="sv-${dm.key}" class="accent-[#2E9E68] w-5 h-5" ${mine?'checked disabled':''} onchange="intakeToggle('${dm.key}')">
           <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${dm.color}"></span>
           <span class="font-bold">${dm.label}</span><span class="text-[11px] text-sub">（${dm.role}）</span>
           ${mine?`<span class="text-[10px] font-black text-white px-2 py-0.5 rounded-full" style="background:${dm.color}">あなた</span>`:''}
         </label>
-        <input id="svr-${dm.key}" placeholder="関わらない理由（チームに共有されます）" class="hidden border border-line rounded-lg px-3 py-1.5 text-xs mb-1 ml-6" style="width:calc(100% - 1.5rem)">
+        <input id="svr-${dm.key}" placeholder="関わらない理由（チームに共有されます）" class="hidden border border-line rounded-lg px-3 py-2 text-xs mb-1 ml-7" style="width:calc(100% - 1.75rem)">
       </div>`;
     }).join('')}
   </div>
 
   <label class="flex items-start gap-2 text-sm cursor-pointer mt-3 bg-paper rounded-xl p-3">
-    <input type="checkbox" id="n-consent" class="accent-[#2E9E68] w-4 h-4 mt-0.5">
+    <input type="checkbox" id="n-consent" class="accent-[#2E9E68] w-5 h-5 mt-0.5">
     <span>お客様ご本人に<strong>「他の専門家へ情報を共有すること」の同意</strong>をいただいた
       <span class="block text-[11px] text-sub">${partner
         ? '未記録のお客様は、返信ファイルの書き出し時に既定で除外されます（同意なしに他社へ個人情報を渡さないため）'
@@ -1768,12 +1939,41 @@ function renderIntake(){
     </span>
   </label>
 
-  <div class="flex justify-end gap-2 mt-5">
-    <button onclick="closeNew()" class="text-sm font-bold px-5 py-2.5 rounded-full border border-line">キャンセル</button>
-    <button onclick="submitIntake()" class="bg-grn text-white text-sm font-bold px-6 py-2.5 rounded-full">${partner?'登録してチームへ共有':'この案件を作成'}</button>
+  <div class="flex justify-end gap-2 mt-5 sticky bottom-0 bg-white pt-3 pb-1">
+    <button type="button" onclick="closeNew()" class="text-sm font-bold px-5 py-3 rounded-full border border-line">キャンセル</button>
+    <button type="button" onclick="submitIntake()" class="bg-grn text-white text-sm font-bold px-7 py-3 rounded-full">${partner?'登録してチームへ共有':'このお客様を登録'}</button>
   </div>`;
   intakeRecommend(true);
   ['n-owner','n-exit','n-urg','n-lo','n-garden'].forEach(id=>{ const e=document.getElementById(id); if(e) e.addEventListener('change', ()=>intakeRecommend(true)); });
+  // Enterキーでも登録できるように（テキスト入力欄のみ。textareaは改行のまま）
+  // ※ onkeydown への代入にすること。addEventListener だとモーダルを開き直すたびに重複登録され、1回のEnterで複数件登録される
+  document.getElementById('newBody').onkeydown = e=>{
+    if(e.key==='Enter' && e.target.tagName==='INPUT' && e.target.type!=='checkbox'){ e.preventDefault(); submitIntake(); }
+  };
+}
+function showAge(){
+  const a = ageOf(val('n-birthday'));
+  const el = document.getElementById('n-age'); if(el) el.textContent = a!=null ? a+'歳' : '';
+}
+/* ご相談の入口チップの選択 */
+function toggleConsult(k){
+  const b = document.getElementById('ct-'+k); if(!b) return;
+  const on = b.dataset.on === '1';
+  b.dataset.on = on ? '0' : '1';
+  const t = CONSULT_TYPES.find(x=>x.key===k);
+  if(on){ b.style.background='#fff'; b.style.color='#5C6B60'; b.style.borderColor='#E2E9E3'; }
+  else  { b.style.background=t.color; b.style.color='#fff'; b.style.borderColor=t.color; }
+  if(k==='demolish' || k==='sell' || k==='use'){
+    const hp = document.getElementById('n-hasprop');
+    if(hp && !on && !hp.checked){ hp.checked = true; toggleProperty(); }
+  }
+  intakeRecommend(true);
+}
+function pickedConsults(){ return CONSULT_TYPES.filter(t=>document.getElementById('ct-'+t.key)?.dataset.on==='1').map(t=>t.key); }
+function toggleProperty(){
+  const on = !!document.getElementById('n-hasprop')?.checked;
+  document.getElementById('propBox').classList.toggle('hidden', !on);
+  intakeRecommend(true);
 }
 /* チェックの手動切替：外したら理由欄を出す */
 function intakeToggle(k){
@@ -1782,13 +1982,22 @@ function intakeToggle(k){
   if(cb && rs) rs.classList.toggle('hidden', cb.checked);
 }
 /* 入力内容から「関わるチーム」を推奨。auto=true のときは手で触った分野を変えない */
-function intakeRecommend(auto){
-  if(!auto) intakeTouched = new Set();   // 手動の「推奨をセット」＝それまでの個別指定をリセットする操作
-  const tmp = {
-    owner: val('n-owner'), exit: val('n-exit'), urgencyLevel: val('n-urg'),
-    estimateRangeLow: Number(val('n-lo'))||null, garden: val('n-garden'),
+/* フォームの入力内容を案件オブジェクトの形にする（推奨計算と保存で必ず同じ値を使うための唯一の変換口） */
+function intakeDraft(){
+  const hasProp = !!document.getElementById('n-hasprop')?.checked;
+  return {
+    consultTypes: pickedConsults(), hasProperty: hasProp,
+    owner: hasProp?val('n-owner'):'', exit: hasProp?val('n-exit'):'',
+    urgencyLevel: (hasProp?val('n-urg'):'') || '中',
+    estimateRangeLow: hasProp?(Number(val('n-lo'))||null):null,
+    estimateRangeHigh: hasProp?(Number(val('n-hi'))||null):null,
+    garden: hasProp?val('n-garden'):'',
     subsidyApplicable:'未確認', domains:{}
   };
+}
+function intakeRecommend(auto){
+  if(!auto) intakeTouched = new Set();   // 手動の「推奨をセット」＝それまでの個別指定をリセットする操作
+  const tmp = intakeDraft();
   deriveDomains(tmp);
   const myKey = isAdmin() ? null : roleDomain();
   DOMAINS.forEach(dm=>{
@@ -1839,11 +2048,12 @@ function parsePaste(){
   intakeRecommend(true);
   toast('診断テキストから全項目を取り込みました（関わるチームの推奨も更新。内容をご確認ください）');
 }
-/* 登録の確定（社内＝案件作成／提携先＝自分のお客様を登録してチームへ共有）
+/* 登録の確定（事務局＝そのまま台帳へ／提携先＝自分のお客様を登録してチームへ送客）
    チェックした分野＝その専門家に共有され「必要」になる。外した分野＝共有されず「不要（理由つき）」。 */
 function applyTeamChecks(c){
   const myKey = isAdmin() ? null : roleDomain();
-  const rec = { domains:{}, owner:c.owner, exit:c.exit, urgencyLevel:c.urgencyLevel, estimateRangeLow:c.estimateRangeLow, garden:c.garden, subsidyApplicable:c.subsidyApplicable };
+  const rec = { domains:{}, consultTypes:c.consultTypes, hasProperty:c.hasProperty, owner:c.owner, exit:c.exit,
+    urgencyLevel:c.urgencyLevel, estimateRangeLow:c.estimateRangeLow, garden:c.garden, subsidyApplicable:c.subsidyApplicable };
   deriveDomains(rec);
   DOMAINS.forEach(dm=>{
     const cb = document.getElementById('sv-'+dm.key);
@@ -1858,12 +2068,10 @@ function applyTeamChecks(c){
       if(dm.key===myKey) d.assignee = val('n-assignee') || d.assignee || DOM_ASSIGNEE[dm.key] || '';   // 登録者が入力した担当名を最優先
       else if(!d.assignee && DOM_ASSIGNEE[dm.key]) d.assignee = DOM_ASSIGNEE[dm.key];
     } else {
-      const rs = document.getElementById('svr-'+dm.key);
-      const typed = ((rs && rs.value)||'').trim();
       // 「推奨されたのに外した」「自分で触って外した」＝明示的に不要。触っていない未推奨は自動判定（未判定）のまま残す
-      if(recommended || intakeTouched.has(dm.key) || typed){
+      if(recommended || intakeTouched.has(dm.key) || typedReason){
         d.need = 'not_required';
-        d.reason = typed || '登録時に「今回は関わらない」と選択';
+        d.reason = typedReason || '登録時に「今回は関わらない」と選択';
         d.stage = '未判定';
       }
     }
@@ -1872,51 +2080,68 @@ function applyTeamChecks(c){
 }
 function submitIntake(){
   const name = (val('n-name')||'').trim();
-  if(!name){ toast('お名前を入力してください'); return; }
+  if(!name){
+    toast('お名前を入力してください');
+    const n = document.getElementById('n-name');
+    if(n){ n.scrollIntoView({block:'center'}); n.focus(); n.style.borderColor='#E5484D'; setTimeout(()=>n.style.borderColor='', 2500); }
+    return;
+  }
   const partner   = !isAdmin();
   const roleLabel = ROLE_DEFS[ROLE].label;
   const note      = (val('n-note')||'').trim();
   const consent   = !!document.getElementById('n-consent')?.checked;
+  const types     = pickedConsults();
+  const hasProp   = !!document.getElementById('n-hasprop')?.checked;
   const id = partner ? newId('REF') : newId();
   const c = {
     id, createdAt: todayISO(), source: val('n-source') || (partner?('紹介（'+roleLabel+'）'):'手入力'),
     referredBy: partner ? ROLE : null, referredAt: partner ? todayISO() : null,
-    name, phone: val('n-phone'), email: val('n-email'), city: val('n-city'),
+    // お客様マスタ
+    name, kana: val('n-kana'), birthday: val('n-birthday'), gender: val('n-gender'),
+    phone: val('n-phone'), mobile: val('n-mobile'), email: val('n-email'),
+    city: val('n-city'), zip: val('n-zip'), address: val('n-address'), job: val('n-job'), relation: val('n-relation'),
+    family: { spouse: !!document.getElementById('n-spouse')?.checked, children: Number(val('n-children'))||0, note:'' },
+    // ご相談
+    consultTypes: types, hasProperty: hasProp,
     desiredConsult: val('n-consult'),
     assignee: partner ? '' : val('n-assignee'),
     teamNote: note ? (partner ? ('【'+roleLabel+'の所見】'+note) : note) : '',
     stage:'lead',
-    nextAction: partner ? '紹介案件の一次架電・ご挨拶' : (val('n-assignee')?'一次架電・ヒアリング':'担当割当＋一次架電'),
+    nextAction: partner ? '紹介いただいたお客様への一次ご連絡' : (val('n-assignee')?'一次架電・ヒアリング':'担当割当＋一次架電'),
     nextActionDate: todayISO(),
-    structure: val('n-structure'), tsubo: Number(val('n-tsubo'))||null, floors: val('n-floors'),
-    era: val('n-era'), road: val('n-road'), garden: val('n-garden'), zanchi: val('n-zanchi'),
-    owner: val('n-owner'), exit: val('n-exit'),
-    urgencyLevel: val('n-urg'), urgencyScore: null,
-    estimateRangeLow: Number(val('n-lo'))||null, estimateRangeHigh: Number(val('n-hi'))||null,
+    // 物件（ご相談がある場合のみ意味を持つ）
+    structure: hasProp?val('n-structure'):'', tsubo: hasProp?(Number(val('n-tsubo'))||null):null, floors: hasProp?val('n-floors'):'',
+    era: hasProp?val('n-era'):'', road: hasProp?val('n-road'):'', garden: hasProp?val('n-garden'):'', zanchi: hasProp?val('n-zanchi'):'',
+    owner: hasProp?val('n-owner'):'', exit: hasProp?val('n-exit'):'',
+    urgencyLevel: (hasProp?val('n-urg'):'') || '中', urgencyScore: null,
+    estimateRangeLow: hasProp?(Number(val('n-lo'))||null):null, estimateRangeHigh: hasProp?(Number(val('n-hi'))||null):null,
     finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施',
-    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
+    insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, chiban:'', landArea:null, rightType:'', salePriceEstimate:null,
     demolitionDate:null, inheritanceStartDate:null,
     thirdPartyConsent:{ obtained: consent, date: consent?todayISO():'', method: consent?'登録フォーム':'' },
     domains:{},
-    followHistory:[{ date:todayISO(), type:'メモ',
-      memo: partner ? ('【'+roleLabel+'】からのご紹介で登録') : ('新規起票（'+(val('n-source')||'手入力')+'）') }],
+    followHistory:[{ date:todayISO(), type:'メモ', auto:true,
+      memo: partner ? ('【'+roleLabel+'】からのご紹介で登録') : ('新規登録（'+(val('n-source')||'手入力')+'）') }],
     lostReason:null, notes:''
   };
   deriveDomains(c);
   applyTeamChecks(c);
   const team = DOMAINS.filter(dm=>c.domains[dm.key]?.need==='required').map(dm=>dm.label);
-  c.followHistory.unshift({ date:todayISO(), type:'メモ', memo:'【共有範囲】'+(team.length?team.join('・'):'なし')+'（登録時の設定）' });
-  if(partner){
-    upsert(c);                                   // updatedAt を打刻（返信・統合時の世代比較に必要）
-    localStorage.setItem('akiya_crm_dirty', todayISO());
-    closeNew(); render();
-    alert('「'+name+'様」を登録しました。\n\nこの時点ではまだ解体チームには届いていません。\n画面上部のバーにある「自分の更新を書き出して返信」を押してファイルを作り、解体チームへメール等でお送りください。');
-    toast('登録しました。次は「自分の更新を書き出して返信」でファイルを送ってください');
-  } else {
-    upsert(c); closeNew();
-    toast('案件を作成しました（共有：'+(team.length?team.join('・'):'なし')+'）');
-    openDetail(id);
+  // 登録した本人の分野には「今日やること」を立てて、当日のリストに必ず出るようにする
+  const myKey = isAdmin() ? null : roleDomain();
+  if(myKey && c.domains[myKey]?.need==='required' && !c.domains[myKey].nextDate){
+    c.domains[myKey].nextDate = todayISO();
+    if(!c.domains[myKey].next) c.domains[myKey].next = '初回ご連絡・状況の確認';
   }
+  const typeLabels = types.map(k=>CONSULT_TYPES.find(t=>t.key===k)?.label).filter(Boolean);
+  if(typeLabels.length) c.followHistory.unshift({ date:todayISO(), type:'メモ', auto:true, memo:'【ご相談の入口】'+typeLabels.join('・') });
+  c.followHistory.unshift({ date:todayISO(), type:'メモ', auto:true, memo:'【共有範囲】'+(team.length?team.join('・'):'なし')+'（登録時の設定）' });
+  upsert(c);
+  if(partner) localStorage.setItem('akiya_crm_dirty', todayISO());
+  closeNew();
+  toast('「'+name+'様」を登録しました'+(team.length?('／共有：'+team.join('・')):''));
+  openDetail(id);   // 登録できたことが必ず画面で分かるように詳細を開く
+  if(partner) setTimeout(()=>alert('「'+name+'様」を登録しました。\n\nこの時点ではまだ事務局には届いていません。\n画面上部のバーにある「自分の更新を書き出して返信」を押してファイルを作り、事務局へメール等でお送りください。'), 120);
 }
 
 /* ============================================================
@@ -1929,7 +2154,7 @@ function exportJSON(){
 function importJSON(e){
   const f = e.target.files[0]; if(!f) return;
   if(localStorage.getItem('akiya_crm_locked_role')){
-    if(!confirm('この端末は「'+(ROLE_DEFS[localStorage.getItem('akiya_crm_locked_role')]?.label||'提携先')+'モード」に固定されています。\n全データJSONを読み込むと固定が解除され、社内モードに切り替えられる状態になります。\n\n※ 解体チームから受け取った共有ファイルを開く場合は、こちらではなく「提携先データを受け取る」をお使いください。\n\n続行しますか？')){ e.target.value=''; toggleMenu(); return; }
+    if(!confirm('この端末は「'+(ROLE_DEFS[localStorage.getItem('akiya_crm_locked_role')]?.label||'提携先')+'モード」に固定されています。\n全データJSONを読み込むと固定が解除され、事務局モードに切り替えられる状態になります。\n\n※ 事務局から受け取った共有ファイルを開く場合は、こちらではなく「提携先データを受け取る」をお使いください。\n\n続行しますか？')){ e.target.value=''; toggleMenu(); return; }
   }
   const r = new FileReader();
   r.onload = ()=>{ try {
@@ -1968,56 +2193,93 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
    デモ用サンプル
    ============================================================ */
 function seedData(){
-  const mk = (o)=>{ const c=Object.assign({ finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施', demolitionDate:null, inheritanceStartDate:null, lostReason:null, notes:'', followHistory:[], insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null, referredBy:null, thirdPartyConsent:{obtained:false,date:'',method:''} }, o); if(!c.domains||!Object.keys(c.domains).length) deriveDomains(c); return c; };
+  const mk = (o)=>{ const c=Object.assign({ finalEstimate:null, subsidyApplicable:'未確認', asbestosSurvey:'未実施', demolitionDate:null, inheritanceStartDate:null, lostReason:null, notes:'', followHistory:[], insuranceStatus:'unknown', insuranceCancelDate:null, builtYear:null, zip:'', address:'', chiban:'', landArea:null, rightType:'', salePriceEstimate:null, referredBy:null, kana:'', birthday:'', gender:'', mobile:'', job:'', relation:'', family:{spouse:false,children:0,note:''}, consultTypes:[], hasProperty:true, thirdPartyConsent:{obtained:false,date:'',method:''} }, o); if(!c.domains||!Object.keys(c.domains).length) deriveDomains(c); return c; };
   return [
-    mk({ id:'AK-2026-0007', createdAt:'2026-07-14', source:'60秒診断', name:'高松 太郎', phone:'090-1111-2222', email:'taro@example.com',
+    mk({ id:'AK-2026-0007', createdAt:'2026-07-14', source:'HPの空き家診断', name:'高松 太郎', kana:'タカマツ タロウ',
+      birthday:'1962-04-08', gender:'男性', phone:'087-111-2222', mobile:'090-1111-2222', email:'taro@example.com',
+      zip:'760-0001', city:'高松市', address:'番町1-2-3', job:'会社員', relation:'ご本人（長男）', family:{spouse:true,children:2,note:''},
+      consultTypes:['inherit','demolish','sell'], hasProperty:true,
       desiredConsult:'父名義のままの実家を解体して売却したい。相続の手続きも不安。', assignee:'中谷',
       teamNote:'ご連絡は夕方以降が繋がりやすい。相続はご兄弟2人の同意が必要（キーマンは長男の太郎様）。',
-      stage:'survey', nextAction:'現地調査を実施し確定レンジ見積。司法書士と相続登記見積をセット準備', nextActionDate:'2026-07-18',
-      city:'高松市', structure:'wood', tsubo:38, floors:'2f', era:'old', road:'mid', garden:'many', zanchi:'full',
+      stage:'hearing', nextAction:'現地調査を実施し確定レンジ見積。司法書士と相続登記見積をセット準備', nextActionDate:'2026-07-18',
+      structure:'wood', tsubo:38, floors:'2f', era:'old', road:'mid', garden:'many', zanchi:'full',
       owner:'deceased', exit:'sell', urgencyLevel:'高', urgencyScore:78, estimateRangeLow:160, estimateRangeHigh:230,
       inheritanceStartDate:'2024-09-10', asbestosSurvey:'調査中', builtYear:1978, insuranceStatus:'active',
       thirdPartyConsent:{obtained:true, date:'2026-07-14', method:'書面'},
       notes:'3000万控除の本命。相続開始2024/9→控除期限2027末。相続登記→解体→滅失→売買のクリティカルパスを共有中。',
       followHistory:[{date:'2026-07-14',type:'メモ',memo:'診断完了→起票。緊急度高・名義故人・売却フラグ'},{date:'2026-07-14',type:'架電',memo:'当日接触。父名義のまま・相続未了。現地調査7/18に設定'}],
       domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'二朗さん',next:'戸籍収集・相続人確定',reason:''},
+        demolition:{need:'required',stage:'現地調査',assignee:'',next:'7/18 現地調査→確定レンジ見積',reason:''},
         demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
         tax:{need:'required',stage:'3000万控除の判定',assignee:'山田さん',next:'控除の可否判定（2027末を逆算）',reason:''},
         realestate:{need:'required',stage:'査定',assignee:'瀬尾さん',next:'現況／更地の両建て査定',reason:''},
         construction_ext:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'更地渡し・売却のため活用なし'},
         fp:{need:'required',stage:'資金ヒアリング',assignee:'中谷',next:'解体費160万超・自己資金と補助金確認',reason:''} } }),
-    mk({ id:'AK-2026-0009', createdAt:'2026-07-15', source:'問い合わせフォーム', name:'丸亀 花子', phone:'080-3333-4444', email:'hanako@example.com',
+
+    mk({ id:'AK-2026-0009', createdAt:'2026-07-15', source:'問い合わせフォーム', name:'丸亀 花子', kana:'マルガメ ハナコ',
+      birthday:'1971-11-23', gender:'女性', phone:'', mobile:'080-3333-4444', email:'hanako@example.com',
+      zip:'763-0001', city:'丸亀市', address:'城西町2-4-5', job:'自営業', relation:'ご本人', family:{spouse:true,children:1,note:''},
+      consultTypes:['demolish','use','money'], hasProperty:true,
       desiredConsult:'自分名義の古い倉庫を解体して駐車場か新築を検討。費用が心配。', assignee:'中谷',
       teamNote:'費用重視のお客様。見積は内訳を丁寧に説明する。日中はお仕事のためSMS連絡が確実。',
-      stage:'estimate', nextAction:'活用プラン比較と解体＋造成の一体見積を提示。FP資金計画', nextActionDate:'2026-07-20',
-      city:'丸亀市', structure:'lightSteel', tsubo:25, floors:'1f', era:'mid', road:'wide', garden:'few', zanchi:'half',
+      stage:'proposal', nextAction:'活用プラン比較と解体＋造成の一体見積を提示。FP資金計画', nextActionDate:'2026-07-20',
+      structure:'lightSteel', tsubo:25, floors:'1f', era:'mid', road:'wide', garden:'few', zanchi:'half',
       owner:'self', exit:'use', urgencyLevel:'中', urgencyScore:42, estimateRangeLow:95, estimateRangeHigh:140, finalEstimate:118, subsidyApplicable:'該当なし', asbestosSurvey:'無し',
-      notes:'self名義で相続登記不要。再建築可否を確認中。解体〜造成〜新築の連結受注でLTV最大化狙い。',
-      followHistory:[{date:'2026-07-15',type:'メモ',memo:'フォーム送信→起票。self名義・活用フラグ'},{date:'2026-07-15',type:'架電',memo:'接触。駐車場か新築で迷い。現調済で見積段階へ'}],
+      notes:'ご本人名義で相続登記不要。再建築可否を確認中。解体〜造成〜新築を一体でご提案。',
+      followHistory:[{date:'2026-07-15',type:'メモ',memo:'フォーム送信→起票。ご本人名義・活用フラグ'},{date:'2026-07-15',type:'架電',memo:'接触。駐車場か新築で迷い。現調済で見積段階へ'}],
       domains:{ inheritance_reg:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'名義がご本人のため登記不要'},
+        demolition:{need:'required',stage:'見積提示',assignee:'',next:'解体＋造成の一体見積を提示',reason:''},
         demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
         tax:{need:'undetermined',stage:'未判定',assignee:'',next:'活用（非売却）。固定資産税のみ後続確認',reason:''},
         realestate:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'活用予定のため売却不要'},
         construction_ext:{need:'required',stage:'プラン提示',assignee:'植原さん',next:'駐車場/新築の比較・再建築可否確認',reason:''},
         fp:{need:'required',stage:'資金計画',assignee:'中谷',next:'解体＋造成資金のローン候補提示',reason:''} } }),
-    mk({ id:'AK-2026-0011', createdAt:'2026-07-16', source:'60秒診断', name:'坂出 次郎', phone:'090-5555-6666', email:'jiro@example.com',
+
+    mk({ id:'AK-2026-0011', createdAt:'2026-07-16', source:'HPの空き家診断', name:'坂出 次郎', kana:'サカイデ ジロウ',
+      birthday:'1955-02-17', gender:'男性', phone:'', mobile:'090-5555-6666', email:'jiro@example.com',
+      zip:'762-0001', city:'坂出市', address:'京町3-1-1', job:'年金受給', relation:'お孫様', family:{spouse:true,children:3,note:''},
+      consultTypes:['regist','demolish'], hasProperty:true,
       desiredConsult:'名義が誰か分からない祖父の家。近所から苦情が来ている。', assignee:'未割当',
-      teamNote:'⚠近隣から苦情あり＝近隣対応は最優先で丁寧に。前面道路は私道の可能性（掘削承諾の要確認）。',
+      teamNote:'近隣から苦情あり＝近隣対応は最優先で丁寧に。前面道路は私道の可能性（掘削承諾の要確認）。',
       stage:'lead', nextAction:'当日中に一次架電（緊急度高）。不通ならSMS＋メール。登記簿取得を案内', nextActionDate:'2026-07-16',
-      city:'坂出市', structure:'wood', tsubo:45, floors:'2f', era:'old', road:'narrow', garden:'normal', zanchi:'full',
+      structure:'wood', tsubo:45, floors:'2f', era:'old', road:'narrow', garden:'normal', zanchi:'full',
       owner:'unknown', exit:'undecided', urgencyLevel:'高', urgencyScore:85, estimateRangeLow:180, estimateRangeHigh:260,
       notes:'最上流ゲート案件。名義不明→登記簿取得が最優先。私道接道で掘削承諾も要確認。出口未定。緊急度高で放置厳禁。',
       followHistory:[{date:'2026-07-16',type:'メモ',memo:'診断完了→起票。緊急度85（老朽・私道・名義不明・満載）。近隣苦情=特定空家リスク'}],
       domains:{ inheritance_reg:{need:'required',stage:'名義確認',assignee:'二朗さん',next:'登記簿取得で名義確定',reason:''},
+        demolition:{need:'required',stage:'未判定',assignee:'',next:'名義確定後に現地調査',reason:''},
         demolition_reg:{need:'required',stage:'解体完了待ち',assignee:'田村さん',next:'解体完了待ち',reason:''},
         tax:{need:'undetermined',stage:'未判定',assignee:'',next:'出口未定のため保留',reason:''},
         realestate:{need:'undetermined',stage:'未判定',assignee:'',next:'査定で出口確定後に判断',reason:''},
         construction_ext:{need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''},
         fp:{need:'required',stage:'未判定',assignee:'',next:'概算180万超・資金懸念の可能性',reason:''} } }),
+
+    /* 不動産を伴わない相談（税理士が入口）＝士業ワンストップの代表例 */
+    mk({ id:'REF-2026-0021', createdAt:'2026-07-22', source:'紹介（税理士）', name:'観音寺 佐知子', kana:'カンオンジ サチコ',
+      birthday:'1948-06-30', gender:'女性', phone:'0875-00-0000', mobile:'090-7777-8888', email:'sachiko@example.com',
+      zip:'768-0001', city:'観音寺市', address:'柞田町4-5-6', job:'無職', relation:'ご本人（配偶者を亡くされた）', family:{spouse:false,children:2,note:''},
+      consultTypes:['inherit','tax','money'], hasProperty:false,
+      referredBy:'tax', referredAt:'2026-07-22',
+      desiredConsult:'夫が亡くなり、相続の手続きと今後の生活費が不安。不動産はないが預金と保険がある。', assignee:'中谷',
+      teamNote:'ご高齢・おひとりでのご来所。専門用語を避け、書類は当方で揃える前提で進める。',
+      stage:'contact', nextAction:'相続人・財産の一覧づくり（税理士と同席）', nextActionDate:'2026-08-08',
+      structure:'', tsubo:null, floors:'', era:'', road:'', garden:'', zanchi:'', owner:'', exit:'',
+      urgencyLevel:'中', urgencyScore:null, estimateRangeLow:null, estimateRangeHigh:null,
+      inheritanceStartDate:'2026-06-18',
+      thirdPartyConsent:{obtained:true, date:'2026-07-22', method:'書面'},
+      notes:'不動産なし。相続税の申告要否と、遺族年金を含む生活資金の見通しが論点。',
+      followHistory:[{date:'2026-07-22',type:'メモ',memo:'【税理士】からのご紹介で登録。相続開始2026/6/18＝申告期限2027/4/18'},{date:'2026-07-25',type:'面談',memo:'初回面談。預金・保険の一覧を次回までにご用意いただく'}],
+      domains:{ inheritance_reg:{need:'required',stage:'相続人確定',assignee:'二朗さん',next:'戸籍収集・相続人確定',reason:''},
+        demolition:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'不動産のご相談なし'},
+        demolition_reg:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'不動産のご相談なし'},
+        tax:{need:'required',stage:'課税論点の洗い出し',assignee:'山田さん',next:'相続税の申告要否（期限2027/4/18）',reason:''},
+        realestate:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'不動産のご相談なし'},
+        construction_ext:{need:'not_required',stage:'未判定',assignee:'',next:'',reason:'不動産のご相談なし'},
+        fp:{need:'required',stage:'資金ヒアリング',assignee:'中谷',next:'遺族年金と生活費の見通し・保険の請求漏れ確認',reason:''} } }),
   ];
 }
 function loadSeed(force){
-  if(force && !confirm('現在のデータをサンプル3件で置き換えます。よろしいですか？')) return;
+  if(force && !confirm('現在のデータをサンプル4件で置き換えます。よろしいですか？')) return;
   DB = seedData(); save(); if(force){ toggleMenu(); render(); toast('サンプルを読み込みました'); }
 }
 

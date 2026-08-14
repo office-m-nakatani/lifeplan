@@ -219,6 +219,30 @@
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
     .loan-monthly-box{ margin-top:14px; padding:14px 14px 12px; background:var(--blue-pale); border:1px solid var(--blue-pale2); border-radius:12px; }
+    /* お客様モード（共有リンクで開いたとき）のご案内バー */
+    .cust-box{ display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-top:12px; padding:14px 16px;
+      background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:12px; }
+    .cust-main{ flex:1 1 320px; min-width:260px; }
+    .cust-title{ font-weight:800; font-size:1rem; color:var(--blue-deep); display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .cust-lead{ font-size:.86rem; line-height:1.75; color:var(--ink); margin:0; }
+    .cust-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; flex:0 1 auto; }
+    @media(max-width:560px){ .cust-actions{ width:100%; } .cust-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
+    .cust-guide{ font-size:.85rem; line-height:1.75; color:var(--ink); margin:8px 0 0; padding:9px 11px; background:#fff; border:1px solid var(--blue-pale2); border-radius:9px; }
+    .cust-inline-link{ background:none; border:none; padding:0 2px; color:var(--blue-deep); font-family:inherit; font-size:1em; font-weight:700; text-decoration:underline; cursor:pointer; }
+    /* 「最初の内容に戻す」の確認パネル（ボタンの文字を入れ替えず、専用の枠で受ける） */
+    .cust-confirm{ flex:1 1 100%; margin-top:10px; padding:11px 13px; background:#fff; border:1.5px solid var(--warn); border-radius:10px; }
+    .cust-confirm p{ margin:0 0 9px; font-size:.86rem; line-height:1.7; }
+    .cust-confirm-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    @media(max-width:560px){ .cust-confirm-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
+    /* お客様モードでは、担当者専用の操作（アカウント保存・共有リンク作成）を隠す */
+    body.customer-mode #btn-save{ display:none !important; }
+    /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
+    .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
+      font-size:.78rem; text-decoration:underline; cursor:pointer; }
+    .cust-advisor-link:hover{ color:var(--blue-deep); }
+    /* 「最初の内容に戻す」の確認待ち（2段階目）を目立たせる */
+    .btn.btn-warn{ background:var(--warn); border-color:var(--warn); color:#fff; }
+    .btn.btn-warn:hover{ filter:brightness(.95); }
     /* もしもの検証（ストレステスト）：注意色の枠・ON中のチップは警告色 */
     .stress-box{ margin-top:14px; padding:14px 14px 12px; background:#fffdf6; border:1.5px dashed var(--warn); border-radius:12px; }
     .stress-box .lp-title{ font-size:.85rem; font-weight:700; color:#a06a10; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
@@ -825,11 +849,35 @@
     </div>
   </section>
 
+  <!-- お客様モード（共有リンクで開いたとき）のご案内と操作 -->
+  <div class="wrap no-print hidden" id="customer-bar">
+    <div class="cust-box">
+      <div class="cust-main">
+        <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
+        <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
+        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">結果を見る</button>で「金融資産の推移」と「現状 と 将来 をくらべる」をご覧ください。そのあと、気になる数字（<b>①ご夫婦の年収</b>／<b>⑤毎月の積立額</b>／<b>③住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+      </div>
+      <div class="cust-actions">
+        <button class="btn btn-ghost btn-sm" type="button" id="cust-reset"><i class="fa-solid fa-rotate-left"></i> 最初の内容に戻す</button>
+        <button class="btn btn-primary btn-sm" type="button" id="cust-sendback"><i class="fa-solid fa-paper-plane"></i> 担当者に送る</button>
+        <button type="button" id="cust-wipe" class="cust-advisor-link">この端末から消して閉じる</button>
+      </div>
+      <!-- 「最初の内容に戻す」の確認（誤タップで変更が消えないように） -->
+      <div class="cust-confirm hidden" id="cust-reset-confirm">
+        <p><b>変更を取り消して、担当者が作成した内容に戻します。</b>この画面でご自身が変更された数字は消えます（元に戻せません）。よろしいですか？</p>
+        <div class="cust-confirm-actions">
+          <button class="btn btn-ghost btn-sm" type="button" id="cust-reset-cancel">やめる</button>
+          <button class="btn btn-sm btn-warn" type="button" id="cust-reset-do"><i class="fa-solid fa-rotate-left"></i> 変更を消して戻す</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 自動保存ドラフトの復元バナー（誤リロード対策） -->
   <div class="wrap no-print hidden" id="draft-banner">
     <div class="note" style="background:var(--blue-pale); border:1.5px solid var(--blue-pale2); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <i class="fa-solid fa-clock-rotate-left" style="color:var(--blue-deep);"></i>
-      <span style="flex:1; min-width:200px;"><b>前回の入力データがあります</b><span id="draft-when"></span>。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※入力内容はこの端末のブラウザ内にのみ自動保存されます（外部への送信はありません）。共用の端末では「破棄して新規」をご利用ください。</span></span>
+      <span style="flex:1; min-width:200px;" id="draft-text"><b>前回の入力データがあります</b><span id="draft-when"></span>。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※入力内容はこの端末のブラウザ内にのみ自動保存されます（外部への送信はありません）。共用の端末では「破棄して新規」をご利用ください。</span></span>
       <button class="btn btn-primary btn-sm" type="button" id="draft-restore"><i class="fa-solid fa-rotate-left"></i> 復元する</button>
       <button class="btn btn-ghost btn-sm" type="button" id="draft-discard">破棄して新規</button>
     </div>
@@ -1654,10 +1702,11 @@
       </div>
       <div class="modal-body">
         <div id="share-setup">
-          <p class="at-note">いま画面に表示している内容を、お客様がご自身のスマホ・パソコンで確認できるリンクを作成します。データはリンクの中に暗号化して埋め込むだけなので、サーバーへの保存は行いません（費用もかかりません）。</p>
+          <p class="at-note">いま画面に表示している<b>現状プラン・将来プランの両方</b>を、お客様がご自身のスマホ・パソコンで確認・操作できるリンクにします。データは<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存しません（費用もかかりません）。リンクは長くなりますが、LINE・メールともそのまま開けます。</p>
           <div class="field" style="margin-bottom:12px;">
             <label>閲覧用パスワード（お客様にお伝えください）</label>
-            <input type="text" id="share-pass" placeholder="例：4桁の数字など" autocomplete="off">
+            <input type="text" id="share-pass" placeholder="例：Y2026kaigi など" autocomplete="off">
+            <span class="hint">お客様の大切な情報を守るため、<b>8文字以上・数字だけにしない</b>ことをおすすめします（生年月日・電話番号は避けてください）。リンクとパスワードは<b>別々の方法</b>でお伝えいただくとより安全です。</span>
           </div>
           <button class="btn btn-primary btn-sm btn-full" id="share-make" type="button"><i class="fa-solid fa-link"></i> 共有リンクを作成</button>
           <div class="lock-err" id="share-err"></div>
@@ -1670,6 +1719,31 @@
           </div>
           <button class="btn btn-primary btn-sm btn-full" id="share-copy" type="button"><i class="fa-solid fa-copy"></i> コピーする</button>
           <p class="at-note" style="margin-top:10px;">※ このリンクとパスワードを知っている人は誰でも閲覧できます。お客様ご本人にのみお伝えください。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== お客様 → 担当者へ 送り返し モーダル ===================== -->
+  <div class="modal-overlay" id="sendback-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="担当者に送る">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-paper-plane"></i> 担当者に送る</h3>
+        <button class="modal-close" id="sendback-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="sendback-setup">
+          <p class="at-note">いま画面に表示している<b>変更後の内容</b>を、担当者が開けるリンクにします。内容は<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存されません。パスワードは、担当者からお伝えしたものと同じものが使われます。</p>
+          <button class="btn btn-primary btn-sm btn-full" id="sendback-make" type="button"><i class="fa-solid fa-link"></i> 送信用のリンクを作る</button>
+          <div class="lock-err" id="sendback-err"></div>
+        </div>
+        <div id="sendback-result" hidden>
+          <p class="at-note">下のボタンを押すと、<b>LINE・メールなどの送り先を選ぶ画面</b>が開きます（開かない端末では文章がコピーされますので、LINE・メールに貼り付けてお送りください）。<b>このボタンだけでは担当者に届きません</b>ので、最後に送信までお願いします。</p>
+          <div class="field" style="margin-bottom:10px;">
+            <label>担当者に送るメッセージ</label>
+            <textarea id="sendback-msg" rows="6" readonly></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="sendback-copy" type="button"><i class="fa-solid fa-share-from-square"></i> LINE・メールで送る（コピー）</button>
         </div>
       </div>
     </div>
@@ -1736,7 +1810,8 @@
     </div>
   </div>
 
-  <a href="#results" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</a>
+  <!-- 共有リンク（#share=…）を壊さないよう、href ではなくスクロールで結果へ移動する -->
+  <button type="button" id="jump-result" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</button>
 
   <!-- ============================= FOOTER ============================= -->
   <footer class="foot">
@@ -1765,6 +1840,7 @@
         </ul>
       </details>
       <p style="margin-bottom:6px;"><b>本サイトは一条工務店株式会社の公式サイト・提携サイトではありません。</b>公表情報をもとに、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した非公式の試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<!-- 【一条フック】非公式・運営主体・利益相反の表示 --></p>
+      <p class="no-print hidden" id="cust-advisor-wrap" style="margin-bottom:6px;"><button type="button" id="cust-advisor" class="cust-advisor-link">（担当者の方へ）このリンクを担当者として開く</button></p>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
@@ -3529,20 +3605,37 @@
        recomputeのたびに1秒デバウンスで両プランをlocalStorageへ保存。起動時にドラフトがあれば
        復元バナーを表示（復元/破棄をユーザーが選ぶまでは上書き保存しない） */
     const DRAFT_KEY = 'lifeplan_ichijo_draft_v1';
+    const SHARED_DRAFT_KEY = 'lifeplan_ichijo_shared_v1';     // お客様モードの保存先（担当者自身のドラフトと混ざらないよう分離）
     const DRAFT_TTL_MS = 7*24*60*60*1000;                     // ドラフトの有効期限：7日（古い顧客情報を残さない）
-    const SHARED_VIEW = location.hash.indexOf('#share=') === 0;   // 共有リンク閲覧＝顧客データを端末に自動保存しない
+    const UNLOCK_KEY = 'lifeplan_ichijo_unlock';   // sessionStorage：同じタブでの再読込み時に解錠状態を引き継ぐ
+    const UNLOCK_TTL_MS = 30*60*1000;              // 解錠の引き継ぎは30分まで（放置した端末で開きっぱなしにしない）
+    function readUnlockCache(){
+      try{
+        const u = JSON.parse(sessionStorage.getItem(UNLOCK_KEY) || 'null');
+        if(!u || !u.code || !u.at || (Date.now() - u.at) > UNLOCK_TTL_MS){ sessionStorage.removeItem(UNLOCK_KEY); return null; }
+        return u;
+      }catch(e){ return null; }
+    }
+    // 共有リンクで開いた＝お客様モード。ページ内リンク等でハッシュが失われても、同じタブなら解錠情報から判定する
+    const SHARED_VIEW = location.hash.indexOf('#share=') === 0 || !!readUnlockCache();
     let draftHold = false;        // 復元バナー表示中は自動保存を止める（デモ初期値でドラフトを潰さない）
     let demoSnapshot = null;      // 起動直後のデモ初期値のスナップショット（無編集なら保存しない）
     let draftTimer = null;
+    let shareUnlocked = false;    // 共有リンクのパスワードを解錠済みか（解錠前は何も保存しない）
+    let customerMode = false;     // お客様モード表示中か（保存先を共有キーに分ける。担当者に切り替えたら false）
+    let shareFp = '';             // 共有リンクの識別子（別のリンクの内容を取り違えて復元しないため）
     function scheduleDraftSave(){
-      if(SHARED_VIEW || draftHold || _refreshingSum) return;
+      if(draftHold || _refreshingSum) return;
+      if(SHARED_VIEW && !shareUnlocked) return;                // 解錠前（パスワード入力中）は保存しない
       clearTimeout(draftTimer);
       draftTimer = setTimeout(()=>{
         if(draftHold) return;                                  // タイマー発火時に再チェック（初期化競合でドラフトを潰さない）
         try{
           const plans = collectPlans();
-          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集のデモ初期値は保存しない
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ plans, savedAt: Date.now() }));
+          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集（デモ初期値／共有された内容のまま）は保存しない
+          const rec = { plans, savedAt: Date.now() };
+          if(customerMode) rec.fp = shareFp;                   // お客様の変更は共有リンクごとに区別して保存
+          localStorage.setItem(customerMode ? SHARED_DRAFT_KEY : DRAFT_KEY, JSON.stringify(rec));
         }catch(e){}
       }, 1000);
     }
@@ -3561,7 +3654,14 @@
       if(!banner){ draftHold = false; return; }
       const when = d.savedAt ? new Date(d.savedAt) : null;
       const label = when ? `${when.getMonth()+1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2,'0')}` : '';
-      const wEl = $('draft-when'); if(wEl && label) wEl.textContent = `（${label}保存）`;
+      // 誰の下書きかが分かるように、保存されているお名前を併記する（別のお客様のデータを開く事故を防ぐ）
+      let who = '';
+      try{
+        const f = d.plans && d.plans.genjo && d.plans.genjo.state && d.plans.genjo.state.fields;
+        const nm = f && (f['h-name']||'').trim();
+        if(nm) who = `${nm}様 / `;
+      }catch(e){}
+      const wEl = $('draft-when'); if(wEl && (who||label)) wEl.textContent = `（${who}${label}保存）`;
       banner.classList.remove('hidden');
       $('draft-restore').addEventListener('click', ()=>{
         banner.classList.add('hidden'); draftHold = false;
@@ -3961,9 +4061,13 @@
       [...tabs.querySelectorAll('button')].forEach(b=> b.classList.toggle('active', b.dataset.plan===PLANS.active));
       document.body.classList.toggle('plan-mirai', PLANS.active==='mirai');
       const hint = $('plan-hint');
-      if(hint) hint.innerHTML = PLANS.active==='genjo'
-        ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
-        : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span >／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。';
+      if(hint) hint.innerHTML = document.body.classList.contains('customer-mode')
+        ? (PLANS.active==='genjo'
+            ? '<b>現状プラン</b>＝いまのままの家計です。上の「<b>将来プラン</b>」に切り替えると、担当者がご提案した内容（住まい・保険・積立など）でどう変わるかをご覧いただけます。'
+            : '<b>将来プラン</b>＝ご提案の内容です。数字を変えると、現状との差が <span class="diff-plus">青（増える）</span>／<span class="diff-minus">赤（減る）</span> で表示されます。2つのタブは<b>見比べるためのもの</b>で、切り替えても入力は消えません。')
+        : (PLANS.active==='genjo'
+            ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
+            : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span >／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。');
       updatePrintHeader();
     }
     // 印刷・PDFの1行目：どちらのプランか・作成日・ストレスシナリオ適用中ならその前提を必ず明記
@@ -4024,7 +4128,9 @@
         PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
         PLANS.mirai = { state: pl.mirai && pl.mirai.state || null, sum: pl.mirai && pl.mirai.sum || null };
         PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
-        miraiTouched = !!(PLANS.mirai.state);   // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従
+        // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従。
+        // 共有リンクで「将来をまだ作っていない」印（miraiUntouched）が付いていれば、中身が同じでも追従させる
+        miraiTouched = saved.miraiUntouched ? false : !!(PLANS.mirai.state);
         updatePlanTabs();
         if(PLANS[PLANS.active].state){ restoreWifeWork(PLANS[PLANS.active].state); applyState(PLANS[PLANS.active].state); }
         refreshInactiveSum();                   // 読込直後から両タブを開かずに比較を表示（古い形式のsumも作り直す）
@@ -4608,6 +4714,14 @@
 
     // すべての入力変更で再計算
     $('input-panel').addEventListener('input', recompute);
+
+    // 「結果を見る」：URLのハッシュ（共有リンクのデータ）を書き換えずに結果へスクロール
+    const gotoResults = ()=>{
+      const el = $('results') || document.querySelector('.results');
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    if($('jump-result')) $('jump-result').addEventListener('click', gotoResults);
+    if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
     // 妻の働き方を変える予定：ON/OFFと期間追加
     if($('wife-worklife')) $('wife-worklife').addEventListener('change', ()=>{ toggleWifeWorklife(); onWifeWorkChange(); });
@@ -6202,6 +6316,7 @@
       for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
       return bytes;
     }
+    // 旧リンク（過去に発行済み）の復号にだけ使う簡易XOR。新規作成では使わない（下のAES-GCMに置き換え済み）
     function xorBytes(bytes, password){
       const key = new TextEncoder().encode(password||'');
       if(!key.length) return bytes;
@@ -6209,6 +6324,31 @@
       for(let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ key[i%key.length];
       return out;
     }
+    /* ---------- 共有リンクの暗号化（AES-GCM 256 ＋ PBKDF2）----------
+       ブラウザ標準のWeb Crypto APIだけで完結（追加費用・サーバー・外部ライブラリなし）。
+       パスワードから毎回ランダムな塩で鍵を作り直すため、同じ内容でも毎回別の暗号文になる。
+       復号時は改ざん・パスワード誤りを自動検出（GCMの認証タグ）。 */
+    const PBKDF2_ITER = 210000;
+    async function aesKeyFromPassword(password, salt){
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password||''), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:PBKDF2_ITER, hash:'SHA-256' },
+        base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+    }
+    async function aesEncrypt(bytes, password){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv   = crypto.getRandomValues(new Uint8Array(12));
+      const key  = await aesKeyFromPassword(password, salt);
+      const ct   = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, bytes));
+      const out  = new Uint8Array(salt.length + iv.length + ct.length);
+      out.set(salt, 0); out.set(iv, salt.length); out.set(ct, salt.length + iv.length);
+      return out;
+    }
+    async function aesDecrypt(packed, password){
+      const salt = packed.slice(0,16), iv = packed.slice(16,28), ct = packed.slice(28);
+      const key  = await aesKeyFromPassword(password, salt);
+      return new Uint8Array(await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct));
+    }
+    const canEncrypt = ()=> !!(window.crypto && crypto.subtle && crypto.subtle.deriveKey);
     // 共有リンクを短くするため、入力の初期値（HTMLのdefault）を算出。
     // 初期値と同じ項目は共有データから省く（受け取り側も同じ初期値から復元するので情報は失われない）
     function shareDefaultFields(){
@@ -6230,16 +6370,43 @@
       const ds=new DecompressionStream('gzip'); const w=ds.writable.getWriter(); w.write(bytes); w.close();
       return new Uint8Array(await new Response(ds.readable).arrayBuffer());
     }
-    // 新形式（先頭"~"）＝ 初期値との差分JSON → gzip → パスワードでXOR → base64url。
-    // 未対応ブラウザや失敗時は旧形式（非圧縮）にフォールバック。
+    // 1つのプラン（state）を、初期値との差分だけに圧縮／復元する
+    function slimStateForShare(st, DEF){
+      if(!st) return null;
+      const full = st.fields || {};
+      const diff = {};
+      Object.keys(full).forEach(id=>{ if(String(full[id])!==String(DEF[id])) diff[id]=full[id]; });
+      const o = Object.assign({}, st, { f:diff }); delete o.fields; return o;
+    }
+    function fatStateFromShare(o){
+      if(!o) return null;
+      const s = Object.assign({}, o);
+      s.fields = Object.assign({}, shareDefaultFields(), o.f||{});
+      delete s.f; return s;
+    }
+    // 現行形式（先頭"^"）＝ 現状プラン＋将来プランの両方を差分JSON → gzip → パスワードでXOR → base64url。
+    // お客様側でも「現状と将来をくらべる」がそのまま見られる。将来が現状と同一なら重複を省いてURLを短くする。
+    // 集計結果（sum）は送らず、受け取り側で再計算する（URLを短く保つため）。
+    async function encodeSharePlans(plansObj, password){
+      if(!canEncrypt()) throw new Error('no-crypto');   // 暗号化できない環境ではリンクを作らない（保護なしで顧客情報を出さない）
+      const DEF = shareDefaultFields();
+      const g = slimStateForShare(plansObj.genjo && plansObj.genjo.state, DEF);
+      const m = slimStateForShare(plansObj.mirai && plansObj.mirai.state, DEF);
+      const same = m && g && JSON.stringify(m)===JSON.stringify(g);
+      // same＝担当者が将来プランをまだ作っていない状態。受け取り側でも「現状に追従」させるため印を残す
+      const payload = { v:3, a: (plansObj.active==='mirai' ? 'm' : 'g'), g, m: same ? 1 : m, u: same ? 1 : 0 };
+      let body = new TextEncoder().encode(JSON.stringify(payload));
+      let head = '*';                                   // AES-GCM（非圧縮）
+      if(typeof CompressionStream!=='undefined'){
+        try{ body = await gzipBytes(body); head = '*z'; }catch(e){ /* 圧縮できなければ非圧縮のまま */ }
+      }
+      return head + b64urlEncode(await aesEncrypt(body, password));
+    }
+    // 旧形式（先頭"~"）＝ 1プランのみ。過去に発行したリンクとの互換のため残す。
     async function encodeShareState(stateObj, password){
       if(typeof CompressionStream!=='undefined'){
         try{
-          const DEF = shareDefaultFields();
-          const full = stateObj.fields || {};
-          const diff = {};
-          Object.keys(full).forEach(id=>{ if(String(full[id])!==String(DEF[id])) diff[id]=full[id]; });
-          const slim = Object.assign({}, stateObj, { f:diff }); delete slim.fields;
+          const slim = slimStateForShare(stateObj, shareDefaultFields());
           const gz = await gzipBytes(new TextEncoder().encode(JSON.stringify(slim)));
           return '~' + b64urlEncode(xorBytes(gz, password));
         }catch(e){ /* 失敗時は下の旧形式へ */ }
@@ -6247,19 +6414,36 @@
       const bytes = new TextEncoder().encode(JSON.stringify(stateObj));
       return b64urlEncode(xorBytes(bytes, password));
     }
+    // 両プラン形式のペイロード → applyPlans() に渡せる形
+    function plansFromPayload(p){
+      const g = fatStateFromShare(p.g);
+      const m = (p.m===1) ? (g ? JSON.parse(JSON.stringify(g)) : null) : fatStateFromShare(p.m);
+      return { plans: { active: (p.a==='m' ? 'mirai' : 'genjo'),
+                        genjo:{ state:g, sum:null }, mirai:{ state:m, sum:null } },
+               miraiUntouched: p.u===1 };   // 将来プラン未作成のまま共有された＝受け取り側でも現状に追従させる
+    }
+    // 復元：applyPlans() に渡せる形（{plans:…} または {state:…}）で返す
     async function decodeShareState(str, password){
+      if(str && str.charAt(0)==='*'){        // 現行：AES-GCM（'*z'＝gzip圧縮あり）
+        const gz = str.charAt(1)==='z';
+        const raw = await aesDecrypt(b64urlDecode(str.slice(gz?2:1)), password);
+        const bytes = gz ? await gunzipBytes(raw) : raw;
+        return plansFromPayload(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+      }
+      if(str && str.charAt(0)==='^'){        // 旧：XOR＋gzipの両プラン形式（過去に発行したリンク）
+        const gz = xorBytes(b64urlDecode(str.slice(1)), password);
+        const bytes = await gunzipBytes(gz);
+        return plansFromPayload(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+      }
       if(str && str.charAt(0)==='~'){
         const gz = xorBytes(b64urlDecode(str.slice(1)), password);
         const bytes = await gunzipBytes(gz);
-        const slim = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes));
-        slim.fields = Object.assign({}, shareDefaultFields(), slim.f||{});
-        delete slim.f;
-        return slim;
+        return { state: fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes))) };
       }
-      // 旧形式（非圧縮）
+      // 最も古い形式（非圧縮・1プラン）
       const dec = xorBytes(b64urlDecode(str), password);
       const json = new TextDecoder('utf-8', {fatal:true}).decode(dec);
-      return JSON.parse(json);
+      return { state: JSON.parse(json) };
     }
 
     const shareModal = $('share-modal');
@@ -6270,42 +6454,50 @@
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
-    // LINE等でリンクが途切れないよう、URLを短縮する（da.gd）。失敗時は元の長いURLを返す（＝共有はできる）。
-    // 埋め込みデータはパスワードで暗号化済みのため、短縮サービス側では中身を読めない。
-    async function shortenShareUrl(longUrl){
-      try{
-        const ctrl = new AbortController();
-        const timer = setTimeout(()=> ctrl.abort(), 7000);
-        const res = await fetch('https://da.gd/shorten?url=' + encodeURIComponent(longUrl), { signal: ctrl.signal });
-        clearTimeout(timer);
-        if(res.ok){
-          const short = (await res.text()).trim();
-          if(/^https?:\/\/\S+$/.test(short) && short.length < longUrl.length) return short;
-        }
-      }catch(e){ /* 失敗時は長いURLのまま */ }
-      return longUrl;   // 短縮に失敗しても長いURLで共有できる（機能自体は止めない）
-    }
+    // 【重要】URL短縮サービス（da.gd）の利用は廃止しました。
+    // 短縮は「短縮したいURL」をそのサービスへ送信する仕組みのため、お客様の氏名・年収・資産を含む
+    // リンクが外部（海外）の第三者サービスへ渡り、そこに保存され続けることになります。
+    // 個人情報の外部提供にあたるため、リンクは長いままお送りする方式に統一しました
+    // （LINE・メールとも長いURLでそのまま開けます）。
+    function shortenShareUrl(longUrl){ return longUrl; }
     if($('share-make')) $('share-make').addEventListener('click', async ()=>{
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
       const btn = $('share-make'); const orig = btn.textContent; btn.disabled=true; btn.textContent='リンク作成中…';
       try{
-        const code = await encodeShareState(collectState(), pass);
+        const code = await encodeSharePlans(collectPlans(), pass);   // 現状・将来の両プランを共有（比較もそのまま見られる）
         // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
         const longUrl = 'https://office-m-nakatani.github.io/lifeplan/ichijo.html' + '#share=' + code;   // 【一条フック】共有URLの飛び先
         const url = await shortenShareUrl(longUrl);   // 短くしてLINEで開けるように
         const nm = ($('h-name')?.value||'').trim();
-        $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
+        $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}\n\n※ 画面の数字（年収・積立額・住宅ローンなど）は、${nm?nm+'様':'お客様'}ご自身で自由に変更してお試しいただけます。変更した内容は、そのスマホ・パソコンの中だけに保存され、次に開いたときも続きから確認できます。\n※ 気になる形になりましたら、画面上部の青い案内の中にある「担当者に送る」からお知らせください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
-      }catch(e){ $('share-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
+      }catch(e){
+        $('share-err').textContent = (e && e.message==='no-crypto')
+          ? 'このブラウザ・開き方では暗号化ができないため、安全のためリンクを作成しませんでした。公開URL（https://office-m-nakatani.github.io/lifeplan/ichijo.html）から開いてお試しください。'
+          : 'リンクの作成に失敗しました。もう一度お試しください。';
+      }
       finally{ btn.disabled=false; btn.textContent=orig; }
     });
-    if($('share-copy')) $('share-copy').addEventListener('click', ()=>{
-      const ta=$('share-msg'); ta.select();
-      const done=()=> alert('コピーしました。LINEやメールに貼り付けてお送りください。');
-      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ document.execCommand('copy'); done(); }); }
-      else { document.execCommand('copy'); done(); }
-    });
+    /* メッセージを送る／コピーする共通処理。
+       スマホでは端末の共有シート（LINE・メール等）を直接開き、非対応時のみコピーにフォールバック。
+       コピーは成否を確認し、失敗したら「手動で選択してコピー」を案内する（成功と偽らない）。 */
+    async function shareOrCopyText(textarea, okMsg){
+      const text = textarea.value;
+      if(navigator.share){
+        try{ await navigator.share({ text }); return; }
+        catch(e){ if(e && e.name==='AbortError') return; /* 共有をやめた場合は何もしない */ }
+      }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        try{ await navigator.clipboard.writeText(text); alert(okMsg); return; }catch(e){ /* 下の方法へ */ }
+      }
+      textarea.removeAttribute('readonly'); textarea.focus(); textarea.select();
+      let ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+      textarea.setAttribute('readonly','');
+      alert(ok ? okMsg : 'この端末では自動コピーができませんでした。上の文章を長押し（またはドラッグ）して全体を選び、コピーしてお送りください。');
+    }
+    if($('share-copy')) $('share-copy').addEventListener('click', ()=> shareOrCopyText($('share-msg'), 'コピーしました。LINEやメールに貼り付けてお送りください。'));
 
     // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
     (function(){
@@ -6341,30 +6533,202 @@
     updatePlanTabs();
     initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
 
-    // お客様専用ページ：共有リンク（#share=...）で開いた場合、パスワード入力後に内容を復元する
+    /* ============================================================
+       お客様専用ページ（共有リンクで開いたとき）
+       ・パスワードで解錠 → 担当者が作った内容を表示
+       ・お客様ご自身が数字を変えられ、その内容はこの端末にだけ自動保存される
+       ・「最初の内容に戻す」でいつでも共有された状態へ復帰
+       ・「担当者に送る」で変更後の内容をリンクにして返信できる
+       ============================================================ */
     (function(){
+      const cachedUnlock = readUnlockCache();
       const m = location.hash.match(/#share=([^&]+)/);
-      if(!m) return;
-      const code = m[1];
+      // ページ内の移動などでハッシュが消えても、同じタブなら解錠情報からリンクを復帰させる
+      const code = m ? m[1] : (cachedUnlock ? cachedUnlock.code : null);
+      if(!code) return;
       const modal = $('viewer-gate-modal');
       if(!modal) return;
-      modal.hidden = false;
-      const tryOpen = async ()=>{
-        const pass = ($('viewer-pass').value||'').trim();
-        $('viewer-err').textContent='';
-        if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
+      if(!m) history.replaceState(null, '', location.pathname + location.search + '#share=' + code);   // URLも元に戻す
+      shareFp = (()=>{ let h=5381; for(let i=0;i<code.length;i++) h=((h<<5)+h+code.charCodeAt(i))>>>0; return 'fp'+h.toString(36)+'-'+code.length; })();
+      let sharePass = '';
+      let shareOrigin = null;   // 共有された最初の内容（「最初の内容に戻す」用）
+
+      // 保存済みの「続き」を読む（同じ共有リンクのもの・期限内のものだけ）
+      // 期限切れ・別のリンクのものは「読まない」だけでなく端末から消す（顧客情報を残さない）
+      const readSharedDraft = ()=>{
         try{
-          const state = await decodeShareState(code, pass);
-          applyPlans({ state: state });
-          setCurrentSave(null);
-          modal.hidden = true;
-          history.replaceState(null, '', location.pathname + location.search);
-        }catch(e){
-          $('viewer-err').textContent='パスワードが正しくないか、リンクが壊れています。もう一度お確かめください。';
+          const d = JSON.parse(localStorage.getItem(SHARED_DRAFT_KEY) || 'null');
+          if(!d || !d.plans) return null;
+          if(d.fp !== shareFp || (d.savedAt && (Date.now() - d.savedAt) > DRAFT_TTL_MS)){
+            localStorage.removeItem(SHARED_DRAFT_KEY);
+            return null;
+          }
+          return d;
+        }catch(e){ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(_){} return null; }
+      };
+      const clearSharedDraft = ()=>{ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(e){} };
+
+      // 共有された内容に戻す（お客様の変更を破棄）
+      const applyOrigin = ()=>{
+        if(!shareOrigin) return;
+        draftHold = true;
+        // 「もしもの検証」が入ったままだと元に戻したのに数字が厳しいままになるため、あわせて解除する
+        if(typeof STRESS!=='undefined' && (STRESS.rateBump>0 || STRESS.incomeCut>0)){
+          STRESS.rateBump = 0; STRESS.incomeCut = 0;
+          if(typeof updateStressUI==='function') updateStressUI();
+        }
+        applyPlans(JSON.parse(JSON.stringify(shareOrigin)));
+        demoSnapshot = JSON.stringify(collectPlans());   // 戻した直後は「未編集」＝保存しない
+        clearSharedDraft();
+        draftHold = false;
+      };
+
+      const enterCustomerMode = (decoded, pass)=>{
+        sharePass = pass;
+        shareOrigin = JSON.parse(JSON.stringify(decoded));
+        draftHold = true;                    // 復元の選択が終わるまで自動保存しない
+        applyPlans(decoded);
+        setCurrentSave(null);
+        document.body.classList.add('customer-mode');
+        modal.hidden = true;
+        shareUnlocked = true; customerMode = true;
+        // 同じタブでの再読込み用（30分で失効。タブを閉じても消える）
+        try{ sessionStorage.setItem(UNLOCK_KEY, JSON.stringify({ fp:shareFp, pass, code, at:Date.now() })); }catch(e){}
+
+        const nm = ($('h-name')?.value||'').trim();
+        const hello = $('cust-hello');
+        if(hello) hello.textContent = nm ? `${nm}様 専用ページ` : 'お客様専用ページ';
+        const bar = $('customer-bar'); if(bar) bar.classList.remove('hidden');
+        const adv = $('cust-advisor-wrap'); if(adv) adv.classList.remove('hidden');   // 担当者用の切替はフッターに小さく出す
+        updatePlanTabs();   // プランの説明文をお客様向けの言い回しに切り替える（customer-mode 付与後に呼ぶ）
+
+        // 前回の続きがあれば、続きから／共有された内容から を選んでいただく
+        const saved = readSharedDraft();
+        const banner = $('draft-banner');
+        if(saved && banner){
+          const when = saved.savedAt ? new Date(saved.savedAt) : null;
+          const label = when ? `（${when.getMonth()+1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2,'0')}時点）` : '';
+          const t = $('draft-text');
+          if(t) t.innerHTML = `<b>前回このページでご覧になった続きがあります</b>${label}。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※変更内容はこの端末のブラウザ内にのみ保存されています（外部への送信はありません）。</span>`;
+          const rb = $('draft-restore'); if(rb) rb.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 続きから';
+          const db = $('draft-discard'); if(db) db.textContent = '共有された内容で見る';
+          banner.classList.remove('hidden');
+          $('draft-restore').addEventListener('click', ()=>{
+            banner.classList.add('hidden');
+            applyPlans(saved);
+            demoSnapshot = JSON.stringify(collectPlans());
+            draftHold = false;
+          });
+          $('draft-discard').addEventListener('click', ()=>{
+            banner.classList.add('hidden');
+            applyOrigin();
+          });
+          // バナーを読み飛ばしてそのまま数字を触り始めた場合＝「共有された内容から編集」とみなし、
+          // バナーを閉じて自動保存を再開する（変更が保存されないまま消える事故を防ぐ）
+          const panel = $('input-panel');
+          if(panel) panel.addEventListener('input', ()=>{
+            if(banner.classList.contains('hidden')) return;
+            banner.classList.add('hidden');
+            draftHold = false;
+            scheduleDraftSave();
+          }, { once:true });
+        } else {
+          demoSnapshot = JSON.stringify(collectPlans());   // 共有された内容そのままなら保存しない
+          draftHold = false;
         }
       };
+
+      let opening = false;
+      const tryOpen = async ()=>{
+        if(opening || shareUnlocked) return;   // 二度押しで二重に開かない
+        // 全角の数字・英字で入力されても開けるように半角へ揃える
+        const pass = ($('viewer-pass').value||'').replace(/[Ａ-Ｚａ-ｚ０-９]/g, c=> String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/　/g,' ').trim();
+        $('viewer-err').textContent='';
+        if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
+        opening = true;
+        const btn = $('viewer-open'); const orig = btn.innerHTML; btn.disabled = true; btn.textContent = '確認中…';
+        try{
+          enterCustomerMode(await decodeShareState(code, pass), pass);
+        }catch(e){
+          $('viewer-err').innerHTML = 'パスワードが違うか、リンクが途中で切れている可能性があります。<br>お手元のメッセージのパスワードをもう一度お確かめのうえ、リンクは<b>全体をコピー</b>して開いてください。ご不明なときは担当者までご連絡ください。';
+        }finally{ opening = false; btn.disabled = false; btn.innerHTML = orig; }
+      };
       $('viewer-open').addEventListener('click', tryOpen);
-      $('viewer-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryOpen(); });
+      $('viewer-pass').addEventListener('keydown', e=>{
+        if(e.isComposing || e.keyCode===229) return;
+        if(e.key==='Enter') tryOpen();
+      });
+
+      // 「最初の内容に戻す」：押し間違いで変更が消えないよう、専用の確認パネルで受ける
+      // （ボタンの文字を入れ替える方式は、幅が変わって隣のボタンがずれ、かえって誤タップを招くためやめた）
+      const confirmBox = $('cust-reset-confirm');
+      if($('cust-reset')) $('cust-reset').addEventListener('click', ()=>{
+        if(confirmBox){ confirmBox.classList.remove('hidden'); confirmBox.scrollIntoView({ block:'nearest' }); }
+      });
+      if($('cust-reset-cancel')) $('cust-reset-cancel').addEventListener('click', ()=>{ if(confirmBox) confirmBox.classList.add('hidden'); });
+      if($('cust-reset-do')) $('cust-reset-do').addEventListener('click', ()=>{
+        if(confirmBox) confirmBox.classList.add('hidden');
+        applyOrigin();
+      });
+
+      // 「担当者の方はこちら」：お客様から返信されたリンクを担当者が開いたとき、
+      // 保存・共有などの担当者向け機能を使えるようにする（自動保存の保存先も担当者側へ切り替える）
+      if($('cust-advisor')) $('cust-advisor').addEventListener('click', ()=>{
+        if(!confirm('担当者モードに切り替えます。\n\n・お客様向けの案内と「最初の内容に戻す」「担当者に送る」は表示されなくなります\n・この内容は、以降このパソコンの下書きとして保存されます\n・お客様モードに戻すには、ページを再読み込みしてください\n\n切り替えますか？')) return;
+        document.body.classList.remove('customer-mode');
+        const bar = $('customer-bar'); if(bar) bar.classList.add('hidden');
+        const adv = $('cust-advisor-wrap'); if(adv) adv.classList.add('hidden');
+        customerMode = false;   // 以降の自動保存は担当者側のドラフトへ（お客様用の保存先には書かない）
+        demoSnapshot = JSON.stringify(collectPlans());   // 切替直後の状態は「未編集」＝タブを見ただけで下書きに残さない
+      });
+
+      // 「この端末から消して閉じる」：共用のパソコン・借りた端末で見たときに、自分の情報を残さない
+      if($('cust-wipe')) $('cust-wipe').addEventListener('click', ()=>{
+        if(!confirm('この端末に保存されている変更内容と、開いている情報を消します。\n（担当者からのリンクとパスワードがあれば、いつでもまた開けます）\n\n消してよろしいですか？')) return;
+        clearSharedDraft();
+        try{ sessionStorage.removeItem(UNLOCK_KEY); }catch(e){}
+        location.replace(location.pathname + location.search);   // ハッシュごと外して読み込み直す
+      });
+
+      // 「担当者に送る」：変更後の内容を、担当者が開けるリンクにして返信できるようにする
+      const sbModal = $('sendback-modal');
+      const openSendback = ()=>{
+        if(!sbModal) return;
+        $('sendback-setup').hidden=false; $('sendback-result').hidden=true; $('sendback-err').textContent='';
+        sbModal.hidden=false;
+      };
+      if($('cust-sendback')) $('cust-sendback').addEventListener('click', openSendback);
+      if($('sendback-close')) $('sendback-close').addEventListener('click', ()=> sbModal.hidden=true);
+      if(sbModal) sbModal.addEventListener('click', (e)=>{ if(e.target===sbModal) sbModal.hidden=true; });
+      if($('sendback-make')) $('sendback-make').addEventListener('click', async ()=>{
+        if(!sharePass){ $('sendback-err').textContent='お手元のリンクをもう一度開き、パスワードを入力してからお試しください。'; return; }
+        // 「もしもの検証」は共有リンクに含まれないため、表示中なら先にお知らせする
+        if(typeof STRESS!=='undefined' && (STRESS.rateBump>0 || STRESS.incomeCut>0)){
+          if(!confirm('いま「もしもの検証」（金利や収入を厳しめにした表示）がオンになっています。\nこの前提は担当者に送るリンクには含まれません（通常の前提で送られます）。\n\nこのまま作成しますか？')) return;
+        }
+        const btn = $('sendback-make'); const orig = btn.innerHTML; btn.disabled=true; btn.textContent='リンク作成中…';
+        try{
+          const c = await encodeSharePlans(collectPlans(), sharePass);
+          const longUrl = 'https://office-m-nakatani.github.io/lifeplan/ichijo.html' + '#share=' + c;   // 【一条フック】共有URLの飛び先
+          const url = await shortenShareUrl(longUrl);
+          const nm = ($('h-name')?.value||'').trim();
+          $('sendback-msg').value = `${nm?nm+'です。\n':''}ライフプランの数字を変更してみましたので、ご確認をお願いします。\n\n下記のリンクを開き、いただいたパスワードを入力してください。\n${url}\n\n（担当者の方へ：開いた画面の一番下にある「（担当者の方へ）このリンクを担当者として開く」から、保存などの操作ができます）`;
+          $('sendback-setup').hidden=true; $('sendback-result').hidden=false;
+        }catch(e){ $('sendback-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
+        finally{ btn.disabled=false; btn.innerHTML=orig; }
+      });
+      if($('sendback-copy')) $('sendback-copy').addEventListener('click', ()=> shareOrCopyText($('sendback-msg'), 'コピーしました。LINEやメールで担当者にお送りください。'));
+
+      // リロード時：同じタブで解錠済みならパスワードを再入力せずに開く
+      let cached = null;
+      try{ cached = JSON.parse(sessionStorage.getItem(UNLOCK_KEY) || 'null'); }catch(e){}
+      if(cached && cached.fp === shareFp && cached.pass){
+        decodeShareState(code, cached.pass)
+          .then(dec=> enterCustomerMode(dec, cached.pass))
+          .catch(()=>{ modal.hidden = false; });
+      } else {
+        modal.hidden = false;
+      }
     })();
 
   })();

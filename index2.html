@@ -6321,8 +6321,10 @@
 
     /* ============================================================
        お客様への共有リンク（サーバー不要・費用ゼロ）
-       いまの入力内容をパスワードでXOR暗号化してURLの#に埋め込み、
-       お客様がご自身の端末でリンク＋パスワードを開くと同じ内容を見られる
+       いまの入力内容をパスワードで暗号化してURLの#に埋め込み、
+       お客様がご自身の端末でリンク＋パスワードを開くと同じ内容を見られる。
+       暗号はブラウザ標準の AES-GCM 256（＋PBKDF2）。URLの#はサーバーへ送信されないため、
+       リンク自体が外部に渡ることはない（短縮サービスも使わない。下の shortenShareUrl 参照）。
        ============================================================ */
     function b64urlEncode(bytes){
       let bin=''; bytes.forEach(b=> bin+=String.fromCharCode(b));
@@ -6336,6 +6338,7 @@
       for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
       return bytes;
     }
+    // 旧リンク（過去に発行済み）の復号にだけ使う簡易XOR。新規作成では使わない（下のAES-GCMに置き換え済み）
     function xorBytes(bytes, password){
       const key = new TextEncoder().encode(password||'');
       if(!key.length) return bytes;
@@ -6343,6 +6346,31 @@
       for(let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ key[i%key.length];
       return out;
     }
+    /* ---------- 共有リンクの暗号化（AES-GCM 256 ＋ PBKDF2）----------
+       ブラウザ標準のWeb Crypto APIだけで完結（追加費用・サーバー・外部ライブラリなし）。
+       パスワードから毎回ランダムな塩で鍵を作り直すため、同じ内容でも毎回別の暗号文になる。
+       復号時は改ざん・パスワード誤りを自動検出（GCMの認証タグ）。 */
+    const PBKDF2_ITER = 210000;
+    async function aesKeyFromPassword(password, salt){
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password||''), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:PBKDF2_ITER, hash:'SHA-256' },
+        base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+    }
+    async function aesEncrypt(bytes, password){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv   = crypto.getRandomValues(new Uint8Array(12));
+      const key  = await aesKeyFromPassword(password, salt);
+      const ct   = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, bytes));
+      const out  = new Uint8Array(salt.length + iv.length + ct.length);
+      out.set(salt, 0); out.set(iv, salt.length); out.set(ct, salt.length + iv.length);
+      return out;
+    }
+    async function aesDecrypt(packed, password){
+      const salt = packed.slice(0,16), iv = packed.slice(16,28), ct = packed.slice(28);
+      const key  = await aesKeyFromPassword(password, salt);
+      return new Uint8Array(await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct));
+    }
+    const canEncrypt = ()=> !!(window.crypto && crypto.subtle && crypto.subtle.deriveKey);
     // 共有リンクを短くするため、入力の初期値（HTMLのdefault）を算出。
     // 初期値と同じ項目は共有データから省く（受け取り側も同じ初期値から復元するので情報は失われない）
     function shareDefaultFields(){
@@ -6364,33 +6392,42 @@
       const ds=new DecompressionStream('gzip'); const w=ds.writable.getWriter(); w.write(bytes); w.close();
       return new Uint8Array(await new Response(ds.readable).arrayBuffer());
     }
-    // 新形式（先頭"~"）＝ 初期値との差分JSON → gzip → パスワードでXOR → base64url。
-    // 未対応ブラウザや失敗時は旧形式（非圧縮）にフォールバック。
+    // 1つのプラン（state）を、初期値との差分だけに圧縮／復元する
+    function slimStateForShare(st, DEF){
+      const full = st.fields || {};
+      const diff = {};
+      Object.keys(full).forEach(id=>{ if(String(full[id])!==String(DEF[id])) diff[id]=full[id]; });
+      const o = Object.assign({}, st, { f:diff }); delete o.fields; return o;
+    }
+    function fatStateFromShare(o){
+      const s = Object.assign({}, o);
+      s.fields = Object.assign({}, shareDefaultFields(), o.f||{});
+      delete s.f; return s;
+    }
+    // 現行形式（先頭"*"）＝ 初期値との差分JSON → gzip → パスワードでAES-GCM暗号化 → base64url。
+    // （'*z'＝gzip圧縮あり。CompressionStream 非対応ブラウザでは非圧縮の '*'）
     async function encodeShareState(stateObj, password){
+      if(!canEncrypt()) throw new Error('no-crypto');   // 暗号化できない環境ではリンクを作らない（保護なしで顧客情報を出さない）
+      let body = new TextEncoder().encode(JSON.stringify(slimStateForShare(stateObj, shareDefaultFields())));
+      let head = '*';                                   // AES-GCM（非圧縮）
       if(typeof CompressionStream!=='undefined'){
-        try{
-          const DEF = shareDefaultFields();
-          const full = stateObj.fields || {};
-          const diff = {};
-          Object.keys(full).forEach(id=>{ if(String(full[id])!==String(DEF[id])) diff[id]=full[id]; });
-          const slim = Object.assign({}, stateObj, { f:diff }); delete slim.fields;
-          const gz = await gzipBytes(new TextEncoder().encode(JSON.stringify(slim)));
-          return '~' + b64urlEncode(xorBytes(gz, password));
-        }catch(e){ /* 失敗時は下の旧形式へ */ }
+        try{ body = await gzipBytes(body); head = '*z'; }catch(e){ /* 圧縮できなければ非圧縮のまま */ }
       }
-      const bytes = new TextEncoder().encode(JSON.stringify(stateObj));
-      return b64urlEncode(xorBytes(bytes, password));
+      return head + b64urlEncode(await aesEncrypt(body, password));
     }
     async function decodeShareState(str, password){
-      if(str && str.charAt(0)==='~'){
+      if(str && str.charAt(0)==='*'){        // 現行：AES-GCM（'*z'＝gzip圧縮あり）
+        const gz = str.charAt(1)==='z';
+        const raw = await aesDecrypt(b64urlDecode(str.slice(gz?2:1)), password);
+        const bytes = gz ? await gunzipBytes(raw) : raw;
+        return fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+      }
+      if(str && str.charAt(0)==='~'){        // 旧：XOR＋gzip（過去に発行したリンク。復号のみ対応）
         const gz = xorBytes(b64urlDecode(str.slice(1)), password);
         const bytes = await gunzipBytes(gz);
-        const slim = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes));
-        slim.fields = Object.assign({}, shareDefaultFields(), slim.f||{});
-        delete slim.f;
-        return slim;
+        return fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
       }
-      // 旧形式（非圧縮）
+      // 最も古い形式（XOR・非圧縮・差分なし）
       const dec = xorBytes(b64urlDecode(str), password);
       const json = new TextDecoder('utf-8', {fatal:true}).decode(dec);
       return JSON.parse(json);
@@ -6404,21 +6441,12 @@
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
-    // LINE等でリンクが途切れないよう、URLを短縮する（da.gd）。失敗時は元の長いURLを返す（＝共有はできる）。
-    // 埋め込みデータはパスワードで暗号化済みのため、短縮サービス側では中身を読めない。
-    async function shortenShareUrl(longUrl){
-      try{
-        const ctrl = new AbortController();
-        const timer = setTimeout(()=> ctrl.abort(), 7000);
-        const res = await fetch('https://da.gd/shorten?url=' + encodeURIComponent(longUrl), { signal: ctrl.signal });
-        clearTimeout(timer);
-        if(res.ok){
-          const short = (await res.text()).trim();
-          if(/^https?:\/\/\S+$/.test(short) && short.length < longUrl.length) return short;
-        }
-      }catch(e){ /* 失敗時は長いURLのまま */ }
-      return longUrl;   // 短縮に失敗しても長いURLで共有できる（機能自体は止めない）
-    }
+    // 【重要】URL短縮サービス（da.gd）の利用は廃止しました。
+    // 短縮は「短縮したいURL」をそのサービスへ送信する仕組みのため、お客様の氏名・年収・資産を含む
+    // リンクが外部（海外）の第三者サービスへ渡り、そこに保存され続けることになります。
+    // 個人情報の外部提供にあたるため、リンクは長いままお送りする方式に統一しました
+    // （LINE・メールとも長いURLでそのまま開けます）。
+    function shortenShareUrl(longUrl){ return longUrl; }
     if($('share-make')) $('share-make').addEventListener('click', async ()=>{
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
@@ -6427,11 +6455,15 @@
         const code = await encodeShareState(collectState(), pass);
         // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
         const longUrl = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
-        const url = await shortenShareUrl(longUrl);   // 短くしてLINEで開けるように
+        const url = await shortenShareUrl(longUrl);
         const nm = ($('h-name')?.value||'').trim();
         $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
-      }catch(e){ $('share-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
+      }catch(e){
+        $('share-err').textContent = (e && e.message==='no-crypto')
+          ? 'このブラウザ・開き方では暗号化ができないため、安全のためリンクを作成しませんでした。公開URL（https://office-m-nakatani.github.io/lifeplan/）から開いてお試しください。'
+          : 'リンクの作成に失敗しました。もう一度お試しください。';
+      }
       finally{ btn.disabled=false; btn.textContent=orig; }
     });
     if($('share-copy')) $('share-copy').addEventListener('click', ()=>{

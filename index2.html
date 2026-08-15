@@ -4491,6 +4491,19 @@
     }
     $('btn-send').addEventListener('click', sendPDF);
 
+    /* Ctrl+S（Mac は ⌘+S）でPDFを作る。
+       ブラウザ標準の Ctrl+S は「ウェブページ、完全」保存で、HTMLと _files フォルダ
+       （Chart.js・html2canvas・jsPDF・Font Awesome・Google Fonts）が散らばるうえ、
+       保存が途中で終わると .ダウンロード のまま残り、開き直してもグラフもアイコンも出ない。
+       お客様の資料として残す用途では常に PDF が正解なので、こちらへ寄せる。 */
+    document.addEventListener('keydown', (e)=>{
+      if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      if((e.key||'').toLowerCase() !== 's') return;
+      e.preventDefault();                      // ページ保存ダイアログを出させない
+      if($('btn-send').disabled) return;       // 作成中の二重起動を防ぐ
+      sendPDF();
+    });
+
     /* ============================================================
        詳細（項目別の表）モーダル
        ============================================================ */

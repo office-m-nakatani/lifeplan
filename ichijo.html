@@ -1863,7 +1863,7 @@
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
-          <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。</li>
+          <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。<b>団信の上乗せ金利</b>（がん団信等）を入力した場合は全期間の金利に加算します。「もしもの検証（ストレステスト）」は<b>表示のみの一時的な前提</b>で、保存されません（<b>実際の金利・収入の変動がその範囲に収まることを示すものではありません</b>）。</li>
           <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、耐震等級3（一条工務店の家を選択時）＝50%割引、一般住宅＝新築の建築年割引10%で計算します（等級割引の適用には確認資料が必要）。</li>
           <li><b>住宅ローン控除</b>：年末残高×0.7%・最大13年を、<b>住宅性能×子育て世帯等（入居時に18歳以下のお子さま、または夫婦いずれか40歳未満）</b>の上限（一条選択時＝ZEH水準31.5万円/24.5万円、一般住宅＝省エネ基準28万円/21万円）と、<b>名義人ごとの納税額（所得税＋住民税の控除対象分・上限9.75万円）の概算</b>の両方でキャップして計上します。ペアローンはご夫婦それぞれの割合・枠・納税額で計算します（控除枠が実質2人分）。子育て世帯の上限特例は2025年入居の制度水準で、以降の延長は制度改正をご確認ください。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
           <!-- 【一条フック】一条向け免責 -->
@@ -6487,7 +6487,24 @@
       const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
     });
     // 印刷・PDF時は「計算の前提」を開いた状態で出力する（お客様に渡る振り返り資料に前提を残す）
-    window.addEventListener('beforeprint', ()=> document.querySelectorAll('details.premise').forEach(d=> d.open = true));
+    /* Ctrl+P やスマホの「共有→印刷」からPDF化されたときも、折りたたみの中身を紙に載せる。
+       印刷ボタン（enterPdfMode）を通らない経路だと、保険業法上の打消し表示が入った
+       ic-fold が閉じたまま印刷され、注意書きの無い紙が独り歩きしてしまう。
+       ※ wasOpen がすでに入っているとき＝印刷ボタン経由で enterPdfMode が先に記録済み。
+          上書きすると印刷後に全部開いたままになるので、そのときは触らない。 */
+    window.addEventListener('beforeprint', ()=>{
+      document.querySelectorAll('details.premise, details.ic-fold').forEach(d=>{
+        if(d.dataset.wasOpen === undefined) d.dataset.wasOpen = d.open ? '1' : '';
+        d.open = true;
+      });
+    });
+    window.addEventListener('afterprint', ()=>{
+      document.querySelectorAll('details.premise, details.ic-fold').forEach(d=>{
+        if(d.dataset.wasOpen === undefined) return;
+        d.open = d.dataset.wasOpen === '1';
+        delete d.dataset.wasOpen;
+      });
+    });
     // 年金月額の目安プリセット（会社員・自営業など働き方別）
     document.addEventListener('click', (e)=>{
       const p = e.target.closest('.pen-preset'); if(!p) return;

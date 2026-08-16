@@ -719,6 +719,13 @@
       .brand .mark{ width:34px; height:34px; }
     }
 
+    /* 「使い方・前提を見る」の折りたたみ（打消し表示の直下に置くので、押せると分かる見た目にする） */
+    .ic-fold{ margin-top:10px; }
+    .ic-fold summary{ cursor:pointer; font-size:.8rem; font-weight:700; color:var(--blue-deep); text-align:center; padding:8px 10px; border:1.5px dashed var(--blue-pale2); border-radius:10px; list-style:none; }
+    .ic-fold summary::-webkit-details-marker{ display:none; }
+    .ic-fold summary:hover{ background:var(--blue-pale); }
+    .ic-fold[open] summary{ margin-bottom:8px; }
+
     /* モバイル：結果へジャンプ */
     .jump-result{ display:none; }
     @media(max-width:999px){
@@ -1260,15 +1267,17 @@
               <span class="lt-label" style="color:#a8497e;"><i class="fa-solid fa-file-shield"></i> 死亡保障の合計</span>
               <span class="lt-value" id="ins-sum-value"></span>
             </div>
+            <!-- 保障を減らす判断に直結する注意（保険業法上の打消し表示）は、
+                 折りたたまずに常に見える位置へ置く（同一視野で読めるようにするため） -->
+            <div class="note" style="margin-bottom:8px; background:var(--warn-pale); border-color:var(--warn);">
+              <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
+              <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障は、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+            </div>
             <details class="ic-fold" style="margin-top:0; margin-bottom:12px;">
-              <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
+              <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
               <div class="note" style="margin-bottom:8px;">
                 <i class="fa-solid fa-scale-balanced"></i>
                 <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。保障額は、上の「万が一の備え」診断で計算した<b>必要保障額を下回らない範囲</b>でご検討ください。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、結果の「万一のときの死亡保障額」カードでご覧いただけます。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
-              </div>
-              <div class="note" style="margin-bottom:8px;">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
               </div>
               <div class="note" style="margin-bottom:0;">
                 <i class="fa-solid fa-file-lines"></i>
@@ -1404,8 +1413,13 @@
           <div id="hkd-table"></div>
           <div class="seg no-print" id="hkd-member-seg" style="margin:10px 0 6px;"></div>
           <div class="chart-box"><canvas id="hokenDiffChart"></canvas></div>
+          <!-- 保障を減らす判断に直結する注意は折りたたまず常に表示する（保険業法上の打消し表示） -->
+          <div class="note" style="margin-top:10px; background:var(--warn-pale); border-color:var(--warn);">
+            <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
+            <span>保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+          </div>
           <details class="ic-fold">
-            <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
+            <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
             <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ 保障を減らす方向の見直しは、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。なお、AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。保険の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時の返戻金が払込保険料を下回ることがある</b>などの注意点があります。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
@@ -5984,7 +5998,24 @@
       const b = e.target.closest('.chat-chip'); if(b) sendChat(b.dataset.q);
     });
     // 印刷・PDF時は「計算の前提」を開いた状態で出力する（お客様に渡る振り返り資料に前提を残す）
-    window.addEventListener('beforeprint', ()=> document.querySelectorAll('details.premise').forEach(d=> d.open = true));
+    /* Ctrl+P やスマホの「共有→印刷」からPDF化されたときも、折りたたみの中身を紙に載せる。
+       印刷ボタン（enterPdfMode）を通らない経路だと、保険業法上の打消し表示が入った
+       ic-fold が閉じたまま印刷され、注意書きの無い紙が独り歩きしてしまう。
+       ※ wasOpen がすでに入っているとき＝印刷ボタン経由で enterPdfMode が先に記録済み。
+          上書きすると印刷後に全部開いたままになるので、そのときは触らない。 */
+    window.addEventListener('beforeprint', ()=>{
+      document.querySelectorAll('details.premise, details.ic-fold').forEach(d=>{
+        if(d.dataset.wasOpen === undefined) d.dataset.wasOpen = d.open ? '1' : '';
+        d.open = true;
+      });
+    });
+    window.addEventListener('afterprint', ()=>{
+      document.querySelectorAll('details.premise, details.ic-fold').forEach(d=>{
+        if(d.dataset.wasOpen === undefined) return;
+        d.open = d.dataset.wasOpen === '1';
+        delete d.dataset.wasOpen;
+      });
+    });
     // 年金月額の目安プリセット（会社員・自営業など働き方別）
     document.addEventListener('click', (e)=>{
       const p = e.target.closest('.pen-preset'); if(!p) return;

@@ -1719,7 +1719,7 @@
       </div>
       <div class="modal-body">
         <div id="share-setup">
-          <p class="at-note">いま画面に表示している<b>現状プラン・将来プランの両方</b>を、お客様がご自身のスマホ・パソコンで確認・操作できるリンクにします。データは<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存しません（費用もかかりません）。リンクは長くなりますが、LINE・メールともそのまま開けます。</p>
+          <p class="at-note">いま画面に表示している<b>現状プラン・将来プランの両方</b>を、お客様がご自身のスマホ・パソコンで確認・操作できるリンクにします。データは<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存しません（費用もかかりません）。リンクは長くなりますが、LINE・メールともそのまま開けます。<br><b>有効期限は発行から2週間です。</b>期限を過ぎるとお客様の画面では開けなくなりますので、その場合はここで作り直してお送りください。</p>
           <div class="field" style="margin-bottom:12px;">
             <label>閲覧用パスワード（お客様にお伝えください）</label>
             <input type="text" id="share-pass" placeholder="例：Y2026kaigi など" autocomplete="off">
@@ -1756,7 +1756,7 @@
       </div>
       <div class="modal-body">
         <div id="sendback-setup">
-          <p class="at-note">いま画面に表示している<b>変更後の内容</b>を、担当者が開けるリンクにします。内容は<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存されません。パスワードは、担当者からお伝えしたものと同じものが使われます。</p>
+          <p class="at-note">いま画面に表示している<b>変更後の内容</b>を、担当者が開けるリンクにします。内容は<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存されません。パスワードは、担当者からお伝えしたものと同じものが使われます。<br>作成したデータは<b>2週間</b>ご利用いただけます。</p>
           <button class="btn btn-primary btn-sm btn-full" id="sendback-make" type="button"><i class="fa-solid fa-link"></i> 送信用のリンクを作る</button>
           <div class="lock-err" id="sendback-err"></div>
         </div>
@@ -3652,13 +3652,20 @@
     const DRAFT_KEY = 'lifeplan_ichijo_draft_v1';
     const SHARED_DRAFT_KEY = 'lifeplan_ichijo_shared_v1';     // お客様モードの保存先（担当者自身のドラフトと混ざらないよう分離）
     const DRAFT_TTL_MS = 14*24*60*60*1000;                    // ドラフトの有効期限：2週間（古い顧客情報を残さない）
-    /* 保存期限（最後に変更した日から2週間）の残り日数。
-       お客様に「あと何日」を正直にお伝えするために、画面と共有メッセージの両方で使う。
-       期限が切れても消えるのは端末内の変更内容だけで、データとパスワードがあればいつでも開き直せる。 */
-    function draftExpiryInfo(savedAt){
-      const end = new Date((savedAt || Date.now()) + DRAFT_TTL_MS);
+    /* 共有データ（お客様にお渡しするリンク）の有効期限：発行から2週間。
+       期限は暗号化した中身に入れるので、お客様の端末では書き換えられない。
+       期限を過ぎたデータは開かず、担当者に作り直していただく（古い試算がいつまでも
+       独り歩きしないようにするための期限）。
+       ※ 期限を入れる前に発行したデータは、これまでどおり期限なしで開ける。 */
+    const SHARE_TTL_MS = 14*24*60*60*1000;
+    // 期限の表示用（◯年◯月◯日／あと◯日）。画面の案内バーと共有メッセージの両方で使う
+    function expiryInfo(atMs){
+      const end = new Date(atMs);
       const days = Math.max(0, Math.ceil((end.getTime() - Date.now()) / (24*60*60*1000)));
       return { end, days, label:`${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日` };
+    }
+    function assertShareNotExpired(at){
+      if(typeof at === 'number' && Date.now() > at) throw new Error('expired');
     }
     const UNLOCK_KEY = 'lifeplan_ichijo_unlock';   // sessionStorage：同じタブでの再読込み時に解錠状態を引き継ぐ
     const UNLOCK_TTL_MS = 30*60*1000;              // 解錠の引き継ぎは30分まで（放置した端末で開きっぱなしにしない）
@@ -3677,7 +3684,6 @@
     let shareUnlocked = false;    // 共有リンクのパスワードを解錠済みか（解錠前は何も保存しない）
     let customerMode = false;     // お客様モード表示中か（保存先を共有キーに分ける。担当者に切り替えたら false）
     let shareFp = '';             // 共有リンクの識別子（別のリンクの内容を取り違えて復元しないため）
-    let onCustomerDraftSaved = null;   // お客様モードで自動保存したあとに残り日数の表示を更新する（下のIIFEで差し込む）
     function scheduleDraftSave(){
       if(draftHold || _refreshingSum) return;
       if(SHARED_VIEW && !shareUnlocked) return;                // 解錠前（パスワード入力中）は保存しない
@@ -3690,7 +3696,6 @@
           const rec = { plans, savedAt: Date.now() };
           if(customerMode) rec.fp = shareFp;                   // お客様の変更は共有リンクごとに区別して保存
           localStorage.setItem(customerMode ? SHARED_DRAFT_KEY : DRAFT_KEY, JSON.stringify(rec));
-          if(customerMode && onCustomerDraftSaved) onCustomerDraftSaved();   // 「あと何日」を保存のたびに引き直す
         }catch(e){}
       }, 1000);
     }
@@ -7092,7 +7097,9 @@
       const m = slimStateForShare(plansObj.mirai && plansObj.mirai.state, DEF);
       const same = m && g && JSON.stringify(m)===JSON.stringify(g);
       // same＝担当者が将来プランをまだ作っていない状態。受け取り側でも「現状に追従」させるため印を残す
-      const payload = { v:3, a: (plansObj.active==='mirai' ? 'm' : 'g'), g, m: same ? 1 : m, u: same ? 1 : 0 };
+      // e＝有効期限（発行から2週間）。暗号化した中身に入れるので、受け取り側では書き換えられない
+      const payload = { v:3, a: (plansObj.active==='mirai' ? 'm' : 'g'), g, m: same ? 1 : m, u: same ? 1 : 0,
+                        e: Date.now() + SHARE_TTL_MS };
       // 現行形式（先頭"*d"）＝ キー名を番号に置換 ＋ deflate-raw。お渡しするデータが約3割短くなる
       if(canDeflateRaw()){
         const t = [SHARE_TOP_KEYS.length, SHARE_ROW_KEYS.length, SHARE_FIELD_IDS.length];
@@ -7153,8 +7160,11 @@
         const t = p.t || [];
         // 表が並べ替え・削除されていたら、数字が狂ったまま表示せずに止める
         if(shareTableSig(t[0],t[1],t[2]) !== p.x) throw new Error('table-mismatch');
-        return plansFromPayload(Object.assign({}, p, { g: unpackSlimState(p.g),
+        assertShareNotExpired(p.e);   // 発行から2週間を過ぎたデータは開かない
+        const out = plansFromPayload(Object.assign({}, p, { g: unpackSlimState(p.g),
           m: (p.m===1 ? 1 : unpackSlimState(p.m)) }));
+        out.expiresAt = (typeof p.e === 'number' ? p.e : null);   // 画面に「あと何日」を出すために渡す
+        return out;
       }
       if(str && str.charAt(0)==='*'){        // 旧：AES-GCM（'*z'＝gzip圧縮あり）
         const gz = str.charAt(1)==='z';
@@ -7204,7 +7214,7 @@
         const code = await encodeSharePlans(collectPlans(), pass);   // 現状・将来の両プランを共有（比較もそのまま見られる）
         const url = SHARE_BASE_URL + '#open';
         const nm = ($('h-name')?.value||'').trim();
-        const exp = draftExpiryInfo(null);   // お客様の端末に変更内容が残る期限（あと何日）をご案内に入れる
+        const exp = expiryInfo(Date.now() + SHARE_TTL_MS);   // このデータの有効期限（あと何日）をご案内に入れる
         $('share-code').value = code;
         $('share-msg').value =
           `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n`
@@ -7215,7 +7225,7 @@
           + `${url}\n\n`
           + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。\n`
           + `※ 画面の数字（年収・積立額・住宅ローンなど）は、${nm?nm+'様':'お客様'}ご自身で自由に変更してお試しいただけます。変更した内容は、そのスマホ・パソコンの中だけに保存され、次に開いたときも続きから確認できます。\n`
-          + `※ 変更した内容が端末に残るのは、最後に変更した日から2週間（${exp.label}まで・あと${exp.days}日）です。それ以降は最初にお送りした内容に戻りますが、上のデータとパスワードがあればいつでも開き直せます。\n`
+          + `※ このデータには有効期限があり、${exp.label}まで（あと${exp.days}日）ご覧いただけます。期限を過ぎると開けなくなりますので、それまでにご確認ください（過ぎてしまった場合は、ご連絡いただければ新しくお送りします）。\n`
           + `※ 気になる形になりましたら、画面上部の青い案内の中にある「担当者に送る」からお知らせください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
       }catch(e){
@@ -7332,6 +7342,7 @@
       });
       let sharePass = '';
       let shareOrigin = null;   // 共有された最初の内容（「最初の内容に戻す」用）
+      let shareExpiresAt = null;   // このデータの有効期限（担当者が作った時点から2週間。古いデータはnull）
 
       // 保存済みの「続き」を読む（同じ共有リンクのもの・期限内のものだけ）
       // 期限切れ・別のリンクのものは「読まない」だけでなく端末から消す（顧客情報を残さない）
@@ -7348,20 +7359,18 @@
       };
       const clearSharedDraft = ()=>{ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(e){} };
 
-      /* 「変更した内容がこの端末に残るのはあと何日か」を案内バーに出す。
-         期限が切れて消えるのは端末内の変更内容だけなので、「またいつでも開ける」ことも必ず併記する
-         （リンクが使えなくなると誤解されないように）。 */
+      /* 「このシミュレーションを見られるのはあと何日か」を案内バーに出す。
+         期限は担当者がデータを作った時点から2週間で、過ぎると開けなくなる。
+         期限のない古いデータで開いたときは、日数を出さずに保存の説明だけにする。 */
       const updateCustExpiry = ()=>{
         const el = $('cust-expiry'); if(!el) return;
-        const saved = readSharedDraft();
-        if(saved && saved.savedAt){
-          const x = draftExpiryInfo(saved.savedAt);
-          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>変更した内容がこの端末に残るのは <b>${x.label}まで（あと${x.days}日）</b>です。それ以降は担当者がお送りした最初の内容に戻りますが、<b>お手元のデータとパスワードがあればいつでも開けます</b>。</span>`;
+        if(shareExpiresAt){
+          const x = expiryInfo(shareExpiresAt);
+          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>このシミュレーションをご覧いただけるのは <b>${x.label}まで（あと${x.days}日）</b>です。変更した内容はこのスマホ・パソコンの中だけに保存され、外部には送信されません。期限を過ぎたときは、担当者までご連絡ください。</span>`;
         } else {
-          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>数字を変えると、その内容は<b>最後に変更した日から2週間</b>、このスマホ・パソコンの中だけに保存されます（外部には送信されません）。</span>`;
+          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>変更した内容は、このスマホ・パソコンの中だけに保存されます（外部には送信されません）。</span>`;
         }
       };
-      onCustomerDraftSaved = updateCustExpiry;   // 自動保存のたびに残り日数を引き直す
 
       // 共有された内容に戻す（お客様の変更を破棄）
       const applyOrigin = ()=>{
@@ -7381,6 +7390,7 @@
 
       const enterCustomerMode = (decoded, pass)=>{
         sharePass = pass;
+        shareExpiresAt = (decoded && typeof decoded.expiresAt === 'number') ? decoded.expiresAt : null;
         shareOrigin = JSON.parse(JSON.stringify(decoded));
         draftHold = true;                    // 復元の選択が終わるまで自動保存しない
         applyPlans(decoded);
@@ -7452,9 +7462,11 @@
         try{
           enterCustomerMode(await decodeShareState(code, pass), pass);
         }catch(e){
-          $('viewer-err').innerHTML = pasteMode
-            ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。<br>担当者から届いた<b>「長い英数字」のメッセージを長押し →「コピー」</b>でもう一度コピーし直し、貼り付けてお試しください。ご不明なときは担当者までご連絡ください。'
-            : 'パスワードが違うか、リンクが途中で切れている可能性があります。<br>お手元のメッセージのパスワードをもう一度お確かめのうえ、リンクは<b>全体をコピー</b>して開いてください。ご不明なときは担当者までご連絡ください。';
+          $('viewer-err').innerHTML = (e && e.message === 'expired')
+            ? 'このデータは<b>お渡しから2週間の有効期限</b>が切れているため、開けなくなりました。<br>お手数ですが、担当者に最新のシミュレーションをご依頼ください。'
+            : (pasteMode
+              ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。<br>担当者から届いた<b>「長い英数字」のメッセージを長押し →「コピー」</b>でもう一度コピーし直し、貼り付けてお試しください。ご不明なときは担当者までご連絡ください。'
+              : 'パスワードが違うか、リンクが途中で切れている可能性があります。<br>お手元のメッセージのパスワードをもう一度お確かめのうえ、リンクは<b>全体をコピー</b>して開いてください。ご不明なときは担当者までご連絡ください。');
         }finally{ opening = false; btn.disabled = false; btn.innerHTML = orig; }
       };
       $('viewer-open').addEventListener('click', tryOpen);
@@ -7516,11 +7528,13 @@
           const c = await encodeSharePlans(collectPlans(), sharePass);
           const url = SHARE_BASE_URL + '#open';
           const nm = ($('h-name')?.value||'').trim();
+          const sbExp = expiryInfo(Date.now() + SHARE_TTL_MS);
           $('sendback-code').value = c;
           $('sendback-msg').value =
             `${nm?nm+'です。\n':''}ライフプランの数字を変更してみましたので、ご確認をお願いします。\n\n`
             + `すぐ上の「長い英数字」のメッセージのデータを、下のページで貼り付けてご覧ください。パスワードはいただいたものと同じです。\n`
             + `${url}\n\n`
+            + `（このデータの有効期限は ${sbExp.label} までです）\n`
             + `（担当者の方へ：開いた画面の一番下にある「（担当者の方へ）このリンクを担当者として開く」から、保存などの操作ができます）`;
           $('sendback-setup').hidden=true; $('sendback-result').hidden=false;
         }catch(e){ $('sendback-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
@@ -7537,7 +7551,15 @@
       if(code && cached && cached.fp === shareFp && cached.pass){
         decodeShareState(code, cached.pass)
           .then(dec=> enterCustomerMode(dec, cached.pass))
-          .catch(()=>{ modal.hidden = false; });
+          .catch((e)=>{
+            // 期限切れなら、その場で理由をお伝えする（パスワードを疑わせない）
+            if(e && e.message === 'expired'){
+              try{ sessionStorage.removeItem(UNLOCK_KEY); }catch(_){}
+              clearSharedDraft();
+              $('viewer-err').innerHTML = 'このデータは<b>お渡しから2週間の有効期限</b>が切れているため、開けなくなりました。<br>お手数ですが、担当者に最新のシミュレーションをご依頼ください。';
+            }
+            modal.hidden = false;
+          });
       } else {
         modal.hidden = false;
       }

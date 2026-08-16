@@ -1682,7 +1682,10 @@
     </div>
   </div>
 
-  <a href="#results" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</a>
+  <!-- アンカー（href="#results"）にすると、共有リンク（#open / #share=）で開いた状態のときに
+       URLのハッシュが書き換わり、共有データが失われて再読み込みで通常のツールになってしまう。
+       ボタン＋scrollIntoView で、ハッシュを触らずに結果へ移動する。 -->
+  <button type="button" id="jump-result" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</button>
 
   <!-- ============================= FOOTER ============================= -->
   <footer class="foot">
@@ -3346,7 +3349,14 @@
       if(!banner){ draftHold = false; return; }
       const when = d.savedAt ? new Date(d.savedAt) : null;
       const label = when ? `${when.getMonth()+1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2,'0')}` : '';
-      const wEl = $('draft-when'); if(wEl && label) wEl.textContent = `（${label}保存）`;
+      // 誰の下書きかが分かるように、保存されているお名前を併記する（別のお客様のデータを開く事故を防ぐ）
+      let who = '';
+      try{
+        const f = d.plans && d.plans.genjo && d.plans.genjo.state && d.plans.genjo.state.fields;
+        const nm = f && (f['h-name']||'').trim();
+        if(nm) who = `${nm}様 / `;
+      }catch(e){}
+      const wEl = $('draft-when'); if(wEl && (who||label)) wEl.textContent = `（${who}${label}保存）`;
       banner.classList.remove('hidden');
       $('draft-restore').addEventListener('click', ()=>{
         banner.classList.add('hidden'); draftHold = false;
@@ -4546,6 +4556,13 @@
       } finally { exitPdfMode(); btn.disabled=false; btn.innerHTML=orig; }
     }
     $('btn-send').addEventListener('click', sendPDF);
+
+    // 「結果を見る」：URLのハッシュ（共有リンクのデータ）を書き換えずに結果へスクロールする
+    const gotoResults = ()=>{
+      const el = $('results') || document.querySelector('.results');
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    if($('jump-result')) $('jump-result').addEventListener('click', gotoResults);
 
     /* Ctrl+S（Mac は ⌘+S）でPDFを作る。
        ブラウザ標準の Ctrl+S は「ウェブページ、完全」保存で、HTMLと _files フォルダ
@@ -6736,20 +6753,29 @@
       }
       finally{ btn.disabled=false; btn.textContent=orig; }
     });
-    // コピー処理（①データ・②ご案内で共通）。成否を確認し、失敗したら手動コピーを案内する（成功と偽らない）
-    function copyShareBox(ta, okMsg){
-      if(!ta) return;
-      ta.select();
-      const ng = ()=> alert('コピーできませんでした。恐れ入りますが、枠内の文字を選んでコピーしてください。');
+    /* メッセージを送る／コピーする共通処理。
+       スマホでは端末の共有シート（LINE・メール等）を直接開き、非対応時のみコピーにフォールバック。
+       コピーは成否を確認し、失敗したら「手動で選択してコピー」を案内する（成功と偽らない）。 */
+    async function shareOrCopyText(textarea, okMsg){
+      if(!textarea) return;
+      const text = textarea.value;
+      if(navigator.share){
+        try{ await navigator.share({ text }); return; }
+        catch(e){ if(e && e.name==='AbortError') return; /* 共有をやめた場合は何もしない */ }
+      }
       if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(ta.value).then(()=> alert(okMsg))
-          .catch(()=>{ if(document.execCommand('copy')) alert(okMsg); else ng(); });
-      } else { if(document.execCommand('copy')) alert(okMsg); else ng(); }
+        try{ await navigator.clipboard.writeText(text); alert(okMsg); return; }catch(e){ /* 下の方法へ */ }
+      }
+      textarea.removeAttribute('readonly'); textarea.focus(); textarea.select();
+      let ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+      textarea.setAttribute('readonly','');
+      alert(ok ? okMsg : 'この端末では自動コピーができませんでした。上の文章を長押し（またはドラッグ）して全体を選び、コピーしてお送りください。');
     }
     if($('share-copy-code')) $('share-copy-code').addEventListener('click', ()=>
-      copyShareBox($('share-code'), '①データをコピーしました。\n\nLINEで、これを先に1通目としてお送りください。'));
+      shareOrCopyText($('share-code'), '①データをコピーしました。LINEで、これを先に1通目としてお送りください。'));
     if($('share-copy')) $('share-copy').addEventListener('click', ()=>
-      copyShareBox($('share-msg'), '②ご案内をコピーしました。\n\n①データを送ったあとの2通目としてお送りください。'));
+      shareOrCopyText($('share-msg'), '②ご案内をコピーしました。①データを送ったあとの2通目としてお送りください。'));
 
     // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
     (function(){
@@ -6819,25 +6845,37 @@
         }
       });
 
+      let opening = false;
       const tryOpen = async ()=>{
+        if(opening) return;                      // 二度押しで二重に開かない
         $('viewer-err').textContent='';
         const code = m ? m[1] : cleanCode($('viewer-code') && $('viewer-code').value);
         if(!code){ $('viewer-err').textContent='データを貼り付けてください。'; return; }
-        const pass = ($('viewer-pass').value||'').trim();
+        /* スマホの日本語キーボードだとパスワードが全角で入ることがある。
+           そのままだと正しいパスワードでも開けず、お客様には理由が分からないので、
+           全角の英数を半角へ揃え、全角スペースも取り除く。 */
+        const pass = ($('viewer-pass').value||'')
+          .replace(/[Ａ-Ｚａ-ｚ０-９]/g, c=> String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+          .replace(/　/g,' ').trim();
         if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
+        opening = true;
+        const btn = $('viewer-open'); const orig = btn.innerHTML; btn.disabled = true; btn.textContent = '確認中…';
         try{
           applyPlans(await decodeShareState(code, pass));   // 両プラン形式・1プラン形式のどちらでも受け取れる
           setCurrentSave(null);
           modal.hidden = true;
           history.replaceState(null, '', location.pathname + location.search);
         }catch(e){
-          $('viewer-err').textContent = pasteMode
-            ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。データをもう一度コピーし直してからお試しください。'
-            : 'パスワードが正しくないか、リンクが壊れています。もう一度お確かめください。';
-        }
+          $('viewer-err').innerHTML = pasteMode
+            ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。<br>担当者から届いた<b>「長い英数字」のメッセージを長押し →「コピー」</b>でもう一度コピーし直し、貼り付けてお試しください。ご不明なときは担当者までご連絡ください。'
+            : 'パスワードが違うか、リンクが途中で切れている可能性があります。<br>お手元のメッセージのパスワードをもう一度お確かめのうえ、リンクは<b>全体をコピー</b>して開いてください。ご不明なときは担当者までご連絡ください。';
+        }finally{ opening = false; btn.disabled = false; btn.innerHTML = orig; }
       };
       $('viewer-open').addEventListener('click', tryOpen);
-      $('viewer-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryOpen(); });
+      $('viewer-pass').addEventListener('keydown', e=>{
+        if(e.isComposing || e.keyCode===229) return;   // 日本語入力の変換確定のEnterで開こうとしない
+        if(e.key==='Enter') tryOpen();
+      });
     })();
 
   })();

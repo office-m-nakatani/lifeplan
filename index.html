@@ -6862,7 +6862,7 @@
           + `${url}\n\n`
           + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。うまくいかないときはご連絡ください。\n`
           + `※ 画面の数字（年収・積立額・住宅ローンなど）は、${nm?nm+'様':'お客様'}ご自身で自由に変更してお試しいただけます。変更した内容は、そのスマホ・パソコンの中だけに保存され、次に開いたときも続きから確認できます。\n`
-          + `※ 変更した内容が端末に残るのは、最後に変更した日から2週間（${exp.label}ごろまで・あと${exp.days}日）です。それ以降は最初にお送りした内容に戻りますが、上のデータとパスワードがあればいつでも開き直せます。\n`
+          + `※ 変更した内容が端末に残るのは、最後に変更した日から2週間（${exp.label}まで・あと${exp.days}日）です。それ以降は最初にお送りした内容に戻りますが、上のデータとパスワードがあればいつでも開き直せます。\n`
           + `※ 気になる形になりましたら、画面上部の青い案内の中にある「担当者に送る」からお知らせください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
       }catch(e){
@@ -6874,11 +6874,14 @@
     });
     /* メッセージを送る／コピーする共通処理。
        スマホでは端末の共有シート（LINE・メール等）を直接開き、非対応時のみコピーにフォールバック。
-       コピーは成否を確認し、失敗したら「手動で選択してコピー」を案内する（成功と偽らない）。 */
-    async function shareOrCopyText(textarea, okMsg){
+       コピーは成否を確認し、失敗したら「手動で選択してコピー」を案内する（成功と偽らない）。
+       ただし「コピー」とだけ書いてあるボタンは copyOnly=true で呼び、共有シートを開かない。
+       共有シートを閉じると何もコピーされず、直前にコピーした①が残ったままになるため、
+       「②を押したのに①がコピーされる」ように見える事故が起きた（2026-08-17）。 */
+    async function shareOrCopyText(textarea, okMsg, copyOnly){
       if(!textarea) return;
       const text = textarea.value;
-      if(navigator.share){
+      if(!copyOnly && navigator.share){
         try{ await navigator.share({ text }); return; }
         catch(e){ if(e && e.name==='AbortError') return; /* 共有をやめた場合は何もしない */ }
       }
@@ -6891,10 +6894,11 @@
       textarea.setAttribute('readonly','');
       alert(ok ? okMsg : 'この端末では自動コピーができませんでした。上の文章を長押し（またはドラッグ）して全体を選び、コピーしてお送りください。');
     }
+    // ボタンの文字が「コピー」なので、共有シートは開かず必ずクリップボードへコピーする（第3引数 copyOnly）
     if($('share-copy-code')) $('share-copy-code').addEventListener('click', ()=>
-      shareOrCopyText($('share-code'), '①データをコピーしました。LINEで、これを先に1通目としてお送りください。'));
+      shareOrCopyText($('share-code'), '①データをコピーしました。LINEで、これを先に1通目としてお送りください。', true));
     if($('share-copy')) $('share-copy').addEventListener('click', ()=>
-      shareOrCopyText($('share-msg'), '②ご案内をコピーしました。①データを送ったあとの2通目としてお送りください。'));
+      shareOrCopyText($('share-msg'), '②ご案内をコピーしました。①データを送ったあとの2通目としてお送りください。', true));
 
     // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
     (function(){

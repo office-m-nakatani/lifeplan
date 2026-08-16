@@ -6916,9 +6916,13 @@
       s.fields = Object.assign({}, shareDefaultFields(), o.f||{});
       delete s.f; return s;
     }
-    // 現行形式（先頭"^"）＝ 現状プラン＋将来プランの両方を差分JSON → gzip → パスワードでXOR → base64url。
+    // 現行形式（先頭"*"、gzip圧縮ありは"*z"）＝ 現状プラン＋将来プランの両方を差分JSON
+    // → gzip → パスワードでAES-GCM暗号化 → base64url。
     // お客様側でも「現状と将来をくらべる」がそのまま見られる。将来が現状と同一なら重複を省いてURLを短くする。
     // 集計結果（sum）は送らず、受け取り側で再計算する（URLを短く保つため）。
+    // ※ 新規に発行するのはこの形式だけ。"^" "~" と無印は過去に発行したリンクを開くためだけに残してある
+    //   （decodeShareState を参照）。ここを別の記号に変えると、お客様の手元に残っている
+    //   リンクが開かなくなり回収できないため、記号は変更しないこと。
     async function encodeSharePlans(plansObj, password){
       if(!canEncrypt()) throw new Error('no-crypto');   // 暗号化できない環境ではリンクを作らない（保護なしで顧客情報を出さない）
       const DEF = shareDefaultFields();
@@ -6932,9 +6936,25 @@
       if(typeof CompressionStream!=='undefined'){
         try{ body = await gzipBytes(body); head = '*z'; }catch(e){ /* 圧縮できなければ非圧縮のまま */ }
       }
-      return head + b64urlEncode(await aesEncrypt(body, password));
+      return head + await encodeBodyAvoidingTrailingHyphen(body, password);
     }
-    // 旧形式（先頭"~"）＝ 1プランのみ。過去に発行したリンクとの互換のため残す。
+    /* base64url の末尾が "-" になったリンクは、Android系の自動リンク検出
+       （android.util.Patterns.WEB_URL）がURLの後ろに単語境界を要求するため、
+       最後の1文字を落としてリンク化することがある。1文字欠けると復号は必ず失敗し、
+       お客様の画面には「パスワードが違うか、リンクが途中で切れている可能性があります」と出る。
+       担当者の手元では同じURLが正常に開くので原因にたどり着けない、という厄介な壊れ方をする。
+       salt と iv は暗号化のたびにランダムに引き直されるので、末尾が "-" の間だけ
+       作り直せば確実に避けられる（作り直しが必要なのは64回に1回程度）。
+       ※ base64url で使う記号は "-" と "_" だけ。"_" は単語構成文字なので切られない。 */
+    async function encodeBodyAvoidingTrailingHyphen(body, password){
+      let enc = '';
+      for(let i=0; i<8; i++){
+        enc = b64urlEncode(await aesEncrypt(body, password));
+        if(!enc.endsWith('-')) break;
+      }
+      return enc;
+    }
+    // 旧形式（先頭"~"）＝ 1プランのみ。過去に発行したリンクとの互換のため残す（新規発行では使わない）。
     async function encodeShareState(stateObj, password){
       if(typeof CompressionStream!=='undefined'){
         try{

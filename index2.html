@@ -1580,13 +1580,19 @@
           <div class="lock-err" id="share-err"></div>
         </div>
         <div id="share-result" hidden>
-          <p class="at-note">下記をコピーして、LINEやメールでお客様にお送りください。</p>
-          <div class="field" style="margin-bottom:10px;">
-            <label>お客様に送るメッセージ</label>
-            <textarea id="share-msg" rows="6" readonly></textarea>
+          <p class="at-note"><b>LINEでは2通に分けてお送りください。</b>①データ → ②ご案内 の順です。長いリンクはLINEの折りたたみに埋もれて開けないため、リンクは短いままにして、データは別のメッセージでお渡しします。<br>
+            <span style="color:#5b6b7d;">（メールなら折りたたまれないので、2通をまとめて1通に貼っていただいても開けます）</span></p>
+          <div class="field" style="margin-bottom:8px;">
+            <label>① 1通目：データ（長い英数字）</label>
+            <textarea id="share-code" rows="4" readonly spellcheck="false"></textarea>
           </div>
-          <button class="btn btn-primary btn-sm btn-full" id="share-copy" type="button"><i class="fa-solid fa-copy"></i> コピーする</button>
-          <p class="at-note" style="margin-top:10px;">※ このリンクとパスワードを知っている人は誰でも閲覧できます。お客様ご本人にのみお伝えください。</p>
+          <button class="btn btn-ghost btn-sm btn-full" id="share-copy-code" type="button"><i class="fa-solid fa-copy"></i> ①データをコピー</button>
+          <div class="field" style="margin:14px 0 8px;">
+            <label>② 2通目：ご案内とリンク</label>
+            <textarea id="share-msg" rows="9" readonly></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="share-copy" type="button"><i class="fa-solid fa-copy"></i> ②ご案内をコピー</button>
+          <p class="at-note" style="margin-top:10px;">※ このデータとパスワードを知っている人は誰でも閲覧できます。お客様ご本人にのみお伝えください。</p>
         </div>
       </div>
     </div>
@@ -1599,6 +1605,16 @@
         <h3><i class="fa-solid fa-lock"></i> お客様専用ページ</h3>
       </div>
       <div class="modal-body">
+        <!-- データを貼り付けていただく欄（#open で開いたときだけ表示。#share= のリンクでは不要） -->
+        <div id="viewer-paste-wrap" hidden>
+          <p class="at-note">担当者から届いた<b>「長い英数字」のメッセージ</b>を、下の欄に貼り付けてください。<br>
+            LINEでは、そのメッセージを<b>長押し →「コピー」</b>を選んでから、下の欄を<b>長押し →「ペースト」</b>です。</p>
+          <button class="btn btn-ghost btn-sm btn-full" id="viewer-paste-btn" type="button" style="margin-bottom:8px;"><i class="fa-solid fa-paste"></i> コピーしたデータを貼り付ける</button>
+          <div class="field" style="margin-bottom:12px;">
+            <label>データ</label>
+            <textarea id="viewer-code" rows="4" placeholder="ここを長押しして「ペースト」" autocomplete="off" spellcheck="false"></textarea>
+          </div>
+        </div>
         <p class="at-note">担当者からお伝えしたパスワードを入力してください。</p>
         <div class="field" style="margin-bottom:12px;">
           <label>パスワード</label>
@@ -3261,7 +3277,8 @@
        復元バナーを表示（復元/破棄をユーザーが選ぶまでは上書き保存しない） */
     const DRAFT_KEY = 'lifeplan2_draft_v1';
     const DRAFT_TTL_MS = 7*24*60*60*1000;                     // ドラフトの有効期限：7日（古い顧客情報を残さない）
-    const SHARED_VIEW = location.hash.indexOf('#share=') === 0;   // 共有リンク閲覧＝顧客データを端末に自動保存しない
+    // 共有リンク閲覧＝顧客データを端末に自動保存しない（#open＝データを貼り付けていただく現在の方式）
+    const SHARED_VIEW = location.hash.indexOf('#share=') === 0 || location.hash.indexOf('#open') === 0;
     let draftHold = false;        // 復元バナー表示中は自動保存を止める（デモ初期値でドラフトを潰さない）
     let demoSnapshot = null;      // 起動直後のデモ初期値のスナップショット（無編集なら保存しない）
     let draftTimer = null;
@@ -6484,12 +6501,15 @@
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
-    // 【重要】URL短縮サービス（da.gd）の利用は廃止しました。
-    // 短縮は「短縮したいURL」をそのサービスへ送信する仕組みのため、お客様の氏名・年収・資産を含む
-    // リンクが外部（海外）の第三者サービスへ渡り、そこに保存され続けることになります。
-    // 個人情報の外部提供にあたるため、リンクは長いままお送りする方式に統一しました
-    // （LINE・メールとも長いURLでそのまま開けます）。
-    function shortenShareUrl(longUrl){ return longUrl; }
+    /* 共有リンクの飛び先。ローカルでfile://から開いていても、お客様の端末で開けるよう公開URLを使う。
+       【URL短縮サービスは使わない】短縮は「短縮したいURL」を第三者サービスへ送る仕組みで、
+       サービスが止まればお客様の手元のリンクも死ぬ。
+       【データもURLに載せない】載せると実測で約1,000文字になり、LINEでは折りたたみに
+       埋もれてタップできない（圧縮を限界まで詰めても701文字までしか縮まないことを実測で確認済み）。
+       そこでリンクは "#open" だけの短いものにし、データは別メッセージでお渡しする方式にした。
+       LINEはメッセージを長押しすれば折りたたまれていても全文コピーできるため、途中で切れない。
+       ※ 過去に発行した "#share=..." の長いリンクも、引き続きそのまま開ける（下の復元処理を参照）。 */
+    const SHARE_BASE_URL = 'https://office-m-nakatani.github.io/lifeplan/';
     if($('share-make')) $('share-make').addEventListener('click', async ()=>{
       const pass = ($('share-pass').value||'').trim();
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
@@ -6497,10 +6517,19 @@
       try{
         const code = await encodeShareState(collectState(), pass);
         // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
-        const longUrl = 'https://office-m-nakatani.github.io/lifeplan/' + '#share=' + code;
-        const url = await shortenShareUrl(longUrl);
+        // データはURLに載せず別メッセージで渡すため、リンクは「#open」だけの短いものにする。
+        // （実測：データを載せると約1,000文字になり、LINEの折りたたみに埋もれてタップできない）
+        const url = SHARE_BASE_URL + '#open';
         const nm = ($('h-name')?.value||'').trim();
-        $('share-msg').value = `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n下記のリンクを開き、パスワード「${pass}」を入力してください。\n${url}`;
+        $('share-code').value = code;
+        $('share-msg').value =
+          `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n`
+          + `■ ご覧いただく手順\n`
+          + `1. すぐ上の「長い英数字」のメッセージを長押しして、「コピー」を選びます\n`
+          + `2. 下のリンクを開きます\n`
+          + `3. 画面の入力欄に貼り付けて、パスワード「${pass}」を入れ、「開く」を押します\n\n`
+          + `${url}\n\n`
+          + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。うまくいかないときはご連絡ください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
       }catch(e){
         $('share-err').textContent = (e && e.message==='no-crypto')
@@ -6509,12 +6538,20 @@
       }
       finally{ btn.disabled=false; btn.textContent=orig; }
     });
-    if($('share-copy')) $('share-copy').addEventListener('click', ()=>{
-      const ta=$('share-msg'); ta.select();
-      const done=()=> alert('コピーしました。LINEやメールに貼り付けてお送りください。');
-      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ document.execCommand('copy'); done(); }); }
-      else { document.execCommand('copy'); done(); }
-    });
+    // コピー処理（①データ・②ご案内で共通）。成否を確認し、失敗したら手動コピーを案内する（成功と偽らない）
+    function copyShareBox(ta, okMsg){
+      if(!ta) return;
+      ta.select();
+      const ng = ()=> alert('コピーできませんでした。恐れ入りますが、枠内の文字を選んでコピーしてください。');
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(ta.value).then(()=> alert(okMsg))
+          .catch(()=>{ if(document.execCommand('copy')) alert(okMsg); else ng(); });
+      } else { if(document.execCommand('copy')) alert(okMsg); else ng(); }
+    }
+    if($('share-copy-code')) $('share-copy-code').addEventListener('click', ()=>
+      copyShareBox($('share-code'), '①データをコピーしました。\n\nLINEで、これを先に1通目としてお送りください。'));
+    if($('share-copy')) $('share-copy').addEventListener('click', ()=>
+      copyShareBox($('share-msg'), '②ご案内をコピーしました。\n\n①データを送ったあとの2通目としてお送りください。'));
 
     // 旧バージョン（全アカウント共通保存）のデータを、各アカウントの個別データへ1回だけ引き継ぐ
     (function(){
@@ -6550,17 +6587,45 @@
     updatePlanTabs();
     initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
 
-    // お客様専用ページ：共有リンク（#share=...）で開いた場合、パスワード入力後に内容を復元する
+    /* お客様専用ページ。2通りの開き方に対応する。
+        ・#open        … データは別メッセージで届くので、お客様に貼り付けていただく（現在の方式）
+        ・#share=xxxx  … データがURLに入っている（過去に発行したリンク。今後も開けるように残す） */
     (function(){
       const m = location.hash.match(/#share=([^&]+)/);
-      if(!m) return;
-      const code = m[1];
+      const pasteMode = !m && location.hash.indexOf('#open') === 0;
+      if(!m && !pasteMode) return;
       const modal = $('viewer-gate-modal');
       if(!modal) return;
+      if(pasteMode && $('viewer-paste-wrap')) $('viewer-paste-wrap').hidden = false;
       modal.hidden = false;
+
+      /* 貼り付けられた文字から共有データだけを取り出す。
+         端末によっては改行や空白が混ざる。長いリンクごと貼られることもあるので、
+         "#share=" があればその後ろを使う。 */
+      const cleanCode = (raw)=>{
+        let s = (raw||'').trim();
+        const at = s.indexOf('#share=');
+        if(at >= 0) s = s.slice(at + 7);
+        return s.replace(/\s+/g, '');
+      };
+
+      if($('viewer-paste-btn')) $('viewer-paste-btn').addEventListener('click', async ()=>{
+        /* クリップボードから直接読む（スマホでは「貼り付け」の確認が出る）。
+           使えない環境・拒否された場合は手で貼り付けていただくので、案内だけ出して止めない。 */
+        try{
+          const t = await navigator.clipboard.readText();
+          if(t && t.trim()){ $('viewer-code').value = t.trim(); $('viewer-err').textContent=''; }
+          else $('viewer-err').textContent='コピーされたデータが見つかりませんでした。LINEのメッセージを長押しして「コピー」を選んでから、もう一度お試しください。';
+        }catch(e){
+          $('viewer-err').textContent='この端末では自動で貼り付けできませんでした。下の欄を長押しして「ペースト」を選んでください。';
+        }
+      });
+
       const tryOpen = async ()=>{
-        const pass = ($('viewer-pass').value||'').trim();
         $('viewer-err').textContent='';
+        const code = m ? m[1] : cleanCode($('viewer-code') && $('viewer-code').value);
+        if(!code){ $('viewer-err').textContent='データを貼り付けてください。'; return; }
+        const pass = ($('viewer-pass').value||'').trim();
         if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
         try{
           const state = await decodeShareState(code, pass);
@@ -6569,7 +6634,9 @@
           modal.hidden = true;
           history.replaceState(null, '', location.pathname + location.search);
         }catch(e){
-          $('viewer-err').textContent='パスワードが正しくないか、リンクが壊れています。もう一度お確かめください。';
+          $('viewer-err').textContent = pasteMode
+            ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。データをもう一度コピーし直してからお試しください。'
+            : 'パスワードが正しくないか、リンクが壊れています。もう一度お確かめください。';
         }
       };
       $('viewer-open').addEventListener('click', tryOpen);

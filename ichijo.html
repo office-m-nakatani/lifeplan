@@ -229,6 +229,10 @@
     @media(max-width:560px){ .cust-actions{ width:100%; } .cust-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
     .cust-guide{ font-size:.85rem; line-height:1.75; color:var(--ink); margin:8px 0 0; padding:9px 11px; background:#fff; border:1px solid var(--blue-pale2); border-radius:9px; }
     .cust-inline-link{ background:none; border:none; padding:0 2px; color:var(--blue-deep); font-family:inherit; font-size:1em; font-weight:700; text-decoration:underline; cursor:pointer; }
+    /* 変更内容がこの端末に残る期限（あと何日） */
+    .cust-expiry{ font-size:.8rem; line-height:1.7; color:var(--ink-soft); margin:8px 0 0; display:flex; align-items:flex-start; gap:6px; }
+    .cust-expiry i{ margin-top:.25em; flex:0 0 auto; }
+    .cust-expiry b{ color:var(--blue-deep); }
     /* 「最初の内容に戻す」の確認パネル（ボタンの文字を入れ替えず、専用の枠で受ける） */
     .cust-confirm{ flex:1 1 100%; margin-top:10px; padding:11px 13px; background:#fff; border:1.5px solid var(--warn); border-radius:10px; }
     .cust-confirm p{ margin:0 0 9px; font-size:.86rem; line-height:1.7; }
@@ -861,6 +865,7 @@
         <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
         <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
         <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">結果を見る</button>で「金融資産の推移」と「現状 と 将来 をくらべる」をご覧ください。そのあと、気になる数字（<b>①ご夫婦の年収</b>／<b>⑤毎月の積立額</b>／<b>③住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+        <p class="cust-expiry" id="cust-expiry"></p>
       </div>
       <div class="cust-actions">
         <button class="btn btn-ghost btn-sm" type="button" id="cust-reset"><i class="fa-solid fa-rotate-left"></i> 最初の内容に戻す</button>
@@ -3646,7 +3651,15 @@
        復元バナーを表示（復元/破棄をユーザーが選ぶまでは上書き保存しない） */
     const DRAFT_KEY = 'lifeplan_ichijo_draft_v1';
     const SHARED_DRAFT_KEY = 'lifeplan_ichijo_shared_v1';     // お客様モードの保存先（担当者自身のドラフトと混ざらないよう分離）
-    const DRAFT_TTL_MS = 7*24*60*60*1000;                     // ドラフトの有効期限：7日（古い顧客情報を残さない）
+    const DRAFT_TTL_MS = 14*24*60*60*1000;                    // ドラフトの有効期限：2週間（古い顧客情報を残さない）
+    /* 保存期限（最後に変更した日から2週間）の残り日数。
+       お客様に「あと何日」を正直にお伝えするために、画面と共有メッセージの両方で使う。
+       期限が切れても消えるのは端末内の変更内容だけで、データとパスワードがあればいつでも開き直せる。 */
+    function draftExpiryInfo(savedAt){
+      const end = new Date((savedAt || Date.now()) + DRAFT_TTL_MS);
+      const days = Math.max(0, Math.ceil((end.getTime() - Date.now()) / (24*60*60*1000)));
+      return { end, days, label:`${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日` };
+    }
     const UNLOCK_KEY = 'lifeplan_ichijo_unlock';   // sessionStorage：同じタブでの再読込み時に解錠状態を引き継ぐ
     const UNLOCK_TTL_MS = 30*60*1000;              // 解錠の引き継ぎは30分まで（放置した端末で開きっぱなしにしない）
     function readUnlockCache(){
@@ -3664,6 +3677,7 @@
     let shareUnlocked = false;    // 共有リンクのパスワードを解錠済みか（解錠前は何も保存しない）
     let customerMode = false;     // お客様モード表示中か（保存先を共有キーに分ける。担当者に切り替えたら false）
     let shareFp = '';             // 共有リンクの識別子（別のリンクの内容を取り違えて復元しないため）
+    let onCustomerDraftSaved = null;   // お客様モードで自動保存したあとに残り日数の表示を更新する（下のIIFEで差し込む）
     function scheduleDraftSave(){
       if(draftHold || _refreshingSum) return;
       if(SHARED_VIEW && !shareUnlocked) return;                // 解錠前（パスワード入力中）は保存しない
@@ -3676,6 +3690,7 @@
           const rec = { plans, savedAt: Date.now() };
           if(customerMode) rec.fp = shareFp;                   // お客様の変更は共有リンクごとに区別して保存
           localStorage.setItem(customerMode ? SHARED_DRAFT_KEY : DRAFT_KEY, JSON.stringify(rec));
+          if(customerMode && onCustomerDraftSaved) onCustomerDraftSaved();   // 「あと何日」を保存のたびに引き直す
         }catch(e){}
       }, 1000);
     }
@@ -7189,6 +7204,7 @@
         const code = await encodeSharePlans(collectPlans(), pass);   // 現状・将来の両プランを共有（比較もそのまま見られる）
         const url = SHARE_BASE_URL + '#open';
         const nm = ($('h-name')?.value||'').trim();
+        const exp = draftExpiryInfo(null);   // お客様の端末に変更内容が残る期限（あと何日）をご案内に入れる
         $('share-code').value = code;
         $('share-msg').value =
           `${nm?nm+'様\n':''}ライフプランのシミュレーション結果をご確認いただけます。\n\n`
@@ -7199,6 +7215,7 @@
           + `${url}\n\n`
           + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。\n`
           + `※ 画面の数字（年収・積立額・住宅ローンなど）は、${nm?nm+'様':'お客様'}ご自身で自由に変更してお試しいただけます。変更した内容は、そのスマホ・パソコンの中だけに保存され、次に開いたときも続きから確認できます。\n`
+          + `※ 変更した内容が端末に残るのは、最後に変更した日から2週間（${exp.label}ごろまで・あと${exp.days}日）です。それ以降は最初にお送りした内容に戻りますが、上のデータとパスワードがあればいつでも開き直せます。\n`
           + `※ 気になる形になりましたら、画面上部の青い案内の中にある「担当者に送る」からお知らせください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
       }catch(e){
@@ -7326,6 +7343,21 @@
       };
       const clearSharedDraft = ()=>{ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(e){} };
 
+      /* 「変更した内容がこの端末に残るのはあと何日か」を案内バーに出す。
+         期限が切れて消えるのは端末内の変更内容だけなので、「またいつでも開ける」ことも必ず併記する
+         （リンクが使えなくなると誤解されないように）。 */
+      const updateCustExpiry = ()=>{
+        const el = $('cust-expiry'); if(!el) return;
+        const saved = readSharedDraft();
+        if(saved && saved.savedAt){
+          const x = draftExpiryInfo(saved.savedAt);
+          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>変更した内容がこの端末に残るのは <b>${x.label}まで（あと${x.days}日）</b>です。それ以降は担当者がお送りした最初の内容に戻りますが、<b>お手元のデータとパスワードがあればいつでも開けます</b>。</span>`;
+        } else {
+          el.innerHTML = `<i class="fa-regular fa-clock"></i><span>数字を変えると、その内容は<b>最後に変更した日から2週間</b>、このスマホ・パソコンの中だけに保存されます（外部には送信されません）。</span>`;
+        }
+      };
+      onCustomerDraftSaved = updateCustExpiry;   // 自動保存のたびに残り日数を引き直す
+
       // 共有された内容に戻す（お客様の変更を破棄）
       const applyOrigin = ()=>{
         if(!shareOrigin) return;
@@ -7338,6 +7370,7 @@
         applyPlans(JSON.parse(JSON.stringify(shareOrigin)));
         demoSnapshot = JSON.stringify(collectPlans());   // 戻した直後は「未編集」＝保存しない
         clearSharedDraft();
+        updateCustExpiry();
         draftHold = false;
       };
 
@@ -7359,6 +7392,7 @@
         const bar = $('customer-bar'); if(bar) bar.classList.remove('hidden');
         const adv = $('cust-advisor-wrap'); if(adv) adv.classList.remove('hidden');   // 担当者用の切替はフッターに小さく出す
         updatePlanTabs();   // プランの説明文をお客様向けの言い回しに切り替える（customer-mode 付与後に呼ぶ）
+        updateCustExpiry(); // 「変更した内容がこの端末に残るのはあと何日か」を表示
 
         // 前回の続きがあれば、続きから／共有された内容から を選んでいただく
         const saved = readSharedDraft();

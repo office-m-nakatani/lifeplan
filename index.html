@@ -213,6 +213,30 @@
     .loan-payoff-box #loan-balance-auto{ color:var(--blue-deep); font-weight:600; }
 
     .loan-monthly-box{ margin-top:14px; padding:14px 14px 12px; background:var(--blue-pale); border:1px solid var(--blue-pale2); border-radius:12px; }
+    /* お客様モード（共有リンクで開いたとき）のご案内バー */
+    .cust-box{ display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-top:12px; padding:14px 16px;
+      background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:12px; }
+    .cust-main{ flex:1 1 320px; min-width:260px; }
+    .cust-title{ font-weight:800; font-size:1rem; color:var(--blue-deep); display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .cust-lead{ font-size:.86rem; line-height:1.75; color:var(--ink); margin:0; }
+    .cust-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; flex:0 1 auto; }
+    @media(max-width:560px){ .cust-actions{ width:100%; } .cust-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
+    .cust-guide{ font-size:.85rem; line-height:1.75; color:var(--ink); margin:8px 0 0; padding:9px 11px; background:#fff; border:1px solid var(--blue-pale2); border-radius:9px; }
+    .cust-inline-link{ background:none; border:none; padding:0 2px; color:var(--blue-deep); font-family:inherit; font-size:1em; font-weight:700; text-decoration:underline; cursor:pointer; }
+    /* 「最初の内容に戻す」の確認パネル（ボタンの文字を入れ替えず、専用の枠で受ける） */
+    .cust-confirm{ flex:1 1 100%; margin-top:10px; padding:11px 13px; background:#fff; border:1.5px solid var(--warn); border-radius:10px; }
+    .cust-confirm p{ margin:0 0 9px; font-size:.86rem; line-height:1.7; }
+    .cust-confirm-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    @media(max-width:560px){ .cust-confirm-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
+    /* お客様モードでは、担当者専用の操作（アカウント保存・共有リンク作成）を隠す */
+    body.customer-mode #btn-save{ display:none !important; }
+    /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
+    .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
+      font-size:.78rem; text-decoration:underline; cursor:pointer; }
+    .cust-advisor-link:hover{ color:var(--blue-deep); }
+    /* 「最初の内容に戻す」の確認待ち（2段階目）を目立たせる */
+    .btn.btn-warn{ background:var(--warn); border-color:var(--warn); color:#fff; }
+    .btn.btn-warn:hover{ filter:brightness(.95); }
     /* もしもの検証（ストレステスト）：注意色の枠・ON中のチップは警告色 */
     .stress-box{ margin-top:14px; padding:14px 14px 12px; background:#fffdf6; border:1.5px dashed var(--warn); border-radius:12px; }
     .stress-box .lp-title{ font-size:.85rem; font-weight:700; color:#a06a10; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
@@ -805,11 +829,35 @@
     </div>
   </section>
 
+  <!-- お客様モード（共有リンクで開いたとき）のご案内と操作 -->
+  <div class="wrap no-print hidden" id="customer-bar">
+    <div class="cust-box">
+      <div class="cust-main">
+        <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
+        <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
+        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">結果を見る</button>で「金融資産の推移」と「現状 と 将来 をくらべる」をご覧ください。そのあと、気になる数字（<b>①ご夫婦の年収</b>／<b>⑤毎月の積立額</b>／<b>③住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+      </div>
+      <div class="cust-actions">
+        <button class="btn btn-ghost btn-sm" type="button" id="cust-reset"><i class="fa-solid fa-rotate-left"></i> 最初の内容に戻す</button>
+        <button class="btn btn-primary btn-sm" type="button" id="cust-sendback"><i class="fa-solid fa-paper-plane"></i> 担当者に送る</button>
+        <button type="button" id="cust-wipe" class="cust-advisor-link">この端末から消して閉じる</button>
+      </div>
+      <!-- 「最初の内容に戻す」の確認（誤タップで変更が消えないように） -->
+      <div class="cust-confirm hidden" id="cust-reset-confirm">
+        <p><b>変更を取り消して、担当者が作成した内容に戻します。</b>この画面でご自身が変更された数字は消えます（元に戻せません）。よろしいですか？</p>
+        <div class="cust-confirm-actions">
+          <button class="btn btn-ghost btn-sm" type="button" id="cust-reset-cancel">やめる</button>
+          <button class="btn btn-sm btn-warn" type="button" id="cust-reset-do"><i class="fa-solid fa-rotate-left"></i> 変更を消して戻す</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 自動保存ドラフトの復元バナー（誤リロード対策） -->
   <div class="wrap no-print hidden" id="draft-banner">
     <div class="note" style="background:var(--blue-pale); border:1.5px solid var(--blue-pale2); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <i class="fa-solid fa-clock-rotate-left" style="color:var(--blue-deep);"></i>
-      <span style="flex:1; min-width:200px;"><b>前回の入力データがあります</b><span id="draft-when"></span>。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※入力内容はこの端末のブラウザ内にのみ自動保存されます（外部への送信はありません）。共用の端末では「破棄して新規」をご利用ください。</span></span>
+      <span style="flex:1; min-width:200px;" id="draft-text"><b>前回の入力データがあります</b><span id="draft-when"></span>。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※入力内容はこの端末のブラウザ内にのみ自動保存されます（外部への送信はありません）。共用の端末では「破棄して新規」をご利用ください。</span></span>
       <button class="btn btn-primary btn-sm" type="button" id="draft-restore"><i class="fa-solid fa-rotate-left"></i> 復元する</button>
       <button class="btn btn-ghost btn-sm" type="button" id="draft-discard">破棄して新規</button>
     </div>
@@ -1612,6 +1660,36 @@
     </div>
   </div>
 
+  <!-- ===================== お客様 → 担当者へ 送り返し モーダル ===================== -->
+  <div class="modal-overlay" id="sendback-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="担当者に送る">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-paper-plane"></i> 担当者に送る</h3>
+        <button class="modal-close" id="sendback-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="sendback-setup">
+          <p class="at-note">いま画面に表示している<b>変更後の内容</b>を、担当者が開けるリンクにします。内容は<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存されません。パスワードは、担当者からお伝えしたものと同じものが使われます。</p>
+          <button class="btn btn-primary btn-sm btn-full" id="sendback-make" type="button"><i class="fa-solid fa-link"></i> 送信用のリンクを作る</button>
+          <div class="lock-err" id="sendback-err"></div>
+        </div>
+        <div id="sendback-result" hidden>
+          <p class="at-note"><b>2回に分けてお送りください。</b>下のボタンを押すと、<b>LINE・メールなどの送り先を選ぶ画面</b>が開きます（開かない端末では文章がコピーされますので、LINE・メールに貼り付けてお送りください）。<b>ボタンを押しただけでは担当者に届きません</b>ので、最後に送信までお願いします。</p>
+          <div class="field" style="margin-bottom:8px;">
+            <label>① 1回目：データ（長い英数字）</label>
+            <textarea id="sendback-code" rows="4" readonly spellcheck="false"></textarea>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-full" id="sendback-copy-code" type="button"><i class="fa-solid fa-share-from-square"></i> ①データを送る（コピー）</button>
+          <div class="field" style="margin:14px 0 8px;">
+            <label>② 2回目：ご連絡</label>
+            <textarea id="sendback-msg" rows="7" readonly></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" id="sendback-copy" type="button"><i class="fa-solid fa-share-from-square"></i> ②ご連絡を送る（コピー）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== お客様専用ページ（共有リンクを開いたときのパスワード入力）===================== -->
   <div class="modal-overlay" id="viewer-gate-modal" hidden>
     <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="お客様専用ページ">
@@ -1713,6 +1791,7 @@
         </ul>
       </details>
       <p style="margin-bottom:6px;">本サイトは、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</p>
+      <p class="no-print hidden" id="cust-advisor-wrap" style="margin-bottom:6px;"><button type="button" id="cust-advisor" class="cust-advisor-link">（担当者の方へ）このリンクを担当者として開く</button></p>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
@@ -3316,21 +3395,37 @@
        recomputeのたびに1秒デバウンスで両プランをlocalStorageへ保存。起動時にドラフトがあれば
        復元バナーを表示（復元/破棄をユーザーが選ぶまでは上書き保存しない） */
     const DRAFT_KEY = 'lifeplan2_draft_v1';
+    const SHARED_DRAFT_KEY = 'lifeplan2_shared_v1';           // お客様モードの保存先（担当者自身のドラフトと混ざらないよう分離）
     const DRAFT_TTL_MS = 7*24*60*60*1000;                     // ドラフトの有効期限：7日（古い顧客情報を残さない）
-    // 共有リンク閲覧＝顧客データを端末に自動保存しない（#open＝データを貼り付けていただく現在の方式）
-    const SHARED_VIEW = location.hash.indexOf('#share=') === 0 || location.hash.indexOf('#open') === 0;
+    const UNLOCK_KEY = 'lifeplan2_unlock';         // sessionStorage：同じタブでの再読込み時に解錠状態を引き継ぐ
+    const UNLOCK_TTL_MS = 30*60*1000;              // 解錠の引き継ぎは30分まで（放置した端末で開きっぱなしにしない）
+    function readUnlockCache(){
+      try{
+        const u = JSON.parse(sessionStorage.getItem(UNLOCK_KEY) || 'null');
+        if(!u || !u.code || !u.at || (Date.now() - u.at) > UNLOCK_TTL_MS){ sessionStorage.removeItem(UNLOCK_KEY); return null; }
+        return u;
+      }catch(e){ return null; }
+    }
+    // 共有リンクで開いた＝お客様モード。ページ内リンク等でハッシュが失われても、同じタブなら解錠情報から判定する
+    const SHARED_VIEW = location.hash.indexOf('#share=') === 0 || location.hash.indexOf('#open') === 0 || !!readUnlockCache();
     let draftHold = false;        // 復元バナー表示中は自動保存を止める（デモ初期値でドラフトを潰さない）
     let demoSnapshot = null;      // 起動直後のデモ初期値のスナップショット（無編集なら保存しない）
     let draftTimer = null;
+    let shareUnlocked = false;    // 共有リンクのパスワードを解錠済みか（解錠前は何も保存しない）
+    let customerMode = false;     // お客様モード表示中か（保存先を共有キーに分ける。担当者に切り替えたら false）
+    let shareFp = '';             // 共有リンクの識別子（別のリンクの内容を取り違えて復元しないため）
     function scheduleDraftSave(){
-      if(SHARED_VIEW || draftHold || _refreshingSum) return;
+      if(draftHold || _refreshingSum) return;
+      if(SHARED_VIEW && !shareUnlocked) return;                // 解錠前（パスワード入力中）は保存しない
       clearTimeout(draftTimer);
       draftTimer = setTimeout(()=>{
         if(draftHold) return;                                  // タイマー発火時に再チェック（初期化競合でドラフトを潰さない）
         try{
           const plans = collectPlans();
-          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集のデモ初期値は保存しない
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ plans, savedAt: Date.now() }));
+          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集（デモ初期値／共有された内容のまま）は保存しない
+          const rec = { plans, savedAt: Date.now() };
+          if(customerMode) rec.fp = shareFp;                   // お客様の変更は共有リンクごとに区別して保存
+          localStorage.setItem(customerMode ? SHARED_DRAFT_KEY : DRAFT_KEY, JSON.stringify(rec));
         }catch(e){}
       }, 1000);
     }
@@ -3756,9 +3851,13 @@
       [...tabs.querySelectorAll('button')].forEach(b=> b.classList.toggle('active', b.dataset.plan===PLANS.active));
       document.body.classList.toggle('plan-mirai', PLANS.active==='mirai');
       const hint = $('plan-hint');
-      if(hint) hint.innerHTML = PLANS.active==='genjo'
-        ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
-        : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span>／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。';
+      if(hint) hint.innerHTML = document.body.classList.contains('customer-mode')
+        ? (PLANS.active==='genjo'
+            ? '<b>現状プラン</b>＝いまのままの家計です。上の「<b>将来プラン</b>」に切り替えると、担当者がご提案した内容（住まい・保険・積立など）でどう変わるかをご覧いただけます。'
+            : '<b>将来プラン</b>＝ご提案の内容です。数字を変えると、現状との差が <span class="diff-plus">青（増える）</span>／<span class="diff-minus">赤（減る）</span> で表示されます。2つのタブは<b>見比べるためのもの</b>で、切り替えても入力は消えません。')
+        : (PLANS.active==='genjo'
+            ? 'いまの家計・プランを入力してください。入力できたら上の「<b>将来プラン</b>」タブへ切り替えて、保険・住まい・積立などを変えてみましょう。'
+            : '<b>将来プラン</b>を表示中。数字を変えると、現状との差額が <span class="diff-plus">青（プラス）</span>／<span class="diff-minus">赤（マイナス）</span> で表示されます。「現状プラン」タブでいつでも元の内容に戻れます。');
       updatePrintHeader();
     }
     // 印刷・PDFの1行目：どちらのプランか・作成日・ストレスシナリオ適用中ならその前提を必ず明記
@@ -4563,6 +4662,7 @@
       if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
     };
     if($('jump-result')) $('jump-result').addEventListener('click', gotoResults);
+    if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
     /* Ctrl+S（Mac は ⌘+S）でPDFを作る。
        ブラウザ標準の Ctrl+S は「ウェブページ、完全」保存で、HTMLと _files フォルダ
@@ -6744,7 +6844,9 @@
           + `2. 下のリンクを開きます\n`
           + `3. 画面の入力欄に貼り付けて、パスワード「${pass}」を入れ、「開く」を押します\n\n`
           + `${url}\n\n`
-          + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。うまくいかないときはご連絡ください。`;
+          + `※ 貼り付けは、入力欄を長押しして「ペースト」を選びます。うまくいかないときはご連絡ください。\n`
+          + `※ 画面の数字（年収・積立額・住宅ローンなど）は、${nm?nm+'様':'お客様'}ご自身で自由に変更してお試しいただけます。変更した内容は、そのスマホ・パソコンの中だけに保存され、次に開いたときも続きから確認できます。\n`
+          + `※ 気になる形になりましたら、画面上部の青い案内の中にある「担当者に送る」からお知らせください。`;
         $('share-setup').hidden=true; $('share-result').hidden=false;
       }catch(e){
         $('share-err').textContent = (e && e.message==='no-crypto')
@@ -6811,17 +6913,31 @@
     updatePlanTabs();
     initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
 
-    /* お客様専用ページ。2通りの開き方に対応する。
+    /* ============================================================
+       お客様専用ページ（共有リンクで開いたとき）
+       ・パスワードで解錠 → 担当者が作った内容を表示
+       ・お客様ご自身が数字を変えられ、その内容はこの端末にだけ自動保存される
+       ・「最初の内容に戻す」でいつでも共有された状態へ復帰
+       ・「担当者に送る」で変更後の内容をリンクにして返信できる
+       2通りの開き方に対応する。
         ・#open        … データは別メッセージで届くので、お客様に貼り付けていただく（現在の方式）
-        ・#share=xxxx  … データがURLに入っている（過去に発行したリンク。今後も開けるように残す） */
+        ・#share=xxxx  … データがURLに入っている（過去に発行したリンク。今後も開けるように残す）
+       ============================================================ */
     (function(){
+      const cachedUnlock = readUnlockCache();
       const m = location.hash.match(/#share=([^&]+)/);
-      const pasteMode = !m && location.hash.indexOf('#open') === 0;
-      if(!m && !pasteMode) return;
+      // ページ内の移動などでハッシュが消えても、同じタブなら解錠情報からリンクを復帰させる
+      let code = m ? m[1] : (cachedUnlock ? cachedUnlock.code : null);
+      // データを別メッセージでお渡しする方式（#open）。データはお客様に貼り付けていただく
+      const pasteMode = !code && location.hash.indexOf('#open') === 0;
+      if(!code && !pasteMode) return;
       const modal = $('viewer-gate-modal');
       if(!modal) return;
+      if(!m && code) history.replaceState(null, '', location.pathname + location.search + '#share=' + code);   // URLも元に戻す
       if(pasteMode && $('viewer-paste-wrap')) $('viewer-paste-wrap').hidden = false;
-      modal.hidden = false;
+      // 保存先を共有リンクごとに分けるための指紋。貼り付け方式では、貼られた時点で決まる
+      const computeFp = (c)=>{ let h=5381; for(let i=0;i<c.length;i++) h=((h<<5)+h+c.charCodeAt(i))>>>0; return 'fp'+h.toString(36)+'-'+c.length; };
+      if(code) shareFp = computeFp(code);
 
       /* 貼り付けられた文字から共有データだけを取り出す。
          端末によっては改行や空白が混ざる。長いリンクごと貼られることもあるので、
@@ -6845,12 +6961,103 @@
         }
       });
 
+      let sharePass = '';
+      let shareOrigin = null;   // 共有された最初の内容（「最初の内容に戻す」用）
+
+      // 保存済みの「続き」を読む（同じ共有リンクのもの・期限内のものだけ）
+      // 期限切れ・別のリンクのものは「読まない」だけでなく端末から消す（顧客情報を残さない）
+      const readSharedDraft = ()=>{
+        try{
+          const d = JSON.parse(localStorage.getItem(SHARED_DRAFT_KEY) || 'null');
+          if(!d || !d.plans) return null;
+          if(d.fp !== shareFp || (d.savedAt && (Date.now() - d.savedAt) > DRAFT_TTL_MS)){
+            localStorage.removeItem(SHARED_DRAFT_KEY);
+            return null;
+          }
+          return d;
+        }catch(e){ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(_){} return null; }
+      };
+      const clearSharedDraft = ()=>{ try{ localStorage.removeItem(SHARED_DRAFT_KEY); }catch(e){} };
+
+      // 共有された内容に戻す（お客様の変更を破棄）
+      const applyOrigin = ()=>{
+        if(!shareOrigin) return;
+        draftHold = true;
+        // 「もしもの検証」が入ったままだと元に戻したのに数字が厳しいままになるため、あわせて解除する
+        if(typeof STRESS!=='undefined' && (STRESS.rateBump>0 || STRESS.incomeCut>0)){
+          STRESS.rateBump = 0; STRESS.incomeCut = 0;
+          if(typeof updateStressUI==='function') updateStressUI();
+        }
+        applyPlans(JSON.parse(JSON.stringify(shareOrigin)));
+        demoSnapshot = JSON.stringify(collectPlans());   // 戻した直後は「未編集」＝保存しない
+        clearSharedDraft();
+        draftHold = false;
+      };
+
+      const enterCustomerMode = (decoded, pass)=>{
+        sharePass = pass;
+        shareOrigin = JSON.parse(JSON.stringify(decoded));
+        draftHold = true;                    // 復元の選択が終わるまで自動保存しない
+        applyPlans(decoded);
+        setCurrentSave(null);
+        document.body.classList.add('customer-mode');
+        modal.hidden = true;
+        shareUnlocked = true; customerMode = true;
+        // 同じタブでの再読込み用（30分で失効。タブを閉じても消える）
+        try{ sessionStorage.setItem(UNLOCK_KEY, JSON.stringify({ fp:shareFp, pass, code, at:Date.now() })); }catch(e){}
+
+        const nm = ($('h-name')?.value||'').trim();
+        const hello = $('cust-hello');
+        if(hello) hello.textContent = nm ? `${nm}様 専用ページ` : 'お客様専用ページ';
+        const bar = $('customer-bar'); if(bar) bar.classList.remove('hidden');
+        const adv = $('cust-advisor-wrap'); if(adv) adv.classList.remove('hidden');   // 担当者用の切替はフッターに小さく出す
+        updatePlanTabs();   // プランの説明文をお客様向けの言い回しに切り替える（customer-mode 付与後に呼ぶ）
+
+        // 前回の続きがあれば、続きから／共有された内容から を選んでいただく
+        const saved = readSharedDraft();
+        const banner = $('draft-banner');
+        if(saved && banner){
+          const when = saved.savedAt ? new Date(saved.savedAt) : null;
+          const label = when ? `（${when.getMonth()+1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2,'0')}時点）` : '';
+          const t = $('draft-text');
+          if(t) t.innerHTML = `<b>前回このページでご覧になった続きがあります</b>${label}。続きから再開しますか？<br><span class="hint" style="font-size:.78rem;">※変更内容はこの端末のブラウザ内にのみ保存されています（外部への送信はありません）。</span>`;
+          const rb = $('draft-restore'); if(rb) rb.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 続きから';
+          const db = $('draft-discard'); if(db) db.textContent = '共有された内容で見る';
+          banner.classList.remove('hidden');
+          $('draft-restore').addEventListener('click', ()=>{
+            banner.classList.add('hidden');
+            applyPlans(saved);
+            demoSnapshot = JSON.stringify(collectPlans());
+            draftHold = false;
+          });
+          $('draft-discard').addEventListener('click', ()=>{
+            banner.classList.add('hidden');
+            applyOrigin();
+          });
+          // バナーを読み飛ばしてそのまま数字を触り始めた場合＝「共有された内容から編集」とみなし、
+          // バナーを閉じて自動保存を再開する（変更が保存されないまま消える事故を防ぐ）
+          const panel = $('input-panel');
+          if(panel) panel.addEventListener('input', ()=>{
+            if(banner.classList.contains('hidden')) return;
+            banner.classList.add('hidden');
+            draftHold = false;
+            scheduleDraftSave();
+          }, { once:true });
+        } else {
+          demoSnapshot = JSON.stringify(collectPlans());   // 共有された内容そのままなら保存しない
+          draftHold = false;
+        }
+      };
+
       let opening = false;
       const tryOpen = async ()=>{
-        if(opening) return;                      // 二度押しで二重に開かない
+        if(opening || shareUnlocked) return;   // 二度押しで二重に開かない
         $('viewer-err').textContent='';
-        const code = m ? m[1] : cleanCode($('viewer-code') && $('viewer-code').value);
-        if(!code){ $('viewer-err').textContent='データを貼り付けてください。'; return; }
+        if(pasteMode){
+          const pasted = cleanCode($('viewer-code') ? $('viewer-code').value : '');
+          if(!pasted){ $('viewer-err').textContent='担当者から届いたデータを貼り付けてください。'; return; }
+          code = pasted; shareFp = computeFp(code);
+        }
         /* スマホの日本語キーボードだとパスワードが全角で入ることがある。
            そのままだと正しいパスワードでも開けず、お客様には理由が分からないので、
            全角の英数を半角へ揃え、全角スペースも取り除く。 */
@@ -6861,10 +7068,7 @@
         opening = true;
         const btn = $('viewer-open'); const orig = btn.innerHTML; btn.disabled = true; btn.textContent = '確認中…';
         try{
-          applyPlans(await decodeShareState(code, pass));   // 両プラン形式・1プラン形式のどちらでも受け取れる
-          setCurrentSave(null);
-          modal.hidden = true;
-          history.replaceState(null, '', location.pathname + location.search);
+          enterCustomerMode(await decodeShareState(code, pass), pass);   // 両プラン形式・1プラン形式のどちらでも受け取れる
         }catch(e){
           $('viewer-err').innerHTML = pasteMode
             ? 'パスワードが違うか、貼り付けたデータが途中で切れているようです。<br>担当者から届いた<b>「長い英数字」のメッセージを長押し →「コピー」</b>でもう一度コピーし直し、貼り付けてお試しください。ご不明なときは担当者までご連絡ください。'
@@ -6876,6 +7080,85 @@
         if(e.isComposing || e.keyCode===229) return;   // 日本語入力の変換確定のEnterで開こうとしない
         if(e.key==='Enter') tryOpen();
       });
+
+      // 「最初の内容に戻す」：押し間違いで変更が消えないよう、専用の確認パネルで受ける
+      // （ボタンの文字を入れ替える方式は、幅が変わって隣のボタンがずれ、かえって誤タップを招くためやめた）
+      const confirmBox = $('cust-reset-confirm');
+      if($('cust-reset')) $('cust-reset').addEventListener('click', ()=>{
+        if(confirmBox){ confirmBox.classList.remove('hidden'); confirmBox.scrollIntoView({ block:'nearest' }); }
+      });
+      if($('cust-reset-cancel')) $('cust-reset-cancel').addEventListener('click', ()=>{ if(confirmBox) confirmBox.classList.add('hidden'); });
+      if($('cust-reset-do')) $('cust-reset-do').addEventListener('click', ()=>{
+        if(confirmBox) confirmBox.classList.add('hidden');
+        applyOrigin();
+      });
+
+      // 「担当者の方はこちら」：お客様から返信されたリンクを担当者が開いたとき、
+      // 保存・共有などの担当者向け機能を使えるようにする（自動保存の保存先も担当者側へ切り替える）
+      if($('cust-advisor')) $('cust-advisor').addEventListener('click', ()=>{
+        if(!confirm('担当者モードに切り替えます。\n\n・お客様向けの案内と「最初の内容に戻す」「担当者に送る」は表示されなくなります\n・この内容は、以降このパソコンの下書きとして保存されます\n・お客様モードに戻すには、ページを再読み込みしてください\n\n切り替えますか？')) return;
+        document.body.classList.remove('customer-mode');
+        const bar = $('customer-bar'); if(bar) bar.classList.add('hidden');
+        const adv = $('cust-advisor-wrap'); if(adv) adv.classList.add('hidden');
+        customerMode = false;   // 以降の自動保存は担当者側のドラフトへ（お客様用の保存先には書かない）
+        demoSnapshot = JSON.stringify(collectPlans());   // 切替直後の状態は「未編集」＝タブを見ただけで下書きに残さない
+        updatePlanTabs();       // プランの説明文を担当者向けの言い回しに戻す
+      });
+
+      // 「この端末から消して閉じる」：共用のパソコン・借りた端末で見たときに、自分の情報を残さない
+      if($('cust-wipe')) $('cust-wipe').addEventListener('click', ()=>{
+        if(!confirm('この端末に保存されている変更内容と、開いている情報を消します。\n（担当者からのリンクとパスワードがあれば、いつでもまた開けます）\n\n消してよろしいですか？')) return;
+        clearSharedDraft();
+        try{ sessionStorage.removeItem(UNLOCK_KEY); }catch(e){}
+        location.replace(location.pathname + location.search);   // ハッシュごと外して読み込み直す
+      });
+
+      // 「担当者に送る」：変更後の内容を、担当者が開けるリンクにして返信できるようにする
+      const sbModal = $('sendback-modal');
+      const openSendback = ()=>{
+        if(!sbModal) return;
+        $('sendback-setup').hidden=false; $('sendback-result').hidden=true; $('sendback-err').textContent='';
+        sbModal.hidden=false;
+      };
+      if($('cust-sendback')) $('cust-sendback').addEventListener('click', openSendback);
+      if($('sendback-close')) $('sendback-close').addEventListener('click', ()=> sbModal.hidden=true);
+      if(sbModal) sbModal.addEventListener('click', (e)=>{ if(e.target===sbModal) sbModal.hidden=true; });
+      if($('sendback-make')) $('sendback-make').addEventListener('click', async ()=>{
+        if(!sharePass){ $('sendback-err').textContent='お手元のリンクをもう一度開き、パスワードを入力してからお試しください。'; return; }
+        // 「もしもの検証」は共有リンクに含まれないため、表示中なら先にお知らせする
+        if(typeof STRESS!=='undefined' && (STRESS.rateBump>0 || STRESS.incomeCut>0)){
+          if(!confirm('いま「もしもの検証」（金利や収入を厳しめにした表示）がオンになっています。\nこの前提は担当者に送るリンクには含まれません（通常の前提で送られます）。\n\nこのまま作成しますか？')) return;
+        }
+        const btn = $('sendback-make'); const orig = btn.innerHTML; btn.disabled=true; btn.textContent='リンク作成中…';
+        try{
+          const c = await encodeSharePlans(collectPlans(), sharePass);
+          const url = SHARE_BASE_URL + '#open';
+          const nm = ($('h-name')?.value||'').trim();
+          $('sendback-code').value = c;
+          $('sendback-msg').value =
+            `${nm?nm+'です。\n':''}ライフプランの数字を変更してみましたので、ご確認をお願いします。\n\n`
+            + `すぐ上の「長い英数字」のメッセージのデータを、下のページで貼り付けてご覧ください。パスワードはいただいたものと同じです。\n`
+            + `${url}\n\n`
+            + `（担当者の方へ：開いた画面の一番下にある「（担当者の方へ）このリンクを担当者として開く」から、保存などの操作ができます）`;
+          $('sendback-setup').hidden=true; $('sendback-result').hidden=false;
+        }catch(e){ $('sendback-err').textContent='リンクの作成に失敗しました。もう一度お試しください。'; }
+        finally{ btn.disabled=false; btn.innerHTML=orig; }
+      });
+      if($('sendback-copy-code')) $('sendback-copy-code').addEventListener('click', ()=>
+        shareOrCopyText($('sendback-code'), '①データをコピーしました。先にこれを担当者へお送りください。'));
+      if($('sendback-copy')) $('sendback-copy').addEventListener('click', ()=>
+        shareOrCopyText($('sendback-msg'), '②ご連絡をコピーしました。①データのあとにお送りください。'));
+
+      // リロード時：同じタブで解錠済みならパスワードを再入力せずに開く
+      let cached = null;
+      try{ cached = JSON.parse(sessionStorage.getItem(UNLOCK_KEY) || 'null'); }catch(e){}
+      if(code && cached && cached.fp === shareFp && cached.pass){
+        decodeShareState(code, cached.pass)
+          .then(dec=> enterCustomerMode(dec, cached.pass))
+          .catch(()=>{ modal.hidden = false; });
+      } else {
+        modal.hidden = false;
+      }
     })();
 
   })();

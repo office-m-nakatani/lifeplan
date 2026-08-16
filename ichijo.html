@@ -7445,6 +7445,7 @@
         const adv = $('cust-advisor-wrap'); if(adv) adv.classList.add('hidden');
         customerMode = false;   // 以降の自動保存は担当者側のドラフトへ（お客様用の保存先には書かない）
         demoSnapshot = JSON.stringify(collectPlans());   // 切替直後の状態は「未編集」＝タブを見ただけで下書きに残さない
+        updatePlanTabs();       // プランの説明文を担当者向けの言い回しに戻す
       });
 
       // 「この端末から消して閉じる」：共用のパソコン・借りた端末で見たときに、自分の情報を残さない

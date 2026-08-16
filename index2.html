@@ -1706,7 +1706,7 @@
           <li><b>住宅ローン控除</b>：年末残高×0.7%・最大13年を、<b>住宅性能×子育て世帯等（入居時に18歳以下のお子さま、または夫婦いずれか40歳未満）</b>の上限（ZEHチェックON＝ZEH水準31.5万円/24.5万円、OFF＝省エネ基準28万円/21万円）と、<b>名義人ごとの納税額（所得税＋住民税の控除対象分・上限9.75万円）の概算</b>の両方でキャップして計上します。ペアローンはご夫婦それぞれの割合・枠・納税額で計算します（控除枠が実質2人分）。子育て世帯の上限特例は2025年入居の制度水準で、以降の延長は制度改正をご確認ください。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
           <li><b>太陽光の試算</b>：ZEH欄の「太陽光・蓄電池の詳細設定」に搭載容量を入れると、2026年度FITの区分（<b>10kW未満＝24円が4年間／10kW以上＝19円が5年間、以降8.3円→卒FIT8円</b>）とパネル経年劣化（年0.5%）・蓄電池による自家消費の増加を織り込み、売電収入・光熱費削減を概算します。自家消費は<b>買電単価32円の節約として実際の電気代の範囲まで</b>を計上しています。個別の見積り・実額を保証するものではありません。</li>
           <li><b>火災保険・地震保険の記載</b>は制度の一般的な説明であり、特定の損害保険商品の募集・推奨を目的とするものではありません。損害保険の詳細は取扱代理店・保険会社にご確認ください。税制・社会保険の記載も概要であり、<b>詳細は最新の制度をご確認ください</b>。</li>
-          <li><b>制度・知識の最終更新：2026年8月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。前提は年1回の見直しを想定しています。</li>
+          <li><b>制度・知識の最終更新：2026年8月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
       <p style="margin-bottom:6px;">本サイトは、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</p>
@@ -2410,6 +2410,17 @@
       return kw < 10 ? (y<=4 ? 24 : (y<=10 ? 8.3 : 8))
                      : (y<=5 ? 19 : (y<=20 ? 8.3 : 8));
     }
+    /* 経過年ごとの売電単価カーブ（FIT期間の満額→期間後の単価）とパネル劣化を、
+       キャッシュフロー側にも効かせるための係数。初年度を1とした倍率を返す。
+       以前はここが無く、フッターの前提には「FITの区分と劣化を織り込み」と書いてあるのに
+       実際は汎用の逓減（10年満額→以後4割）で計算していて、30年の売電が過大に出ていた。
+       kW未入力（0）のときは null を返し、従来どおり汎用の逓減で計算する。 */
+    function zehSellFactor(yo){          // yo＝購入からの経過年（0始まり）
+      const kw = Math.max(num('ichijo-solar-kw', 0), 0);
+      if(kw <= 0) return null;
+      if(yo >= 30) return 0;             // パネル寿命を考慮し31年目以降は見込まない
+      return (ichijoSellPrice(kw, yo+1) / ichijoSellPrice(kw, 1)) * Math.pow(0.995, yo);
+    }
     function ichijoSolarModel(){
       const kw   = Math.max(num('ichijo-solar-kw', 0), 0);
       const batt = Math.max(num('ichijo-battery-kwh', 0), 0);
@@ -2434,9 +2445,21 @@
     // 太陽光の詳細入力 → ZEHの「売電収入」「光熱費の削減」へ自動反映（実見積など手入力した値は尊重）
     let userEditedZeh = false;
     ['zeh-sell','zeh-save'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedZeh = true; }); });
+    const ZEH_SELL_DEFAULT = 7;   // HTMLの zeh-sell の初期値と一致させること
+    const ZEH_SAVE_DEFAULT = 6;   // HTMLの zeh-save の初期値と一致させること
     function applySolarToZeh(){
       if(!$('zeh-on') || !$('zeh-on').checked) return;   // ZEH（太陽光）がONのときだけ自動計算
       if(userEditedZeh) return;                          // 手入力済みの値は上書きしない
+      /* 搭載容量が未入力（0）のときは自動計算しない。
+         ガードが無いと、kW=0 でも売電0万円・光熱費削減3万円で既定値を黙って上書きしてしまい、
+         逆に一度入力してから空に戻すと「0kWなのに売電20万円台」という古い値が残ってしまう。
+         どちらも避けるため、初期値へ戻したうえで抜ける。 */
+      const kwNow = Math.max(num('ichijo-solar-kw', 0), 0);
+      if(kwNow <= 0){
+        if($('zeh-sell')) $('zeh-sell').value = ZEH_SELL_DEFAULT;
+        if($('zeh-save')) $('zeh-save').value = ZEH_SAVE_DEFAULT;
+        return;
+      }
       const m = ichijoSolarModel();
       if($('zeh-sell')) $('zeh-sell').value = Math.round(m.sellY1);               // 初年度の売電収入
       if($('zeh-save')) $('zeh-save').value = Math.round(m.selfMan + m.utilSave); // 自家消費＋高断熱の節約
@@ -3010,7 +3033,7 @@
             if(zeh){
               const yo = Math.max(yearsOwned, 0);
               let sell = 0;
-              const zf = null;   // ZEHの売電はsimulate側の汎用逓減（FIT10年満額→以後約4割）で計算
+              const zf = zehSellFactor(yo);   // 搭載容量を入力したときはFIT単価カーブ＋パネル劣化で計算（未入力なら null＝汎用逓減）
               if(zf != null)   sell = zehSell * zf;
               else if(yo < 10) sell = zehSell;          // FIT期間：満額
               else if(yo < 30) sell = zehSell * 0.4;    // 卒FIT：約4割

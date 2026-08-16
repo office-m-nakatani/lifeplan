@@ -6937,7 +6937,91 @@
       s.fields = Object.assign({}, shareDefaultFields(), o.f||{});
       delete s.f; return s;
     }
-    // 現行形式（先頭"*"、gzip圧縮ありは"*z"）＝ 現状プラン＋将来プランの両方を差分JSON
+    /* ---------- 共有データを短くする（キー名を番号に置き換える）----------
+       お客様にLINEでお渡しする「1通目のデータ」を短くするための仕組み。
+       生JSONの6割がキー名だったので、キー名を表の番号に置き換える。
+
+       ★★ 下の3つの表は「末尾に足す」だけにすること。並べ替え・削除は絶対にしない ★★
+       番号がずれると、お客様の画面で夫と妻の年収が入れ替わるなど、
+       エラーを出さずに数字だけが狂う（募集資料として最悪の壊れ方）。
+       表に無いキーは "!" を付けてそのまま入れるので、入力欄が増えても壊れない。
+       万一並べ替え・削除をしてしまった場合に備え、作成時の表の内容から指紋を作って
+       一緒に入れておき、食い違ったら復号を止める（黙って数字が狂うのを防ぐ）。 */
+    const SHARE_TOP_KEYS = ['v','f','wifeWorklife','wifeSchedule','house','ichijoRegion','ichijoHorizon',
+      'household','expMode','kasaiCycle','kasaiQuakeMode','payoff','loanType','loanRateType','loanRepayType',
+      'children','events','incomeEvents','expenses','investments','hokenMode','insurances'];
+    const SHARE_ROW_KEYS = ['name','age','k12','highEd','lodging','gender','label','amount','every',
+      'years','start','type','lump','monthly','ret','end','after','on','who','keep'];
+    const SHARE_FIELD_IDS = ['h-name','h-age','h-income','h-raise','h-retire','h-bonus',
+      'w-name','w-age','w-income','w-raise','w-retire','w-bonus','wife-worklife','end-age','inflation','rent',
+      'ichijo-solar-kw','ichijo-battery-kwh','buy-age','owned-age','house-price','down','loan-term',
+      'prop-tax','maint','loan-rate',
+      'rate_step5_0','rate_step5_1','rate_step5_2','rate_step5_3','rate_step5_4','rate_step5_5','rate_step5_6',
+      'loan-bonus-pay','dansin-extra','loan-share-h','loan-share-w','loan-payoff-age','loan-balance-manual',
+      'zeh-on','zeh-sell','zeh-save',
+      'e-bulk','e-food','e-water','e-elec','e-gas','e-daily','e-cloth','e-life','e-nonlife','e-car','e-fuel',
+      'e-phone','e-net','e-pocket','e-hobby','e-other','kasai-fire','kasai-quake','e-retire-living',
+      'cash-on','cash','pension-age','pension-monthly','ins-total-h','ins-total-w','age-point-1','age-point-2'];
+    // 作成時の表の「先頭n個」から作る指紋。末尾に足しただけなら先頭n個は変わらないので、
+    // 過去に発行したデータもそのまま開ける（並べ替え・削除をすると一致しなくなる）
+    function shareTableSig(nT, nR, nF){
+      if(SHARE_TOP_KEYS.length < nT || SHARE_ROW_KEYS.length < nR || SHARE_FIELD_IDS.length < nF) return null;
+      const s = SHARE_TOP_KEYS.slice(0,nT).join(',') + '|' + SHARE_ROW_KEYS.slice(0,nR).join(',') + '|' + SHARE_FIELD_IDS.slice(0,nF).join(',');
+      let h = 5381; for(let i=0;i<s.length;i++) h = ((h<<5)+h+s.charCodeAt(i))>>>0;
+      return h.toString(36);
+    }
+    const shareTok = (table, k)=>{ const i = table.indexOf(k); return i>=0 ? i.toString(36) : ('!'+k); };
+    const shareUnTok = (table, k)=> k.charAt(0)==='!' ? k.slice(1) : table[parseInt(k,36)];
+    function packRows(arr){
+      return (arr||[]).map(o=>{
+        if(!o || typeof o!=='object') return o;
+        const r = {}; Object.keys(o).forEach(k=> r[shareTok(SHARE_ROW_KEYS,k)] = o[k]); return r;
+      });
+    }
+    function unpackRows(arr){
+      return (arr||[]).map(o=>{
+        if(!o || typeof o!=='object') return o;
+        const r = {}; Object.keys(o).forEach(k=>{ const n = shareUnTok(SHARE_ROW_KEYS,k); if(n!==undefined) r[n]=o[k]; }); return r;
+      });
+    }
+    const SHARE_ARRAY_KEYS = ['children','events','incomeEvents','expenses','investments','insurances'];
+    function packSlimState(st){
+      if(!st) return st;
+      const o = {};
+      Object.keys(st).forEach(k=>{
+        let v = st[k];
+        if(k === 'f'){ const f = {}; Object.keys(v||{}).forEach(id=> f[shareTok(SHARE_FIELD_IDS,id)] = v[id]); v = f; }
+        else if(Array.isArray(v)){ if(!v.length) return; v = packRows(v); }   // 空の配列は送らない（復元時に[]を補う）
+        o[shareTok(SHARE_TOP_KEYS,k)] = v;
+      });
+      return o;
+    }
+    function unpackSlimState(o){
+      if(!o) return o;
+      const st = {};
+      Object.keys(o).forEach(k=>{
+        const name = shareUnTok(SHARE_TOP_KEYS,k);
+        if(name === undefined) return;
+        let v = o[k];
+        if(name === 'f'){ const f = {}; Object.keys(v||{}).forEach(t=>{ const id = shareUnTok(SHARE_FIELD_IDS,t); if(id!==undefined) f[id]=v[t]; }); v = f; }
+        else if(Array.isArray(v)) v = unpackRows(v);
+        st[name] = v;
+      });
+      SHARE_ARRAY_KEYS.forEach(k=>{ if(!(k in st)) st[k] = []; });   // 送らなかった空の配列を戻す
+      return st;
+    }
+    // deflate-raw（gzipのヘッダ・フッタ18バイトぶん短い）
+    async function deflateBytes(bytes){
+      const cs=new CompressionStream('deflate-raw'); const w=cs.writable.getWriter(); w.write(bytes); w.close();
+      return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    }
+    async function inflateBytes(bytes){
+      const ds=new DecompressionStream('deflate-raw'); const w=ds.writable.getWriter(); w.write(bytes); w.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    }
+    const canDeflateRaw = ()=>{ try{ new CompressionStream('deflate-raw'); return true; }catch(e){ return false; } };
+
+    // 旧形式（先頭"*"、gzip圧縮ありは"*z"）＝ 現状プラン＋将来プランの両方を差分JSON
     // → gzip → パスワードでAES-GCM暗号化 → base64url。
     // お客様側でも「現状と将来をくらべる」がそのまま見られる。将来が現状と同一なら重複を省いてURLを短くする。
     // 集計結果（sum）は送らず、受け取り側で再計算する（URLを短く保つため）。
@@ -6952,6 +7036,15 @@
       const same = m && g && JSON.stringify(m)===JSON.stringify(g);
       // same＝担当者が将来プランをまだ作っていない状態。受け取り側でも「現状に追従」させるため印を残す
       const payload = { v:3, a: (plansObj.active==='mirai' ? 'm' : 'g'), g, m: same ? 1 : m, u: same ? 1 : 0 };
+      // 現行形式（先頭"*d"）＝ キー名を番号に置換 ＋ deflate-raw。お渡しするデータが約3割短くなる
+      if(canDeflateRaw()){
+        const t = [SHARE_TOP_KEYS.length, SHARE_ROW_KEYS.length, SHARE_FIELD_IDS.length];
+        const packed = Object.assign({}, payload, { t, x: shareTableSig(t[0],t[1],t[2]),
+          g: packSlimState(payload.g), m: (payload.m===1 ? 1 : packSlimState(payload.m)) });
+        const body = await deflateBytes(new TextEncoder().encode(JSON.stringify(packed)));
+        return '*d' + await encodeBodyAvoidingTrailingHyphen(body, password);
+      }
+      // deflate-raw が使えない環境（古いブラウザ）は従来どおり
       let body = new TextEncoder().encode(JSON.stringify(payload));
       let head = '*';                                   // AES-GCM（非圧縮）
       if(typeof CompressionStream!=='undefined'){
@@ -6997,7 +7090,16 @@
     }
     // 復元：applyPlans() に渡せる形（{plans:…} または {state:…}）で返す
     async function decodeShareState(str, password){
-      if(str && str.charAt(0)==='*'){        // 現行：AES-GCM（'*z'＝gzip圧縮あり）
+      if(str && str.slice(0,2)==='*d'){      // 現行：キー名を番号に置換 ＋ deflate-raw ＋ AES-GCM
+        const raw = await aesDecrypt(b64urlDecode(str.slice(2)), password);
+        const p = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await inflateBytes(raw)));
+        const t = p.t || [];
+        // 表が並べ替え・削除されていたら、数字が狂ったまま表示せずに止める
+        if(shareTableSig(t[0],t[1],t[2]) !== p.x) throw new Error('table-mismatch');
+        return plansFromPayload(Object.assign({}, p, { g: unpackSlimState(p.g),
+          m: (p.m===1 ? 1 : unpackSlimState(p.m)) }));
+      }
+      if(str && str.charAt(0)==='*'){        // 旧：AES-GCM（'*z'＝gzip圧縮あり）
         const gz = str.charAt(1)==='z';
         const raw = await aesDecrypt(b64urlDecode(str.slice(gz?2:1)), password);
         const bytes = gz ? await gunzipBytes(raw) : raw;

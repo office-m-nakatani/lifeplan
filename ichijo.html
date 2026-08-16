@@ -6718,7 +6718,11 @@
     const OLD_SAVE_KEY = 'lifeplan_saves_v1';
     function importOldSaves(){
       if(!currentUser) return;
-      const flagKey = 'lifeplan2_imported_from1__' + currentUser;
+      /* 取込済みフラグは一条版専用の名前にする。
+         ②と同じ 'lifeplan2_imported_from1__' を使っていたため、先に②を開いた
+         アカウントでは②がフラグを立て、一条版は「取込済み」と誤認して①のデータを
+         一度も取り込まなかった（お客様の保存が一条版だけ出てこない事故の原因）。 */
+      const flagKey = 'lifeplan_ichijo_imported_from1__' + currentUser;
       try{
         if(localStorage.getItem(flagKey)) return;
         let old = {};

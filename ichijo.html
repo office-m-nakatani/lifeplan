@@ -501,8 +501,9 @@
     .save-row{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px; }
     .save-row .field{ flex:1 1 200px; }
     .save-list{ display:flex; flex-direction:column; gap:8px; }
-    .save-item{ display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 14px; background:var(--bg-soft); }
-    .save-item .si-name{ font-weight:700; flex:1; }
+    .save-item{ display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 14px; background:var(--bg-soft); flex-wrap:wrap; }
+    .save-item .si-name{ font-weight:700; flex:1 1 100%; }
+    @media(min-width:560px){ .save-item .si-name{ flex:1 1 auto; } }
     .save-item .si-date{ font-size:.74rem; color:var(--ink-soft); }
     .save-empty{ color:var(--ink-soft); font-size:.85rem; text-align:center; padding:14px; }
     .save-userbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:9px 13px; background:var(--blue-pale); border-radius:10px; margin-bottom:14px; font-size:.88rem; color:var(--blue-deep); }
@@ -6768,13 +6769,43 @@
         const d = new Date(it.t||0);
         const ds = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;
         const badge = it.owner===ADMIN_USER ? '' : ` <span style="font-size:.72em;background:var(--blue-pale);color:var(--blue-deep);border-radius:6px;padding:1px 6px;">${esc(it.owner)}</span>`;
+        // 自分（管理者）のアカウントに無い保存には「自分に複製」を出す
+        const mine = (it.storeKey === saveKeyFor(currentUser));
+        const copyBtn = mine ? '' :
+          `<button class="btn btn-ghost btn-sm" data-adm-copy="${idx}" title="自分のアカウントに複製"><i class="fa-solid fa-copy"></i> 自分に複製</button>`;
         return `<div class="save-item"><span class="si-name">${esc(it.name)}${badge}</span><span class="si-date">${ds}</span>
           <button class="btn btn-ghost btn-sm" data-adm-load="${idx}"><i class="fa-solid fa-folder-open"></i> 読込</button>
+          ${copyBtn}
           <button class="btn-del" data-adm-del="${idx}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
       }).join('');
       list.querySelectorAll('[data-adm-load]').forEach(b=> b.addEventListener('click', ()=>{
         const it = items[+b.dataset.admLoad]; if(!it) return;
         applyPlans(it.entry); setCurrentSave(it.name); $('save-modal').hidden=true;
+      }));
+      /* 「自分に複製」：他アカウントの保存や、①（旧ツール）に残っている保存を、
+         管理者自身のアカウントへコピーする。別アカウントのパスワードが分からなくても
+         手元に引き取れるようにするための操作。
+         ・元のデータは消さない（複製であって移動ではない）
+         ・複製すると顧客管理（CRM）にも自分の顧客として反映される */
+      list.querySelectorAll('[data-adm-copy]').forEach(b=> b.addEventListener('click', ()=>{
+        const it = items[+b.dataset.admCopy]; if(!it || !it.entry) return;
+        const mineSaves = getSaves();
+        // 同じ保存名・同じ保存日時のものが既にあれば複製済み（押し間違いで増やさない）
+        const already = Object.keys(mineSaves).find(k=> mineSaves[k] && mineSaves[k].t === it.entry.t
+                          && (k === it.name || k.indexOf(it.name+'（') === 0));
+        if(already){ alert(`「${it.name}」は、あなたのアカウントに既に「${already}」として取り込み済みです。`); return; }
+        let name = it.name;
+        if(name in mineSaves){
+          name = `${it.name}（${it.owner}）`;
+          let n = 2; while(name in mineSaves){ name = `${it.name}（${it.owner}・${n++}）`; }
+        }
+        if(!confirm(`「${it.name}」（${it.owner} の保存）を、あなたのアカウント（${currentUser}）へ複製します。\n\n保存名：${name}\n元のデータはそのまま残ります。\n\n複製しますか？`)) return;
+        mineSaves[name] = Object.assign({}, it.entry, { t:(it.entry.t || Date.now()), by: currentUser });
+        if(putSaves(mineSaves)){
+          omcrmSync(name);
+          renderSaveList();
+          alert(`「${name}」をあなたのアカウントへ複製しました（顧客管理にも反映）。`);
+        }
       }));
       list.querySelectorAll('[data-adm-del]').forEach(b=> b.addEventListener('click', ()=>{
         const it = items[+b.dataset.admDel]; if(!it) return;

@@ -1704,8 +1704,21 @@
           <div class="save-row" style="margin-top:10px;">
             <button class="btn btn-primary btn-sm btn-full" id="open-share" type="button"><i class="fa-solid fa-share-nodes"></i> お客様にこの内容を共有する</button>
           </div>
-          <p class="at-note">保存したデータは<strong>ログイン中のアカウントごと</strong>に、このパソコン（ブラウザ）へ記録されます（他のアカウントからは見えません）。下の一覧から読み込んで続きを作成できます。</p>
+          <p class="at-note">保存したデータは<strong>ログイン中のアカウントごと</strong>に、このパソコン（ブラウザ）へ記録されます（他のアカウントからは見えません）。下の一覧から読み込んで続きを作成できます。<br>
+            <b>ブラウザのデータを消すと保存も消えます。</b>「バックアップ」で定期的にJSONファイルへ書き出してください。</p>
+          <div class="save-row" style="gap:8px; margin-bottom:10px;">
+            <button class="btn btn-ghost btn-sm" id="saves-backup" type="button"><i class="fa-solid fa-download"></i> バックアップ</button>
+            <button class="btn btn-ghost btn-sm" id="saves-restore" type="button"><i class="fa-solid fa-upload"></i> 復元（取り込み）</button>
+            <input type="file" id="saves-restore-file" accept=".json,application/json" hidden>
+          </div>
           <div class="save-list" id="save-list"></div>
+
+          <!-- 管理者だけに出す：アカウントのパスワード再設定 -->
+          <div id="admin-accounts" hidden style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+            <p class="at-note" style="margin-bottom:8px;"><b>アカウント管理（管理者のみ）</b><br>
+              パスワードが分からなくなったアカウントは、ここで新しいパスワードに設定し直せます。保存データはそのまま残ります。</p>
+            <div class="save-list" id="admin-acct-list"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -6816,8 +6829,88 @@
       }));
     }
 
+    /* ── バックアップ／復元（JSON） ─────────────────────────────
+       保存はこのブラウザの中だけにあるため、ブラウザのデータを消すと消える。
+       またローカルのHTMLを直接開いて保存した分は file:// 側に入り、公開URLからは見えない。
+       （実際に「土橋様のデータが消えた」＝file://側に入っていた事故が起きた）
+       そこでJSONで書き出し・取り込みできるようにして、移し替えと保管の両方を賄う。 */
+    function backupSaves(){
+      if(!currentUser){ alert('ログインしてからご利用ください。'); return; }
+      const data = JSON.stringify(getSaves(), null, 1);
+      const d = new Date();
+      const stamp = `${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
+      a.download = `ライフプラン一条_保存データ_${currentUser}_${stamp}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=> URL.revokeObjectURL(a.href), 5000);
+    }
+    /* 取り込み：{保存名:{t, plans|state, by}} 形式をログイン中のアカウントへマージする。
+       同名は上書きせず「（復元）」を付けて別名で入れる（既存を壊さない）。 */
+    function restoreSavesFromText(text){
+      if(!currentUser){ alert('ログインしてからご利用ください。'); return; }
+      let obj = null;
+      try{ obj = JSON.parse(text); }catch(e){ alert('ファイルの中身を読み取れませんでした。バックアップで作ったJSONファイルをお選びください。'); return; }
+      if(!obj || typeof obj!=='object' || Array.isArray(obj)){ alert('保存データの形式ではないようです。'); return; }
+      const entries = Object.keys(obj).filter(k=> obj[k] && typeof obj[k]==='object' && (obj[k].plans || obj[k].state));
+      if(!entries.length){ alert('取り込める保存データが見つかりませんでした。'); return; }
+      if(!confirm(`${entries.length}件の保存データを、あなたのアカウント（${currentUser}）へ取り込みます。\n\n${entries.slice(0,10).join('\n')}${entries.length>10?'\n…ほか':''}\n\n取り込みますか？`)) return;
+      const cur = getSaves();
+      const added = [];
+      entries.forEach(name=>{
+        let n = name;
+        if(n in cur){ n = `${name}（復元）`; let i=2; while(n in cur){ n = `${name}（復元・${i++}）`; } }
+        cur[n] = Object.assign({}, obj[name], { by: currentUser });
+        added.push(n);
+      });
+      if(putSaves(cur)){
+        added.forEach(n=> omcrmSync(n));
+        renderSaveList();
+        alert(`${added.length}件を取り込みました（顧客管理にも反映）。\n\n${added.slice(0,10).join('\n')}`);
+      }
+    }
+    if($('saves-backup')) $('saves-backup').addEventListener('click', backupSaves);
+    if($('saves-restore')) $('saves-restore').addEventListener('click', ()=> $('saves-restore-file').click());
+    if($('saves-restore-file')) $('saves-restore-file').addEventListener('change', (e)=>{
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ restoreSavesFromText(String(r.result||'')); e.target.value=''; };
+      r.onerror = ()=>{ alert('ファイルを読み込めませんでした。'); e.target.value=''; };
+      r.readAsText(f, 'utf-8');
+    });
+
+    /* 管理者だけ：他アカウントのパスワードを再設定する。
+       パスワードは戻せない形（ハッシュ）でしか保存していないため、忘れたら再設定するしかない。
+       保存データはアカウント名に紐づくので、再設定しても中身は失われない。 */
+    function renderAdminAccounts(){
+      const wrap = $('admin-accounts'); if(!wrap) return;
+      wrap.hidden = (currentUser !== ADMIN_USER);
+      if(wrap.hidden) return;
+      const accts = getAccounts();
+      const list = $('admin-acct-list');
+      const names = Object.keys(accts).sort();
+      if(!names.length){ list.innerHTML = '<div class="save-empty">アカウントがありません。</div>'; return; }
+      list.innerHTML = names.map((u,i)=>{
+        const me = (u===currentUser) ? ' <span style="font-size:.72em; color:var(--ink-soft);">（自分）</span>' : '';
+        return `<div class="save-item"><span class="si-name">${esc(u)}${me}</span>
+          <button class="btn btn-ghost btn-sm" data-acct-reset="${i}"><i class="fa-solid fa-key"></i> パスワード再設定</button></div>`;
+      }).join('');
+      list.querySelectorAll('[data-acct-reset]').forEach(b=> b.addEventListener('click', async ()=>{
+        const u = names[+b.dataset.acctReset]; if(!u) return;
+        const p = prompt(`「${u}」の新しいパスワードを入力してください（4文字以上）。\n保存データはそのまま残ります。`);
+        if(p===null) return;
+        if((p||'').length < 4){ alert('パスワードは4文字以上にしてください。'); return; }
+        const o = getAccounts();
+        if(!o[u]){ alert('そのアカウントが見つかりませんでした。'); return; }
+        o[u].pass = await hashPass(p);
+        o[u].resetAt = Date.now();
+        if(putAccounts(o)) alert(`「${u}」のパスワードを再設定しました。`);
+      }));
+    }
+
     function renderSaveList(){
       importOldSaves();
+      renderAdminAccounts();
       if(currentUser===ADMIN_USER){ renderAdminSaveList(); return; }
       const saves = getSaves();
       const names = Object.keys(saves).sort((a,b)=> (saves[b].t||0)-(saves[a].t||0));

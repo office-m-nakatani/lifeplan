@@ -3809,7 +3809,9 @@
         PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
         PLANS.mirai = { state: pl.mirai && pl.mirai.state || null, sum: pl.mirai && pl.mirai.sum || null };
         PLANS.active = (pl.active==='mirai' && PLANS.mirai.state) ? 'mirai' : 'genjo';
-        miraiTouched = !!(PLANS.mirai.state);   // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従
+        // 将来プランを持つ保存＝独立扱い／持たない保存＝現状に追従。
+        // 共有リンクで「将来をまだ作っていない」印（miraiUntouched）が付いていれば、中身が同じでも追従させる
+        miraiTouched = saved.miraiUntouched ? false : !!(PLANS.mirai.state);
         updatePlanTabs();
         if(PLANS[PLANS.active].state){ restoreWifeWork(PLANS[PLANS.active].state); applyState(PLANS[PLANS.active].state); }
         refreshInactiveSum();                   // 読込直後から両タブを開かずに比較を表示（古い形式のsumも作り直す）
@@ -6605,6 +6607,37 @@
       }
       return head + await encodeBodyAvoidingTrailingHyphen(body, password);
     }
+    /* 現行形式（先頭"*p"）＝ 現状プラン＋将来プランの両方を送る。
+       このツールの中核は「現状と将来をくらべる」なので、片方だけ送ると
+       お客様の画面で将来プランが空になり、比較そのものが成立しない。
+       将来が現状と同一（＝担当者がまだ将来プランを作っていない）ときは重複を省き、
+       受け取り側でも「現状に追従」させるための印（u）を残す。
+       集計結果（sum）は送らず、受け取り側で再計算する（データを短く保つため）。 */
+    async function encodeSharePlans(plansObj, password){
+      if(!canEncrypt()) throw new Error('no-crypto');
+      const DEF = shareDefaultFields();
+      const g = plansObj.genjo && plansObj.genjo.state ? slimStateForShare(plansObj.genjo.state, DEF) : null;
+      const m = plansObj.mirai && plansObj.mirai.state ? slimStateForShare(plansObj.mirai.state, DEF) : null;
+      const same = m && g && JSON.stringify(m) === JSON.stringify(g);
+      const payload = { v:3, a: (plansObj.active==='mirai' ? 'm' : 'g'), g, m: same ? 1 : m, u: same ? 1 : 0 };
+      if(canDeflateRaw()){
+        const t = [SHARE_TOP_KEYS.length, SHARE_ROW_KEYS.length, SHARE_FIELD_IDS.length];
+        const packed = Object.assign({}, payload, { t, x: shareTableSig(t[0],t[1],t[2]),
+          g: g ? packSlimState(g) : null, m: (payload.m===1 ? 1 : (payload.m ? packSlimState(payload.m) : null)) });
+        const body = await deflateBytes(new TextEncoder().encode(JSON.stringify(packed)));
+        return '*p' + await encodeBodyAvoidingTrailingHyphen(body, password);
+      }
+      // deflate-raw が使えない環境（古いブラウザ）は1プランのみの従来形式で作る
+      return await encodeShareState(plansObj[plansObj.active].state, password);
+    }
+    // 両プラン形式のペイロード → applyPlans() に渡せる形
+    function plansFromPayload(p){
+      const g = p.g ? fatStateFromShare(p.g) : null;
+      const m = (p.m === 1) ? (g ? JSON.parse(JSON.stringify(g)) : null) : (p.m ? fatStateFromShare(p.m) : null);
+      return { plans: { active: (p.a === 'm' ? 'mirai' : 'genjo'),
+                        genjo: { state:g, sum:null }, mirai: { state:m, sum:null } },
+               miraiUntouched: p.u === 1 };   // 将来プラン未作成のまま共有された＝受け取り側でも現状に追従させる
+    }
     /* base64url の末尾が "-" になったリンクは、Android系の自動リンク検出
        （android.util.Patterns.WEB_URL）がURLの後ろに単語境界を要求するため、
        最後の1文字を落としてリンク化することがある。1文字欠けると復号は必ず失敗し、
@@ -6621,30 +6654,41 @@
       }
       return enc;
     }
+    /* 復元：applyPlans() に渡せる形（{plans:…} または {state:…}）で返す。
+       "*p"＝現行の両プラン形式。それ以外は過去に発行した1プラン形式で、引き続き開ける。 */
     async function decodeShareState(str, password){
-      if(str && str.slice(0,2)==='*d'){      // 現行：キー名を番号に置換 ＋ deflate-raw ＋ AES-GCM
+      if(str && str.slice(0,2)==='*p'){      // 現行：両プラン ＋ キー番号化 ＋ deflate-raw ＋ AES-GCM
+        const raw = await aesDecrypt(b64urlDecode(str.slice(2)), password);
+        const p = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await inflateBytes(raw)));
+        const t = p.t || [];
+        if(shareTableSig(t[0],t[1],t[2]) !== p.x) throw new Error('table-mismatch');
+        return plansFromPayload(Object.assign({}, p, {
+          g: p.g ? unpackSlimState(p.g) : null,
+          m: (p.m === 1 ? 1 : (p.m ? unpackSlimState(p.m) : null)) }));
+      }
+      if(str && str.slice(0,2)==='*d'){      // 1プラン：キー名を番号に置換 ＋ deflate-raw ＋ AES-GCM
         const raw = await aesDecrypt(b64urlDecode(str.slice(2)), password);
         const payload = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await inflateBytes(raw)));
         const t = payload.t || [];
         // 表が並べ替え・削除されていたら、数字が狂ったまま表示せずに止める
         if(shareTableSig(t[0],t[1],t[2]) !== payload.x) throw new Error('table-mismatch');
-        return fatStateFromShare(unpackSlimState(payload.p));
+        return { state: fatStateFromShare(unpackSlimState(payload.p)) };
       }
       if(str && str.charAt(0)==='*'){        // 旧：AES-GCM（'*z'＝gzip圧縮あり）
         const gz = str.charAt(1)==='z';
         const raw = await aesDecrypt(b64urlDecode(str.slice(gz?2:1)), password);
         const bytes = gz ? await gunzipBytes(raw) : raw;
-        return fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+        return { state: fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes))) };
       }
       if(str && str.charAt(0)==='~'){        // 旧：XOR＋gzip（過去に発行したリンク。復号のみ対応）
         const gz = xorBytes(b64urlDecode(str.slice(1)), password);
         const bytes = await gunzipBytes(gz);
-        return fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+        return { state: fatStateFromShare(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes))) };
       }
       // 最も古い形式（XOR・非圧縮・差分なし）
       const dec = xorBytes(b64urlDecode(str), password);
       const json = new TextDecoder('utf-8', {fatal:true}).decode(dec);
-      return JSON.parse(json);
+      return { state: JSON.parse(json) };
     }
 
     const shareModal = $('share-modal');
@@ -6669,7 +6713,7 @@
       if(!pass){ $('share-err').textContent='パスワードを入力してください。'; return; }
       const btn = $('share-make'); const orig = btn.textContent; btn.disabled=true; btn.textContent='リンク作成中…';
       try{
-        const code = await encodeShareState(collectState(), pass);
+        const code = await encodeSharePlans(collectPlans(), pass);   // 現状・将来の両プランを共有（比較もそのまま見られる）
         // 共有リンクは必ず公開サイトのURLを使う（ローカルでfile://から開いていても、お客様のスマホ・PCで開けるように）
         // データはURLに載せず別メッセージで渡すため、リンクは「#open」だけの短いものにする。
         // （実測：データを載せると約1,000文字になり、LINEの折りたたみに埋もれてタップできない）
@@ -6782,8 +6826,7 @@
         const pass = ($('viewer-pass').value||'').trim();
         if(!pass){ $('viewer-err').textContent='パスワードを入力してください。'; return; }
         try{
-          const state = await decodeShareState(code, pass);
-          applyPlans({ state: state });
+          applyPlans(await decodeShareState(code, pass));   // 両プラン形式・1プラン形式のどちらでも受け取れる
           setCurrentSave(null);
           modal.hidden = true;
           history.replaceState(null, '', location.pathname + location.search);

@@ -885,6 +885,10 @@
     }
     .vc-fab{ bottom:72px; background:var(--yellow); color:#5a4a12; box-shadow:0 6px 20px rgba(227,169,72,.4); }
     .vc-fab:hover{ background:var(--yellow-soft); }
+    /* 録音中はドックを閉じ、この右下ボタンだけを濃い色にして知らせる（商談中に画面を占領しないため） */
+    .vc-fab.rec-on{ background:var(--vc-rec-on); color:#fff; box-shadow:0 6px 22px rgba(184,82,79,.45); font-variant-numeric:tabular-nums; }
+    .vc-fab.rec-on:hover{ background:#a4433f; }
+    .vc-fab.rec-on i{ animation:vcPulse 1.1s ease-in-out infinite; }
     /* ドック表示中：音声FABは隠し、チャットFABはドックの上へ逃がす */
     body.vc-dock-on .vc-fab{ display:none !important; }
     body.vc-dock-on .chat-fab{ bottom:calc(14px + var(--vc-dock-h)); }
@@ -1011,18 +1015,16 @@
     body.customer-mode #mn-modal{ display:none !important; }
 
     /* ---------- 議事録の体裁（番号＋テーマ／リード語: 本文） ---------- */
-    .mn-doc{ font-size:.88rem; line-height:1.75; }
+    /* 議事録はお渡しするワード資料に近い体裁で読ませる（見出し＋「リード語: 本文」） */
+    .mn-doc{ font-size:.92rem; line-height:1.95; max-width:52em; }
     .mn-doc:focus{ outline:2px solid var(--blue); outline-offset:3px; border-radius:8px; }
-    .mn-meta{ margin:0 0 8px; font-weight:800; color:var(--blue-deep); }
-    .mn-h{ margin:12px 0 4px; font-size:.95rem; color:var(--blue-deep); }
-    .mn-h:first-of-type{ margin-top:2px; }
-    .mn-item{ margin:0 0 6px; }
+    .mn-meta{ margin:0 0 12px; font-weight:800; color:var(--blue-deep); }
+    .mn-h{ margin:20px 0 8px; padding-bottom:5px; font-size:1.04rem; font-weight:800;
+      color:var(--blue-deep); border-bottom:1.5px solid var(--blue-pale2); }
+    .mn-h:first-of-type{ margin-top:4px; }
+    .mn-item{ margin:0 0 11px; }
     .mn-item b{ color:var(--ink); }
     .mn-empty{ color:var(--ink-soft); }
-    /* ツールの試算値の行は、発言の抜粋と見分けられるようにする（言っていない数字と発言の混同を防ぐ） */
-    .mn-item-calc{ border-left:3px solid var(--blue-pale2); padding-left:9px; }
-    .mn-tag{ display:inline-block; margin-right:6px; padding:1px 7px; border-radius:999px;
-      font-size:.72rem; font-weight:700; background:var(--blue-pale); color:var(--blue-deep); }
     .mn-notes{ margin-top:10px; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; }
     .mn-notes p{ margin:0 0 5px; }
@@ -1055,6 +1057,30 @@
     .nx-disclaimer{ margin:8px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
     .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
+
+    /* ---------- 家系図 ---------- */
+    .fam-tree{ display:flex; flex-direction:column; gap:8px; margin:2px 0 10px; }
+    .fam-gen{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 10px;
+      background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
+    .fam-gen-l{ flex:0 0 auto; min-width:6.6em; font-size:.74rem; font-weight:800; color:var(--ink-soft); }
+    .fam-chip{ display:inline-flex; flex-direction:column; gap:1px; padding:6px 11px; border-radius:10px;
+      background:#fff; border:1.5px solid var(--line); font-size:.82rem; line-height:1.45; }
+    .fam-chip b{ font-size:.85rem; }
+    .fam-sub{ color:var(--ink-soft); font-size:.72rem; }
+    .fam-chip.is-care{ border-color:var(--warn); background:var(--warn-pale); }
+    .fam-chip.is-asset{ border-color:var(--blue-pale2); background:var(--blue-pale); }
+    .fam-chip.is-gone{ opacity:.55; }
+    .fam-empty{ font-size:.78rem; color:var(--ink-soft); }
+    .fam-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(122px,1fr)); gap:8px; align-items:end;
+      padding:9px 10px; margin-bottom:8px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
+    .fam-row label{ display:block; font-size:.72rem; color:var(--ink-soft); margin-bottom:2px; }
+    .fam-row input, .fam-row select{ width:100%; min-height:40px; padding:8px 9px; border:1.5px solid var(--line);
+      border-radius:9px; font-family:inherit; font-size:.85rem; background:#fff; color:var(--ink); }
+    .fam-row input:focus, .fam-row select:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
+    .fam-row .fam-memo{ grid-column:1/-1; }
+    .fam-del{ min-height:44px; border:1.5px solid var(--line); border-radius:9px; background:#fff;
+      color:#c25f5f; font-family:inherit; font-size:.85rem; cursor:pointer; }
+    .fam-del:hover{ background:var(--bad-pale); }
 
     /* ---------- メモ ---------- */
     .vc-memo{ display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:.84rem; line-height:1.55; }
@@ -2582,6 +2608,7 @@
         <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
         <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
         <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
+        <button type="button" id="vc-tab-family"  class="vc-tab" role="tab" data-vc-tab="family"  aria-selected="false" aria-controls="vc-pane-fam"><i class="fa-solid fa-sitemap"></i> 家系図</button>
         <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
       </div>
 
@@ -2625,6 +2652,18 @@
           <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> コピー</button>
         </div>
         <div id="next-actions"></div>
+      </div>
+
+      <!-- 家系図タブ：ご両親・ご兄弟・ご親戚を記録し、介護・相続・ご紹介の話につなげる -->
+      <div class="vc-pane" id="vc-pane-fam" role="tabpanel" aria-labelledby="vc-tab-family" hidden>
+        <p class="hint" style="display:block; margin:2px 0 8px;">ご本人・配偶者・お子さまは入力内容から自動で並びます。ご両親・ご兄弟・ご親戚・ご友人を足すと、<b>介護・相続・ご紹介</b>の確認事項が「次の一手」に出ます。</p>
+        <div class="fam-tree" id="fam-tree"></div>
+        <div class="vc-tools">
+          <button type="button" class="btn btn-primary btn-sm" id="fam-add"><i class="fa-solid fa-user-plus"></i> 人を追加</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="fam-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+        </div>
+        <div id="fam-list"></div>
+        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。</p>
       </div>
 
       <!-- メモタブ -->
@@ -6493,9 +6532,22 @@
       function setStatus(t){ if(status) status.textContent = t; }
       function vcAutoOn(){ const c = $('vc-auto'); return !c || c.checked; }
       function vcElapsedTick(){
-        if(!elapsedEl) return;
-        elapsedEl.hidden = !recWanted;
-        if(recWanted && mnT0) elapsedEl.textContent = vcTimeLabel(Date.now() - mnT0);
+        if(elapsedEl){
+          elapsedEl.hidden = !recWanted;
+          if(recWanted && mnT0) elapsedEl.textContent = vcTimeLabel(Date.now() - mnT0);
+        }
+        vcFabUI();
+      }
+      /* 録音中の合図は右下ボタンの色だけにする（ドックは閉じる＝商談に集中できるように） */
+      function vcFabUI(){
+        if(!fab) return;
+        const on = recWanted || recOn;
+        fab.classList.toggle('rec-on', on);
+        const t = (on && mnT0) ? ' ' + vcTimeLabel(Date.now() - mnT0) : '';
+        fab.innerHTML = on
+          ? '<i class="fa-solid fa-microphone"></i> 録音中' + t
+          : '<i class="fa-solid fa-microphone"></i> 音声メモ';
+        fab.setAttribute('aria-label', on ? '録音中です。押すと音声メモを開きます' : '音声メモを開く');
       }
       function vcRecUI(on){
         if(!recBtn) return;
@@ -6508,6 +6560,7 @@
           : '<i class="fa-solid fa-microphone"></i> <span class="vc-lbl">録音して入力</span>';
         panel.classList.toggle('rec-on', on);
         vcElapsedTick();
+        vcFabUI();
         vcSyncDockH();
       }
       /* 停止は rec.stop() の副作用（onend）に頼らず、ここで確実にUIまで戻す。
@@ -6559,6 +6612,8 @@
           if(ev.error==='not-allowed' || ev.error==='service-not-allowed'){
             recWanted = false;
             setStatus('マイクの使用が許可されていません（ブラウザのマイク設定をご確認ください）');
+            // 録音開始でドックを閉じているため、開き直さないとこのエラーが誰にも見えない
+            panel.hidden = false; vcSyncDockH();
           } else setStatus('認識できませんでした（'+ev.error+'）');
         };
         rec.onend = ()=>{
@@ -6567,7 +6622,8 @@
           if(recWanted){ setTimeout(()=>{ if(recWanted){ try{ rec.start(); }catch(e){ try{ vcStartRec(); }catch(_){} } } }, 300); return; }
           vcStopRec();
         };
-        try{ rec.start(); }catch(e){ setStatus('録音を開始できませんでした'); vcStopRec(); }
+        try{ rec.start(); }
+        catch(e){ setStatus('録音を開始できませんでした'); vcStopRec(); panel.hidden = false; vcSyncDockH(); }
       }
       if(!SR){
         if(recBtn){
@@ -6594,6 +6650,8 @@
           if(elapsedTimer) clearInterval(elapsedTimer);
           elapsedTimer = setInterval(vcElapsedTick, 1000);
           vcStartRec();
+          // 録音を始めたらドックは閉じ、右下のボタンだけを残す（押すとまた開く）
+          panel.hidden = true; vcSyncDockH(); vcFabUI();
         });
       }
 
@@ -6927,89 +6985,16 @@
         while(used[L4]){ L4 = theme.short + 'の確認（' + (n++) + '）'; }
         used[L4] = 1; return L4;
       }
-      /* 金額（万円）→ 1億以上は「約○.○億円」。
-         符号は付けない（「約-1,200万円」を作らない）＝マイナスは呼び出し側で「〜の不足」と文にする */
-      function mnMoney(man){
-        const a = Math.abs(Math.round(man||0));
-        if(a >= 10000) return (a/10000).toFixed(1).replace(/\.0$/,'') + '億円';
-        return fmt(a) + '万円';
-      }
-      const mnAmt = (v)=> (v < 0 ? '約'+mnMoney(v)+'の不足' : '約'+mnMoney(v));
-      /* ツールの試算値をテーマ別のテンプレ文にする。
-         既存の計算関数は「呼んで読むだけ」で、書き換えは一切しない。
-         語尾は「〜という試算結果でした／〜という計算です」に固定＝断定・推奨を構造的に作れないようにする */
-      function mnFacts(){
-        const F = [];
-        const push = function(theme, lead, text){ if(text) F.push({ theme:theme, lead:lead, text:text }); };
-        let P = null;
-        try{ P = buildProfile(); }catch(e){ return F; }
-        const a1 = Math.round(num('age-point-1',65)), a2 = Math.round(num('age-point-2',100));
-        const r1 = P.rows.find(function(r){ return r.hAge===a1; });
-        const r2 = P.rows.find(function(r){ return r.hAge===a2; });
-        if(r1) push('retire', a1+'歳までの資産見通し',
-          '現在のご入力条件では、'+a1+'歳時点の金融資産は'+mnAmt(r1.net)
-          + (r1.inflF ? '（今のお金の価値に換算すると'+mnAmt(r1.net/r1.inflF)+'）' : '')
-          + 'という試算結果でした。'
-          + (r2 ? a2+'歳時点では'+mnAmt(r2.net)+(r2.net<0 ? 'となる見込みです。' : 'の見込みです。') : ''));
-        if(P.depletion) push('retire', '資金が不足する時期',
-          '同じ条件のままだと、'+P.depletion.hAge+'歳（'+P.depletion.year+'年）ごろに金融資産が底をつく計算になります。');
-        else if(P.minRow) push('retire', '残高がもっとも少なくなる時期',
-          'もっとも残高が少なくなるのは'+P.minRow.hAge+'歳時点で、'+mnAmt(P.minRow.net)+'という計算です。');
-        const cs = P.rows.find(function(r){ return r.cash < 0; });
-        if(cs) push('budget', '預貯金が不足する期間',
-          '運用を取り崩さない前提では、'+cs.hAge+'歳ごろに預貯金が不足する期間が出る計算です。');
-        if(P.living) push('budget', '毎月の生活費の前提',
-          '毎月の生活費は合計 約'+(Math.round(P.living*10)/10)+'万円として試算しています。');
-        if(P.eduRemain > 0) push('education', '教育資金の見込み',
-          'これから必要になる教育費の見込みは、お子さま合計で約'+mnMoney(P.eduRemain)+'です。');
-        if(houseType !== 'rent'){
-          try{
-            const sc = buildLoanSchedule();
-            if(sc.rows.length) push('loan', '返済の前提',
-              '当初の毎月返済は約'+(Math.round(sc.rows[0].payment*10)/10)+'万円（ボーナス返済分を除く。借入 約'+mnMoney(num('house-price',0))
-              +'・当初金利'+num('loan-rate',0)+'%・'+num('loan-term',35)+'年）という前提で試算しました。'
-              +'変動金利の場合、見直しのたびに返済額は変わります。');
-          }catch(e){}
-          if(htype === 'ichijo'){
-            try{
-              const ic = Math.round(ichijoCompareTotal());
-              // 差が負（一条が不利）のときに絶対値だけ書くと向きが伝わらないため、プラスのときだけ出す
-              if(ic > 0) push('house', '住まいの性能による差',
-                '一般的な住宅との差は、30年で約'+mnMoney(ic)+'（光熱費・太陽光・メンテナンスの3項目のみ）という試算です。'
-                +'初期費用・建物価格差は含みません。地域・電力料金・FIT制度・使用状況により大きく変わり、'
-                +'当事務所が公表値と公的統計をもとに作成した概算の目安です'
-                +'（一条工務店株式会社の公式資料ではなく、同社の提携・監修を受けたものでもありません）。');
-            }catch(e){}
-          }
-        }
-        if(!isSingle()){
-          try{
-            const nh = survivorNeed('h');
-            if(nh && nh.rawNeed > 0){
-              push('insure', '万一のときの必要額',
-                hNameH()+'に万一のときに備えたい保障額のめやすは約'+mnMoney(nh.rawNeed)
-                + (nh.ins>0 ? '、ご加入中の保障を差し引いた不足は約'+mnMoney(nh.need) : '')
-                + 'という計算でした（貯蓄などで備える分も含みます。前提により増減します）。');
-            } else if(nh){
-              // 0のときに「約0万円」と書くと誤解を招くため、計算の意味を文で説明する
-              push('insure', '万一のときの必要額',
-                'いまのご入力（遺族年金・遺されたご家族の収入・資産）では、'+hNameH()
-                +'に万一のときの不足は生じない計算でした（生活水準や働き方の前提を変えると結果は変わります）。');
-            }
-          }catch(e){}
-        }
-        try{
-          const iv = readInvestments();
-          // 商品名の自由入力がそのまま自動生成文に載らないようにする（特定商品の推奨に見えないため）
-          const ivName = function(v){ return mnHasBrand(v.name||'') ? 'その他の積立' : v.name; };
-          if(iv.length) push('invest', '積立の前提',
-            '積立は'+ iv.slice(0,2).map(function(v){ return ivName(v)+' 月'+v.monthly+'万円・想定利回り'+v.ret+'%'; }).join('、')
-            +'という前提で試算しています（運用の成果は保証されるものではありません）。');
-        }catch(e){}
-        const pm = num('pension-monthly',0);
-        if(pm) push('retire', '公的年金の前提',
-          '公的年金は'+num('pension-age',65)+'歳から月額 約'+pm+'万円の前提で試算しています。');
-        return F;
+      /* 話し言葉 → 議事録の文体。意味は変えず、口ぐせと冗長な結びだけ落とす
+         （お渡しするワード資料と同じ「整った書き言葉」に近づけるため） */
+      function mnPolish(t){
+        return String(t||'')
+          .replace(/(?:かなと思って(?:います|いて)|という感じ(?:です|でした)|なんですよね|ですかね|みたいな感じ|というふうに)/g, '')
+          .replace(/(?:いちばん|一番)/g, '最も')
+          .replace(/(?:すごく|めっちゃ|かなり|結構|ちょっと)/g, '')
+          .replace(/、{2,}/g, '、')
+          .replace(/^[、。\s]+/, '')
+          .replace(/。{2,}/g, '。');
       }
       function mnMeta(utters){
         const d = new Date(mnT0 || Date.now());
@@ -7027,14 +7012,16 @@
           return { time: String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'), x:u.x };
         });
       }
+      /* 概要には「面談で話したこと」だけを書く（ユーザー指示 2026-08-18）。
+         ツールの試算値は結果画面で見るものなので、議事録には混ぜない
+         （混ぜると「誰も言っていない数字」が議事録に載る問題も同時に消える） */
       function mnBuild(utters){
         const sents = mnBuildSentences(utters);
-        const facts = mnFacts();
         const model = { meta: mnMeta(utters), sections:[], todo:[], rawLines: mnRawLines(utters) };
         const chars = sents.reduce(function(a,s){ return a + s.t.length; }, 0);
         if(chars < 40){ model.tooShort = true; return model; }
         const freq = mnFreqIndex(sents);
-        const byTheme = {}, order = [], leftoverExtra = [], usedSent = {};
+        const byTheme = {}, order = [], usedSent = {};
         sents.forEach(function(s){
           const r = mnThemeOf(s.t);
           s.theme = r.primary || 'other'; s.hitN = r.n;
@@ -7046,8 +7033,7 @@
           if(model.sections.length >= 6) return;
           const list = byTheme[id];
           const theme = MN_THEMES.filter(function(x){ return x.id===id; })[0];
-          const tFacts = facts.filter(function(f){ return f.theme===id; }).slice(0,2);
-          if(list.length < 2 && !tFacts.length) return;
+          if(!list.length) return;
           list[list.length-1].lastInTheme = true;
           const joined = list.map(function(s){ return s.t; }).join('');
           let title = theme.title, titleRe = null;
@@ -7063,33 +7049,12 @@
           const picked = mnPick(list, freq);
           picked.forEach(function(s){ usedSent[s.i] = 1; });   // 本文に採った文は末尾の宿題欄に重ねて出さない
           const items = mnGroup(picked).map(function(it){
-            return { lead: mnLead(it, theme, used), body: it.body, fromFact:false };
+            return { lead: mnLead(it, theme, used), body: mnPolish(it.body) };
           });
-          tFacts.forEach(function(f){
-            let lead = f.lead; while(used[lead]) lead += '（試算）';
-            // factLead＝重複判定用の元キー（lead を書き換えると下の leftover 判定とズレて同じ試算文が2回出る）
-            used[lead] = 1; items.push({ lead:lead, body:f.text, fromFact:true, factLead:f.lead });
-          });
-          // 1項目だけの見出しは体裁を崩すので、試算文だけの1項目は「本日の試算値」へ回す
-          if(items.length >= 2) model.sections.push({ no: model.sections.length+1, title:title, items:items });
-          else if(items.length === 1 && items[0].fromFact) leftoverExtra.push(items[0]);
-          else if(items.length === 1) model.sections.push({ no: model.sections.length+1, title:title, items:items });
+          if(items.length) model.sections.push({ no: model.sections.length+1, title:title, items:items });
         });
-        // どのテーマにも入らなかった試算文は、最後に「本日の試算値」としてまとめて出す
-        const usedThemes = {};
-        model.sections.forEach(function(sec){ sec.items.forEach(function(it){ if(it.fromFact) usedThemes[it.factLead || it.lead] = 1; }); });
-        const leftover = facts.filter(function(f){ return !usedThemes[f.lead]; })
-                              .map(function(f){ return { lead:f.lead, body:f.text, fromFact:true, factLead:f.lead }; })
-                              .concat(leftoverExtra);
-        if(leftover.length && model.sections.length < 6){
-          model.sections.push({ no: model.sections.length+1, title:'本日の試算値（ツールの計算結果）', items: leftover.slice(0,6) });
-        }
-        /* 発言からの抜粋が乏しいと、ツールの試算値だけが並ぶ「議事録」になる。
-           お客様が「誰も口にしていない数字」を議事録として受け取る事故を防ぐため、
-           発言由来が2件に満たないときは丸ごと捨てて発言メモの表示に落とす */
-        const talkN = model.sections.reduce(function(n, sec){
-          return n + sec.items.filter(function(it){ return !it.fromFact; }).length;
-        }, 0);
+        // 拾えた項目が乏しいときは、無理に見出しを作らず発言メモの表示に落とす
+        const talkN = model.sections.reduce(function(n, sec){ return n + sec.items.length; }, 0);
         if(talkN < 2){ model.sections = []; model.noTheme = true; }
         model.todo = sents.filter(function(s){
           return !usedSent[s.i]                 // 本文に載せた文の重複掲載を避ける
@@ -7116,8 +7081,7 @@
           model.sections.forEach(function(sec){
             h += '<h4 class="mn-h">' + sec.no + '. ' + esc(sec.title) + '</h4>';
             sec.items.forEach(function(it){
-              h += '<p class="mn-item' + (it.fromFact ? ' mn-item-calc' : '') + '"><b>' + esc(it.lead) + ':</b> '
-                 + (it.fromFact ? '<span class="mn-tag">ツール試算</span>' : '') + esc(it.body) + '</p>';
+              h += '<p class="mn-item"><b>' + esc(it.lead) + ':</b> ' + esc(it.body) + '</p>';
             });
           });
           if(model.todo.length){
@@ -7259,9 +7223,42 @@
           when: function(c){ return !!c.p.depletion; },
           make: function(c){
             return { title:'資金が不足する時期への対策',
-              basis:'試算では '+hNameH()+c.p.depletion.hAge+'歳（'+c.p.depletion.year+'年）ごろに金融資産が不足する見込みです。',
-              tasks:[ { who:'staff', text:'不足の時期を後ろにずらす案を、積立額・就労期間・支出の3通りで将来プランの数字にして比較表でお持ちします。' },
-                      { who:'cust', text:'3通りのうち、生活の実感として取り組みやすい順に順位をお聞かせください。' } ] };
+              basis:'試算では '+hNameH()+c.p.depletion.hAge+'歳（'+c.p.depletion.year+'年）ごろに金融資産が不足する見込みです。'
+                    +'手立てには、就労期間を延ばす／支出を見直す／積立を増やす／公的給付を確認する／保障の過不足を調整する、といった選択肢があります。',
+              tasks:[ { who:'staff', text:'上の選択肢ごとに、不足の時期がどれだけ後ろへずれるかを同じ表に並べてお持ちします。保険で備える場合は、掛け捨て型と貯蓄型で毎月の負担と受け取り方がどう変わるかも同じ表に入れます。' },
+                      { who:'cust', text:'生活の実感として取り組みやすい順に、順位をお聞かせください。' } ],
+              caution:'保険で備える場合、掛け捨て型は解約しても戻りません。貯蓄型は途中で解約すると払込保険料を下回ることがあり、加入には健康状態の告知が必要です。運用の成果は保証されるものではありません。' };
+          } },
+        { id:'calc.hokenryo', cat:'balance', src:'calc', impact:4, urgency:3,
+          when: function(c){ return !!(c.p.depletion || c.cashShort) && (num('e-life',0) + num('e-nonlife',0)) > 0; },
+          make: function(c){
+            const m = Math.round((num('e-life',0) + num('e-nonlife',0)) * 10) / 10;
+            return { title:'いまの保険料の内訳の確認',
+              basis:'毎月の保険料は合計 約'+m+'万円として試算しています。資金が不足する時期があるため、保障の目的と金額が今のご家族に合っているかを確認します。',
+              tasks:[ { who:'cust', text:'加入中の保険の証券をご用意ください（保障の目的・保険金額・保険期間・月払保険料が分かるもの）。' },
+                      { who:'staff', text:'保障の目的別に一覧にし、必要保障額を下回らない範囲で組み替えた場合に毎月いくら変わるかをお出しします。' } ],
+              caution:'これは解約・減額を前提としたお願いではありません。減額・解約には、健康状態により再加入や増額ができない／保障に空白が生じる／貯蓄型は解約時に払込保険料を下回ることがある、という点があります。' };
+          } },
+        { id:'calc.hatarakenai', cat:'hoken', src:'calc', impact:4, urgency:3,
+          when: function(c){ return c.p.children.length > 0 || c.loanBal > 0; },
+          make: function(c){
+            return { title:'働けない期間の家計（この試算の対象外）',
+              basis:'この試算には、病気やケガで働けない期間の収入減と、医療費の自己負担が含まれていません。'
+                    + (c.loanBal > 0 ? 'その間も住宅ローンの返済は続きます。' : ''),
+              tasks:[ { who:'staff', text:'傷病手当金・高額療養費・障害年金でどこまで埋まるかを整理し、残る不足をどう備えるか（手元資金・就業不能に備える保険など）を一覧にしてお持ちします。' },
+                      { who:'cust', text:'働けない期間がどのくらい続くと家計が苦しくなりそうか、実感をお聞かせください。' } ],
+              caution:'公的給付の額はご加入状況により異なります。保険で備える場合、支払いの対象となる状態や期間は商品ごとに条件が異なります。' };
+          } },
+        { id:'calc.eduPrep', cat:'edu', src:'calc', impact:4,
+          urgency: function(c){ return (c.yg && c.yg.age >= 12) ? 4 : 3; },
+          when: function(c){ return c.p.eduRemain > 0 && c.p.children.length > 0; },
+          make: function(c){
+            return { title:'教育費のピークに向けた準備',
+              basis:'これから必要になる教育費は、お子さま合計で約'+fmt(c.p.eduRemain)+'万円という試算です。'
+                    + (c.yg ? 'いちばん下のお子さまの大学入学は、およそ'+Math.max(18 - c.yg.age, 0)+'年後にあたります。' : ''),
+              tasks:[ { who:'staff', text:'準備の手段（預貯金・NISA等の積立・学資や終身などの貯蓄型保険）を、途中で使えるか・元本割れの可能性・万一のときに保障が残るか の3点で比べた表をお持ちします。' },
+                      { who:'cust', text:'いつまでに、いくら用意しておきたいかのご希望をお聞かせください。' } ],
+              caution:'貯蓄型の保険は途中で解約すると払込保険料を下回ることがあります。運用の成果は保証されるものではありません。' };
           } },
         { id:'calc.cashShort', cat:'balance', src:'calc', impact:4, urgency:3,
           when: function(c){ return !c.p.depletion && !!c.cashShort; },
@@ -7393,12 +7390,32 @@
                       { who:'staff', text:'増額した場合としない場合の資産推移を並べ、手続きの手順とあわせて1枚にまとめてお送りします。' } ],
               caution:'積立を増やすとその分だけ手元の預貯金は減ります。運用の成果は保証されるものではなく、相場により元本を下回ることがあります。急な出費に備える資金を確保したうえでご検討ください。' };
           } },
-        { id:'talk.iryo', cat:'hoken', src:'talk', impact:3, urgency:2,
-          when: function(){ return talkHas(/がん|入院|手術|医療|傷病|働けなく|就業不能/); },
+        { id:'fam.kaigo', cat:'retire', src:'calc', impact:4, urgency:3,
+          when: function(){ return famFlags().kaigo; },
           make: function(){
-            return { title:'働けない期間の家計（本試算の対象外）',
-              basis:'本日この話題が出ましたが、この試算には医療費の自己負担と、働けない期間の収入減は含まれていません。',
-              tasks:[ { who:'staff', text:'高額療養費制度の自己負担上限と、収入が止まった場合の毎月の収支を別紙で整理してお持ちします。' } ] };
+            const f = famFlags();
+            return { title:'ご親族の介護に関する確認',
+              basis:'家系図に'+f.kaigoNames+'の介護・お体のご状況を記録しています。介護は費用と時間の両方が家計に効くため、早めに前提を置いておきます。',
+              tasks:[ { who:'cust', text:'介護が必要になった場合に、費用をどなたが負担する見込みか、施設と在宅のどちらを想定されるかをお聞かせください。' },
+                      { who:'staff', text:'公的介護保険の自己負担と、在宅・施設それぞれの費用の目安を整理し、ご負担が生じる場合の家計への影響をお出しします。' } ],
+              caution:'介護費用は要介護度・地域・施設により大きく異なります。ここでの整理は一般的な目安です。' };
+          } },
+        { id:'fam.souzoku', cat:'tax', src:'calc', impact:3, urgency:2,
+          when: function(){ return famFlags().souzoku; },
+          make: function(){
+            return { title:'ご実家・相続に関する論点の整理',
+              basis:'家系図にご実家や事業などの資産の論点を記録しています。これらはこのツールの試算には含まれていません。',
+              tasks:[ { who:'cust', text:'ご実家の名義・おおよその評価、相続人になる方の人数など、分かる範囲でお聞かせください。' },
+                      { who:'staff', text:'分かった範囲で論点を整理してお持ちします。税額の判断は税理士にご確認いただきます。' } ] };
+          } },
+        { id:'fam.intro', cat:'plan', src:'calc', impact:2, urgency:1,
+          when: function(){ return famFlags().intro; },
+          make: function(){
+            return { title:'ご紹介のお願い（同意をいただいてから）',
+              basis:'家系図に「ご紹介いただけるかもしれない方」を記録しています。',
+              tasks:[ { who:'cust', text:'同じ時期に住宅やお子さまの進学を控えている方がいらっしゃれば、まずはこのツールの話をしてみていただけますか。' },
+                      { who:'staff', text:'ご紹介先にお渡しできる資料をご用意します。ご連絡はご本人とご紹介先の同意をいただいてから行います。' } ],
+              caution:'ご紹介先の連絡先は、ご本人の同意なく取得・保管しません。' };
           } },
         { id:'talk.souzoku', cat:'tax', src:'talk', impact:3, urgency:2,
           when: function(){ return talkHas(/相続|贈与|実家|親御|義父|義母/); },
@@ -7461,6 +7478,9 @@
       const NEXT_SRC_ORDER = { calc:0, plan:1, talk:2, blank:3 };
       function rankNext(list, max){
         max = max || 5;
+        // 家系図由来（介護・相続・ご紹介）は試算由来と競合させず、独立の枠で必ず出す
+        const famList = list.filter(function(it){ return it.id.indexOf('fam.')===0; }).slice(0,3);
+        list = list.filter(function(it){ return it.id.indexOf('fam.')!==0; });
         list.sort(function(a,b){
           return (b.score - a.score)
               || (NEXT_SRC_ORDER[a.src] - NEXT_SRC_ORDER[b.src])
@@ -7473,7 +7493,7 @@
           if(full){ if(rest.length < 10) rest.push(it); return; }
           main.push(it); perCat[it.cat] = cn + 1; if(it.src==='blank') blankN++;
         });
-        return { main:nextAssertSafe(main), rest:nextAssertSafe(rest) };
+        return { main:nextAssertSafe(main), rest:nextAssertSafe(rest), fam:nextAssertSafe(famList) };
       }
       function nextItemHTML(it, t){
         return '<label class="nx-item" data-nx="' + esc(it.id + '|' + t.who) + '">'
@@ -7495,13 +7515,17 @@
           }).join('');
         };
         const cust = pick('cust'), staff = pick('staff');
+        const famHtml = (res.fam && res.fam.length)
+          ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-sitemap"></i> 家系図から（介護・相続・ご紹介）</div>'
+            + res.fam.map(function(it){ return it.tasks.map(function(t){ return nextItemHTML(it, t); }).join(''); }).join('')
+            + '</div>' : '';
         const disc = '<p class="nx-disclaimer">※ 上記は本日ご入力いただいた条件による<b>試算</b>にもとづく確認事項で、'
           + '将来の受取額・運用成果・税額を保証するものではありません。前提が変わると結果も変わります。'
           + '税額は税理士、公的年金の実額は年金事務所でご確認ください。<br>'
           + '※ 特定の保険商品・金融商品をおすすめするものではありません。保障の詳細は約款および'
           + '「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」をご確認ください。<br>'
           + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</p>';
-        if(!cust && !staff){
+        if(!cust && !staff && !famHtml){
           return '<p class="nx-empty">いまお出しする宿題はありません。次回は年1回の定点確認として、収入・ご家族・保障の変化をご確認ください。</p>' + disc;
         }
         const more = res.rest.length
@@ -7510,7 +7534,7 @@
             + '</details>' : '';
         return (cust  ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-user"></i> お客様にお願いしたいこと</div>' + cust + '</div>' : '')
              + (staff ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-briefcase"></i> 担当（当方）が行うこと</div>' + staff + '</div>' : '')
-             + more + disc;
+             + famHtml + more + disc;
       }
       function nextToText(res, head){
         const line = function(it, t){
@@ -7523,12 +7547,17 @@
           }).filter(Boolean);
           return rows.length ? ('■ ' + label + '\n' + rows.join('\n') + '\n') : '';
         };
+        const famBlock = (res.fam && res.fam.length)
+          ? '■ 家系図から（介護・相続・ご紹介）\n'
+            + res.fam.map(function(it){ return it.tasks.map(function(t){ return line(it,t); }).join('\n'); }).join('\n') + '\n'
+          : '';
         /* テキストにも打消し表示を必ず付ける。
            この文字列はコピーしてLINE・メールで顧客へ渡りうるため、画面の nx-disclaimer と同じ内容を末尾に置く
            （議事録に取り込む場合は MN_NOTES と重なるが、単独コピーでも欠けないことを優先する） */
         return (head || '次の一手') + '（次回までの宿題）\n'
           + block('お客様にお願いしたいこと','cust')
           + block('担当が行うこと','staff')
+          + famBlock
           + '※ 上記は本日ご入力いただいた条件による試算にもとづく確認事項で、将来の受取額・運用成果・税額を保証するものではありません。前提が変わると結果も変わります。\n'
           + '※ 特定の保険商品・金融商品をおすすめするものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」をご確認ください。\n'
           + '※ 税額の判断は税理士、公的年金の実額は年金事務所でご確認ください。\n'
@@ -7565,6 +7594,135 @@
         const d = nxDone(), k = nxScope() + '::' + el.dataset.nx;
         if(on) d[k] = 1; else delete d[k];
         try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){}
+      });
+
+      /* ============================================================
+         家系図（ユーザー指示 2026-08-18）
+         ・ご本人／配偶者／お子さまは入力内容から自動表示。ご両親・ご兄弟・ご親戚・ご友人を足せる
+         ・介護・相続・ご紹介のきっかけを「次の一手」へ渡す（famFlags）
+         ・第三者の個人情報になるため、この端末のlocalStorageのみ。共有リンク・保存データには含めない
+         ============================================================ */
+      const FAM_KEY  = 'lifeplan_ichijo_family_v1';
+      const FAM_RELS = ['夫の父','夫の母','妻の父','妻の母','夫の兄弟姉妹','妻の兄弟姉妹','祖父母','親戚','ご友人','その他'];
+      const FAM_LIVE = ['未確認','同居','近居','遠方'];
+      const FAM_HEAL = ['未確認','お元気','通院中','要支援','要介護','施設に入居','ご逝去'];
+      const FAM_ASST = ['未確認','とくになし','ご実家あり','事業あり','農地・山林あり','賃貸物件あり'];
+      const FAM_INTR = ['未確認','なし','検討中','ご紹介いただけそう'];
+      var famPeople = [];
+      function famLoad(){
+        try{ const a = JSON.parse(localStorage.getItem(FAM_KEY)||'[]'); famPeople = Array.isArray(a) ? a : []; }
+        catch(e){ famPeople = []; }
+      }
+      function famSave(){
+        try{ localStorage.setItem(FAM_KEY, JSON.stringify(famPeople.slice(0,30))); }catch(e){}
+      }
+      function famSel(name, opts, val){
+        return '<select data-fam="'+name+'">' + opts.map(function(o){
+          return '<option'+(o===val?' selected':'')+'>'+esc(o)+'</option>';
+        }).join('') + '</select>';
+      }
+      function famRowHTML(p, i){
+        return '<div class="fam-row" data-fam-i="'+i+'">'
+          + '<div><label>続柄</label>'+famSel('rel', FAM_RELS, p.rel)+'</div>'
+          + '<div><label>お名前・呼び方</label><input type="text" data-fam="name" value="'+esc(p.name||'')+'" placeholder="例：お義父さま"></div>'
+          + '<div><label>年齢</label><input type="number" data-fam="age" value="'+(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
+          + '<div><label>お住まい</label>'+famSel('live', FAM_LIVE, p.live)+'</div>'
+          + '<div><label>お体・介護</label>'+famSel('health', FAM_HEAL, p.health)+'</div>'
+          + '<div><label>資産の論点</label>'+famSel('asset', FAM_ASST, p.asset)+'</div>'
+          + '<div><label>ご紹介</label>'+famSel('intro', FAM_INTR, p.intro)+'</div>'
+          + '<div class="fam-memo"><label>メモ（お聞きした範囲で）</label><input type="text" data-fam="memo" value="'+esc(p.memo||'')+'" placeholder="例：来年から施設を検討"></div>'
+          + '<div><button type="button" class="fam-del" data-fam-del="'+i+'"><i class="fa-solid fa-trash-can"></i> 削除</button></div>'
+          + '</div>';
+      }
+      function famChip(name, sub, cls){
+        return '<span class="fam-chip'+(cls?' '+cls:'')+'"><b>'+esc(name)+'</b>'
+             + (sub ? '<span class="fam-sub">'+esc(sub)+'</span>' : '') + '</span>';
+      }
+      function famChipOf(p){
+        let cls = '';
+        if(p.health==='要支援' || p.health==='要介護' || p.health==='施設に入居') cls = 'is-care';
+        else if(p.asset && p.asset!=='未確認' && p.asset!=='とくになし') cls = 'is-asset';
+        if(p.health==='ご逝去') cls = 'is-gone';
+        const sub = [p.rel, (p.age?p.age+'歳':''), (p.live!=='未確認'?p.live:''), (p.health!=='未確認'?p.health:''),
+                     (p.asset && p.asset!=='未確認' && p.asset!=='とくになし' ? p.asset : ''),
+                     (p.intro==='ご紹介いただけそう' ? 'ご紹介の可能性' : '')].filter(Boolean).join('・');
+        return famChip(p.name || p.rel || 'ご家族', sub, cls);
+      }
+      function famRenderTree(){
+        const box = $('fam-tree'); if(!box) return;
+        const has = function(re){ return famPeople.filter(function(p){ return re.test(p.rel||''); }); };
+        const parents = has(/父|母|祖父母/), sibs = has(/兄弟姉妹/), others = has(/親戚|ご友人|その他/);
+        let kids = [];
+        try{ kids = readChildren(); }catch(e){}
+        const me = [];
+        me.push(famChip(hNameH(), 'ご本人（'+num('h-age',35)+'歳）'));
+        try{ if(!isSingle()) me.push(famChip(wNameH(), '配偶者（'+num('w-age',33)+'歳）')); }catch(e){}
+        sibs.forEach(function(p){ me.push(famChipOf(p)); });
+        let h = '';
+        h += '<div class="fam-gen"><span class="fam-gen-l">親の世代</span>'
+           + (parents.length ? parents.map(famChipOf).join('') : '<span class="fam-empty">「人を追加」からご両親を登録できます</span>')
+           + '</div>';
+        h += '<div class="fam-gen"><span class="fam-gen-l">ご本人の世代</span>' + me.join('') + '</div>';
+        h += '<div class="fam-gen"><span class="fam-gen-l">お子さまの世代</span>'
+           + (kids.length ? kids.map(function(c){ return famChip(c.name, c.age+'歳'); }).join('')
+                          : '<span class="fam-empty">お子さまの登録はありません</span>')
+           + '</div>';
+        if(others.length){
+          h += '<div class="fam-gen"><span class="fam-gen-l">親戚・ご友人</span>' + others.map(famChipOf).join('') + '</div>';
+        }
+        box.innerHTML = h;
+      }
+      function famRenderList(){
+        const box = $('fam-list'); if(!box) return;
+        box.innerHTML = famPeople.map(famRowHTML).join('');
+      }
+      function famRender(){ famRenderTree(); famRenderList(); vcSyncDockH(); }
+      // 「次の一手」へ渡す旗（原文は渡さず、状態と名前だけ）
+      function famFlags(){
+        const care = famPeople.filter(function(p){
+          return p.health==='要支援' || p.health==='要介護' || p.health==='施設に入居'
+              || (/父|母|祖父母/.test(p.rel||'') && (parseInt(p.age,10)||0) >= 75);
+        });
+        const asset = famPeople.filter(function(p){ return p.asset && p.asset!=='未確認' && p.asset!=='とくになし'; });
+        const intro = famPeople.filter(function(p){ return p.intro==='ご紹介いただけそう'; });
+        return { kaigo: care.length>0, souzoku: asset.length>0, intro: intro.length>0,
+                 kaigoNames: care.map(function(p){ return p.name || p.rel; }).slice(0,3).join('・') || 'ご親族' };
+      }
+      function famText(){
+        if(!famPeople.length) return '';
+        return '【家系図メモ】\n' + famPeople.map(function(p){
+          return '・' + (p.rel||'') + '　' + (p.name||'') + (p.age ? '（'+p.age+'歳）' : '')
+            + '　' + [p.live,p.health,p.asset,p.intro].filter(function(x){ return x && x!=='未確認'; }).join('／')
+            + (p.memo ? '　' + p.memo : '');
+        }).join('\n') + '\n';
+      }
+      if($('fam-add')) $('fam-add').addEventListener('click', ()=>{
+        famPeople.push({ rel:'夫の父', name:'', age:'', live:'未確認', health:'未確認', asset:'未確認', intro:'未確認', memo:'' });
+        famSave(); famRender();
+      });
+      if($('fam-list')) $('fam-list').addEventListener('input', (e)=>{
+        const row = e.target.closest('[data-fam-i]'); if(!row) return;
+        const p = famPeople[parseInt(row.dataset.famI,10)]; if(!p) return;
+        const k = e.target.dataset.fam; if(!k) return;
+        p[k] = e.target.value; famSave(); famRenderTree();
+      });
+      if($('fam-list')) $('fam-list').addEventListener('change', (e)=>{
+        const row = e.target.closest('[data-fam-i]'); if(!row) return;
+        const p = famPeople[parseInt(row.dataset.famI,10)]; if(!p) return;
+        const k = e.target.dataset.fam; if(!k) return;
+        p[k] = e.target.value; famSave(); famRenderTree();
+      });
+      if($('fam-list')) $('fam-list').addEventListener('click', (e)=>{
+        const del = e.target.closest('[data-fam-del]'); if(!del) return;
+        famPeople.splice(parseInt(del.dataset.famDel,10), 1); famSave(); famRender();
+      });
+      if($('fam-copy')) $('fam-copy').addEventListener('click', ()=>{
+        const t = famText();
+        if(!t){ setStatus('家系図に登録がありません'); return; }
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(t).then(function(){ setStatus('家系図メモをコピーしました'); },
+                                                function(){ mnCopyFallback(t, '家系図メモ'); });
+        } else mnCopyFallback(t, '家系図メモ');
       });
 
       /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ---------- */
@@ -7628,7 +7786,7 @@
         vcSaveUI(); vcCapFollow(); vcSyncDockH();
       }
       function vcSetTab(t){
-        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', memo:'vc-pane-memo' };
+        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', family:'vc-pane-fam', memo:'vc-pane-memo' };
         if(!map[t]) t = 'cap';
         document.querySelectorAll('.vc-tab').forEach(function(b){
           const on = (b.dataset.vcTab===t);
@@ -7638,6 +7796,7 @@
         Object.keys(map).forEach(function(k){ const el = $(map[k]); if(el) el.hidden = (k!==t); });
         if(panel.dataset.vcMode !== 'open') vcSetMode('open');
         if(t==='memo') renderVcMemos();
+        if(t==='family') famRender();
         vcSaveUI(); vcSyncDockH();
       }
       const vcTabEls = [].slice.call(document.querySelectorAll('.vc-tab'));
@@ -7736,6 +7895,8 @@
       })();
       nextWatchInputs();
       renderVcMemos();
+      famLoad();
+      vcFabUI();
       vcSyncDockH();
     })();
     // 追従ナビの位置決め：プランバー（sticky）の高さを実測して --planbar-h にセット

@@ -407,8 +407,10 @@
     }
     .kpi .k-label{ font-size:.78rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
     .kpi .k-label i{ color:var(--blue); }
-    /* keep-all：スマホで桁数が増えたとき「万」と「円」の間で折り返して1文字だけ次行に落ちるのを防ぐ（折り返すなら数字と単位の間） */
-    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; word-break:keep-all; }
+    /* keep-all：スマホで桁数が増えたとき「万」と「円」の間で折り返して1文字だけ次行に落ちるのを防ぐ（折り返すなら数字と単位の間）
+       tabular-nums：数字を等幅にして、表・KPIの桁が縦に揃うように */
+    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; word-break:keep-all; font-variant-numeric:tabular-nums; }
+    .cf td, .cf th, .kpi-diff, .lt-value, .fdiff{ font-variant-numeric:tabular-nums; }
     .kpi .k-value small{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
     .kpi .k-sub{ font-size:.74rem; color:var(--ink-soft); margin-top:2px; }
     .kpi.accent-yellow{ background:var(--yellow-pale); border-color:#f3e3a9; }
@@ -480,6 +482,40 @@
     /* 運用商品セル内に併記する「投じた元本」（小さく薄い文字） */
     .pr-sub{ font-size:.72em; color:#9aa7b3; }
     table.cf td.at-iv-cell{ white-space:normal; line-height:1.35; }
+    /* ============================================================
+       キャッシュフロー表（横軸＝年）：FP実務の型（2026-08-17）
+       画面ではこちらを表示し、印刷・PDFは従来の縦（年＝行）を使う（横長はA4で切れるため）
+       ============================================================ */
+    @media screen{
+      body:not(.pdf-mode) .cf-vertical{ display:none; }
+      body.pdf-mode .cfh-scroll{ display:none; }
+    }
+    @media print{ .cfh-scroll{ display:none !important; } }
+    table.cfh{ table-layout:auto; width:auto; min-width:100%; }
+    table.cfh th, table.cfh td{ min-width:64px; }
+    /* 左端の項目名列は固定（横スクロールしても何の行か見える） */
+    table.cfh .rowhead{
+      position:sticky; left:0; z-index:5; background:var(--card); text-align:left;
+      font-weight:700; color:var(--ink); min-width:9.5em; max-width:11em;
+      border-right:1.5px solid var(--line); box-shadow:2px 0 4px rgba(31,51,40,.06);
+    }
+    table.cfh tr:nth-child(even) .rowhead{ background:var(--bg-soft); }
+    table.cfh thead th.rowhead{ background:var(--blue-pale2); }
+    /* 年の見出し（西暦＋年齢）。5年ごとに区切り線でリズムを作る */
+    table.cfh th.cfh-y{ background:var(--blue-pale2); color:var(--blue-deep); font-weight:700; }
+    table.cfh th.cfh-y .cfh-age{ display:block; font-size:.68rem; font-weight:600; color:var(--ink-soft); }
+    table.cfh td.ms, table.cfh th.ms{ border-left:2px solid var(--blue-pale2); }
+    /* 取り崩し期＝縦の帯（列方向）。従来の行の帯と同じ配色 */
+    table.cfh td.dd{ background:#fdf1e7; }
+    table.cfh th.cfh-y.dd{ background:#fdeede; color:#8a5a2a; }
+    /* ライフイベント行は縦書き（日本語の表の型・セル幅を保ったまま内容が読める） */
+    table.cfh td.evtv{
+      writing-mode:vertical-rl; text-orientation:mixed; white-space:normal;
+      text-align:start; vertical-align:top; font-size:.7rem; line-height:1.5;
+      max-height:130px; height:130px; padding:6px 3px; overflow:hidden; font-weight:500;
+    }
+    table.cfh td.evtv .ev-k{ font-weight:700; }
+    table.cfh td.evtv:not(.dd):not(:empty){ background:#fbfdfc; }
     /* 運用サマリー表：列を内容に合わせ、見出しを折り返して1画面に全列を収める */
     table.cf-summary{ table-layout:auto; }
     table.cf-summary th, table.cf-summary td{ width:auto !important; white-space:normal; overflow:visible; text-overflow:clip; padding:6px 6px; }
@@ -693,6 +729,9 @@
       color:var(--ink); cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
     .tool-nav-scroll button:hover{ background:var(--blue-pale); border-color:var(--blue-pale2); }
     .tool-nav-scroll button.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+    /* ボタン内アイコン：非選択時はグリーン、選択時は白（文字色に追従） */
+    .tool-nav-scroll button i{ color:var(--blue); margin-right:2px; }
+    .tool-nav-scroll button.active i{ color:inherit; }
     .tool-nav-row.tnr-result .tool-nav-scroll button.active{ background:var(--blue-deep); border-color:var(--blue-deep); }
     /* 入力済みの目印。
        is-filled＝開始時の内容から変更あり（＝この面談で入力した）／is-visited＝開いたが未変更。
@@ -745,12 +784,23 @@
       body.tab-mode:not(.pdf-mode) .results.rpair-2{
         display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
       }
+      /* 「資産と収支」もPC幅は左右2画面：KPIと総合判定は全幅、2つのグラフ（資産推移／年間収支）を左右に */
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"]{
+        display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;
+      }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid,
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1/-1; }
+      /* KPIは全幅を活かして4枚横並び（65歳・実質・100歳・実質が1行で見渡せる） */
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-template-columns:repeat(4,1fr); }
+      /* 画面切替ナビを追従させる（スクロールしても常に切替できる）。スマホは画面を圧迫するため従来どおり */
+      body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:0; z-index:45; background:var(--bg); padding:8px 0 6px; }
     }
     /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
        min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
     .view-wrap{ display:flex; flex-direction:column; gap:18px; min-width:0; }
     /* 結果ナビ「AIに相談する」ボタン：チャット導線を目立たせる（ゴールドの差し色） */
     #nav-result button[data-nav-result="chat"]{ background:var(--yellow-pale); border-color:var(--yellow-soft); color:#8a6a12; font-weight:800; }
+    #nav-result button[data-nav-result="chat"] i{ color:inherit; }
     #nav-result button[data-nav-result="chat"]:hover{ background:var(--yellow-soft); }
     #nav-result button[data-nav-result="chat"].active{ background:var(--yellow); border-color:var(--yellow); color:#5a4a12; }
     /* チャットへのショートカット（右下常駐） */
@@ -1051,10 +1101,10 @@
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
       <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
-        <button type="button" data-nav-input="family">ご家族・住まい</button>
-        <button type="button" data-nav-input="living">生活費・ライフイベント</button>
-        <button type="button" data-nav-input="save">貯蓄運用・年金</button>
-        <button type="button" data-nav-input="insurance">団信・生命保険</button>
+        <button type="button" data-nav-input="family"><i class="fa-solid fa-house-user"></i> ご家族・住まい</button>
+        <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
+        <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
+        <button type="button" data-nav-input="insurance"><i class="fa-solid fa-shield-halved"></i> 団信・生命保険</button>
       </div>
     </div>
     <div class="tool-nav-row tnr-result">
@@ -1062,10 +1112,10 @@
       <!-- 似た内容どうしをペアにする（値はJSの RESULT_GROUPS のキー。2画面のペアはPC幅で左右に並ぶ）
            assets単独／ichijo＝一条比較＋現状と将来／hoken＝もしもの保障＋AI診断／cf単独／chat単独 -->
       <div class="tool-nav-scroll" id="nav-result">
-        <button type="button" data-nav-result="assets">資産と収支</button>
-        <button type="button" data-nav-result="ichijo">一条比較・現状と将来</button>
-        <button type="button" data-nav-result="hoken">もしもの保障・AI診断</button>
-        <button type="button" data-nav-result="cf">キャッシュフロー表</button>
+        <button type="button" data-nav-result="assets"><i class="fa-solid fa-chart-column"></i> 資産と収支</button>
+        <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-scale-balanced"></i> 一条比較・現状と将来</button>
+        <button type="button" data-nav-result="hoken"><i class="fa-solid fa-file-shield"></i> もしもの保障・AI診断</button>
+        <button type="button" data-nav-result="cf"><i class="fa-solid fa-table-cells"></i> キャッシュフロー表</button>
         <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
       </div>
     </div>
@@ -1486,9 +1536,24 @@
           <div class="acc-body">
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
-              <div class="grid2 pension-grid">
-                <div class="field"><label>受給開始（夫の年齢）</label><div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div></div>
-                <div class="field"><label>年金月額（夫婦合計）</label><div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div><span class="hint">「ねんきん定期便」の見込額があれば最優先で入力を。目安は下のボタンから選べます</span>
+              <div class="field" style="max-width:260px;">
+                <label>受給開始（夫の年齢）</label>
+                <div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div>
+              </div>
+              <div class="field">
+                <label>入力方法</label>
+                <div class="seg seg-wrap" id="pen-mode-seg">
+                  <button type="button" data-penmode="direct" class="active">月額を入力（目安ボタンあり）</button>
+                  <button type="button" data-penmode="teikibin">ねんきん定期便から計算</button>
+                </div>
+              </div>
+
+              <!-- 月額を直接入力（既定） -->
+              <div class="conditional" data-pen-panel="direct">
+                <div class="field" style="max-width:340px;">
+                  <label>年金月額（夫婦合計）</label>
+                  <div class="input-unit"><input type="number" id="pension-monthly" value="22" min="0" step="1"><span class="u">万円</span></div>
+                  <span class="hint">「ねんきん定期便」がお手元にあれば、上の「ねんきん定期便から計算」でより実態に近い金額を出せます。目安は下のボタンからも選べます</span>
                   <div class="pen-presets">
                     <button type="button" class="pen-preset" data-v="26">会社員×会社員 約26万</button>
                     <button type="button" class="pen-preset" data-v="22">会社員＋専業・扶養内 約22万</button>
@@ -1496,6 +1561,37 @@
                   </div>
                   <span class="hint">自営業（国民年金のみ）は満額でも1人 月約6.8万円。厚生年金の上乗せがない分、iDeCo等での上積みが重要です</span>
                 </div>
+              </div>
+
+              <!-- ねんきん定期便から計算：実績年額＋今後の働き方で見込みを概算し、年金月額へ自動反映 -->
+              <div class="conditional hidden" data-pen-panel="teikibin">
+                <div class="note" style="margin-bottom:10px;">
+                  <i class="fa-solid fa-envelope-open-text"></i>
+                  <span>毎年の誕生月に届く<b>「ねんきん定期便」</b>の数字から見込み額を概算します。50歳未満の定期便に載っているのは<b>「これまでの加入実績に応じた年金額」＝今までの分だけ</b>なので、今後働く分を足して計算します。<b>50歳以上の定期便には見込額がそのまま載っている</b>ため、チェックを入れてその金額をご記入ください。</span>
+                </div>
+                <div class="loan-payoff-box" style="margin-top:0;">
+                  <div class="lp-title"><span class="tag">夫</span> ねんきん定期便の数字</div>
+                  <div class="grid3">
+                    <div class="field"><label>定期便に記載の年金額（年額）</label><div class="input-unit"><input type="number" id="pen-tb-amount-h" value="" min="0" step="1" placeholder="例：50"><span class="u">万円</span></div><span class="hint">「これまでの加入実績に応じた年金額」の基礎＋厚生の<b>合計（年額）</b></span></div>
+                    <div class="field pen-tb-future-h"><label>今後の平均年収（額面）</label><div class="input-unit"><input type="number" id="pen-tb-income-h" value="" min="0" step="10" placeholder="例：550"><span class="u">万円</span></div></div>
+                    <div class="field pen-tb-future-h"><label>何歳まで厚生年金に加入</label><div class="input-unit"><input type="number" id="pen-tb-until-h" value="65" min="20" max="75"><span class="u">歳</span></div><span class="hint">働く予定の年齢まで（自営業・専業になる予定ならその年齢まで）</span></div>
+                  </div>
+                  <label class="chk-label" style="margin-top:6px;"><input type="checkbox" id="pen-tb-over50-h"> 50歳以上の定期便（「老齢年金の見込額」をそのまま記入）</label>
+                </div>
+                <div class="loan-payoff-box" data-couple-only>
+                  <div class="lp-title"><span class="tag" style="background:#fbe7f0;color:#c2729a;">妻</span> ねんきん定期便の数字</div>
+                  <div class="grid3">
+                    <div class="field"><label>定期便に記載の年金額（年額）</label><div class="input-unit"><input type="number" id="pen-tb-amount-w" value="" min="0" step="1" placeholder="例：40"><span class="u">万円</span></div><span class="hint">「これまでの加入実績に応じた年金額」の基礎＋厚生の<b>合計（年額）</b></span></div>
+                    <div class="field pen-tb-future-w"><label>今後の平均年収（額面）</label><div class="input-unit"><input type="number" id="pen-tb-income-w" value="" min="0" step="10" placeholder="例：100"><span class="u">万円</span></div><span class="hint">扶養内・専業の期間はおおよその平均で。0でも基礎年金分は増えます</span></div>
+                    <div class="field pen-tb-future-w"><label>何歳まで厚生年金に加入</label><div class="input-unit"><input type="number" id="pen-tb-until-w" value="60" min="20" max="75"><span class="u">歳</span></div></div>
+                  </div>
+                  <label class="chk-label" style="margin-top:6px;"><input type="checkbox" id="pen-tb-over50-w"> 50歳以上の定期便（「老齢年金の見込額」をそのまま記入）</label>
+                </div>
+                <div class="living-total" id="pen-tb-result" style="margin-top:12px;">
+                  <span class="lt-label"><i class="fa-solid fa-calculator"></i> 計算上の見込み（夫婦合計）</span>
+                  <span class="lt-value"><b id="pen-tb-monthly">—</b> 万円/月<span class="lt-diff" id="pen-tb-detail"></span></span>
+                </div>
+                <span class="hint" style="display:block; margin-top:6px;">※ 2025年度の水準にもとづく概算です（基礎年金＝加入1年あたり年約2.1万円・満額 年約83万円／厚生年金＝平均年収×0.5481％×加入年数）。今後の制度改正・賃金水準で変わるため、正確な見込み額は<b>「ねんきんネット」や年金事務所</b>でご確認ください。計算した月額は下の資産推移にそのまま使われます。</span>
               </div>
             </div>
           </div>
@@ -1856,10 +1952,18 @@
       <div class="table-head">
         <h3><i class="fa-solid fa-table-cells"></i> 年齢別キャッシュフロー表</h3>
       </div>
-      <p class="scroll-hint">金額の単位：万円<span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
+      <p class="scroll-hint">金額の単位：万円<span class="no-print"> ／ 年を追って<b>横にスクロール</b>できます</span><span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
       <!-- 表示期間を絞っているときだけ出す。この画面には切替UIが無いので、行が少ない理由が分かるようにする -->
       <p class="cf-horizon-note hidden" id="cf-horizon-note"></p>
-      <div class="table-scroll">
+      <!-- 画面用：年数を横軸にした表（FP実務のキャッシュフロー表の型） -->
+      <div class="table-scroll cfh-scroll">
+        <table class="cf cfh">
+          <thead><tr id="cfh-head-row"></tr></thead>
+          <tbody id="cfh-body"></tbody>
+        </table>
+      </div>
+      <!-- 印刷・PDF用：従来の縦（年＝行）の表。横長の表はA4で切れるため印刷はこちら -->
+      <div class="table-scroll cf-vertical">
         <table class="cf">
           <thead>
             <tr id="cf-head-row"></tr>
@@ -4019,6 +4123,9 @@
     }
 
     function recompute(){
+      // 定期便モード中は年齢・退職予定の変更にも追従して年金月額を引き直す
+      // （applyTeikibin はこの後方で定義。初期化中の呼び出しはTDZになるため握りつぶす）
+      try{ applyTeikibin(); }catch(e){}
       updateNetDisplay();
       updateEventWifeAges();
       refreshBirthHints();      // 生年月日の表示だけ更新（年齢欄は書き換えない）
@@ -5124,6 +5231,49 @@
           <td class="networth ${r.net<0?'neg':''}">${fmt(r.net)}</td>`;
         body.appendChild(tr);
       });
+
+      /* ---------- 画面用：年数を横軸にした表（FP実務の型・2026-08-17） ----------
+         上の縦の表と同じ rows から転置して作る（印刷・PDFは従来の縦の表のまま） */
+      const hh = $('cfh-head-row'), hb = $('cfh-body');
+      if(hh && hb){
+        const cls = (r)=> (r.milestone?' ms':'') + (r.drawdown?' dd':'');
+        // 年の見出し（西暦＋夫の年齢）
+        hh.innerHTML = `<th class="rowhead">西暦（${esc(hNameH())}の年齢）</th>` +
+          rows.map(r=> `<th class="cfh-y${cls(r)}">${r.year}<span class="cfh-age">${r.hAge}歳</span></th>`).join('');
+        const rowsHtml = [];
+        const addRow = (label, cellFn, headStyle)=>{
+          rowsHtml.push(`<tr><th class="rowhead"${headStyle?` style="${headStyle}"`:''}>${label}</th>` +
+            rows.map(r=> cellFn(r)).join('') + '</tr>');
+        };
+        if(!single) addRow(`${esc(wNameH())}の年齢`, r=> `<td class="${cls(r)}">${r.wAge}</td>`);
+        kidsMeta.forEach((k, ki)=>{
+          const c = childColor(ki);
+          addRow(`${esc(k.name)}の年齢`, r=>{
+            const a = r.childAges[ki];
+            const on = (a!=null && a>=0);
+            return `<td class="${cls(r)}" style="color:${on?c.text:'#c2ccd6'}">${on?a:'—'}</td>`;
+          }, `color:${c.text}`);
+        });
+        // ライフイベント（縦書き）：取り崩し開始・入園入学・家族イベントを1セルに集約
+        addRow('ライフイベント', r=>{
+          const parts = [];
+          if(r.drawdownStart) parts.push('<span class="ev-k">取り崩し開始</span>');
+          for(let k=0; k<nKids; k++){
+            const m = eduMarker(r.childAges[k], kidsMeta[k]);
+            if(m && m.kind==='enter') parts.push(`<span class="ev-k" style="color:${childColor(k).text}">${esc(kidsMeta[k].name)} ${esc(m.label)}</span>`);
+          }
+          (r.eventList||[]).forEach(e=>{ if(e.type==='edu') return; parts.push(esc(e.label)); });
+          const full = parts.join('・').replace(/<[^>]+>/g,'');
+          return `<td class="evtv${cls(r)}"${full?` title="${full}"`:''}>${parts.join('　')}</td>`;
+        });
+        addRow('収入', r=> `<td class="${cls(r)}">${fmt(r.income)}</td>`);
+        addRow('支出', r=> `<td class="${cls(r)}">${fmt(r.expense)}</td>`);
+        addRow('年間収支', r=> `<td class="${cls(r)}${r.cashflow<0?' neg':''}">${r.cashflow>=0?'+':''}${fmt(r.cashflow)}</td>`);
+        addRow('預貯金', r=> `<td class="${cls(r)}${r.cash<0?' neg':''}">${fmt(r.cash)}</td>`);
+        addRow('運用資産', r=> `<td class="${cls(r)}">${fmt(r.invest)}</td>`);
+        addRow('金融資産合計', r=> `<td class="networth${cls(r)}${r.net<0?' neg':''}">${fmt(r.net)}</td>`);
+        hb.innerHTML = rowsHtml.join('');
+      }
     }
 
     /* ---------- お子さまの教育ステージ・タイムライン ---------- */
@@ -7217,6 +7367,72 @@
       el.value = p.dataset.v;
       el.dispatchEvent(new Event('input', {bubbles:true}));
     });
+
+    /* ---------- 公的年金「ねんきん定期便から計算」 ----------
+       50歳未満の定期便＝「これまでの加入実績に応じた年金額」（過去分のみ）に、
+       今後の働き方（平均年収×何歳まで）の上積みを足して概算する。
+       50歳以上の定期便＝見込額がそのまま載っているためチェックで上積みを止める。
+       単価（2025年度水準）：基礎＝加入1年あたり年約2.08万円（満額 年約83.2万円）、
+       厚生（報酬比例）＝平均年収×0.5481%×加入年数。概算のため断定表現は使わない。 */
+    /* penMode/setPenMode/applyTeikibin は関数宣言（巻き上げ）にする：
+       collectState・recompute はこの位置より前で定義され初期化中にも走るため、
+       const だと TDZ で初期化が壊れる */
+    function penMode(){
+      const seg = document.getElementById('pen-mode-seg');
+      return seg?.querySelector('button.active')?.dataset.penmode || 'direct';
+    }
+    function setPenMode(m){
+      const seg = document.getElementById('pen-mode-seg');
+      if(!seg) return;
+      [...seg.children].forEach(x=> x.classList.toggle('active', x.dataset.penmode===m));
+      document.querySelectorAll('[data-pen-panel]').forEach(p=> p.classList.toggle('hidden', p.dataset.penPanel!==m));
+      if(m==='teikibin') applyTeikibin();
+    }
+    function teikibinEst(who){
+      const amt = Math.max(num('pen-tb-amount-'+who, 0), 0);      // 定期便記載の年額
+      const over50 = !!($('pen-tb-over50-'+who) && $('pen-tb-over50-'+who).checked);
+      if(over50) return amt;                                      // 見込額はそのまま使う
+      const income = Math.max(num('pen-tb-income-'+who, 0), 0);
+      const until  = num('pen-tb-until-'+who, 65);
+      const age    = num(who==='h' ? 'h-age' : 'w-age', 35);
+      const years  = Math.max(until - age, 0);
+      const kiso   = Math.min(2.08*years, 83.2);                  // 基礎の上積み（満額でガード）
+      const kosei  = income*0.005481*years;                       // 厚生の上積み（報酬比例）
+      return amt + kiso + kosei;
+    }
+    // 定期便モード中は recompute のたびに年金月額へ反映（値を書くだけ・再計算は呼ばない）
+    function applyTeikibin(){
+      if(penMode()!=='teikibin') return;
+      const single = isSingle();
+      const h = teikibinEst('h');
+      const w = single ? 0 : teikibinEst('w');
+      const monthly = Math.round((h+w)/12*10)/10;
+      const el = $('pension-monthly');
+      if(el) el.value = monthly;
+      const mEl = $('pen-tb-monthly'), dEl = $('pen-tb-detail');
+      if(mEl) mEl.textContent = fmt1(monthly);
+      if(dEl) dEl.textContent = single
+        ? `（年額 約${fmt1(h)}万円）`
+        : `（夫 年約${fmt1(h)}万円 ＋ 妻 年約${fmt1(w)}万円）`;
+      // 50歳以上チェックで「今後の働き方」欄の表示を切替える
+      ['h','w'].forEach(who=>{
+        const on = !!($('pen-tb-over50-'+who) && $('pen-tb-over50-'+who).checked);
+        document.querySelectorAll('.pen-tb-future-'+who).forEach(f=> f.classList.toggle('hidden', on));
+      });
+    }
+    function fmt1(v){ return (Math.round(v*10)/10).toLocaleString('ja-JP', {maximumFractionDigits:1}); }
+    if($('pen-mode-seg')) $('pen-mode-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      setPenMode(b.dataset.penmode);
+      recompute();
+    });
+    // 定期便の各欄は「直接リスナー」で先に月額へ反映してから、#input-panel の委譲リスナー（recompute）が走る
+    ['pen-tb-amount-h','pen-tb-income-h','pen-tb-until-h','pen-tb-over50-h',
+     'pen-tb-amount-w','pen-tb-income-w','pen-tb-until-w','pen-tb-over50-w'].forEach(id=>{
+      const el = $(id); if(!el) return;
+      el.addEventListener('input', applyTeikibin);
+      el.addEventListener('change', applyTeikibin);
+    });
     // 最初のあいさつ（お名前を反映）
     function chatGreeting(){
       const nm = (document.getElementById('h-name')?.value||'').trim();
@@ -7314,6 +7530,7 @@
         house: houseType,
         htype, ichijoRegion, ichijoHorizon,   // 【一条フック】住宅の性能タイプ・日射区分・比較期間を保存（太陽光kW/蓄電池はfieldsで自動保存）
         viewHorizon: (viewHorizon==='custom') ? ('c'+viewHorizonYears()) : viewHorizon,   // 「金融資産の推移」の表示期間（比較期間とは別。年数指定は 'c20' の形で保存）
+        penMode: penMode(),   // 公的年金の入力方法（direct/teikibin。定期便の各欄はfieldsで自動保存。SHARE_TOP_KEYSには足さない＝'!'付きで自動往復）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         kasaiCycle: kasaiCycle(),
@@ -7374,6 +7591,7 @@
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
       setViewHorizon(s.viewHorizon || 'end');   // 「金融資産の推移」の表示期間を復元（この項目が無い旧保存は全期間に戻す）
+      setPenMode(s.penMode || 'direct');        // 公的年金の入力方法を復元（旧保存は月額入力。teikibinなら月額を引き直す）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない

@@ -515,6 +515,8 @@
       text-align:start; vertical-align:top; font-size:.7rem; line-height:1.5;
       padding:6px 3px; overflow:hidden; font-weight:500;
     }
+    /* 縦書きのまま高さを抑える箱。溢れた分は…で示し、全文は title で読める */
+    table.cfh td.evtv .evtv-in{ writing-mode:inherit; overflow:hidden; text-overflow:ellipsis; }
     table.cfh td.evtv .ev-k{ font-weight:700; }
     table.cfh td.evtv:not(.dd):not(:empty){ background:#fbfdfc; }
     /* イベント行の項目名は、金額行と区別できるよう控えめに */
@@ -5429,7 +5431,9 @@
           rowsHtml.push(`<tr style="height:${h}px"><th class="rowhead"${er.headStyle?` style="${er.headStyle}"`:''}>${er.label}</th>` +
             rows.map((r, i)=>{
               const c = cells[i];
-              return `<td class="evtv${cls(r)}"${c?` title="${esc(c.title)}"`:''}>${c ? c.html : ''}</td>`;
+              // 表の行の height は「最小値」扱いのため、長い項目名を入れると行が青天井に伸びる。
+              // セル内容を高さ上限つきの箱で包んで抑える（全文は title のツールチップで読める）
+              return `<td class="evtv${cls(r)}"${c?` title="${esc(c.title)}"`:''}>${c ? `<div class="evtv-in" style="max-height:${h-12}px">${c.html}</div>` : ''}</td>`;
             }).join('') + '</tr>');
         });
         addRow('収入', r=> `<td class="${cls(r)}">${fmt(r.income)}</td>`);

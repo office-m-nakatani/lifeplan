@@ -811,10 +811,13 @@
          --planbar-h にセット（バーはflex-wrapで高さが変わるため固定値にしない）。
          これが無いとプランバーがナビ1行目を覆い、家族・住まい等のボタンが押せなくなる（検証役検出） */
       body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:var(--planbar-h, 84px); z-index:45; background:var(--bg); padding:8px 0 6px; }
-      /* 追従中（nav-stuck）は「今いる側」の行だけ残す（入力中は入力行のみ・結果中は結果行のみ＝ユーザー指示）。
-         判定は #nav-sentinel（ナビ直前の高さ0の番兵）で行い、ナビ自身の高さ変化によるチラつきを避ける */
-      body.tab-mode.nav-stuck.view-input:not(.pdf-mode) #tool-nav .tnr-result{ display:none; }
-      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-input{ display:none; }
+      /* 追従中（nav-stuck）は「今いる側」の行だけ見せる（入力中は入力行のみ・結果中は結果行のみ＝ユーザー指示）。
+         判定は #nav-sentinel（ナビ直前の高さ0の番兵）。
+         ★display:noneではなくvisibility＋orderを使う：ナビの高さを一定に保ち、
+           境界をまたぐたびに下のコンテンツが数十pxジャンプする「スクロールのガタつき」を防ぐ */
+      body.tab-mode.nav-stuck.view-input:not(.pdf-mode) #tool-nav .tnr-result{ visibility:hidden; }
+      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-input{ visibility:hidden; }
+      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-result{ order:-1; }
     }
     /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
        min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
@@ -1681,6 +1684,17 @@
                   </div>
                   <span class="hint"><b id="loan-ratio-lbl">夫 50 ： 50 妻</b>。<b id="loan-share-hname2">夫</b>の割合を入れると<b id="loan-share-wname2">妻</b>は自動計算されます。それぞれに万一があったとき、<b>自分の割合の残債だけ</b>が団信でゼロになります（相手の割合は残ります）。</span>
                 </div>
+                <!-- 単独ローンのとき：何対何の団信かをいつでも見えるように（ペアローン時は上の入力欄が出る） -->
+                <div class="field hidden" id="dansin-share-note">
+                  <label>団信でカバーされる割合</label>
+                  <span class="hint" style="margin:0;" id="dansin-share-note-text"></span>
+                </div>
+              </div>
+
+              <!-- 単身のとき：名義の選択肢はないが、割合（100％）は明示する -->
+              <div class="note hidden" id="dansin-single-note">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="dansin-single-note-text"></span>
               </div>
 
               <!-- 団信の保障タイプ（名義人ごと）＋上乗せ金利。タイプはAI診断・もしもの保障の説明に反映 -->
@@ -1715,8 +1729,10 @@
           </div>
         </div>
 
-        <!-- 加入中の保険（旧⑦。死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。単身は診断対象外のため非表示 -->
-        <div class="acc" data-acc data-couple-only data-sec="insurance">
+        <!-- 加入中の保険（旧⑦。死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。
+             2026-08-17夜：単身でも表示する（ユーザー指示「生命保険が消えている」。単身でも加入中の保険の記録・
+             死亡保障カードへの反映はできる。夫婦前提の注意文だけ couple-only で隠す） -->
+        <div class="acc" data-acc data-sec="insurance">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
             <span class="acc-title"><b>任意の生命保険（加入中）</b><span>今の死亡保障を診断に反映</span></span>
@@ -1729,10 +1745,15 @@
               <span class="lt-value" id="ins-sum-value"></span>
             </div>
             <!-- 保障を減らす判断に直結する注意（保険業法上の打消し表示）は、
-                 折りたたまずに常に見える位置へ置く（同一視野で読めるようにするため） -->
-            <div class="note" style="margin-bottom:8px; background:var(--warn-pale); border-color:var(--warn);">
+                 折りたたまずに常に見える位置へ置く（同一視野で読めるようにするため）。文言が夫婦前提のため単身では非表示 -->
+            <div class="note" data-couple-only style="margin-bottom:8px; background:var(--warn-pale); border-color:var(--warn);">
               <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
               <span><b>【ご注意】この総資産の比較はご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではなく、運用の成果を保証するものでもありません。保障は、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。保障の減額・解約には、<b>健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある</b>などの注意点があります。</span>
+            </div>
+            <!-- 単身向けの位置づけ（診断の必要保障額計算は夫婦前提のため、単身は記録と推移表示が中心） -->
+            <div class="note hidden" data-single-only style="margin-bottom:8px;">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>単身の場合、扶養するご家族がいなければ<b>大きな死亡保障は原則不要</b>という考え方が一般的です。ここに加入中の保険を入力すると、<b>「万が一（保障）」の保障額の推移</b>に反映されます（保障の減額・解約には、健康状態により再加入できない等の注意点があります）。</span>
             </div>
             <details class="ic-fold" style="margin-top:0; margin-bottom:12px;">
               <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
@@ -1763,7 +1784,7 @@
             <div class="conditional hidden" data-hoken-panel="simple">
               <div class="grid2">
                 <div class="field"><label>夫の死亡保障の合計</label><div class="input-unit"><input type="number" id="ins-total-h" value="0" min="0" step="100"><span class="u">万円</span></div></div>
-                <div class="field"><label>妻の死亡保障の合計</label><div class="input-unit"><input type="number" id="ins-total-w" value="0" min="0" step="100"><span class="u">万円</span></div></div>
+                <div class="field" data-couple-only><label>妻の死亡保障の合計</label><div class="input-unit"><input type="number" id="ins-total-w" value="0" min="0" step="100"><span class="u">万円</span></div></div>
               </div>
               <span class="hint">加入中の保険の死亡保険金額をざっくり合計してください。収入保障保険は「月額×12か月×残り年数」で総額の目安に（例：月10万円×残り20年＝2,400万円）</span>
             </div>
@@ -3018,7 +3039,8 @@
     }
     // 保険の被保険者に選べる家族：夫・妻＋お子さま全員（keyは h / w / c0,c1… 、labelはお名前＋様/君）
     function insWhoMembers(){
-      const arr = [{ key:'h', label: hNameH() }, { key:'w', label: wNameH() }];
+      const arr = [{ key:'h', label: hNameH() }];
+      if(!isSingle()) arr.push({ key:'w', label: wNameH() });   // 単身では妻を被保険者の選択肢に出さない（2026-08-17夜 単身でも保険入力を可能にした対応）
       readChildren().forEach((c,i)=> arr.push({ key:'c'+i, label: c.name }));
       return arr;
     }
@@ -3708,11 +3730,30 @@
     function updateLoanShareUI(){
       const t = loanType();
       const isPair = t==='pair';
+      const single = isSingle();
       if($('loan-share-field')) $('loan-share-field').classList.toggle('hidden', !isPair);
       // 団信タイプ欄：夫は「妻の単独」以外で表示、妻は「夫の単独」以外かつ夫婦のときだけ表示
       if($('dansin-type-h-field')) $('dansin-type-h-field').classList.toggle('hidden', t==='solo-w');
-      if($('dansin-type-w-field')) $('dansin-type-w-field').classList.toggle('hidden', t==='solo-h' || isSingle());
+      if($('dansin-type-w-field')) $('dansin-type-w-field').classList.toggle('hidden', t==='solo-h' || single);
       updateLoanLabels();
+      // 単独ローンでも「何対何の団信か」を常に見せる（ペアは入力欄・単独は明示テキスト）
+      const hn = hNameH(), wn = wNameH();
+      const noteF = $('dansin-share-note'), noteT = $('dansin-share-note-text');
+      if(noteF){
+        noteF.classList.toggle('hidden', isPair);
+        if(noteT && !isPair){
+          noteT.innerHTML = (t==='solo-h')
+            ? `<b>${esc(hn)} 100％ ： ${esc(wn)} 0％</b>（${esc(hn)}の単独ローン。${esc(hn)}に万一のときは残債の<b>全額</b>がゼロ、${esc(wn)}に万一のときは団信の対象外でローンがそのまま残ります）`
+            : `<b>${esc(hn)} 0％ ： ${esc(wn)} 100％</b>（${esc(wn)}の単独ローン。${esc(wn)}に万一のときは残債の<b>全額</b>がゼロ、${esc(hn)}に万一のときは団信の対象外でローンがそのまま残ります）`;
+        }
+      }
+      // 単身：名義の選択肢はないが、団信の割合（100％）は明示する
+      if($('dansin-single-note')){
+        $('dansin-single-note').classList.toggle('hidden', !single);
+        if(single && $('dansin-single-note-text')){
+          $('dansin-single-note-text').innerHTML = `団信は<b>${esc(hn)} 100％</b>＝万一のときは<b>残債の全額</b>が対象です（単身のため名義の選択はありません）。`;
+        }
+      }
     }
     if(loanTypeSeg) loanTypeSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
@@ -3736,6 +3777,7 @@
     function applyHousehold(){
       $('wife-section').classList.toggle('hidden', isSingle());
       document.querySelectorAll('[data-couple-only]').forEach(el=> el.classList.toggle('hidden', isSingle()));
+      document.querySelectorAll('[data-single-only]').forEach(el=> el.classList.toggle('hidden', !isSingle()));
       // ペア化対応：単身でも団信（上乗せ金利）は使うため「団信・生命保険」ボタンは残す。
       // 表示中のグループを引き直して、ペア（2枚）↔1枚の切替を反映する
       // （tab-mode はスクリプト末尾で付与される＝付与前の初期化中は下の切替を呼ばない。TDZ対策）

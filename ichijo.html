@@ -792,8 +792,11 @@
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1/-1; }
       /* KPIは全幅を活かして4枚横並び（65歳・実質・100歳・実質が1行で見渡せる） */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-template-columns:repeat(4,1fr); }
-      /* 画面切替ナビを追従させる（スクロールしても常に切替できる）。スマホは画面を圧迫するため従来どおり */
-      body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:0; z-index:45; background:var(--bg); padding:8px 0 6px; }
+      /* 画面切替ナビを追従させる（スクロールしても常に切替できる）。スマホは画面を圧迫するため従来どおり。
+         ★プランバー（.plan-wrap sticky top:8 z-60）の「下」に張り付ける：topはJSが実測して
+         --planbar-h にセット（バーはflex-wrapで高さが変わるため固定値にしない）。
+         これが無いとプランバーがナビ1行目を覆い、家族・住まい等のボタンが押せなくなる（検証役検出） */
+      body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:var(--planbar-h, 84px); z-index:45; background:var(--bg); padding:8px 0 6px; }
     }
     /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
        min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
@@ -5609,6 +5612,19 @@
       $('chat-fab').hidden = false;
       $('chat-fab').addEventListener('click', ()=> switchView('result','chat'));
     }
+    // 追従ナビの位置決め：プランバー（sticky）の高さを実測して --planbar-h にセット
+    // （バーはflex-wrapで1〜2行に変わるため。単純な固定topだと重なってボタンが押せなくなる）
+    (function(){
+      const bar = document.querySelector('.plan-wrap');
+      if(!bar) return;
+      const setH = ()=>{
+        const h = bar.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--planbar-h', Math.ceil(h + 8 + 4) + 'px');   // 8=バーのtop、4=すき間
+      };
+      setH();
+      if(typeof ResizeObserver!=='undefined'){ new ResizeObserver(setH).observe(bar); }
+      window.addEventListener('resize', setH);
+    })();
     if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
     // 妻の働き方を変える予定：ON/OFFと期間追加
@@ -7396,8 +7412,11 @@
       const until  = num('pen-tb-until-'+who, 65);
       const age    = num(who==='h' ? 'h-age' : 'w-age', 35);
       const years  = Math.max(until - age, 0);
-      const kiso   = Math.min(2.08*years, 83.2);                  // 基礎の上積み（満額でガード）
-      const kosei  = income*0.005481*years;                       // 厚生の上積み（報酬比例）
+      // 基礎の上積み：加入は20歳開始・上限40年と仮定し、過去分（定期便記載に含まれる）との合算が
+      // 満額を超えないよう「残り加入余地」で年数をガード（若い人ほど超過しやすい・検証役検出）
+      const years40 = Math.min(years, Math.max(0, 40 - Math.max(age - 20, 0)));
+      const kiso   = Math.min(2.08*years40, 83.2);
+      const kosei  = income*0.005481*years;                       // 厚生の上積み（報酬比例・こちらは加入年数上限なし）
       return amt + kiso + kosei;
     }
     // 定期便モード中は recompute のたびに年金月額へ反映（値を書くだけ・再計算は呼ばない）

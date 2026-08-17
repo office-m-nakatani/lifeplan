@@ -668,7 +668,9 @@
     /* ============================================================
        画面切替ナビ（2026-08-17 刷新 → 同日ペア化）
        ・アコーディオン（①〜⑦の縦積み）を廃止し、上部の2段のボタン行で切り替える
-         1段目「入力する」＝4ペア（PC幅は左右2カラム）／2段目「結果を見る」＝4群（縦に連結）＋チャット独立
+         1段目「入力する」＝4ペア（PC幅は左右2カラム）
+         2段目「結果を見る」＝資産と収支／一条比較・現状と将来／もしもの保障・AI診断／キャッシュフロー表／チャット
+         （2画面のペアはPC幅で左右2カラム＝.rpair-2）
        ・スマホはボタン行を横スクロール、ペアは縦積み
        ・印刷/PDF（pdf-mode）では従来どおり全セクションを展開する
        ============================================================ */
@@ -739,7 +741,13 @@
       body.tab-mode:not(.pdf-mode) #input-panel.pair-2{
         max-width:1240px; display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
       }
+      /* 結果のペア表示：2画面のグループ（一条比較＋現状と将来／もしもの保障＋AI診断）は左右に並べる */
+      body.tab-mode:not(.pdf-mode) .results.rpair-2{
+        display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
+      }
     }
+    /* グリッドの子は中身（グラフ・表）の幅で膨らまないよう明示（横はみ出し防止） */
+    .view-wrap{ min-width:0; }
     /* 結果ナビ「AIに相談する」ボタン：チャット導線を目立たせる（ゴールドの差し色） */
     #nav-result button[data-nav-result="chat"]{ background:var(--yellow-pale); border-color:var(--yellow-soft); color:#8a6a12; font-weight:800; }
     #nav-result button[data-nav-result="chat"]:hover{ background:var(--yellow-soft); }
@@ -1050,12 +1058,13 @@
     </div>
     <div class="tool-nav-row tnr-result">
       <span class="tool-nav-label"><i class="fa-solid fa-chart-line"></i> 結果を見る</span>
-      <!-- 似た内容どうしを同じ画面にまとめる（値はJSの RESULT_GROUPS のキー。同じ data-view 値を複数の要素に付けると同時に表示される）
-           assets＝KPI＋総合判定＋資産推移＋収支＋CF表／ichijo＝一条比較＋現状と将来／hoken＝もしもの保障＋AI診断／chat＝相談チャット単独 -->
+      <!-- 似た内容どうしをペアにする（値はJSの RESULT_GROUPS のキー。2画面のペアはPC幅で左右に並ぶ）
+           assets単独／ichijo＝一条比較＋現状と将来／hoken＝もしもの保障＋AI診断／cf単独／chat単独 -->
       <div class="tool-nav-scroll" id="nav-result">
-        <button type="button" data-nav-result="assets">資産と収支・CF表</button>
+        <button type="button" data-nav-result="assets">資産と収支</button>
         <button type="button" data-nav-result="ichijo">一条比較・現状と将来</button>
         <button type="button" data-nav-result="hoken">もしもの保障・AI診断</button>
+        <button type="button" data-nav-result="cf">キャッシュフロー表</button>
         <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
       </div>
     </div>
@@ -1624,8 +1633,12 @@
       <!-- ===================== 結果パネル ===================== -->
       <div class="results" id="results">
 
+        <!-- 各画面のカードは view-wrap で束ねる（2026-08-17）。data-view はラッパーに1つだけ付け、
+             ペア表示（.results.rpair-2）のときは2つのラッパーがCSSグリッドで左右に並ぶ -->
+        <div class="view-wrap" data-view="assets">
+
         <!-- KPI：○歳時点の総資産額＋インフレ後の実質価値（年齢は編集できます）-->
-        <div class="kpi-grid" data-view="assets">
+        <div class="kpi-grid">
           <div class="kpi kpi-total">
             <div class="k-label"><input type="number" id="age-point-1" class="age-input" value="65" min="20" max="110"> 歳時点：総資産額</div>
             <div class="k-value" id="kpi-total-1">—</div>
@@ -1649,7 +1662,7 @@
         </div>
 
         <!-- 総合判定（KPIの直下＝結論を最初に見せる）-->
-        <div class="verdict good" id="verdict" data-view="assets">
+        <div class="verdict good" id="verdict">
           <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
           <div>
             <b id="verdict-title">計算中…</b>
@@ -1658,7 +1671,7 @@
         </div>
 
         <!-- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）-->
-        <div class="card" data-view="assets">
+        <div class="card">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
           <!-- 表示期間：グラフと表の「見せる年数」だけを絞る。下の一条比較カードの「比較期間」とは別物 -->
           <div class="ic-level no-print">
@@ -1675,21 +1688,22 @@
           <div class="chart-box tall"><canvas id="assetChart"></canvas></div>
         </div>
 
-        <!-- 現状 と 将来 のくらべ（②の中核機能）-->
-        <div class="card" id="compare-card2" data-view="compare">
-          <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
-          <div id="plan-effect"></div>
-          <div class="chart-box"><canvas id="compareChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「もしもの保障」もあわせてご確認ください。</p>
+        <!-- 収支グラフ（資産の増減とその原因を1画面で見せる） -->
+        <div class="card" id="flow-card">
+          <div class="card-title"><i class="fa-solid fa-chart-column"></i> 年間の収入と支出</div>
+          <div class="chart-box"><canvas id="flowChart"></canvas></div>
         </div>
 
+        </div><!-- /view-wrap assets -->
+
+        <div class="view-wrap" data-view="ichijo">
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <!-- 賃貸選択時のプレースホルダー：看板機能（一条比較）の存在を予告し、1クリックで発火できるようにする -->
-        <div class="card no-print" id="ichijo-cta-placeholder" data-view="ichijo" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
+        <div class="card no-print" id="ichijo-cta-placeholder" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
           <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「一条の家で試す」を押すと、<b>一般住宅と一条工務店の家のランニングコストの差</b>がここに表示されます。</p>
           <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す（1クリックで比較）</button>
         </div>
-        <div class="card" id="ichijo-compare-card" data-view="ichijo">
+        <div class="card" id="ichijo-compare-card">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
           <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
           <div class="ic-level">
@@ -1719,9 +1733,19 @@
           </details>
         </div>
         <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
+        </div><!-- /view-wrap ichijo -->
+
+        <div class="view-wrap" data-view="compare">
+        <!-- 現状 と 将来 のくらべ（②の中核機能）-->
+        <div class="card" id="compare-card2">
+          <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
+          <div id="plan-effect"></div>
+          <div class="chart-box"><canvas id="compareChart"></canvas></div>
+          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「もしもの保障・AI診断」もあわせてご確認ください。</p>
+        </div>
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
-        <div class="card" id="invest-diff-card" data-view="compare">
+        <div class="card" id="invest-diff-card">
           <div class="card-title card-title-long"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
           <div class="ivd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で比べる？</span>
@@ -1736,8 +1760,11 @@
           </details>
         </div>
 
+        </div><!-- /view-wrap compare -->
+
+        <div class="view-wrap" data-view="hoken">
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
-        <div class="card" id="hoken-diff-card" data-view="hoken">
+        <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
           <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
@@ -1771,14 +1798,11 @@
           </details>
         </div>
 
-        <!-- 収支グラフ（「資産と収支」画面に同居。資産の増減とその原因を1画面で見せる） -->
-        <div class="card" id="flow-card" data-view="assets">
-          <div class="card-title"><i class="fa-solid fa-chart-column"></i> 年間の収入と支出</div>
-          <div class="chart-box"><canvas id="flowChart"></canvas></div>
-        </div>
+        </div><!-- /view-wrap hoken -->
 
+        <div class="view-wrap" data-view="ai">
         <!-- アドバイス（総括＋項目別の詳しい診断）-->
-        <div class="card" data-view="ai">
+        <div class="card">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AI診断と今後のアドバイス</div>
           <div id="advice-summary"></div>
           <p class="adv-cats-hint">▼ 項目をタップすると、その分野の<b>詳しい診断（総括・安心点・懸念点）</b>が表示されます</p>
@@ -1786,8 +1810,11 @@
           <div class="adv-detail" id="advice-detail"></div>
         </div>
 
-        <!-- お客様からの相談チャット（2026-08-17 AI診断から独立した画面に。data-view="chat"） -->
-        <div class="card no-print" id="chat-card" data-view="chat">
+        </div><!-- /view-wrap ai -->
+
+        <div class="view-wrap" data-view="chat">
+        <!-- お客様からの相談チャット（2026-08-17 AI診断から独立した画面に） -->
+        <div class="card no-print" id="chat-card">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AIになんでも相談チャット
             <button class="btn btn-primary btn-sm" id="open-reserve" style="margin-left:auto;"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約</button>
           </div>
@@ -1817,6 +1844,7 @@
             <button class="btn btn-primary btn-sm" id="chat-send" type="button"><i class="fa-solid fa-paper-plane"></i></button>
           </div>
         </div>
+        </div><!-- /view-wrap chat -->
 
       </div><!-- /results -->
 
@@ -3116,7 +3144,7 @@
       el.classList.toggle('hidden', !cut);
       if(cut){
         const last = shownRows[shownRows.length-1];
-        el.innerHTML = `この表は上の「金融資産の推移」の<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
+        el.innerHTML = `この表は「資産と収支」画面の「金融資産の推移」にある<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには「資産と収支」画面で表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
       }
     }
 
@@ -5230,7 +5258,7 @@
     const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'] };
     const INPUT_GROUP_ORDER = ['family','living','save','insurance'];
     const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険' };
-    const RESULT_GROUPS = { assets:['assets','cf'], ichijo:['ichijo','compare'], hoken:['hoken','ai'], chat:['chat'] };
+    const RESULT_GROUPS = { assets:['assets'], ichijo:['ichijo','compare'], hoken:['hoken','ai'], cf:['cf'], chat:['chat'] };
     function groupOfInput(key){
       if(INPUT_GROUPS[key]) return key;
       for(const g of INPUT_GROUP_ORDER){ if(INPUT_GROUPS[g].includes(key)) return g; }
@@ -5297,14 +5325,17 @@
     }
 
     function resizeChartsSoon(){
-      requestAnimationFrame(()=>{
+      const run = ()=>{
         try{
           [typeof assetChart!=='undefined'&&assetChart, typeof flowChart!=='undefined'&&flowChart,
            typeof compareChart2!=='undefined'&&compareChart2, typeof ichijoChart!=='undefined'&&ichijoChart,
            typeof investDiffChart!=='undefined'&&investDiffChart, typeof hokenDiffChart!=='undefined'&&hokenDiffChart
           ].forEach(c=>{ if(c && c.resize) c.resize(); });
         }catch(e){}
-      });
+      };
+      // rAF＋setTimeoutの二段構え：バックグラウンドタブ等でrAFが止まっていても確実にリサイズする（resizeは冪等）
+      requestAnimationFrame(run);
+      setTimeout(run, 150);
     }
     function switchView(type, key, opts){
       opts = opts || {};
@@ -5325,9 +5356,11 @@
         el.classList.toggle('view-active', type==='input' && members.includes(el.dataset.sec)));
       document.querySelectorAll('[data-view]').forEach(el=>
         el.classList.toggle('view-active', type==='result' && members.includes(el.dataset.view)));
-      // ペア（2セクション表示）のときだけPC幅で左右2カラムにする
+      // ペア（2画面表示）のときだけPC幅で左右2カラムにする（入力・結果とも）
       const ip = $('input-panel');
       if(ip) ip.classList.toggle('pair-2', type==='input' && members.length===2);
+      const rp = $('results');
+      if(rp) rp.classList.toggle('rpair-2', type==='result' && members.length===2);
       // チャットのショートカット：チャット画面を見ている間は隠す
       const fab = $('chat-fab');
       if(fab) fab.hidden = (type==='result' && key==='chat');

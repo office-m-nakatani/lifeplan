@@ -2592,6 +2592,7 @@
           <button type="button" class="btn btn-primary btn-sm" id="vc-manual-go">反映</button>
         </div>
         <div class="vc-tools">
+          <label class="vc-auto"><input type="checkbox" id="vc-show-cap"> 文字起こしを画面に表示する</label>
           <label class="vc-auto"><input type="checkbox" id="vc-auto" checked> 話した内容を自動で入力欄に反映する</label>
           <button type="button" class="btn btn-ghost btn-sm" id="vc-apply-all"><i class="fa-solid fa-arrow-right-to-bracket"></i> 話した内容をまとめて入力欄に入れ直す</button>
           <button type="button" class="btn btn-ghost btn-sm" id="vc-clear"><i class="fa-solid fa-eraser"></i> 文字起こしを消す</button>
@@ -2599,6 +2600,7 @@
         <details class="ic-fold vc-help">
           <summary><i class="fa-solid fa-circle-info"></i> 使える言い方の例・ご注意</summary>
           <p class="hint" style="display:block; margin-top:8px;">「<b>食費7万円</b>」「<b>電気1万2千円</b>」「<b>年収550万</b>」「<b>預貯金500万</b>」「<b>住宅ローン5000万円</b>」「<b>金利0.95％</b>」「<b>返済期間35年</b>」「<b>妻の年収300万</b>」のように、<b>項目名＋数字</b>で話すと該当欄へ自動入力します。「、」で区切れば一度に複数もOK。自動で反映したくないときは上のチェックを外してください。</p>
+          <p class="hint" style="display:block; margin-top:8px;">※ <b>文字起こしは画面に出しません</b>（既定）。お客様と画面を見ながらの面談で読まれてしまわないようにするためです。録音した内容は端末内に残り、「ミーティング概要」や発言メモとして<b>振り返りに使えます</b>。面談後などに読みたいときは上のチェックを入れてください。</p>
           <p class="hint" style="display:block; margin-top:8px;">※ 音声はお使いの<b>ブラウザ／OSの音声認識機能</b>で文字に変換されます（端末の設定によっては提供元のサーバーを経由して処理されます）。このツール自体が音声を保存・外部送信することはありません。<br>※ 文字起こし・概要は<b>この端末のブラウザ内にのみ</b>保存され（最後の更新から2週間を過ぎると、次に開いたときに自動削除）、お客様データの保存・共有リンクには含まれません。メモは「文字起こしを消す」では消えず、この端末に残ります（各メモのゴミ箱ボタンで削除できます）。</p>
         </details>
       </div>
@@ -6316,7 +6318,11 @@
         skipped.forEach(s=>{ html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(s)}</span>`; });
         if(unmatched.length){
           const t = unmatched.join('、');
-          html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-circle-question"></i> 入力欄には入れていません：「${esc(t.slice(0,40))}${t.length>40?'…':''}」</span>`
+          // 文字起こしを画面に出さない設定のときは、ここにも発言の中身を出さない（お客様に読まれないように）
+          const body = vcCapOn()
+            ? `「${esc(t.slice(0,40))}${t.length>40?'…':''}」`
+            : `${unmatched.length}件（画面には出していません）`;
+          html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-circle-question"></i> 入力欄には入れていません：${body}</span>`
             + `<button type="button" class="vc-undo" data-vc-memo="${esc(t)}"><i class="fa-solid fa-note-sticky"></i> メモに残す</button>`;
         }
         box.hidden = !html;
@@ -6370,6 +6376,21 @@
       var mnUtter = [];          // ← var。初期化から触るため（const/letのTDZ事故を避ける）
       var mnT0 = 0;              // 録音開始時刻（ミリ秒）
       const cap = $('vc-cap'), jumpBtn = $('vc-jump');
+      /* 文字起こしは既定で画面に出さない（ユーザー指示 2026-08-18）。
+         お客様と画面を見ながら面談するため、発言がそのまま表示されると読まれてしまう。
+         記録は端末内に残り、ミーティング概要・発言メモとして振り返りに使う */
+      function vcCapOn(){ const c = $('vc-show-cap'); return !!(c && c.checked); }
+      function vcCapVisible(){
+        if(!cap) return false;
+        if(!vcCapOn()) return false;
+        if(!mnUtter.length && panel.dataset.vcMode !== 'open') return false;   // 待機中のミニは枠ごとたたむ
+        return true;
+      }
+      function vcCapSync(){
+        if(cap) cap.hidden = !vcCapVisible();
+        if(jumpBtn && !vcCapVisible()) jumpBtn.hidden = true;
+        vcSyncDockH();
+      }
       let capStick = true, capInterim = null;
       function vcTimeLabel(ms){
         const s = Math.max(0, Math.floor(ms/1000));
@@ -6388,7 +6409,8 @@
       }
       function vcCapAdd(text, ms){
         if(!cap || !text) return;
-        cap.hidden = false;
+        // 非表示のときも行はDOMに積んでおく（あとでチェックを入れたら履歴が見えるように）
+        cap.hidden = !vcCapVisible();
         const emp = cap.querySelector('.vc-cap-empty'); if(emp) emp.remove();
         const div = document.createElement('div');
         div.className = 'vc-cap-line';
@@ -6405,6 +6427,7 @@
       function vcCapSetInterim(text){
         if(!cap) return;
         if(!text){ if(capInterim){ capInterim.remove(); capInterim = null; } return; }
+        if(!vcCapVisible()) return;      // 画面に出さない設定のときは未確定の行を作らない
         cap.hidden = false;
         if(!capInterim){
           capInterim = document.createElement('div');
@@ -6420,13 +6443,13 @@
         capInterim = null;
         if(!mnUtter.length){
           cap.innerHTML = '<div class="vc-cap-empty">録音するとここに文字起こしが出ます。行をタップすると、直してから入力欄へ反映できます。</div>';
-          cap.hidden = (panel.dataset.vcMode !== 'open');   // ミニでは空枠を出さない（その分ドックが低くなる）
+          cap.hidden = !vcCapVisible();
           return;
         }
         cap.innerHTML = mnUtter.slice(-200).map(function(u){
           return '<div class="vc-cap-line" title="タップすると下の欄に入り、直してから反映できます">' + vcCapLineHTML(u.x, u.t) + '</div>';
         }).join('');
-        cap.hidden = false; capStick = true; vcCapInteractive(panel.dataset.vcMode === 'open'); vcCapFollow();
+        cap.hidden = !vcCapVisible(); capStick = true; vcCapInteractive(panel.dataset.vcMode === 'open'); vcCapFollow();
       }
       /* 行をタップして編集欄へ送れるのは展開時だけ。
          ミニでもrole/tabindexが付いたままだと「フォーカスできるのにマウスでは無反応」になる */
@@ -6523,6 +6546,8 @@
                 if(mnUtter.length > 2000) mnUtter.shift();
                 vcCapAdd(t, ms);
                 if(vcAutoOn()) vcApplyText(t);
+                // 文字起こしを画面に出さない設定でも「録れている」ことは分かるように件数だけ出す
+                if(!vcCapOn()) setStatus('聞き取り中…（' + mnUtter.length + '件を記録）');
                 mnSaveSoon();
               }
             } else interim += r[0].transcript;
@@ -7583,7 +7608,8 @@
             m: panel.dataset.vcMode || 'mini',
             tab: (document.querySelector('.vc-tab[aria-selected="true"]') || {}).dataset
                  ? document.querySelector('.vc-tab[aria-selected="true"]').dataset.vcTab : 'cap',
-            auto: ($('vc-auto') && $('vc-auto').checked) ? 1 : 0
+            auto: ($('vc-auto') && $('vc-auto').checked) ? 1 : 0,
+            cap: ($('vc-show-cap') && $('vc-show-cap').checked) ? 1 : 0
           }));
         }catch(e){}
       }
@@ -7598,7 +7624,7 @@
           b.title = open ? '小さくする' : '大きく表示';
         }
         vcCapInteractive(panel.dataset.vcMode === 'open');
-        if(!mnUtter.length && cap) cap.hidden = (panel.dataset.vcMode !== 'open');
+        if(cap) cap.hidden = !vcCapVisible();
         vcSaveUI(); vcCapFollow(); vcSyncDockH();
       }
       function vcSetTab(t){
@@ -7629,6 +7655,7 @@
         vcSetMode(panel.dataset.vcMode==='open' ? 'mini' : 'open');
       });
       if($('vc-auto')) $('vc-auto').addEventListener('change', vcSaveUI);
+      if($('vc-show-cap')) $('vc-show-cap').addEventListener('change', ()=>{ vcCapRedraw(); vcCapSync(); vcSaveUI(); });
       if($('mn-attendees')) $('mn-attendees').addEventListener('input', mnSaveSoon);
       if($('mn-build')) $('mn-build').addEventListener('click', mnRun);
       if($('mn-copy'))  $('mn-copy').addEventListener('click', mnCopy);
@@ -7701,6 +7728,7 @@
         let ui = null;
         try{ ui = JSON.parse(localStorage.getItem(VC_UI_KEY)||'null'); }catch(e){}
         if(ui && $('vc-auto')) $('vc-auto').checked = (ui.auto !== 0);
+        if($('vc-show-cap')) $('vc-show-cap').checked = !!(ui && ui.cap === 1);   // 既定は非表示
         mnRestore();
         vcSetMode((ui && ui.m==='open') ? 'open' : 'mini');
         vcSetTab((ui && ui.tab) || 'cap');

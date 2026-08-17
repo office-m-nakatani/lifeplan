@@ -6340,7 +6340,9 @@
        なんでも相談チャット（その場で回答→専門家相談へ誘導）
        ============================================================ */
     const chatLog = $('chat-log');
-    const esc = (s)=> s.replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    // 関数宣言（巻き上げ）にする：音声メモのIIFEなど、この行より前に実行される初期化からも呼ばれるため。
+    // const だと「メモが保存された端末でリロード→TDZで起動が半壊」する（検証役が実測検出した重大バグ）
+    function esc(s){ return String(s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
     const pickOne = (a)=> a[Math.floor(Math.random()*a.length)];
     function sampleN(arr,n){ const a=arr.slice(),o=[]; while(o.length<n && a.length) o.push(a.splice(Math.floor(Math.random()*a.length),1)[0]); return o; }
 

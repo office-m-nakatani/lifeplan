@@ -734,6 +734,11 @@
        ・印刷/PDF（pdf-mode）では従来どおり全セクションを展開する
        ============================================================ */
     .tool-nav{ display:grid; gap:8px; margin-top:10px; }
+    /* 追従中にナビを position:fixed へ逃がすとき、流れから抜けたぶんの高さをここで肩代わりする
+       （これが無いと、追従の開始・解除のたびに下のコンテンツがナビの高さぶん飛ぶ） */
+    #nav-spacer{ display:none; }
+    .pdf-mode #nav-spacer{ display:none !important; }
+    @media print{ #nav-spacer{ display:none !important; } }
     .tool-nav-row{ display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid var(--line);
       border-radius:14px; padding:8px 12px; box-shadow:var(--shadow-soft);
       min-width:0; }   /* gridの子はmin-width:autoで中身の幅まで広がるため、明示して横はみ出しを防ぐ */
@@ -836,11 +841,16 @@
       body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:var(--planbar-h, 84px); z-index:45; background:var(--bg); padding:8px 0 6px; }
       /* 追従中（nav-stuck）は「今いる側」の行だけ見せる（入力中は入力行のみ・結果中は結果行のみ＝ユーザー指示）。
          判定は #nav-sentinel（ナビ直前の高さ0の番兵）。
-         ★display:noneではなくvisibility＋orderを使う：ナビの高さを一定に保ち、
-           境界をまたぐたびに下のコンテンツが数十pxジャンプする「スクロールのガタつき」を防ぐ */
-      body.tab-mode.nav-stuck.view-input:not(.pdf-mode) #tool-nav .tnr-result{ visibility:hidden; }
-      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-input{ visibility:hidden; }
-      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-result{ order:-1; }
+         ★2026-08-18：隠した行の空白の帯が残り「ご家族の基本情報・住まい等の見出しが読めない」（ユーザー指摘）。
+           かといって sticky のまま display:none にすると、流し込みの高さが変わって
+           境界をまたぐたびに下のコンテンツが数十pxジャンプする（過去に動画で指摘された不具合）。
+           → 追従中だけ position:fixed にして流れから外し、同じ高さの #nav-spacer を置く。
+             これで「空白ゼロ・ジャンプゼロ」の両立になる。 */
+      body.tab-mode.nav-stuck:not(.pdf-mode) #tool-nav{
+        position:fixed; top:var(--planbar-h, 84px); left:0; right:0; margin-left:auto; margin-right:auto;
+      }
+      body.tab-mode.nav-stuck.view-input:not(.pdf-mode) #tool-nav .tnr-result{ display:none; }
+      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-input{ display:none; }
     }
     /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
        min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
@@ -862,45 +872,214 @@
     .chat-fab[hidden], body:not(.tab-mode) .chat-fab, .pdf-mode .chat-fab{ display:none !important; }
     @media print{ .chat-fab{ display:none !important; } }
     /* ============================================================
-       音声メモ・自動入力（2026-08-17夜）：マイクFABはチャットFABの上に積む
+       音声メモ・自動入力（2026-08-18 ドック型へ改修）
+       旧：右下の幅400pxパネル → 幅680pxの入力カードの約半分を覆い、録音中に
+           画面右側が読めなくなっていた（ユーザー指摘）。
+       新：画面「下端」の帯（ドック）。横は一切塞がず、縦だけを消費する。
+           ・ミニ（既定）＝録音ボタン＋字幕2行  ・展開＝文字起こし／議事録／次の一手／メモ
+       高さは内容で変わるためJSが実測して --vc-dock-h に入れる（--planbar-h と同じ型）
        ============================================================ */
+    :root{
+      --vc-dock-h:0px;
+      --vc-rec-on:#b8524f;   /* 録音中の赤。--bad(#d97b7b)は白文字でコントラスト不足のため専用色 */
+    }
     .vc-fab{ bottom:72px; background:var(--yellow); color:#5a4a12; box-shadow:0 6px 20px rgba(227,169,72,.4); }
     .vc-fab:hover{ background:var(--yellow-soft); }
-    .vc-panel{
-      position:fixed; right:14px; bottom:14px; z-index:70; width:min(400px, calc(100vw - 28px));
-      max-height:min(560px, calc(100vh - 28px)); overflow:auto;
-      background:var(--card); border:1.5px solid var(--line); border-radius:16px; box-shadow:var(--shadow);
+    /* ドック表示中：音声FABは隠し、チャットFABはドックの上へ逃がす */
+    body.vc-dock-on .vc-fab{ display:none !important; }
+    body.vc-dock-on .chat-fab{ bottom:calc(14px + var(--vc-dock-h)); }
+    /* 「次へ」やフッターがドックに隠れないよう下駄をはかせる（印刷・PDFには効かせない）。
+       展開時（スマホは76vh）にそのまま入れると画面1枚ぶんの空白がぶら下がるので頭打ちにする */
+    body.vc-dock-on:not(.pdf-mode){ padding-bottom:min(var(--vc-dock-h), 40vh); }
+
+    .vc-dock{
+      position:fixed; left:14px; right:14px; bottom:0; z-index:70;
+      display:flex; flex-direction:column;
+      background:var(--card); border:1.5px solid var(--line); border-bottom:0;
+      border-radius:16px 16px 0 0; box-shadow:0 -10px 28px rgba(44,122,82,.14);
+      padding-bottom:env(safe-area-inset-bottom, 0px);
     }
-    .vc-panel.hidden{ display:none !important; }
-    .pdf-mode .vc-panel, .pdf-mode .vc-fab{ display:none !important; }
-    @media print{ .vc-panel, .vc-fab{ display:none !important; } }
-    .vc-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1.5px solid var(--line); }
-    .vc-head b{ color:var(--blue-deep); display:flex; align-items:center; gap:7px; }
-    .vc-body{ padding:12px 14px; }
-    .vc-rec-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    #vc-rec{ min-height:46px; }
-    #vc-rec.rec-on{ background:var(--bad); }
+    /* display:flex を指定しているので hidden 属性の打消しを明示する（UA既定に勝たれるため） */
+    .vc-dock[hidden]{ display:none !important; }
+    .pdf-mode .vc-dock, .pdf-mode .vc-fab{ display:none !important; }
+    @media print{ .vc-dock, .vc-fab{ display:none !important; } body.vc-dock-on{ padding-bottom:0 !important; } }
+    /* お客様モード（共有リンクを開いたお客様の画面）では担当者の下書きを出さない */
+    body.customer-mode .vc-dock, body.customer-mode .vc-fab{ display:none !important; }
+    /* 録音中は面を赤くせず上辺のラインで示す（視界の端が明滅し続けないように） */
+    .vc-dock::before{ content:""; display:block; height:2.5px; border-radius:16px 16px 0 0; background:transparent; }
+    .vc-dock.rec-on::before{ background:var(--vc-rec-on); }
+    .vc-dock[data-vc-mode="open"]{ max-height:min(58vh, 580px); }
+
+    /* ---------- 操作バー（ミニ・展開 共通） ---------- */
+    .vc-bar{ display:flex; align-items:center; gap:8px; padding:8px 10px; }
+    .vc-bar .vc-grow{ flex:1 1 auto; min-width:0; }
+    #vc-rec{ flex:0 0 auto; min-height:44px; padding:10px 16px; }
+    #vc-rec.rec-on{ background:var(--vc-rec-on); border-color:var(--vc-rec-on); color:#fff; }
     #vc-rec.rec-on i{ animation:vcPulse 1.1s ease-in-out infinite; }
     @keyframes vcPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
-    .vc-status{ font-size:.78rem; color:var(--ink-soft); }
-    .vc-transcript{ margin-top:10px; padding:9px 11px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:10px; font-size:.9rem; line-height:1.6; }
-    .vc-transcript .interim{ color:var(--ink-soft); }
-    .vc-applied{ margin-top:10px; }
-    .vc-chip{ display:inline-flex; align-items:center; gap:6px; background:var(--good-pale); color:#2a6b52; border:1px solid #bfe3cd; border-radius:999px; padding:4px 11px; font-size:.78rem; font-weight:700; margin:2px 4px 2px 0; }
-    .vc-chip.vc-skip{ background:var(--warn-pale); color:#8a6a12; border-color:var(--yellow-soft); }
-    .vc-undo{ background:none; border:none; color:var(--blue-deep); font-family:inherit; font-size:.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:2px 4px; }
-    .vc-manual-row{ display:flex; gap:8px; margin-top:10px; }
-    .vc-manual-row input{ flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.9rem; }
-    .vc-manual-row input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
-    .vc-help{ margin-top:10px; }
-    .vc-memo-head{ display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:10px; border-top:1.5px solid var(--line); }
-    .vc-memo-head b{ color:var(--blue-deep); display:flex; align-items:center; gap:6px; font-size:.9rem; }
-    .vc-memos{ margin-top:6px; }
+    .vc-elapsed{ flex:0 0 auto; font-size:.8rem; font-weight:800; color:var(--vc-rec-on); font-variant-numeric:tabular-nums; }
+    .vc-elapsed[hidden]{ display:none; }
+    .vc-status{ display:block; font-size:.78rem; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .vc-icon-btn{
+      flex:0 0 auto; width:44px; height:44px; display:grid; place-items:center;
+      border:1.5px solid var(--line); border-radius:12px; background:#fff;
+      color:var(--ink-soft); font-size:1rem; cursor:pointer; font-family:inherit;
+    }
+    .vc-icon-btn:hover{ background:var(--bg-soft); color:var(--blue-deep); }
+    .vc-icon-btn:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+    .vc-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+
+    /* ---------- 字幕（下から積み上がる） ---------- */
+    .vc-cap-wrap{ position:relative; margin:0 10px 8px; }
+    .vc-cap{
+      padding:6px 10px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px;
+      display:flex; flex-direction:column; justify-content:flex-end;
+      overflow-y:auto; overscroll-behavior:contain; scroll-behavior:smooth;
+    }
+    .vc-cap[hidden]{ display:none; }
+    /* ミニは1行ぴったり（30.4px＋padding12＋border3）。52pxだと1.65行になり上端で文字が横に切れる */
+    .vc-dock[data-vc-mode="mini"] .vc-cap{ max-height:46px; }
+    .vc-dock[data-vc-mode="open"] .vc-cap{ height:min(32vh, 260px); }
+    .vc-cap-line{ display:flex; gap:8px; align-items:flex-start; padding:4px 2px; border-radius:8px; font-size:.9rem; line-height:1.55; }
+    .vc-cap-t{ flex:0 0 auto; padding-top:3px; font-size:.72rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+    .vc-dock[data-vc-mode="mini"] .vc-cap-t{ display:none; }
+    .vc-cap-x{ flex:1 1 auto; min-width:0; word-break:break-word; }
+    .vc-cap-line.interim .vc-cap-x{ color:var(--ink-soft); }
+    .vc-cap-line.interim .vc-cap-x::after{
+      content:""; display:inline-block; width:2px; height:1em; margin-left:3px; vertical-align:-2px;
+      background:var(--ink-soft); animation:vcCaret 1s steps(1) infinite;
+    }
+    @keyframes vcCaret{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
+    /* 展開時だけ「行をタップして直す」。ミニでは誤爆するので無効 */
+    .vc-dock[data-vc-mode="open"] .vc-cap-line:not(.interim){ min-height:44px; align-items:center; cursor:pointer; }
+    .vc-dock[data-vc-mode="open"] .vc-cap-line:not(.interim):hover{ background:var(--blue-pale); }
+    .vc-cap-line:focus-visible{ outline:2px solid var(--blue); outline-offset:-2px; }
+    .vc-cap-empty{ font-size:.8rem; color:var(--ink-soft); padding:4px 2px; }
+    .vc-jump{
+      position:absolute; right:10px; bottom:8px; min-height:44px; padding:8px 14px;
+      border:1.5px solid var(--blue-pale2); border-radius:999px; background:#fff; color:var(--blue-deep);
+      font-family:inherit; font-size:.75rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow-soft);
+    }
+    .vc-jump[hidden]{ display:none; }
+
+    /* ---------- 反映チップ ---------- */
+    .vc-chips{ display:flex; align-items:center; gap:6px; margin:0 10px 8px; overflow-x:auto; scrollbar-width:none; }
+    .vc-chips::-webkit-scrollbar{ display:none; }
+    .vc-chips[hidden]{ display:none; }
+    .vc-dock[data-vc-mode="open"] .vc-chips{ flex-wrap:wrap; overflow:visible; }
+    .vc-chip{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; background:var(--good-pale); color:#2a6b52;
+      border:1px solid #bfe3cd; border-radius:999px; padding:4px 11px; font-size:.78rem; font-weight:700; }
+    .vc-chip.vc-skip{ background:var(--warn-pale); color:#7a5c0f; border-color:var(--yellow-soft); }
+    .vc-undo{ flex:0 0 auto; background:none; border:none; color:var(--blue-deep); font-family:inherit;
+      font-size:.78rem; font-weight:700; cursor:pointer; text-decoration:underline; min-height:44px; padding:6px 10px; }
+
+    /* ---------- 展開部（タブ） ---------- */
+    .vc-tabs{ display:flex; gap:6px; padding:0 10px 8px; overflow-x:auto; scrollbar-width:none; }
+    .vc-tabs::-webkit-scrollbar{ display:none; }
+    .vc-tab{ flex:0 0 auto; min-height:44px; padding:8px 15px; border:1.5px solid var(--line); border-radius:999px;
+      background:#fff; color:var(--ink-soft); font-family:inherit; font-weight:700; font-size:.85rem; cursor:pointer; }
+    .vc-tab:hover{ background:var(--blue-pale); }
+    /* 選択中タブは --blue（白文字3.33:1＝AA未達）ではなく --blue-deep（5.23:1）。
+       いまどのタブを見ているかを色だけで示すため、ここはコントラストを確保する */
+    .vc-tab[aria-selected="true"]{ background:var(--blue-deep); border-color:var(--blue-deep); color:#fff; }
+    .vc-tab:focus-visible{ outline:2px solid var(--blue-deep); outline-offset:2px; }
+    .vc-pane{ padding:0 10px 10px; overflow:auto; }
+    .vc-pane[hidden]{ display:none; }
+    .vc-tools{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0 2px; }
+    .vc-tools .btn{ min-height:44px; }
+    .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
+      font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .vc-auto input{ width:22px; height:22px; accent-color:var(--blue); }
+    /* ドック内の主要ボタンにフォーカスリング（.btn 系はサイト共通で :focus-visible 未定義のため） */
+    .vc-dock .btn:focus-visible, .vc-jump:focus-visible, .vc-undo:focus-visible,
+    .vc-memo-del:focus-visible, .mn-raw summary:focus-visible, .nx-more summary:focus-visible{
+      outline:2px solid var(--blue-deep); outline-offset:2px;
+    }
+    .vc-auto:focus-within{ outline:2px solid var(--blue-deep); outline-offset:2px; border-radius:8px; }
+    .vc-edit-row{ display:flex; gap:8px; margin:0 0 4px; }
+    .vc-edit-row input{ flex:1; min-width:0; min-height:44px; padding:10px 12px;
+      border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.9rem; }
+    .vc-edit-row input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
+    .vc-edit-row .btn{ min-height:44px; }
+    .vc-help{ margin-top:8px; }
+    /* ミニでは展開系を全部たたむ */
+    .vc-dock[data-vc-mode="mini"] .vc-tabs,
+    .vc-dock[data-vc-mode="mini"] .vc-pane{ display:none !important; }
+    /* お客様モードでは担当者の下書きタブを出さない（保険の勧誘に読めないようにするため） */
+    body.customer-mode .vc-tab[data-vc-tab="minutes"],
+    body.customer-mode .vc-tab[data-vc-tab="next"],
+    body.customer-mode #mn-modal{ display:none !important; }
+
+    /* ---------- 議事録の体裁（番号＋テーマ／リード語: 本文） ---------- */
+    .mn-doc{ font-size:.88rem; line-height:1.75; }
+    .mn-doc:focus{ outline:2px solid var(--blue); outline-offset:3px; border-radius:8px; }
+    .mn-meta{ margin:0 0 8px; font-weight:800; color:var(--blue-deep); }
+    .mn-h{ margin:12px 0 4px; font-size:.95rem; color:var(--blue-deep); }
+    .mn-h:first-of-type{ margin-top:2px; }
+    .mn-item{ margin:0 0 6px; }
+    .mn-item b{ color:var(--ink); }
+    .mn-empty{ color:var(--ink-soft); }
+    /* ツールの試算値の行は、発言の抜粋と見分けられるようにする（言っていない数字と発言の混同を防ぐ） */
+    .mn-item-calc{ border-left:3px solid var(--blue-pale2); padding-left:9px; }
+    .mn-tag{ display:inline-block; margin-right:6px; padding:1px 7px; border-radius:999px;
+      font-size:.72rem; font-weight:700; background:var(--blue-pale); color:var(--blue-deep); }
+    .mn-notes{ margin-top:10px; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
+      border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; }
+    .mn-notes p{ margin:0 0 5px; }
+    .mn-notes p:last-child{ margin-bottom:0; }
+    .mn-raw{ margin-top:10px; font-size:.8rem; }
+    .mn-raw summary{ cursor:pointer; font-weight:700; color:var(--blue-deep); min-height:44px; display:flex; align-items:center; gap:6px; }
+    .mn-raw p{ margin:3px 0; line-height:1.6; }
+    .mn-t{ display:inline-block; min-width:44px; color:var(--ink-soft); font-size:.72rem; font-variant-numeric:tabular-nums; }
+    .mn-att{ display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.8rem; color:var(--ink-soft); }
+    .mn-att input{ flex:1; min-width:0; min-height:44px; padding:9px 12px; border:1.5px solid var(--line);
+      border-radius:9px; font-family:inherit; font-size:.85rem; }
+
+    /* ---------- 次の一手 ---------- */
+    .nx-group{ margin-bottom:10px; }
+    .nx-group-h{ display:flex; align-items:center; gap:7px; font-size:.85rem; font-weight:800; color:var(--blue-deep); margin-bottom:5px; }
+    .nx-item{ display:flex; align-items:flex-start; gap:9px; padding:8px 10px; margin-bottom:6px;
+      background:var(--bg-soft); border:1.5px solid var(--line); border-radius:10px; cursor:pointer; }
+    .nx-item input{ flex:0 0 auto; width:18px; height:18px; margin-top:2px; accent-color:var(--blue); }
+    .nx-body{ flex:1 1 auto; min-width:0; font-size:.85rem; line-height:1.7; }
+    .nx-lead{ color:var(--blue-deep); }
+    .nx-txt{ display:block; }
+    .nx-basis{ display:block; margin-top:3px; font-size:.76rem; color:var(--ink-soft); }
+    .nx-caution{ display:block; margin-top:3px; font-size:.76rem; color:#7a5c0f; }
+    .nx-due{ flex:0 0 auto; font-size:.74rem; font-weight:800; color:var(--blue-deep); white-space:nowrap; }
+    .nx-item.is-done .nx-body{ opacity:.55; text-decoration:line-through; }
+    /* 不利益事実（caution）は済チェックでも打ち消さない＝顧客に見せながら消えると困る */
+    .nx-item.is-done .nx-caution{ opacity:1; text-decoration:none; }
+    .nx-more{ font-size:.82rem; margin-bottom:8px; }
+    .nx-more summary{ cursor:pointer; font-weight:700; color:var(--blue-deep); min-height:44px; display:flex; align-items:center; gap:6px; }
+    .nx-disclaimer{ margin:8px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
+      border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
+    .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
+
+    /* ---------- メモ ---------- */
     .vc-memo{ display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:.84rem; line-height:1.55; }
     .vc-memo-time{ flex:0 0 auto; font-size:.72rem; color:var(--ink-soft); padding-top:2px; }
     .vc-memo-text{ flex:1; word-break:break-word; }
-    .vc-memo-del{ flex:0 0 auto; background:none; border:none; color:var(--bad); cursor:pointer; font-size:.85rem; padding:2px 4px; }
+    .vc-memo-del{ flex:0 0 auto; width:44px; height:44px; background:none; border:none; color:#c25f5f; cursor:pointer; font-size:.85rem; }
     .vc-memo-empty{ font-size:.78rem; color:var(--ink-soft); padding:6px 0; }
+
+    /* ---------- 375pxスマホ ---------- */
+    @media(max-width:560px){
+      .vc-dock{ left:0; right:0; border-left:0; border-right:0; border-radius:14px 14px 0 0; }
+      .vc-bar .vc-lbl{ display:none; }
+      #vc-rec{ width:44px; padding:0; justify-content:center; }
+      /* タブ・チップは横スクロールするがスクロールバーを消しているため、右端をぼかして続きがあると分かるようにする */
+      .vc-tabs, .vc-chips{
+        -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+                mask-image:linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+      }
+      .vc-tab{ padding:8px 12px; font-size:.82rem; }
+      .vc-dock[data-vc-mode="open"]{ max-height:none; height:76vh; }
+      .vc-dock[data-vc-mode="open"] .vc-cap{ height:auto; max-height:26vh; min-height:96px; }
+      .vc-dock[data-vc-mode="open"] .vc-pane{ flex:1 1 auto; }
+      .nx-item{ flex-wrap:wrap; }
+      .nx-due{ margin-left:27px; }
+    }
     #end-age{ padding-right:56px; }   /* 単位「歳まで」が3文字ぶん広く、値と重なるため */
     /* 生年月日（元号・年・月・日） */
     .bd-field{ margin-bottom:12px; }
@@ -1211,6 +1390,8 @@
       </div>
     </div>
   </div>
+  <!-- ナビを追従（position:fixed）させている間だけ、その高さを肩代わりする空要素 -->
+  <div id="nav-spacer" class="no-print" aria-hidden="true"></div>
 
   <!-- ============================= MAIN ============================= -->
   <div class="wrap">
@@ -2369,35 +2550,103 @@
   <!-- チャットへのショートカット（画面右下に常駐。チャット画面表示中は隠す） -->
   <button type="button" id="chat-fab" class="chat-fab no-print" hidden><i class="fa-solid fa-comments"></i> AIに相談</button>
 
-  <!-- 音声入力のショートカット（チャットFABの上に常駐。押すと下のパネルが開く） -->
-  <button type="button" id="vc-fab" class="chat-fab vc-fab no-print" hidden><i class="fa-solid fa-microphone"></i> 音声入力</button>
+  <!-- 音声メモのショートカット（ドックを閉じている間だけ表示） -->
+  <button type="button" id="vc-fab" class="chat-fab vc-fab no-print" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
 
-  <!-- ===================== 音声メモ・自動入力パネル =====================
-       ボタンを押して録音→ブラウザの音声認識で文字化→「食費7万円」等を対応欄へ自動入力。
-       認識できなかった内容はメモとして残せる。メモはこの端末のブラウザ内のみ（保存・共有データに含めない） -->
-  <div class="vc-panel no-print hidden" id="vc-panel" role="dialog" aria-label="音声メモ・自動入力">
-    <div class="vc-head">
-      <b><i class="fa-solid fa-microphone"></i> 音声メモ・自動入力</b>
-      <button type="button" class="modal-close" id="vc-close" aria-label="閉じる">&times;</button>
+  <!-- ===================== 音声メモ・自動入力（下端ドック）=====================
+       画面下端の帯。横を塞がないので、録音中も入力欄・結果がそのまま読める。
+       ミニ＝録音ボタン＋字幕2行／展開＝文字起こし・議事録・次の一手・メモ。
+       文字起こし・議事録・次の一手はこの端末のlocalStorageのみ
+       （collectState・保存データ・共有リンクには含めない＝共有3表を伸ばさない） -->
+  <section class="vc-dock no-print" id="vc-dock" data-vc-mode="mini" hidden role="region" aria-label="音声メモ・自動入力">
+    <div class="vc-bar">
+      <button type="button" class="btn btn-primary" id="vc-rec" aria-label="録音して入力する" title="録音して入力する"><i class="fa-solid fa-microphone"></i> <span class="vc-lbl">録音して入力</span></button>
+      <span class="vc-elapsed" id="vc-elapsed" hidden aria-hidden="true">0:00</span>
+      <!-- 状態（マイク不許可・録音終了など）は読み上げ対象にする。字幕側はライブにしない（全発話を読み上げ続けてしまう） -->
+      <span class="vc-grow"><span class="vc-status" id="vc-status" role="status" aria-live="polite"></span></span>
+      <button type="button" class="vc-icon-btn" id="vc-expand" aria-expanded="false" aria-controls="vc-more" title="大きく表示"><i class="fa-solid fa-chevron-up"></i><span class="vc-sr">大きく表示</span></button>
+      <button type="button" class="vc-icon-btn" id="vc-close" title="音声メモを閉じる"><i class="fa-solid fa-xmark"></i><span class="vc-sr">閉じる</span></button>
     </div>
-    <div class="vc-body">
-      <div class="vc-rec-row">
-        <button type="button" class="btn btn-primary" id="vc-rec"><i class="fa-solid fa-microphone"></i> 録音して入力</button>
-        <span class="vc-status" id="vc-status"></span>
+
+    <!-- 字幕（録音中は下から積み上がる。確定＝濃い文字／未確定＝薄い文字＋キャレット） -->
+    <div class="vc-cap-wrap">
+      <div class="vc-cap" id="vc-cap" hidden aria-label="文字起こし"></div>
+      <button type="button" class="vc-jump" id="vc-jump" hidden><i class="fa-solid fa-arrow-down"></i> 最新へ</button>
+    </div>
+
+    <!-- 入力欄へ反映できた内容のチップ -->
+    <div class="vc-chips" id="vc-applied" hidden></div>
+
+    <div id="vc-more">
+      <div class="vc-tabs" role="tablist" aria-label="音声メモの表示">
+        <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
+        <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
+        <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
+        <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
       </div>
-      <div class="vc-transcript" id="vc-transcript" hidden></div>
-      <div class="vc-applied" id="vc-applied" hidden></div>
-      <div class="vc-manual-row">
-        <input type="text" id="vc-manual" placeholder="打ち込みでもOK（例：食費7万円、電気1万2千円）" autocomplete="off">
-        <button type="button" class="btn btn-primary btn-sm" id="vc-manual-go">反映</button>
+
+      <!-- 文字起こしタブ：行をタップ→下の欄で直して反映 -->
+      <div class="vc-pane" id="vc-pane-cap" role="tabpanel" aria-labelledby="vc-tab-cap">
+        <div class="vc-edit-row">
+          <input type="text" id="vc-manual" placeholder="行をタップして直す／打ち込みでもOK（例：食費7万円）" autocomplete="off" aria-label="認識結果を直して反映">
+          <button type="button" class="btn btn-primary btn-sm" id="vc-manual-go">反映</button>
+        </div>
+        <div class="vc-tools">
+          <label class="vc-auto"><input type="checkbox" id="vc-auto" checked> 話した内容を自動で入力欄に反映する</label>
+          <button type="button" class="btn btn-ghost btn-sm" id="vc-apply-all"><i class="fa-solid fa-arrow-right-to-bracket"></i> 話した内容をまとめて入力欄に入れ直す</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="vc-clear"><i class="fa-solid fa-eraser"></i> 文字起こしを消す</button>
+        </div>
+        <details class="ic-fold vc-help">
+          <summary><i class="fa-solid fa-circle-info"></i> 使える言い方の例・ご注意</summary>
+          <p class="hint" style="display:block; margin-top:8px;">「<b>食費7万円</b>」「<b>電気1万2千円</b>」「<b>年収550万</b>」「<b>預貯金500万</b>」「<b>住宅ローン5000万円</b>」「<b>金利0.95％</b>」「<b>返済期間35年</b>」「<b>妻の年収300万</b>」のように、<b>項目名＋数字</b>で話すと該当欄へ自動入力します。「、」で区切れば一度に複数もOK。自動で反映したくないときは上のチェックを外してください。</p>
+          <p class="hint" style="display:block; margin-top:8px;">※ 音声はお使いの<b>ブラウザ／OSの音声認識機能</b>で文字に変換されます（端末の設定によっては提供元のサーバーを経由して処理されます）。このツール自体が音声を保存・外部送信することはありません。<br>※ 文字起こし・概要は<b>この端末のブラウザ内にのみ</b>保存され（最後の更新から2週間を過ぎると、次に開いたときに自動削除）、お客様データの保存・共有リンクには含まれません。メモは「文字起こしを消す」では消えず、この端末に残ります（各メモのゴミ箱ボタンで削除できます）。</p>
+        </details>
       </div>
-      <details class="ic-fold vc-help">
-        <summary><i class="fa-solid fa-circle-info"></i> 使える言い方の例・ご注意</summary>
-        <p class="hint" style="display:block; margin-top:8px;">「<b>食費7万円</b>」「<b>電気1万2千円</b>」「<b>年収550万</b>」「<b>預貯金500万</b>」「<b>住宅ローン5000万円</b>」「<b>金利0.95％</b>」「<b>返済期間35年</b>」「<b>妻の年収300万</b>」のように、<b>項目名＋数字</b>で話すと該当欄へ自動入力します。「、」で区切れば一度に複数もOK。どの欄か分からなかった内容は、下の<b>メモ</b>に残せます。</p>
-        <p class="hint" style="display:block; margin-top:8px;">※ 音声はお使いの<b>ブラウザ／OSの音声認識機能</b>で文字に変換されます（端末の設定によっては提供元のサーバーを経由して処理されます）。このツール自体が音声を保存・外部送信することはありません。<br>※ メモは<b>この端末のブラウザ内にのみ</b>保存され、お客様データの保存・共有リンクには含まれません。</p>
-      </details>
-      <div class="vc-memo-head"><b><i class="fa-solid fa-note-sticky"></i> メモ</b><span class="hint" style="margin:0;">この端末にのみ保存</span></div>
-      <div class="vc-memos" id="vc-memos"></div>
+
+      <!-- ミーティング概要タブ（番号＋テーマ／リード語: 本文） -->
+      <div class="vc-pane" id="vc-pane-min" role="tabpanel" aria-labelledby="vc-tab-minutes" hidden>
+        <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off"></div>
+        <div class="vc-tools">
+          <button type="button" class="btn btn-primary btn-sm" id="mn-build"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-dl"><i class="fa-solid fa-download"></i> .txtで保存</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-big"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> 大きく開く</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
+        </div>
+        <div id="mn-out"></div>
+      </div>
+
+      <!-- 次の一手タブ -->
+      <div class="vc-pane" id="vc-pane-next" role="tabpanel" aria-labelledby="vc-tab-next" hidden>
+        <div class="vc-tools">
+          <button type="button" class="btn btn-primary btn-sm" id="nx-build"><i class="fa-solid fa-list-check"></i> 次の一手を作る</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+        </div>
+        <div id="next-actions"></div>
+      </div>
+
+      <!-- メモタブ -->
+      <div class="vc-pane" id="vc-pane-memo" role="tabpanel" aria-labelledby="vc-tab-memo" hidden>
+        <p class="hint" style="display:block; margin:2px 0 6px;">どの欄か分からなかった内容や、面談中の気づきを残せます（この端末にのみ保存）。</p>
+        <div class="vc-memos" id="vc-memos"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 議事録を全画面で読む・仕上げるためのモーダル（ドックの「大きく開く」から） -->
+  <div class="modal-overlay no-print" id="mn-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="ミーティング概要">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-file-lines"></i> ミーティング概要（自動作成の下書き）</h3>
+        <button class="modal-close" id="mn-modal-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="vc-tools">
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-copy2"><i class="fa-solid fa-copy"></i> コピー</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-dl2"><i class="fa-solid fa-download"></i> .txtで保存</button>
+        </div>
+        <div id="mn-out-big"></div>
+      </div>
     </div>
   </div>
 
@@ -5890,16 +6139,24 @@
     }
 
     /* ============================================================
-       音声メモ・自動入力（2026-08-17夜）
+       音声メモ・自動入力（2026-08-17夜 → 2026-08-18 ドック化＋議事録）
        ・ボタンを押して録音 → ブラウザ内蔵の音声認識（Web Speech API＝費用ゼロ）で文字化
-       　→「食費7万円」等を対応する入力欄へ自動反映（取り消し可）
-       ・どの欄か分からなかった内容はメモへ。メモはこの端末のlocalStorageのみ
-       　（collectState/共有リンクには含めない＝リンクを伸ばさない・個人メモを共有しない）
+       　→ 字幕として下端ドックに積み、「食費7万円」等は対応する入力欄へ自動反映（取り消し可）
+       ・停止後、その文字起こしから「ミーティング概要」と「次の一手」をルールベースで作る
+       　（外部AI・APIは使わない。要約は抜粋＋ツールの試算値のテンプレ文の2層構成）
+       ・文字起こし／概要／メモはこの端末のlocalStorageのみ・2週間で自動削除
+       　（collectState/共有リンクには含めない＝リンクを伸ばさない・個人情報を共有しない）
+       ・このIIFEはスクリプト読込中に実行される。初期化から呼ぶヘルパーは必ず function 宣言
+       　（const だとTDZで起動が半壊する。過去に esc / penMode で2回事故あり）
        ============================================================ */
     (function(){
-      const fab = $('vc-fab'), panel = $('vc-panel');
+      const fab = $('vc-fab'), panel = $('vc-dock');
       if(!fab || !panel) return;
       const VC_MEMO_KEY = 'lifeplan_ichijo_vmemo_v1';
+      const VC_UI_KEY   = 'lifeplan_ichijo_vcui_v1';     // ミニ/展開・選択タブ・自動反映のON/OFF
+      const MN_KEY      = 'lifeplan_ichijo_minutes_v1';  // 文字起こし＋概要（端末内・2週間）
+      const NX_DONE_KEY = 'lifeplan_ichijo_next_done_v1';
+      const MN_TTL      = 14*24*60*60*1000;
 
       /* ---------- 認識テキスト → 入力欄 の対応表 ----------
          type: man=万円（円だけなら1万で割る）／raw=数値そのまま（歳・年・%）
@@ -5947,7 +6204,11 @@
 
       // 漢数字まじり（七万・1万2千 等）を数値文字列へ。認識結果の揺れを吸収する
       function vcKanjiNum(s){
-        s = s.replace(/[一二三四五六七八九]/g, c=> '一二三四五六七八九'.indexOf(c)+1);
+        /* 漢数字は「単位が続くとき」だけ数値にする。
+           無条件に変換すると「一条工務店」→「1条工務店」・「一番多い」→「1番多い」となり、
+           後段の数値抽出が先頭の 1 を拾って住宅ローン総額が1万円に化ける（実測で発生） */
+        s = s.replace(/[一二三四五六七八九](?=[十百千万億円歳才年%％人一二三四五六七八九])/g,
+                      c=> '一二三四五六七八九'.indexOf(c)+1);
         // 「1万2千」「3千」「5百」→ 位取りを数値に展開
         s = s.replace(/([0-9.]+)万([0-9.]*)千?/g, (m,a,b)=>{
           let v = parseFloat(a)*10000;
@@ -5958,28 +6219,61 @@
         s = s.replace(/([0-9.]+)百/g, (m,a)=> String(parseFloat(a)*100));
         return s;
       }
+      /* 「いまの値ではない言い方」を入力欄に書き込まないための番人。
+         過去（以前の家賃）・希望（将来的に800万円まで行きたい）・幅のある言い方（7万から8万）を
+         そのまま現在値として書き込むと、面談中に顧客の目の前で前提が書き換わる（検証役が実測で検出） */
+      const VC_PAST   = /でした|だった|以前|昔|当時|旧/;          // 「前は」は「名前は」に部分一致するので入れない
+      const VC_WISH   = /たいです|たいと|たいな|希望|将来的|できれば|目標|理想|くらいまで|までは行き|になれば/;
+      const VC_RANGE  = /[0-9.]+\s*(?:億|万|千)?\s*円?\s*(?:から|〜|～|~|ないし)\s*[0-9.]+\s*(?:億|万|千|円)/;
       // 1区切りぶんの発話を解析して {f, value} を返す（該当なしは null）
       function vcParseSegment(seg){
         const raw = seg.normalize('NFKC').replace(/[,，\s]/g,'');
         if(!raw) return null;
         const wife = /妻|奥様|奥さん|家内/.test(raw);
-        const m = VC_MATCHERS.find(x=> raw.includes(x.key));
+        /* どの欄かの決め方：最初の数字より前にあるキーのうち、いちばん数字に近いものを採る（同位置なら長いキー優先）。
+           キーの長さだけで選ぶと「住宅ローンの金利は0.5%です」で『住宅ローン』が勝ち、
+           住宅ローン総額が0.5万円に書き換わる（実測。返済額・資産推移・必要保障額まで全部崩れる） */
+        const numPos = raw.search(/[0-9一二三四五六七八九]/);
+        let m = null;
+        for(let i=0; i<VC_MATCHERS.length; i++){
+          const x = VC_MATCHERS[i], p = raw.indexOf(x.key);
+          if(p < 0) continue;
+          if(numPos >= 0 && p > numPos) continue;
+          if(!m || p > m.p || (p === m.p && x.key.length > m.key.length)) m = { key:x.key, f:x.f, p:p };
+        }
+        // 数字より前にキーが無い言い方（「5050万円の住宅ローン総額」）は、最初に出るキーで拾う
+        if(!m){
+          for(let i=0; i<VC_MATCHERS.length; i++){
+            const x = VC_MATCHERS[i], p = raw.indexOf(x.key);
+            if(p < 0) continue;
+            if(!m || p < m.p || (p === m.p && x.key.length > m.key.length)) m = { key:x.key, f:x.f, p:p };
+          }
+        }
         if(!m) return null;
         const f = m.f;
+        // 反映しないときも、聞き取った数字を添えて手で直せるようにする
+        const heard = (raw.match(/[0-9.]+\s*(?:億|万|千)?\s*(?:円|%|％|歳|才|年)?/) || [''])[0];
+        const hz = heard ? `（聞き取り：${heard}）` : '';
+        if(VC_PAST.test(raw))  return { f, id:f.id, err:`${f.label}：過去の言い方のため入力欄には入れていません${hz}` };
+        if(VC_WISH.test(raw))  return { f, id:f.id, err:`${f.label}：ご希望・見込みの言い方のため入力欄には入れていません${hz}` };
+        if(VC_RANGE.test(raw)) return { f, id:f.id, err:`${f.label}：幅のある言い方のため入力欄には入れていません${hz}` };
         const id = (wife && f.wid) ? f.wid : f.id;
         const el = $(id);
         if(!el) return null;
         // キーワード以降を優先して数値＋単位を拾う（無ければ全体から）
         const after = raw.slice(raw.indexOf(m.key) + m.key.length) || raw;
         const t = vcKanjiNum(after);
-        const num = t.match(/(-?[0-9]+(?:\.[0-9]+)?)(億)?(万)?(円換算|円)?/);
+        // 単位（万円・歳・年・%）が付いた数字を優先して拾う。無ければ素の数字にフォールバック
+        const num = t.match(/(-?[0-9]+(?:\.[0-9]+)?)\s*(億)?\s*(万)?\s*(円換算|円|歳|才|年|%|％)/)
+                 || t.match(/(-?[0-9]+(?:\.[0-9]+)?)(億)?(万)?(円換算|円)?/);
         if(!num || num[1]===undefined || num[1]==='') return null;
         let v = parseFloat(num[1]);
         if(isNaN(v)) return null;
+        const unit = num[4] || '';
         if(f.type==='man'){
-          if(num[2]) v *= 10000;                     // 億 → 万円
-          else if(!num[3] && num[4]) v = v/10000;    // 「70000円」のように円だけ → 万円へ
-          else if(num[4]==='円換算') v = v/10000;    // 「1万2千円」を円に展開した値 → 万円へ
+          if(num[2]) v *= 10000;                          // 億 → 万円
+          else if(!num[3] && unit==='円') v = v/10000;     // 「70000円」のように円だけ → 万円へ
+          else if(unit==='円換算') v = v/10000;            // 「1万2千円」を円に展開した値 → 万円へ
           // 単位なし（「食費7」）は万円とみなす
         }
         // %・歳・年（raw）はそのまま。min/maxの範囲外は反映しない（言い間違い対策）
@@ -5990,7 +6284,9 @@
         return { f, id, label: (id===f.wid ? '妻の' : (f.wid ? '夫の' : '')) + f.label, value: v };
       }
       // テキスト全体を「、」「。」等で区切って反映。戻り値は結果リスト
-      let vcLastUndo = null;
+      /* 面談まるごと録音するようになったため、取り消しは1回分ではなく「積み重ね」で持つ。
+         押すたびに1つ前の反映へ戻る（雑談の数字が入った時に何度でも戻せるように） */
+      const vcUndoStack = [];
       function vcApplyText(text){
         const segs = String(text||'').split(/[、。,．]|(?:です|します)(?=[^ぁ-ん]|$)/).map(s=>s.trim()).filter(Boolean);
         const applied = [], skipped = [], unmatched = [];
@@ -6005,7 +6301,7 @@
           el.dispatchEvent(new Event('input', { bubbles:true }));
           applied.push(r);
         });
-        if(applied.length) vcLastUndo = undo;
+        if(applied.length){ vcUndoStack.push(undo); if(vcUndoStack.length > 40) vcUndoStack.shift(); }
         renderVcResult(applied, skipped, unmatched);
         return { applied, skipped, unmatched };
       }
@@ -6020,15 +6316,25 @@
         skipped.forEach(s=>{ html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(s)}</span>`; });
         if(unmatched.length){
           const t = unmatched.join('、');
-          html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-circle-question"></i> どの欄か分かりませんでした：「${esc(t.slice(0,40))}${t.length>40?'…':''}」</span>`
+          html += `<span class="vc-chip vc-skip"><i class="fa-solid fa-circle-question"></i> 入力欄には入れていません：「${esc(t.slice(0,40))}${t.length>40?'…':''}」</span>`
             + `<button type="button" class="vc-undo" data-vc-memo="${esc(t)}"><i class="fa-solid fa-note-sticky"></i> メモに残す</button>`;
         }
         box.hidden = !html;
         box.innerHTML = html;
-        const ub = $('vc-undo-btn');
-        if(ub) ub.addEventListener('click', ()=>{
-          (vcLastUndo||[]).forEach(u=>{ const el=$(u.id); if(el){ el.value = u.prev; el.dispatchEvent(new Event('input',{bubbles:true})); } });
-          vcLastUndo = null; box.hidden = true;
+        vcBindUndo();
+      }
+      /* 「元に戻す」：1回押すごとに1つ前の反映へ戻る。
+         戻したあとに古いチップを残すと「反映済み」に見えるので、表示ごと作り直す */
+      function vcBindUndo(){
+        const box = $('vc-applied'), ub = $('vc-undo-btn');
+        if(!box || !ub) return;
+        ub.addEventListener('click', ()=>{
+          const last = vcUndoStack.pop();
+          (last||[]).forEach(u=>{ const el=$(u.id); if(el){ el.value = u.prev; el.dispatchEvent(new Event('input',{bubbles:true})); } });
+          if(!vcUndoStack.length){ box.hidden = true; box.innerHTML = ''; return; }
+          box.innerHTML = '<span class="vc-chip"><i class="fa-solid fa-rotate-left"></i> 元に戻しました</span>'
+                        + '<button type="button" class="vc-undo" id="vc-undo-btn"><i class="fa-solid fa-rotate-left"></i> さらに戻す</button>';
+          vcBindUndo();
         });
       }
 
@@ -6055,77 +6361,1354 @@
         if(mm){ vcAddMemo(mm.dataset.vcMemo); mm.disabled = true; mm.textContent = 'メモに残しました'; return; }
       });
 
-      /* ---------- 録音（Web Speech API・押して開始/停止） ---------- */
+      /* ============================================================
+         文字起こし（字幕）
+         ・確定した発話は1行ずつ append（全文を毎回作り直さない＝長い面談でも重くならない）
+         ・未確定（interim）は最後尾の1本だけを書き換える
+         ・発話は mnUtter[] に {t:録音開始からの経過ms, x:本文} で貯め、議事録の材料にする
+         ============================================================ */
+      var mnUtter = [];          // ← var。初期化から触るため（const/letのTDZ事故を避ける）
+      var mnT0 = 0;              // 録音開始時刻（ミリ秒）
+      const cap = $('vc-cap'), jumpBtn = $('vc-jump');
+      let capStick = true, capInterim = null;
+      function vcTimeLabel(ms){
+        const s = Math.max(0, Math.floor(ms/1000));
+        return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+      }
+      function vcCapAtBottom(){
+        if(!cap) return true;
+        return (cap.scrollHeight - cap.scrollTop - cap.clientHeight) < 24;
+      }
+      function vcCapFollow(){
+        if(!cap) return;
+        if(capStick){ cap.scrollTop = cap.scrollHeight; if(jumpBtn) jumpBtn.hidden = true; }
+      }
+      function vcCapLineHTML(text, ms){
+        return '<span class="vc-cap-t">' + esc(vcTimeLabel(ms)) + '</span><span class="vc-cap-x">' + esc(text) + '</span>';
+      }
+      function vcCapAdd(text, ms){
+        if(!cap || !text) return;
+        cap.hidden = false;
+        const emp = cap.querySelector('.vc-cap-empty'); if(emp) emp.remove();
+        const div = document.createElement('div');
+        div.className = 'vc-cap-line';
+        if(panel.dataset.vcMode === 'open'){ div.setAttribute('role','button'); div.tabIndex = 0; }
+        div.title = 'タップすると下の欄に入り、直してから反映できます';
+        div.innerHTML = vcCapLineHTML(text, ms);
+        if(capInterim && capInterim.parentNode===cap) cap.insertBefore(div, capInterim);
+        else cap.appendChild(div);
+        // DOMは200行を上限に間引く（本文は mnUtter に残るので議事録の材料は失わない）
+        let lines = cap.querySelectorAll('.vc-cap-line:not(.interim)');
+        while(lines.length > 200){ lines[0].remove(); lines = cap.querySelectorAll('.vc-cap-line:not(.interim)'); }
+        vcCapFollow();
+      }
+      function vcCapSetInterim(text){
+        if(!cap) return;
+        if(!text){ if(capInterim){ capInterim.remove(); capInterim = null; } return; }
+        cap.hidden = false;
+        if(!capInterim){
+          capInterim = document.createElement('div');
+          capInterim.className = 'vc-cap-line interim';
+          capInterim.setAttribute('aria-hidden','true');   // 1文字ごとの読み上げ暴走を防ぐ
+          cap.appendChild(capInterim);
+        }
+        capInterim.innerHTML = '<span class="vc-cap-t"></span><span class="vc-cap-x">' + esc(text) + '</span>';
+        vcCapFollow();
+      }
+      function vcCapRedraw(){
+        if(!cap) return;
+        capInterim = null;
+        if(!mnUtter.length){
+          cap.innerHTML = '<div class="vc-cap-empty">録音するとここに文字起こしが出ます。行をタップすると、直してから入力欄へ反映できます。</div>';
+          cap.hidden = (panel.dataset.vcMode !== 'open');   // ミニでは空枠を出さない（その分ドックが低くなる）
+          return;
+        }
+        cap.innerHTML = mnUtter.slice(-200).map(function(u){
+          return '<div class="vc-cap-line" title="タップすると下の欄に入り、直してから反映できます">' + vcCapLineHTML(u.x, u.t) + '</div>';
+        }).join('');
+        cap.hidden = false; capStick = true; vcCapInteractive(panel.dataset.vcMode === 'open'); vcCapFollow();
+      }
+      /* 行をタップして編集欄へ送れるのは展開時だけ。
+         ミニでもrole/tabindexが付いたままだと「フォーカスできるのにマウスでは無反応」になる */
+      function vcCapInteractive(on){
+        if(!cap) return;
+        cap.querySelectorAll('.vc-cap-line:not(.interim)').forEach(function(l){
+          if(on){ l.setAttribute('role','button'); l.tabIndex = 0; }
+          else { l.removeAttribute('role'); l.removeAttribute('tabindex'); }
+        });
+      }
+      if(cap){
+        cap.addEventListener('scroll', ()=>{
+          capStick = vcCapAtBottom();
+          if(jumpBtn) jumpBtn.hidden = capStick;
+        });
+        // 行をタップ → 下の入力欄に入れて直せる（展開時のみ。ミニは誤爆するので無効）
+        cap.addEventListener('click', (e)=>{
+          if(panel.dataset.vcMode !== 'open') return;
+          const line = e.target.closest('.vc-cap-line:not(.interim)'); if(!line) return;
+          vcSendToManual(line.querySelector('.vc-cap-x') ? line.querySelector('.vc-cap-x').textContent : '');
+        });
+        cap.addEventListener('keydown', (e)=>{
+          if(panel.dataset.vcMode !== 'open') return;
+          if(e.key!=='Enter' && e.key!==' ') return;
+          const line = e.target.closest('.vc-cap-line:not(.interim)'); if(!line) return;
+          e.preventDefault();
+          vcSendToManual(line.querySelector('.vc-cap-x') ? line.querySelector('.vc-cap-x').textContent : '');
+        });
+      }
+      if(jumpBtn) jumpBtn.addEventListener('click', ()=>{ capStick = true; vcCapFollow(); });
+      function vcSendToManual(text){
+        const el = $('vc-manual'); if(!el || !text) return;
+        vcSetTab('cap');
+        el.value = text; el.focus(); el.select();
+      }
+
+      /* ---------- 録音（Web Speech API・押して開始/停止。無音で切れても続ける） ---------- */
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recBtn = $('vc-rec'), status = $('vc-status'), transcript = $('vc-transcript');
-      let rec = null, recOn = false, finalText = '';
+      const recBtn = $('vc-rec'), status = $('vc-status'), elapsedEl = $('vc-elapsed');
+      let rec = null, recOn = false, recWanted = false, elapsedTimer = null;
       function setStatus(t){ if(status) status.textContent = t; }
+      function vcAutoOn(){ const c = $('vc-auto'); return !c || c.checked; }
+      function vcElapsedTick(){
+        if(!elapsedEl) return;
+        elapsedEl.hidden = !recWanted;
+        if(recWanted && mnT0) elapsedEl.textContent = vcTimeLabel(Date.now() - mnT0);
+      }
+      function vcRecUI(on){
+        if(!recBtn) return;
+        recBtn.classList.toggle('rec-on', on);
+        // 375pxではラベル文字を隠すため、読み上げ用の名前は aria-label / title で持つ
+        recBtn.setAttribute('aria-label', on ? '録音を停止する' : '録音して入力する');
+        recBtn.title = on ? '録音を停止する' : '録音して入力する';
+        recBtn.innerHTML = on
+          ? '<i class="fa-solid fa-stop"></i> <span class="vc-lbl">停止する</span>'
+          : '<i class="fa-solid fa-microphone"></i> <span class="vc-lbl">録音して入力</span>';
+        panel.classList.toggle('rec-on', on);
+        vcElapsedTick();
+        vcSyncDockH();
+      }
+      /* 停止は rec.stop() の副作用（onend）に頼らず、ここで確実にUIまで戻す。
+         無音の自動停止と再接続の合間に押されると stop() が no-op になり、
+         「見た目は録音中／実際は録れていない」状態が残るため（検証役が実測で検出） */
+      function vcStopRec(){
+        // recOn を先に落としてから stop() を呼ぶ＝onend から再入しても2周目で止まる（無限再帰の予防）
+        const active = recWanted || recOn;
+        recWanted = false; recOn = false;
+        if(active){ try{ if(rec) rec.stop(); }catch(e){} }
+        vcRecUI(false);
+        vcCapSetInterim('');
+        if(elapsedTimer){ clearInterval(elapsedTimer); elapsedTimer = null; }
+        if(elapsedEl) elapsedEl.hidden = true;
+        setStatus(mnUtter.length ? '録音を終了しました。「ミーティング概要」タブで概要を作れます' : '');
+        mnSave();
+      }
+      function vcStartRec(){
+        if(!SR) return;
+        rec = new SR();
+        rec.lang = 'ja-JP'; rec.interimResults = true; rec.continuous = true;
+        rec.onstart = ()=>{
+          recOn = true; vcRecUI(true);
+          // スマホ幅は ellipsis で途中で切れる（切れた日本語は不安を与える）ので短文にする
+          setStatus(window.innerWidth <= 560 ? '聞き取り中です' : '聞き取り中…そのまま面談を続けてください');
+        };
+        rec.onresult = (ev)=>{
+          let interim = '';
+          for(let i=ev.resultIndex; i<ev.results.length; i++){
+            const r = ev.results[i];
+            if(r.isFinal){
+              const t = (r[0].transcript||'').trim();
+              if(t){
+                const ms = mnT0 ? (Date.now() - mnT0) : 0;
+                mnUtter.push({ t:ms, x:t });
+                if(mnUtter.length > 2000) mnUtter.shift();
+                vcCapAdd(t, ms);
+                if(vcAutoOn()) vcApplyText(t);
+                mnSaveSoon();
+              }
+            } else interim += r[0].transcript;
+          }
+          vcCapSetInterim(interim);
+        };
+        rec.onerror = (ev)=>{
+          if(ev.error==='no-speech') return;      // 長時間録音では普通に起きる。止めない
+          if(ev.error==='not-allowed' || ev.error==='service-not-allowed'){
+            recWanted = false;
+            setStatus('マイクの使用が許可されていません（ブラウザのマイク設定をご確認ください）');
+          } else setStatus('認識できませんでした（'+ev.error+'）');
+        };
+        rec.onend = ()=>{
+          recOn = false;
+          // ユーザーが停止していないのに切れた（無音の自動停止）＝つなぎ直して録り続ける
+          if(recWanted){ setTimeout(()=>{ if(recWanted){ try{ rec.start(); }catch(e){ try{ vcStartRec(); }catch(_){} } } }, 300); return; }
+          vcStopRec();
+        };
+        try{ rec.start(); }catch(e){ setStatus('録音を開始できませんでした'); vcStopRec(); }
+      }
       if(!SR){
-        if(recBtn){ recBtn.disabled = true; recBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> このブラウザは音声認識非対応'; }
-        setStatus('Edge・Chrome・Safariでは録音できます。下の打ち込みは利用可能です。');
+        if(recBtn){
+          recBtn.disabled = true;
+          recBtn.setAttribute('aria-label','このブラウザは音声認識に対応していません');
+          recBtn.title = 'このブラウザは音声認識に対応していません';
+          recBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> <span class="vc-lbl">音声認識に非対応</span>';
+        }
+        setStatus('Edge・Chrome・Safariでは録音できます。打ち込みは使えます。');
       } else if(recBtn){
         recBtn.addEventListener('click', ()=>{
-          if(recOn){ try{ rec.stop(); }catch(e){} return; }
-          rec = new SR();
-          rec.lang = 'ja-JP'; rec.interimResults = true; rec.continuous = true;
-          finalText = '';
-          rec.onstart = ()=>{
-            recOn = true; recBtn.classList.add('rec-on');
-            recBtn.innerHTML = '<i class="fa-solid fa-microphone"></i> 停止する';
-            setStatus('聞き取り中…「食費7万円」のように話してください');
-            transcript.hidden = false; transcript.innerHTML = '';
-          };
-          rec.onresult = (ev)=>{
-            let interim = '';
-            for(let i=ev.resultIndex; i<ev.results.length; i++){
-              const r = ev.results[i];
-              if(r.isFinal){
-                const t = r[0].transcript.trim();
-                if(t){ finalText += (finalText?'、':'') + t; vcApplyText(t); }
-              } else interim += r[0].transcript;
-            }
-            transcript.innerHTML = esc(finalText) + (interim ? `<span class="interim">${esc(interim)}</span>` : '');
-          };
-          rec.onerror = (ev)=>{
-            setStatus(ev.error==='not-allowed' ? 'マイクの使用が許可されていません（ブラウザのマイク設定をご確認ください）'
-              : ev.error==='no-speech' ? '音声が聞き取れませんでした。もう一度お試しください'
-              : '認識できませんでした（'+ev.error+'）');
-          };
-          rec.onend = ()=>{
-            recOn = false; recBtn.classList.remove('rec-on');
-            recBtn.innerHTML = '<i class="fa-solid fa-microphone"></i> 録音して入力';
-            if(finalText){
-              setStatus('認識が終わりました。内容は上のとおり反映・表示しています');
-              if(transcript.innerHTML){
-                transcript.innerHTML = esc(finalText)
-                  + ` <button type="button" class="vc-undo" data-vc-memo="${esc(finalText)}"><i class="fa-solid fa-note-sticky"></i> 全文をメモに残す</button>`;
-              }
-            } else setStatus('');
-          };
-          try{ rec.start(); }catch(e){ setStatus('録音を開始できませんでした'); }
+          if(recWanted || recOn){ vcStopRec(); return; }
+          /* 面談の会話には健康状態（要配慮個人情報）が含まれる前提のツール。
+             音声はブラウザ／OSの認識機能に渡り、端末の設定によっては提供元のサーバーを経由するため、
+             お客様の同意を確認してから開始する（このタブを開いている間は1回だけ） */
+          let okd = false;
+          try{ okd = !!sessionStorage.getItem('lifeplan_ichijo_rec_ok'); }catch(e){}
+          if(!okd){
+            if(!confirm('お話をブラウザ／OSの音声認識で文字にします（端末の設定によっては、その提供元のサーバーを経由して処理されます）。\n\n・録音と文字起こしについて、お客様の同意はいただけていますか？\n・文字起こしはこの端末内にのみ保存され、2週間で自動削除されます\n\n同意を得たうえで開始しますか？')) return;
+            try{ sessionStorage.setItem('lifeplan_ichijo_rec_ok','1'); }catch(e){}
+          }
+          recWanted = true;
+          if(!mnT0 || !mnUtter.length) mnT0 = Date.now();
+          if(elapsedTimer) clearInterval(elapsedTimer);
+          elapsedTimer = setInterval(vcElapsedTick, 1000);
+          vcStartRec();
         });
       }
 
       // 打ち込みフォールバック（音声が使えない環境・検証用）
       if($('vc-manual-go')) $('vc-manual-go').addEventListener('click', ()=>{
         const el = $('vc-manual'); if(!el || !el.value.trim()) return;
-        vcApplyText(el.value); el.value = '';
+        const t = el.value.trim();
+        // 打ち込んだ内容も文字起こしに残す（議事録の材料にするため）
+        const ms = mnT0 ? (Date.now() - mnT0) : 0;
+        if(!mnT0) mnT0 = Date.now();
+        mnUtter.push({ t:ms, x:t }); vcCapAdd(t, ms); mnSaveSoon();
+        vcApplyText(t); el.value = '';
       });
       if($('vc-manual')) $('vc-manual').addEventListener('keydown', (e)=>{
         if(e.key==='Enter'){ e.preventDefault(); $('vc-manual-go').click(); }
       });
+      if($('vc-apply-all')) $('vc-apply-all').addEventListener('click', ()=>{
+        if(!mnUtter.length){ setStatus('反映できる文字起こしがありません'); return; }
+        if(!confirm('話した内容から拾える数字を、まとめて入力欄に入れ直します。\n手で直した欄も上書きされます。よろしいですか？')) return;
+        vcApplyText(mnUtter.map(u=> u.x).join('、'));
+      });
+      if($('vc-clear')) $('vc-clear').addEventListener('click', ()=>{
+        if(!mnUtter.length) return;
+        if(!confirm('この端末に残っている文字起こしと、作成した概要・次の一手を消します。よろしいですか？')) return;
+        mnUtter = []; mnT0 = 0; capInterim = null; nxLast = null;
+        mnBig(false);
+        if($('mn-out')) $('mn-out').innerHTML = '';
+        if($('next-actions')) $('next-actions').innerHTML = '';
+        try{ localStorage.removeItem(MN_KEY); localStorage.removeItem(MN_KEY+'_prev'); localStorage.removeItem(NX_DONE_KEY); }catch(e){}
+        vcCapRedraw(); setStatus('文字起こしを消しました'); vcSyncDockH();
+      });
 
-      /* ---------- パネルの開閉 ---------- */
+      /* ============================================================
+         ミーティング概要（議事録）：文字起こし → テーマ別の要約
+         外部AIは使わず、辞書＋文スコアリングのルールベースで作る（費用ゼロ）。
+         本文は2層構成：
+           (1) 抜粋   ＝ 実際の発言から選んだ文（断定・商品名を含む文は除外）
+           (2) 試算文 ＝ ツールが計算した数字のテンプレ文（断定表現を最初から持たない）
+         ============================================================ */
+      const MN_NOTES = [
+        'この概要は、録音の文字起こしからツールが機械的に抜き出して作成した下書きです。発言の正確な再現を保証するものではありません。とくに金額・年齢・年数などの数字は聞き取りを誤ることがありますので、内容に相違がある場合は担当者までお知らせください。',
+        '記載の金額・年齢は、ご入力いただいた前提にもとづく試算です。税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。',
+        '本メモは特定の保険商品・金融商品の推奨を目的とするものではありません。保障を見直す場合は、必要保障額を下回らない範囲でご検討ください（健康状態により再加入・増額ができない、保障に空白が生じる、貯蓄型は解約時に払込保険料を下回ることがある、などの点にご注意ください）。',
+        'このメモは保険契約の内容を表すものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」を必ずご確認ください。税額の判断は税理士、公的年金の実額は年金事務所でご確認ください。',
+        '作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。',
+        'この下書きは担当者の端末のブラウザ内にのみ保存され、最後に更新してから2週間を過ぎると、次にこのページを開いたときに自動で削除されます。お客様にお渡しする共有リンク・保存データには含まれません。なお、この文書をお渡しした場合、お手元に残るファイルは自動では削除されません。'
+      ];
+      // 強フィラー（どこにあっても削る）／弱フィラー（文頭のみ）／相槌だけの発話
+      const MN_FILLER_STRONG = /(?:え[ーぇ]?[とっ]?と|えっと|あの[ーぅ]|その[ーぅ]|ま[ぁあ][ーぁ]|うー+ん|えー+|あー+|おー+|んー+|なんて言うんですか|なんていうか)/g;
+      const MN_FILLER_HEAD   = /^(?:じゃあ|では|で、|えっと|あの|その|まあ|なんか|ちょっと|やっぱり|やっぱ|一応|とりあえず|はい|ええ|うん|そうですね)[、。]?\s*/;
+      const MN_AIZUCHI       = /^(?:はい|うん|ううん|ええ|そうですね|そうですか|なるほど|ですよね|わかりました|了解です|ありがとうございます|すみません|お願いします)+[。、]?$/;
+      const MN_DUP_OK        = /[一-龥ァ-ヶA-Za-z]/;   // 数字は入れない（5050万円→50万円の桁落ち防止）
+      // 文末表現の直後が「継続の助詞」なら文を割らない／「文頭に立つ語」なら割る（語中で切らないため）
+      const MN_CONT     = /^(?:が|ので|の|から|けど|けれ|し|たら|と|ね|よ|か|に|で|ば|ても|でも)/;
+      const MN_HEADWORD = /^(?:そして|それで|それから|そのため|そのうえ|ただ|ただし|あと|また|まず|もし|もう|やはり|やっぱ|しかし|しかも|なので|ですので|ですから|とりあえず|ちなみに|つまり|たとえば|ところで|ところが|とにかく|とはいえ|では|じゃあ|でも|ですが|なるほど|はい|うん|ええ|わかりました|ありがとう|すみません|おそらく|たしか|ちょっと|いま|いちおう|いずれ|ひとまず)/;
+      const MN_NUM    = /(?:[0-9][0-9,.]*)\s*(?:億|万|千|百)?\s*(?:円|万円|歳|才|年|ヶ月|か月|カ月|%|％|人|台|回|kW)/;
+      const MN_DECIDE = /(?:することにし|する方向|しましょう|していきましょう|お願いします|決め(?:まし)?た|方針|進め(?:ます|る)|申し込|契約|やってみ(?:ます|る)|検討し(?:ます|ましょう)|用意し(?:ます|ておき)|確認し(?:ます|ておき)|お送りし(?:ます)|準備し(?:ます)|見直す|次回)/;
+      const MN_RISK   = /(?:不安|心配|厳しい|きつい|足りな|不足|リスク|破綻|注意|難しい|できない|ショート|赤字|負担|重な(?:る|り)|困る|怖い)/;
+      const MN_GOAL   = /(?:目標|ゴール|までに|前提|想定|試算|シミュレーション|めやす|目安|上限|下限|確保|余裕)/;
+      const MN_SMALL  = /(?:天気|暑いです|寒いです|コーヒー|お茶|渋滞|道が混|テレビ|野球|ご無沙汰|お久しぶり|お忙しい)/;
+      const MN_ASK    = /(?:ですか|でしょうか|ますか)。?$/;
+      /* ツールが自動生成する本文に出してはいけない表現（断定・推奨）と、会社名・商品名らしき語。
+         当たった文は mnScore で -99 になり本文へ入らない（原文は発言メモに残るので改ざんにはならない）。
+         「保険を減らして運用に回すと総資産が増えます」型は、生存前提で構造上必ず減額有利に見える
+         ＝保険業法300条1項の誤解表示リスクの中心なので、専用の語順パターンで弾く */
+      const MN_NG     = /(?:必ず|絶対|確実に|確実です|保証(?:し|され)|元本保証|元本割れ(?:しま?せん)|割れないタイプ|値下がりしません|損しません|損はしません|儲か|得します|お得|有利です|有利になり|おすすめ|お勧め|お薦め|オススメ|推奨し|入るべき|加入すべき|やめるべき|解約すべき|見直すべき|減らすべき|回すべき|(?:入|加入|解約|やめ|減らし|見直し)た(?:方|ほう)がいい|やめても大丈夫|要らない|いらないです|もったいない|一番良い|一番いい|一番条件|ベストです|最適です|間違いない|不要です|必要ありません|十分です|節税になります|節税効果|税金は?かかりません|かからないと思います|今がチャンス|今のうちに入|倍になっている|堅いところ|(?:に|へ)しましょう|しちゃいましょう|(?:ほう|方)が(?:効率的|有利|得|安い|多い|いい|良い)|(?:総資産|手元に残る|残るお金|資産)[^。]{0,10}(?:増えます|増える|多くなります|多くなる)|(?:回す|回した|回せば|減らせば|見直せば|にすれば)[^。]{0,12}(?:増え|得|有利|多く|プラス))/;
+      // 否定・疑問・条件つきの言い方は断定ではない（「減らすべきかどうかは…」まで消すと中立な発言が落ちる）
+      const MN_NG_OK  = /(?:ではありません|ではない|わけでは|かどうか|か迷|ますか|でしょうか|とは限らない|ではなく|ません)/;
+      const MN_BRAND  = /[ァ-ヶ一-龥A-Za-z]{2,6}(?:生命保険|損害保険|生命|損保|火災海上|海上火災|共済)(?![保])|(?:アフラック|かんぽ|東京海上|三井住友海上|あいおい|損保ジャパン|SOMPO|メットライフ|アクサ|チューリッヒ|プルデンシャル|ジブラルタ|マニュライフ|ネオファースト|はなさく|FWD|ライフネット|メディケア|なないろ|ニッセイ|明治安田|eMAXIS|オルカン|ひふみ|SBI証券|楽天証券|マネックス|野村證券|大和証券)/i;
+      // 会社名ではない一般語（控除・団体保険・共済・団信）は落とさない
+      const MN_BRAND_OK = /(?:生命保険料控除|保険料控除|団体信用生命|団信|団体生命|会社の生命|職場の生命|県民共済|都民共済|府民共済|全労済|こくみん共済|共済に|共済の|共済を)/;
+      function mnHasNG(t){ return MN_NG.test(t) && !MN_NG_OK.test(t); }
+      function mnHasBrand(t){ return MN_BRAND.test(t) && !MN_BRAND_OK.test(t); }
+      const MN_STOPLEAD = /^(?:これ|それ|あれ|ここ|そこ|今日|今回|先ほど|さっき|私|僕|うち|そちら|お客様|皆さん|一応|結論|お子さん|奥さん|旦那|主人|お父さん|お母さん|ご主人)/;
+
+      const MN_THEMES = [
+        { id:'insure', short:'保障',
+          keys:['生命保険','医療保険','がん保険','収入保障保険','収入保障','就業不能','死亡保障','必要保障額','保険の見直し','保険料','保障','共済','特約','終身保険','終身','定期保険','掛け捨て','貯蓄型','解約返戻金','解約','払込','万が一','万一','遺族年金','遺族','入院','手術','先進医療','高額療養費','保険','がん','三大疾病','特定疾病','保険証券','掛金','告知'],
+          titles:[ {re:/万が一|万一|遺族|死亡保障|必要保障額/, t:'万一のときの備えと必要保障額の確認'},
+                   {re:/見直し|解約|払込|保険料/,             t:'ご加入中の保障の棚卸しと保険料の確認'},
+                   {re:/医療|がん|入院|手術|就業不能/,        t:'医療・就業不能の備えについての確認'} ],
+          title:'保障の現状整理',
+          leads:[ {re:/万が一|万一|遺族/, lead:'万一のときに必要になるお金'},
+                  {re:/見直し|解約/,      lead:'ご加入中の保障の棚卸し'},
+                  {re:/保険料/,           lead:'保険料の負担状況'} ] },
+        { id:'invest', short:'資産運用',
+          keys:['資産運用','投資信託','投信','投資','NISA','ニーサ','新NISA','つみたてNISA','つみたて','積立','iDeCo','イデコ','インデックス','オルカン','利回り','複利','元本','株式','債券','ドルコスト','証券口座','含み益','分散投資','非課税枠','運用','積み立て','成長投資枠','つみたて投資枠','資産形成'],
+          titles:[ {re:/教育|大学|学資/,                          t:'教育資金と老後資金の運用の組み立て'},
+                   {re:/NISA|ニーサ|iDeCo|イデコ|つみたて|積立/,  t:'非課税制度を使った積立の組み立て'},
+                   {re:/利回り|複利|リスク|下落/,                 t:'運用の前提（利回り・リスク）の確認'} ],
+          title:'資産運用の方針整理',
+          leads:[ {re:/NISA|ニーサ/,  lead:'NISAでの積立'},
+                  {re:/iDeCo|イデコ/, lead:'iDeCoの活用'},
+                  {re:/利回り|複利/,  lead:'運用の前提条件'} ] },
+        { id:'education', short:'教育資金',
+          keys:['教育資金','教育費','学費','大学院','大学','高校','中学受験','中学','小学校','私立','公立','進学','受験','塾','習い事','保育園','幼稚園','こども園','奨学金','学資保険','学資','入学金','授業料','下宿','仕送り','子ども','子供','出産'],
+          titles:[ {re:/大学|進学|下宿|仕送り/,   t:'教育資金のピークと進学プランの想定'},
+                   {re:/塾|習い事|保育園|幼稚園/, t:'お子さまにかかる費用の現実的な見直し'} ],
+          title:'教育資金の整理',
+          leads:[ {re:/大学|進学/,        lead:'進学時にかかる費用'},
+                  {re:/塾|習い事|保育園/, lead:'現在かかっている費用'} ] },
+        { id:'retire', short:'老後資金',
+          keys:['老後資金','老後','定年','退職金','退職','再雇用','再就職','厚生年金','国民年金','ねんきん定期便','年金定期便','年金','受給','繰下げ','繰り下げ','繰上げ受給','セカンドライフ','リタイア','介護','施設'],
+          titles:[ {re:/空白|つなぎ|60歳|65歳|受給/, t:'定年から年金受給までの収入空白期間の対策'},
+                   {re:/退職金|老後資金|目標/,        t:'老後資金の目標額と準備の道筋'},
+                   {re:/介護|施設/,                   t:'老後の医療・介護に関する想定'} ],
+          title:'老後資金の見通し',
+          leads:[ {re:/空白|つなぎ/, lead:'収入空白期間の考え方'},
+                  {re:/退職金/,      lead:'退職金の見込み'},
+                  {re:/年金/,        lead:'公的年金の前提'} ] },
+        { id:'loan', short:'住宅ローン',
+          keys:['住宅ローン','借入額','借入','借り入れ','変動金利','固定金利','金利','フラット35','フラット','返済期間','毎月の返済','返済','繰上げ返済','繰り上げ返済','繰上返済','一括返済','完済','団体信用生命保険','団信','事前審査','本審査','審査','ペアローン','連帯債務','借り換え','借換','頭金','諸費用','元利均等','元金均等','ボーナス返済','ローン'],
+          titles:[ {re:/破綻|払えな|苦し|リスク|不安|重な/, t:'住宅ローン破綻リスクの回避と将来シミュレーション'},
+                   {re:/変動|固定|金利|借り換え/,           t:'住宅ローンの金利タイプと返済計画'},
+                   {re:/繰上|完済|一括/,                    t:'繰上返済と完済時期の整理'},
+                   {re:/団信|審査|ペアローン|名義/,         t:'借入の組み方と団信の確認'} ],
+          title:'住宅ローンの前提整理',
+          leads:[ {re:/破綻|払えな|リスク/, lead:'破綻リスクの回避'},
+                  {re:/変動|固定/,          lead:'金利タイプの考え方'},
+                  {re:/繰上|完済/,          lead:'繰上返済の考え方'},
+                  {re:/団信/,               lead:'団信の取り扱い'} ] },
+        { id:'house', short:'住まい',
+          keys:['一条工務店','一条','ハウスメーカー','工務店','注文住宅','マイホーム','新築','建て替え','間取り','土地','建物','着工','上棟','引き渡し','展示場','モデルハウス','断熱','気密','耐震','太陽光','ソーラー','蓄電池','パネル','光熱費','坪単価','外壁','屋根','塗り替え','メンテナンス','火災保険','地震保険','ZEH','オール電化','固定資産税','賃貸','家賃','駐車場'],
+          titles:[ {re:/太陽光|光熱費|断熱|蓄電池|ZEH/,   t:'住まいの性能と光熱費・太陽光の見込み'},
+                   {re:/土地|間取り|着工|引き渡し|上棟/,  t:'住まいの計画とスケジュールの確認'},
+                   {re:/坪|見積|予算|価格差|建物/,        t:'住宅予算と建物価格の整理'},
+                   {re:/家賃|賃貸/,                       t:'現在の住居費と将来の住居費の比較'} ],
+          title:'住まいの前提整理',
+          leads:[ {re:/太陽光|蓄電池/,             lead:'太陽光・蓄電池の見込み'},
+                  {re:/断熱|光熱費/,               lead:'光熱費の見込み'},
+                  {re:/メンテナンス|外壁|塗/,      lead:'将来のメンテナンス費'},
+                  {re:/土地|間取り|着工|引き渡し/, lead:'計画とスケジュール'} ] },
+        { id:'work', short:'働き方と収入',
+          keys:['年収','手取り','給与','給料','昇給','ボーナス','賞与','転職','独立','起業','副業','育児休業','育休','産休','時短','復職','パート','共働き','正社員','派遣','残業','世帯年収','収入','手当'],
+          titles:[ {re:/育休|産休|時短|復職|パート/, t:'働き方の変化と世帯収入の前提'},
+                   {re:/転職|独立|起業|副業/,        t:'今後の働き方と収入見込みの確認'} ],
+          title:'収入の前提整理',
+          leads:[ {re:/育休|産休|時短|復職/, lead:'働き方の変化'},
+                  {re:/昇給|ボーナス|賞与/,  lead:'収入の伸びの想定'} ] },
+        { id:'budget', short:'家計',
+          keys:['家計簿','家計','生活費','食費','外食','日用品','雑費','被服','水道代','水道','電気代','ガス代','通信費','携帯代','スマホ代','固定費','支出','収支','節約','予算','お小遣い','交際費','サブスク','ガソリン代','生活水準','貯金','預金','貯蓄','家計の見直し'],
+          titles:[ {re:/予算|増やし|上げ|現実的/, t:'家計予算の最適化と投資余力の算出'},
+                   {re:/固定費|節約|見直し/,      t:'固定費の見直し余地の確認'},
+                   {re:/収支|赤字|足りな/,        t:'毎月の収支バランスの確認'} ],
+          title:'家計の現状整理',
+          leads:[ {re:/予算|現実的|増やし/, lead:'現実的な予算への修正'},
+                  {re:/余剰|差額|回せる/,   lead:'投資に回せる予算の特定'},
+                  {re:/固定費|節約/,        lead:'固定費の見直し余地'} ] },
+        { id:'tax', short:'税金・相続',
+          keys:['住宅ローン控除','ローン控除','生命保険料控除','保険料控除','医療費控除','ふるさと納税','確定申告','年末調整','扶養','所得税','住民税','相続税','相続','生前贈与','暦年贈与','贈与','遺言','共有名義','持分','登記','節税','控除'],
+          titles:[ {re:/相続|贈与|遺言|名義/, t:'相続・名義に関する確認事項'},
+                   {re:/控除|申告|年末調整/,  t:'税制上の控除と手続きの確認'} ],
+          title:'税金まわりの確認',
+          leads:[ {re:/住宅ローン控除|ローン控除/, lead:'住宅ローン控除の取り扱い'},
+                  {re:/相続|贈与/,                 lead:'相続・贈与に関する論点'} ] },
+        { id:'life', short:'ライフイベント',
+          keys:['車検','自動車','マイカー','新車','中古車','買い替え','旅行','帰省','レジャー','結婚式','ペット','リフォーム','家電','実家','単身赴任','引越し','引っ越し'],
+          titles:[ {re:/車|車検/, t:'お車の買い替えなど今後の支出予定'} ],
+          title:'今後のライフイベントの確認',
+          leads:[ {re:/車|車検/, lead:'お車にかかる費用'} ] }
+      ];
+      // 最長一致テーブル（「住宅ローン控除」が「住宅ローン」に、「学資保険」が「保険」に食われないように）
+      const MN_MATCH = [];
+      MN_THEMES.forEach(function(th){ th.keys.forEach(function(k){ MN_MATCH.push({ k:k, id:th.id, len:k.length }); }); });
+      MN_MATCH.sort(function(a,b){ return b.len - a.len; });
+
+      function mnNormalize(raw){
+        let s = String(raw||'').normalize('NFKC');
+        s = s.replace(/[\s　]+/g, '').replace(/[!！?？]/g, '。');
+        s = s.replace(MN_FILLER_STRONG, '');
+        // 言い直し「Xじゃなくて Y」→ Y だけ残す。ただし直前の主題（〜は/が/も）は残す
+        // （固定幅で前を消すと「保険料は3万円じゃなくて5万円です」が「5万円です」になり主語が消える）
+        s = s.replace(/([^、。]{0,12}?[はがも])?([^、。]{1,10})(?:じゃなくて|ではなくて|じゃなく、|ではなく、|の間違いで|訂正します、|間違えました、)/g,
+                      function(m, head){ return head || ''; });
+        // 数値の言い直し「7万…あ、8万」→ 後者を採用
+        s = s.replace(/[0-9.]+\s*(?:億|万|千)?\s*(?:円|万円|歳|才|年|%|％|人)\s*(?:あっ?、?|ごめん(?:なさい)?、?|失礼、?|違う、?|違います、?|訂正、?|じゃなくて)\s*(?=[0-9.]+\s*(?:億|万|千)?\s*(?:円|万円|歳|才|年|%|％|人))/g, '');
+        // 反復のつぶし。数字を含む反復は絶対に触らない（5050万円→50万円・2020年→20年の桁落ち防止）
+        s = s.replace(/(.{2,10}?)\1+/g, function(m, unit){
+          if(/[0-9]/.test(unit)) return m;
+          return MN_DUP_OK.test(unit) ? unit : m;
+        });
+        s = s.replace(/[、]{2,}/g, '、').replace(/[。]{2,}/g, '。').replace(/、。/g, '。');
+        return s;
+      }
+      function mnSplitSentences(u){
+        let s = mnNormalize(u);
+        if(!s) return [];
+        /* 文末表現の後ろに「。」を入れる。判定は3段：
+             ① 直後が文頭に立つ語（とにかく・ところが 等）→ 割る
+             ② 直後が接続の助詞（〜ますので／〜ですが）→ 割らない
+             ③ 直後がそれ以外のひらがな → 語中とみなして割らない
+                （「んですねんきん定期便」「ますようお願いします」「ますます」を切らないため）
+           後読みは使わない（古いSafariで構文エラーになりスクリプト全体が落ちる） */
+        s = s.replace(/(でした|ました|ません|でしょう|ましょう|ください|ですね|ますね|ですよ|ますよ|です|ます)/g,
+          function(m, g1, pos, whole){
+            const rest = whole.slice(pos + m.length);
+            if(!rest) return m + '。';
+            const lastP = whole.lastIndexOf('。', pos);
+            if(pos + m.length - (lastP + 1) < 6) return m;      // 短すぎる断片は作らない
+            if(MN_HEADWORD.test(rest)) return m + '。';
+            if(MN_CONT.test(rest))     return m;
+            if(/^[ぁ-ん]/.test(rest))  return m;
+            return m + '。';
+          });
+        s = s.replace(/。+/g, '。');
+        const arr = s.split('。').map(function(x){ return x.replace(/^[、]+|[、]+$/g,'').trim(); }).filter(Boolean);
+        const out = [];
+        arr.forEach(function(t){
+          while(t.length > 90){
+            let cut = t.lastIndexOf('、', 70);
+            if(cut < 25) cut = 70;
+            out.push(t.slice(0, cut));
+            t = t.slice(t.charAt(cut) === '、' ? cut + 1 : cut);   // 「、」で切ったときだけ「、」を捨てる（1文字消失の防止）
+          }
+          if(t) out.push(t);
+        });
+        return out;
+      }
+      function mnBuildSentences(utters){
+        const sents = []; let i = 0;
+        (utters||[]).forEach(function(u, ui){
+          mnSplitSentences(u.x).forEach(function(t){
+            let prev;
+            do { prev = t; t = t.replace(MN_FILLER_HEAD, ''); } while(t !== prev);
+            if(!t || t.length < 4) return;
+            if(MN_AIZUCHI.test(t)) return;
+            sents.push({ i:i++, t:t, u:ui, ms:(u.t||0) });
+          });
+        });
+        return sents;
+      }
+      /* 文のテーマ判定。
+         キーが複数当たったときは「文の中で先に出てきたキー」のテーマを採る（同じ位置なら長いキー優先）。
+         最長一致だけで決めると『食費は…お子さんが大きくなると増える』が
+         「お子さん」に引っ張られて教育資金に化けるため（＝話題の主語を取り違える） */
+      function mnThemeOf(t){
+        const hits = {}; let primary = null, bestPos = Infinity, bestLen = 0, n = 0;
+        for(let j=0; j<MN_MATCH.length; j++){
+          const m = MN_MATCH[j];
+          const pos = t.indexOf(m.k);
+          if(pos < 0) continue;
+          if(!hits[m.id]){ hits[m.id] = 1; n++; } else hits[m.id]++;
+          if(pos < bestPos || (pos === bestPos && m.len > bestLen)){ bestPos = pos; bestLen = m.len; primary = m.id; }
+        }
+        return { primary:primary, n:n };
+      }
+      function mnFreqIndex(sents){
+        const c = {};
+        sents.forEach(function(s){
+          (s.t.match(/[一-龥ァ-ヶ]{2,6}/g)||[]).forEach(function(w){ c[w] = (c[w]||0)+1; });
+        });
+        const hot = Object.keys(c).filter(function(w){ return c[w] >= 3; })
+                          .sort(function(a,b){ return c[b]-c[a]; }).slice(0, 30);
+        return function(t){ let n = 0; hot.forEach(function(w){ if(t.indexOf(w)>=0) n++; }); return n; };
+      }
+      function mnScore(s, freq){
+        const t = s.t; let sc = 0;
+        const nums = t.match(new RegExp(MN_NUM.source, 'g')) || [];
+        sc += Math.min(nums.length, 2) * 3.0;
+        if(MN_DECIDE.test(t)) sc += 2.5;
+        if(MN_RISK.test(t))   sc += 2.0;
+        if(MN_GOAL.test(t))   sc += 1.5;
+        sc += Math.min(s.hitN||0, 2) * 1.2;
+        sc += Math.min(freq(t), 2) * 0.8;
+        const L = t.length;
+        if(L >= 25 && L <= 70) sc += 0.6;
+        if(L < 12)  sc -= 2.0;
+        if(L > 110) sc -= 1.5;
+        if(MN_ASK.test(t)) sc -= 2.5;
+        // hitN===0 の文は theme==='other' として先に捨てられるため、雑談の減点は hitN<=1 で判定する
+        if(MN_SMALL.test(t) && !nums.length && (s.hitN||0) <= 1) sc -= 3.0;
+        if(s.lastInTheme) sc += 0.8;
+        // 断定・商品名を含む発言は本文に採らない（原文は発言メモに残るので改ざんにはならない）
+        if(mnHasNG(t) || mnHasBrand(t)) sc = -99;
+        return sc;
+      }
+      function mnGrams(s){ const S = {}; for(let i=0;i<s.length-1;i++) S[s.slice(i,i+2)] = 1; return S; }
+      function mnSim(a, b){
+        const A = mnGrams(a), B = mnGrams(b), ka = Object.keys(A), kb = Object.keys(B); let n = 0;
+        ka.forEach(function(g){ if(B[g]) n++; });
+        return n / Math.max(1, Math.min(ka.length, kb.length));
+      }
+      function mnPick(list, freq){
+        const maxN = (list.length >= 8) ? 4 : (list.length >= 4 ? 3 : 2);
+        const sorted = list.slice().sort(function(a,b){ return b.sc - a.sc; });
+        const out = [];
+        for(let i=0; i<sorted.length && out.length<maxN; i++){
+          const s = sorted[i];
+          if(s.sc <= 0.5) continue;
+          const dup = out.some(function(o){ return mnSim(o.t, s.t) > 0.6; });
+          if(!dup) out.push(s);
+        }
+        return out.sort(function(a,b){ return a.i - b.i; });
+      }
+      function mnGroup(picked){
+        const items = []; let cur = null;
+        picked.forEach(function(s){
+          if(cur && (s.i - cur.lastI) <= 2 && (cur.body.length + s.t.length) < 160){
+            cur.body += s.t + '。'; cur.lastI = s.i;
+          } else { cur = { body: s.t + '。', lastI: s.i }; items.push(cur); }
+        });
+        return items;
+      }
+      function mnTrimLead(s){
+        return s.replace(/^[、。\s]+|[、。\s]+$/g, '')
+                .replace(/(?:です|ます|でした|ました|という|ということ)$/,'')
+                // 形式名詞は語ごと落とす（1文字だけ削ると「保険のこと」→「保険のこ」になり見出しが壊れる）
+                .replace(/(?:のこと|のところ|の場合|のもの|のため|こと|ところ|もの)$/,'')
+                .replace(/[のはがをにでとも]$/,'').slice(0, 16);
+      }
+      function mnSuffix(t){
+        if(MN_DECIDE.test(t)) return 'の方針';
+        if(MN_RISK.test(t))   return 'の注意点';
+        if(MN_NUM.test(t))    return 'の見通し';
+        return 'の整理';
+      }
+      function mnLead(item, theme, used){
+        const t = item.body;
+        for(let i=0; i<theme.leads.length; i++){
+          const h = theme.leads[i];
+          if(h.re.test(t) && !used[h.lead]){ used[h.lead] = 1; return h.lead; }
+        }
+        const g = t.match(/(?:目標|目安|めやす)[はもを]?\s*(?:約)?([0-9,.]+\s*(?:億|万)?円)/);
+        if(g){ const L2 = theme.short + '（目標：約' + g[1] + '）'; if(!used[L2]){ used[L2] = 1; return L2; } }
+        const k = t.match(/^([^、。]{2,14}?)(?:は|が|について|の場合|を|も)/);
+        if(k && !MN_STOPLEAD.test(k[1])){
+          const L3 = mnTrimLead(k[1]) + mnSuffix(t);
+          if(L3.length >= 4 && !used[L3]){ used[L3] = 1; return L3; }
+        }
+        let L4 = theme.short + mnSuffix(t), n = 2;
+        while(used[L4]){ L4 = theme.short + 'の確認（' + (n++) + '）'; }
+        used[L4] = 1; return L4;
+      }
+      /* 金額（万円）→ 1億以上は「約○.○億円」。
+         符号は付けない（「約-1,200万円」を作らない）＝マイナスは呼び出し側で「〜の不足」と文にする */
+      function mnMoney(man){
+        const a = Math.abs(Math.round(man||0));
+        if(a >= 10000) return (a/10000).toFixed(1).replace(/\.0$/,'') + '億円';
+        return fmt(a) + '万円';
+      }
+      const mnAmt = (v)=> (v < 0 ? '約'+mnMoney(v)+'の不足' : '約'+mnMoney(v));
+      /* ツールの試算値をテーマ別のテンプレ文にする。
+         既存の計算関数は「呼んで読むだけ」で、書き換えは一切しない。
+         語尾は「〜という試算結果でした／〜という計算です」に固定＝断定・推奨を構造的に作れないようにする */
+      function mnFacts(){
+        const F = [];
+        const push = function(theme, lead, text){ if(text) F.push({ theme:theme, lead:lead, text:text }); };
+        let P = null;
+        try{ P = buildProfile(); }catch(e){ return F; }
+        const a1 = Math.round(num('age-point-1',65)), a2 = Math.round(num('age-point-2',100));
+        const r1 = P.rows.find(function(r){ return r.hAge===a1; });
+        const r2 = P.rows.find(function(r){ return r.hAge===a2; });
+        if(r1) push('retire', a1+'歳までの資産見通し',
+          '現在のご入力条件では、'+a1+'歳時点の金融資産は'+mnAmt(r1.net)
+          + (r1.inflF ? '（今のお金の価値に換算すると'+mnAmt(r1.net/r1.inflF)+'）' : '')
+          + 'という試算結果でした。'
+          + (r2 ? a2+'歳時点では'+mnAmt(r2.net)+(r2.net<0 ? 'となる見込みです。' : 'の見込みです。') : ''));
+        if(P.depletion) push('retire', '資金が不足する時期',
+          '同じ条件のままだと、'+P.depletion.hAge+'歳（'+P.depletion.year+'年）ごろに金融資産が底をつく計算になります。');
+        else if(P.minRow) push('retire', '残高がもっとも少なくなる時期',
+          'もっとも残高が少なくなるのは'+P.minRow.hAge+'歳時点で、'+mnAmt(P.minRow.net)+'という計算です。');
+        const cs = P.rows.find(function(r){ return r.cash < 0; });
+        if(cs) push('budget', '預貯金が不足する期間',
+          '運用を取り崩さない前提では、'+cs.hAge+'歳ごろに預貯金が不足する期間が出る計算です。');
+        if(P.living) push('budget', '毎月の生活費の前提',
+          '毎月の生活費は合計 約'+(Math.round(P.living*10)/10)+'万円として試算しています。');
+        if(P.eduRemain > 0) push('education', '教育資金の見込み',
+          'これから必要になる教育費の見込みは、お子さま合計で約'+mnMoney(P.eduRemain)+'です。');
+        if(houseType !== 'rent'){
+          try{
+            const sc = buildLoanSchedule();
+            if(sc.rows.length) push('loan', '返済の前提',
+              '当初の毎月返済は約'+(Math.round(sc.rows[0].payment*10)/10)+'万円（ボーナス返済分を除く。借入 約'+mnMoney(num('house-price',0))
+              +'・当初金利'+num('loan-rate',0)+'%・'+num('loan-term',35)+'年）という前提で試算しました。'
+              +'変動金利の場合、見直しのたびに返済額は変わります。');
+          }catch(e){}
+          if(htype === 'ichijo'){
+            try{
+              const ic = Math.round(ichijoCompareTotal());
+              // 差が負（一条が不利）のときに絶対値だけ書くと向きが伝わらないため、プラスのときだけ出す
+              if(ic > 0) push('house', '住まいの性能による差',
+                '一般的な住宅との差は、30年で約'+mnMoney(ic)+'（光熱費・太陽光・メンテナンスの3項目のみ）という試算です。'
+                +'初期費用・建物価格差は含みません。地域・電力料金・FIT制度・使用状況により大きく変わり、'
+                +'当事務所が公表値と公的統計をもとに作成した概算の目安です'
+                +'（一条工務店株式会社の公式資料ではなく、同社の提携・監修を受けたものでもありません）。');
+            }catch(e){}
+          }
+        }
+        if(!isSingle()){
+          try{
+            const nh = survivorNeed('h');
+            if(nh && nh.rawNeed > 0){
+              push('insure', '万一のときの必要額',
+                hNameH()+'に万一のときに備えたい保障額のめやすは約'+mnMoney(nh.rawNeed)
+                + (nh.ins>0 ? '、ご加入中の保障を差し引いた不足は約'+mnMoney(nh.need) : '')
+                + 'という計算でした（貯蓄などで備える分も含みます。前提により増減します）。');
+            } else if(nh){
+              // 0のときに「約0万円」と書くと誤解を招くため、計算の意味を文で説明する
+              push('insure', '万一のときの必要額',
+                'いまのご入力（遺族年金・遺されたご家族の収入・資産）では、'+hNameH()
+                +'に万一のときの不足は生じない計算でした（生活水準や働き方の前提を変えると結果は変わります）。');
+            }
+          }catch(e){}
+        }
+        try{
+          const iv = readInvestments();
+          // 商品名の自由入力がそのまま自動生成文に載らないようにする（特定商品の推奨に見えないため）
+          const ivName = function(v){ return mnHasBrand(v.name||'') ? 'その他の積立' : v.name; };
+          if(iv.length) push('invest', '積立の前提',
+            '積立は'+ iv.slice(0,2).map(function(v){ return ivName(v)+' 月'+v.monthly+'万円・想定利回り'+v.ret+'%'; }).join('、')
+            +'という前提で試算しています（運用の成果は保証されるものではありません）。');
+        }catch(e){}
+        const pm = num('pension-monthly',0);
+        if(pm) push('retire', '公的年金の前提',
+          '公的年金は'+num('pension-age',65)+'歳から月額 約'+pm+'万円の前提で試算しています。');
+        return F;
+      }
+      function mnMeta(utters){
+        const d = new Date(mnT0 || Date.now());
+        let last = utters.length ? (utters[utters.length-1].t || 0) : 0;
+        if(last > 12*60*60*1000) last = 0;      // 前日の録音を持ち越したとき「約1440分」にならないように
+        const e = new Date((mnT0 || Date.now()) + last);
+        const hm = function(x){ return x.getHours()+':'+String(x.getMinutes()).padStart(2,'0'); };
+        return { dateLabel: d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate(),
+                 start: hm(d), end: hm(e), minutes: last ? Math.max(1, Math.round(last/60000)) : 0,
+                 attendees: ($('mn-attendees') && $('mn-attendees').value.trim()) || '' };
+      }
+      function mnRawLines(utters){
+        return (utters||[]).map(function(u){
+          const s = Math.floor((u.t||0)/1000);
+          return { time: String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'), x:u.x };
+        });
+      }
+      function mnBuild(utters){
+        const sents = mnBuildSentences(utters);
+        const facts = mnFacts();
+        const model = { meta: mnMeta(utters), sections:[], todo:[], rawLines: mnRawLines(utters) };
+        const chars = sents.reduce(function(a,s){ return a + s.t.length; }, 0);
+        if(chars < 40){ model.tooShort = true; return model; }
+        const freq = mnFreqIndex(sents);
+        const byTheme = {}, order = [], leftoverExtra = [], usedSent = {};
+        sents.forEach(function(s){
+          const r = mnThemeOf(s.t);
+          s.theme = r.primary || 'other'; s.hitN = r.n;
+          if(s.theme === 'other') return;
+          if(!byTheme[s.theme]){ byTheme[s.theme] = []; order.push(s.theme); }
+          byTheme[s.theme].push(s);
+        });
+        order.forEach(function(id){
+          if(model.sections.length >= 6) return;
+          const list = byTheme[id];
+          const theme = MN_THEMES.filter(function(x){ return x.id===id; })[0];
+          const tFacts = facts.filter(function(f){ return f.theme===id; }).slice(0,2);
+          if(list.length < 2 && !tFacts.length) return;
+          list[list.length-1].lastInTheme = true;
+          const joined = list.map(function(s){ return s.t; }).join('');
+          let title = theme.title, titleRe = null;
+          for(let i=0; i<theme.titles.length; i++){
+            if(theme.titles[i].re.test(joined)){ title = theme.titles[i].t; titleRe = theme.titles[i].re; break; }
+          }
+          // 見出しを決めた文は必ず本文に残す（見出しだけ「破綻リスク」で中身に破綻の話が無い、を防ぐ）
+          list.forEach(function(s){
+            s.sc = mnScore(s, freq);
+            if(titleRe && s.sc > -50 && titleRe.test(s.t)) s.sc += 2.5;
+          });
+          const used = {};
+          const picked = mnPick(list, freq);
+          picked.forEach(function(s){ usedSent[s.i] = 1; });   // 本文に採った文は末尾の宿題欄に重ねて出さない
+          const items = mnGroup(picked).map(function(it){
+            return { lead: mnLead(it, theme, used), body: it.body, fromFact:false };
+          });
+          tFacts.forEach(function(f){
+            let lead = f.lead; while(used[lead]) lead += '（試算）';
+            // factLead＝重複判定用の元キー（lead を書き換えると下の leftover 判定とズレて同じ試算文が2回出る）
+            used[lead] = 1; items.push({ lead:lead, body:f.text, fromFact:true, factLead:f.lead });
+          });
+          // 1項目だけの見出しは体裁を崩すので、試算文だけの1項目は「本日の試算値」へ回す
+          if(items.length >= 2) model.sections.push({ no: model.sections.length+1, title:title, items:items });
+          else if(items.length === 1 && items[0].fromFact) leftoverExtra.push(items[0]);
+          else if(items.length === 1) model.sections.push({ no: model.sections.length+1, title:title, items:items });
+        });
+        // どのテーマにも入らなかった試算文は、最後に「本日の試算値」としてまとめて出す
+        const usedThemes = {};
+        model.sections.forEach(function(sec){ sec.items.forEach(function(it){ if(it.fromFact) usedThemes[it.factLead || it.lead] = 1; }); });
+        const leftover = facts.filter(function(f){ return !usedThemes[f.lead]; })
+                              .map(function(f){ return { lead:f.lead, body:f.text, fromFact:true, factLead:f.lead }; })
+                              .concat(leftoverExtra);
+        if(leftover.length && model.sections.length < 6){
+          model.sections.push({ no: model.sections.length+1, title:'本日の試算値（ツールの計算結果）', items: leftover.slice(0,6) });
+        }
+        /* 発言からの抜粋が乏しいと、ツールの試算値だけが並ぶ「議事録」になる。
+           お客様が「誰も口にしていない数字」を議事録として受け取る事故を防ぐため、
+           発言由来が2件に満たないときは丸ごと捨てて発言メモの表示に落とす */
+        const talkN = model.sections.reduce(function(n, sec){
+          return n + sec.items.filter(function(it){ return !it.fromFact; }).length;
+        }, 0);
+        if(talkN < 2){ model.sections = []; model.noTheme = true; }
+        model.todo = sents.filter(function(s){
+          return !usedSent[s.i]                 // 本文に載せた文の重複掲載を避ける
+                 && /(?:次回|までに|お送りし|用意し|準備し|確認し|持ってき|宿題|申し込|提出|見積|取り寄せ)/.test(s.t)
+                 && !mnHasBrand(s.t);           // 会社名・商品名は落とす（断定NGは宿題を落としすぎるので見ない）
+        }).slice(0, 8).map(function(s){ return s.t; });
+        if(!model.sections.length) model.noTheme = true;
+        return model;
+      }
+      function mnRenderHTML(model){
+        const m = model.meta;
+        let h = '<div class="mn-doc" id="mn-doc" contenteditable="true" spellcheck="false">';
+        h += '<p class="mn-meta">' + esc(m.dateLabel) + ' ' + esc(m.start)
+           + (m.minutes ? '〜' + esc(m.end) + '（約' + m.minutes + '分）' : '')
+           + (m.attendees ? '　ご出席：' + esc(m.attendees) : '') + '</p>';
+        if(model.tooShort){
+          h += '<p class="mn-item mn-empty">文字起こしが短いため、概要は作成していません。録音するか、下の欄に打ち込んでから「概要を作る」を押してください。</p>';
+        } else if(model.noTheme){
+          h += '<h4 class="mn-h">1. 本日のお話（自動でのテーマ分けができませんでした）</h4>';
+          // 生ログをそのまま出す唯一の経路。スコアリングを通らないので、ここでNG表現・商品名を落とす
+          model.rawLines.filter(function(r){ return !mnHasNG(r.x) && !mnHasBrand(r.x); })
+                        .slice(0,20).forEach(function(r){ h += '<p class="mn-item">・' + esc(r.x) + '</p>'; });
+        } else {
+          model.sections.forEach(function(sec){
+            h += '<h4 class="mn-h">' + sec.no + '. ' + esc(sec.title) + '</h4>';
+            sec.items.forEach(function(it){
+              h += '<p class="mn-item' + (it.fromFact ? ' mn-item-calc' : '') + '"><b>' + esc(it.lead) + ':</b> '
+                 + (it.fromFact ? '<span class="mn-tag">ツール試算</span>' : '') + esc(it.body) + '</p>';
+            });
+          });
+          if(model.todo.length){
+            h += '<h4 class="mn-h">' + (model.sections.length+1) + '. 面談中に出た宿題・確認事項</h4>';
+            model.todo.forEach(function(t){ h += '<p class="mn-item">・' + esc(t) + '</p>'; });
+          }
+        }
+        h += '</div>';
+        // 注記は contenteditable の外に置く＝手直ししても消えない
+        h += '<div class="mn-notes">' + MN_NOTES.map(function(n){ return '<p>※ ' + esc(n) + '</p>'; }).join('') + '</div>';
+        h += '<details class="mn-raw"><summary><i class="fa-solid fa-list-ul"></i> 発言メモ（文字起こし全文 ' + model.rawLines.length + '行）</summary>'
+           + model.rawLines.map(function(r){ return '<p><span class="mn-t">' + esc(r.time) + '</span>' + esc(r.x) + '</p>'; }).join('')
+           + '</details>';
+        return h;
+      }
+      // コピー・保存用のテキスト（手直しした内容＋次の一手＋注記。注記は必ず付ける）
+      function mnText(){
+        const doc = $('mn-doc');
+        if(doc && doc.querySelector('.mn-empty')) return '';   // 「作成していません」をコピーさせない
+        let body = doc ? doc.innerText.replace(/\n{3,}/g,'\n\n').trim() : '';
+        if(!body) return '';
+        const nx = (nxLast ? nextToText(nxLast, '次の一手') : '');
+        return body + (nx ? '\n\n' + nx : '') + '\n\n―――\n' + MN_NOTES.map(function(n){ return '※ ' + n; }).join('\n');
+      }
+      function mnCopy(){
+        const txt = mnText();
+        if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(function(){ setStatus('概要をコピーしました'); },
+                                                  function(){ mnCopyFallback(txt); });
+        } else mnCopyFallback(txt);
+      }
+      function mnCopyFallback(txt, label){
+        const ta = document.createElement('textarea');
+        ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        let ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+        document.body.removeChild(ta);
+        setStatus(ok ? (label || '概要') + 'をコピーしました' : 'コピーできませんでした。文字を選んでコピーしてください');
+      }
+      function mnDownload(){
+        const txt = mnText();
+        if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
+        const d = new Date();
+        const name = '面談メモ_' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '.txt';
+        try{
+          const blob = new Blob([ '﻿' + txt ], { type:'text/plain;charset=utf-8' });   // BOM付き＝Windowsのメモ帳でも文字化けしない
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = name;
+          document.body.appendChild(a); a.click();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }catch(e){ setStatus('保存できませんでした。コピーをお使いください'); }
+      }
+      function mnRun(){
+        const box = $('mn-out'); if(!box) return;
+        if($('mn-doc')){
+          if(!confirm('手直しした内容は消えます。作り直しますか？（文字起こしは残るので、何度でも作り直せます）')) return;
+          mnSave();   // 保存は800msのデバウンス。直前の手直しを取りこぼさないよう、退避の前に確定させる
+          try{ localStorage.setItem(MN_KEY+'_prev', localStorage.getItem(MN_KEY)||''); }catch(e){}   // 1世代だけ退避
+        }
+        mnBig(false);   // モーダルに本文が出ている状態で作り直すと、置き場所がずれるので必ず戻す
+        box.innerHTML = mnRenderHTML(mnBuild(mnUtter));
+        mnSave(); vcSyncDockH();
+      }
+      function mnRestorePrev(){
+        let o = null;
+        try{ o = JSON.parse(localStorage.getItem(MN_KEY+'_prev')||'null'); }catch(e){}
+        if(!o || !o.html){ setStatus('戻せる下書きはありません'); return; }
+        if($('mn-out')) $('mn-out').innerHTML = o.html;
+        mnSave(); vcSyncDockH(); setStatus('1つ前の下書きに戻しました');
+      }
+
+      /* ============================================================
+         次の一手（ネクストアクション）
+         ・生成元＝試算結果／未入力・既定値のまま／文字起こしで出た話題／現状⇔将来の差分
+         ・すべて派生値。collectState・保存データ・共有リンクには一切含めない
+         ・文字起こしは「その話題が出たか」の真偽値だけを使い、原文は転記しない
+         ・テンプレは静的文字列＋数値のみ＝特定商品を勧める文をツールが作れない構造にする
+         ============================================================ */
+      const NEXT_TOUCHED = Object.create(null);
+      function nextWatchInputs(){
+        const p = $('input-panel'); if(!p) return;
+        p.addEventListener('input', function(e){ if(e.target && e.target.id) NEXT_TOUCHED[e.target.id] = 1; }, true);
+      }
+      function isPristine(id){
+        const el = $(id); if(!el) return false;
+        return !NEXT_TOUCHED[id] && String(el.value) === String(el.defaultValue);
+      }
+      function talkHas(re){ return re.test(mnUtter.map(function(u){ return u.x; }).join('')); }
+      function nextDueLabel(days){
+        const d = new Date(); d.setDate(d.getDate() + days);
+        return (d.getMonth()+1) + '/' + d.getDate() + '（' + '日月火水木金土'[d.getDay()] + '）まで';
+      }
+      function nextDueDays(who, urgency){
+        if(urgency >= 5) return who==='cust' ? 3 : 5;
+        if(urgency <= 2) return who==='cust' ? 14 : 21;
+        return who==='cust' ? 7 : 10;
+      }
+      function buildNextContext(){
+        const p = buildProfile();
+        let n = null; try{ n = insuranceNeed(); }catch(e){ n = null; }
+        let cashShort = null;
+        p.rows.forEach(function(r){ if(cashShort===null && r.cash < 0) cashShort = r; });
+        const gs = (typeof sumStats==='function' && PLANS.genjo.sum) ? sumStats(PLANS.genjo.sum) : null;
+        const ms = (typeof sumStats==='function' && PLANS.mirai.sum) ? sumStats(PLANS.mirai.sum) : null;
+        const yg = p.eduByChild.length
+          ? p.eduByChild.reduce(function(a,x){ return x.age < a.age ? x : a; }, p.eduByChild[0]) : null;
+        let ins = [];  try{ ins = readInsurances(); }catch(e){}
+        let loanBal = 0; try{ loanBal = (houseType==='rent') ? 0 : currentLoanBalance(); }catch(e){}
+        return { p:p, n:n, cashShort:cashShort, gs:gs, ms:ms, yg:yg, ins:ins, loanBal:loanBal,
+                 insFlat: num('ins-total-h',0) + num('ins-total-w',0),
+                 defense: Math.round(p.living*6), buying: (houseType==='buy') };
+      }
+      function nextInvDelta(){
+        if(!PLANS.genjo.state || !PLANS.mirai.state) return 0;
+        const sum = function(st){ return (st.investments||[]).reduce(function(a,v){ return a + (parseFloat(v.monthly)||0); }, 0); };
+        return Math.round((sum(PLANS.mirai.state) - sum(PLANS.genjo.state)) * 10) / 10;
+      }
+      const NEXT_RULES = [
+        { id:'blank.ins', cat:'hoken', src:'blank', impact:5, urgency:3, blocker:true,
+          when: function(c){ return !c.p.single && c.ins.length===0 && c.insFlat===0 && c.n && (c.n.h.rawNeed>0 || c.n.w.rawNeed>0); },
+          make: function(c){
+            const mx = Math.max(c.n.h.rawNeed, c.n.w.rawNeed);
+            return { title:'加入中の保険の内容確認',
+              basis:'加入中の保障が未入力のため、必要保障額 約'+fmt(mx)+'万円は「いまの保障を差し引く前」の金額です。',
+              tasks:[ { who:'cust', text:'次回までに、加入中の保険証券（またはご契約内容のお知らせ）をご用意ください。ご契約者名・保険種類・保険金額・保険期間・月払保険料の5点が分かるものをお願いします。' },
+                      { who:'staff', text:'いただいた内容を入力し、必要保障額との差額を再計算してお持ちします。' } ] };
+          } },
+        { id:'blank.pension', cat:'retire', src:'blank', impact:4, urgency:3, blocker:true,
+          when: function(){ return (typeof penMode==='function') && penMode()==='direct' && isPristine('pension-monthly'); },
+          make: function(){
+            return { title:'公的年金の見込額の確認',
+              basis:'年金月額 '+fmt(num('pension-monthly',0))+'万円は初期値のままで、ご自身の記録は反映していません。',
+              tasks:[ { who:'cust', text:'次回までに、ねんきん定期便（毎年のお誕生月に届きます）またはねんきんネットで見込額をご確認ください。' },
+                      { who:'staff', text:'見込額を入力し直し、老後の不足額と資産推移を引き直してお持ちします。' } ] };
+          } },
+        { id:'calc.depletion', cat:'overall', src:'calc', impact:5,
+          urgency: function(c){ return (c.p.depletion.hAge - c.p.hAge <= 10) ? 5 : 4; },
+          when: function(c){ return !!c.p.depletion; },
+          make: function(c){
+            return { title:'資金が不足する時期への対策',
+              basis:'試算では '+hNameH()+c.p.depletion.hAge+'歳（'+c.p.depletion.year+'年）ごろに金融資産が不足する見込みです。',
+              tasks:[ { who:'staff', text:'不足の時期を後ろにずらす案を、積立額・就労期間・支出の3通りで将来プランの数字にして比較表でお持ちします。' },
+                      { who:'cust', text:'3通りのうち、生活の実感として取り組みやすい順に順位をお聞かせください。' } ] };
+          } },
+        { id:'calc.cashShort', cat:'balance', src:'calc', impact:4, urgency:3,
+          when: function(c){ return !c.p.depletion && !!c.cashShort; },
+          make: function(c){
+            return { title:'預貯金が不足する期間の確認',
+              basis:'運用を取り崩さない前提では、'+c.cashShort.hAge+'歳ごろに預貯金が不足する期間が出る計算です。',
+              tasks:[ { who:'staff', text:'その期間に取り崩す商品と順番（どれを何歳から使うか）を整理してお持ちします。' } ] };
+          } },
+        { id:'calc.defense', cat:'invest', src:'calc', impact:4, urgency:4,
+          when: function(c){ return c.p.cashNow < c.defense; },
+          make: function(c){
+            return { title:'すぐ使えるお金（生活防衛資金）の確認',
+              basis:'すぐ使える預貯金は 約'+fmt(c.p.cashNow)+'万円で、毎月の生活費6か月分（約'+fmt(c.defense)+'万円）を下回っています。',
+              tasks:[ { who:'cust', text:'急な出費に備えて、どのくらいを手元に置いておきたいかをお聞かせください。' },
+                      { who:'staff', text:'手元資金を確保した場合の資産推移を、いまの試算と並べてお出しします。' } ],
+              caution:'運用に回した資金は必要なときに元本を下回っていることがあります。' };
+          } },
+        { id:'calc.needH', cat:'hoken', src:'calc',
+          impact: function(c){ return c.n.h.need>=1000 ? 5 : (c.n.h.need>=500 ? 4 : 3); },
+          urgency: function(c){ return (c.yg && c.yg.age<=6) ? 4 : 3; },
+          when: function(c){ return c.n && c.n.h.need > 0; },
+          make: function(c){
+            const r = c.n.h;
+            return { title: hNameH()+'に万一のときの不足額の検討',
+              basis:'必要資金 約'+fmt(r.spend)+'万円に対し、いまの備え（遺族年金・遺されたご家族の収入・資産'
+                    +(r.ins>0 ? '・加入中の保険' : '')+'）では 約'+fmt(r.need)+'万円 不足する計算です。',
+              tasks:[ { who:'cust', text:'万一のときにご家族がどのくらいの期間・水準の生活を望まれるかをお聞かせください（試算は生活費7割・末子独立までを前提にしています）。' },
+                      { who:'staff', text:'不足額 約'+fmt(r.need)+'万円について、掛け捨て型で備える場合と貯蓄で備える場合の負担額を、同じ表に並べてお出しします。' } ],
+              caution:'必要額は前提が変わると増減します。保険料は年齢・保障額・健康状態により変わります。' };
+          } },
+        { id:'calc.needW', cat:'hoken', src:'calc',
+          impact: function(c){ return c.n.w.need>=1000 ? 5 : (c.n.w.need>=500 ? 4 : 3); },
+          urgency: function(c){ return (c.yg && c.yg.age<=6) ? 4 : 3; },
+          when: function(c){ return c.n && c.n.w.need > 0; },
+          make: function(c){
+            const r = c.n.w;
+            return { title: wNameH()+'に万一のときの不足額の検討',
+              basis:'必要資金 約'+fmt(r.spend)+'万円に対し、いまの備えでは 約'+fmt(r.need)+'万円 不足する計算です。'
+                    +(r.pensionKosei===0 ? '（'+wNameH()+'に万一のとき、遺族厚生年金は受給要件を満たさない前提で計算しています）' : ''),
+              tasks:[ { who:'staff', text:'不足額 約'+fmt(r.need)+'万円について、備え方ごとの負担額を同じ表に並べてお出しします。' } ],
+              caution:'必要額は前提が変わると増減します。' };
+          } },
+        { id:'calc.insOver', cat:'hoken', src:'calc', impact:3, urgency:2,
+          when: function(c){ return c.n && Math.max(c.n.h.over, c.n.w.over) >= 500; },
+          make: function(c){
+            const ov = Math.max(c.n.h.over, c.n.w.over);
+            return { title:'保障の重なりがないかの確認',
+              // 必要保障額の対象範囲を書かないと「重なり＝減らせる」と読めてしまう（医療・介護等は対象外のため）
+              basis:'加入中の死亡保障が、この試算の必要保障額を 約'+fmt(ov)+'万円 上回っています。'
+                    +'この必要保障額は「末子独立まで（お子さまがいない場合は15年）の生活費・教育費・住居費・葬儀費用」だけを対象にした計算で、'
+                    +'医療・就業不能・介護、その後の配偶者の生活費、相続や納税の資金は含んでいません。',
+              tasks:[ { who:'staff', text:'加入中の保障を一覧にし、必要保障額と重ねた図をお出しします。' },
+                      { who:'cust', text:'保障の余裕をどこまで持たれたいかのお考えをお聞かせください。' } ],
+              caution:'上回っている分がそのまま不要という意味ではありません。減額・解約には、健康状態により再加入や増額ができない／保障に空白が生じる／貯蓄型は解約時に払込保険料を下回ることがある、という点があります。必要額は前提により変わります。' };
+          } },
+        { id:'calc.soloLoan', cat:'housing', src:'calc', impact:4,
+          urgency: function(c){ return c.buying ? 5 : 3; },
+          when: function(c){ return !c.p.single && houseType!=='rent' && c.loanBal>0
+                                    && (typeof loanType==='function') && loanType()==='solo-h'; },
+          make: function(c){
+            return { title:'ローンの名義と団信の対象の確認',
+              basis: hNameH()+'の単独ローンのため、'+wNameH()+'に万一のときは残債 約'+fmt(c.loanBal)+'万円がそのまま残る計算です。',
+              tasks:[ { who:'cust', text:'ペアローン・連帯債務など名義の選択肢について、金融機関のご説明をご確認ください。' },
+                      { who:'staff', text:'名義のパターンごとに、万一のときの残債と必要保障額がどう変わるかを比較してお持ちします。' } ] };
+          } },
+        { id:'calc.dansin', cat:'housing', src:'calc', impact:3,
+          urgency: function(c){ return c.buying ? 4 : 2; },
+          when: function(c){
+            if(houseType==='rent' || !c.loanBal) return false;
+            if(typeof dansinTypeOf !== 'function') return false;
+            return dansinTypeOf('h')==='general' && (c.p.single || dansinTypeOf('w')==='general');
+          },
+          make: function(){
+            return { title:'療養中の返済についての確認',
+              basis:'団信は一般型（死亡・高度障害が中心）の前提で試算しています。療養中で働けない期間も返済は続きます。',
+              tasks:[ { who:'staff', text:'働けない期間が続いた場合の毎月の収支と、高額療養費制度の自己負担上限を別紙で整理してお持ちします。' } ] };
+          } },
+        { id:'calc.variable', cat:'housing', src:'calc', impact:4,
+          urgency: function(c){ return c.buying ? 5 : 3; },
+          when: function(c){ return houseType!=='rent' && c.loanBal>0
+                                    && (typeof loanRateType==='function') && loanRateType()!=='fixed'; },
+          make: function(){
+            return { title:'金利が上がった場合の返済額の確認',
+              basis:'変動金利（当初 '+num('loan-rate',0)+'%）で試算しています。金利は見直しのたびに変わります。',
+              tasks:[ { who:'staff', text:'金利が +1% / +2% になった場合の毎月返済額と、65歳時点の残高を試算してお持ちします。' } ] };
+          } },
+        { id:'blank.childPlan', cat:'edu', src:'blank', impact:4, urgency:2, blocker:true,
+          when: function(c){ return c.p.children.some(function(x){ return x.age<=15 && x.highEd==='none'; }); },
+          make: function(){
+            return { title:'お子さまの進路の想定',
+              basis:'高校卒業後の進路が「進学しない」の設定のままのお子さまがいます。教育費の見込みがその分少なく出ています。',
+              tasks:[ { who:'cust', text:'現時点でのご希望（大学・専門・自宅か下宿か）をお聞かせください。決まっていない場合は「いまの希望」で構いません。' },
+                      { who:'staff', text:'進路のパターン別に、教育費のピークがいつ・いくらになるかを並べてお出しします。' } ] };
+          } },
+        { id:'blank.retire', cat:'retire', src:'blank', impact:4, urgency:2,
+          when: function(){
+            try{ return !readIncomeEvents().some(function(e){ return /退職/.test(e.label); }); }catch(e){ return false; }
+          },
+          make: function(){
+            return { title:'退職金の見込みの確認',
+              basis:'臨時収入に退職金の登録がないため、退職金を含めずに試算しています。',
+              tasks:[ { who:'cust', text:'勤務先の退職金制度（見込額・支給年齢）をご確認ください。就業規則や社内サイトで確認できることが多いです。' },
+                      { who:'staff', text:'見込額を入れた場合の老後の資産推移をお出しします。' } ] };
+          } },
+        { id:'plan.none', cat:'plan', src:'plan', impact:3, urgency:3,
+          // 将来プランは未作成でも現状が自動コピーされるため sum の有無では判定できない（miraiTouched を見る）
+          when: function(c){ return (typeof miraiTouched!=='undefined') ? !miraiTouched : (!PLANS.mirai.sum || !c.ms); },
+          make: function(){
+            return { title:'将来プランの作成',
+              basis:'いまは「現状プラン」だけの状態です。変更した場合との差はまだ比較していません。',
+              tasks:[ { who:'staff', text:'積立額・働き方・住まいを変えた「将来プラン」を作り、現状との差を数字でお出しします。' } ] };
+          } },
+        { id:'plan.solved', cat:'plan', src:'plan', impact:5, urgency:4,
+          when: function(c){ return c.gs && c.ms && c.gs.dep && !c.ms.dep; },
+          make: function(c){
+            return { title:'将来プランで着手する項目の決定',
+              basis:'現状プランでは '+c.gs.dep.hAge+'歳ごろに資金が不足する試算ですが、将来プランでは不足が出ない試算になっています。',
+              tasks:[ { who:'cust', text:'将来プランで変更した項目のうち、実際に着手できるものを1つお決めください。' },
+                      { who:'staff', text:'変更した項目ごとの効果額を大きい順に並べ、着手する順番の案をお出しします。' } ],
+              caution:'いずれも入力条件にもとづく試算で、将来の結果を保証するものではありません。' };
+          } },
+        { id:'plan.invUp', cat:'invest', src:'plan', impact:4, urgency:4,
+          when: function(){ return nextInvDelta() > 0; },
+          make: function(){
+            // 「手続きの時期を決める」は増額が決定済みという前提の勧奨に読めるため、実行するかどうかから問う
+            return { title:'積立額の見直し（将来プランとの差）',
+              basis:'将来プランでは、毎月の積立を現状より 月 '+fmt(nextInvDelta())+'万円 増やした場合を試算しています。',
+              tasks:[ { who:'cust', text:'この金額で無理がないか、実行する・しない・金額を変える のいずれにするかをご検討ください。' },
+                      { who:'staff', text:'増額した場合としない場合の資産推移を並べ、手続きの手順とあわせて1枚にまとめてお送りします。' } ],
+              caution:'積立を増やすとその分だけ手元の預貯金は減ります。運用の成果は保証されるものではなく、相場により元本を下回ることがあります。急な出費に備える資金を確保したうえでご検討ください。' };
+          } },
+        { id:'talk.iryo', cat:'hoken', src:'talk', impact:3, urgency:2,
+          when: function(){ return talkHas(/がん|入院|手術|医療|傷病|働けなく|就業不能/); },
+          make: function(){
+            return { title:'働けない期間の家計（本試算の対象外）',
+              basis:'本日この話題が出ましたが、この試算には医療費の自己負担と、働けない期間の収入減は含まれていません。',
+              tasks:[ { who:'staff', text:'高額療養費制度の自己負担上限と、収入が止まった場合の毎月の収支を別紙で整理してお持ちします。' } ] };
+          } },
+        { id:'talk.souzoku', cat:'tax', src:'talk', impact:3, urgency:2,
+          when: function(){ return talkHas(/相続|贈与|実家|親御|義父|義母/); },
+          make: function(){
+            return { title:'ご実家・相続に関する情報の整理',
+              basis:'本日この話題が出ましたが、親御さま世代の資産・不動産は、このツールの試算には含まれていません。',
+              tasks:[ { who:'cust', text:'ご実家の不動産の名義・おおよその評価、相続人の人数など、分かる範囲でお聞かせください。' },
+                      { who:'staff', text:'分かった範囲で論点を整理します。税額の判断は税理士にご確認いただきます。' } ] };
+          } },
+        { id:'talk.kuruma', cat:'balance', src:'talk', impact:3, urgency:3,
+          when: function(){
+            if(!talkHas(/車|クルマ|買い替え|マイカー/)) return false;
+            try{ return !readEvents().some(function(e){ return /車/.test(e.label); }); }catch(e){ return false; }
+          },
+          make: function(){
+            return { title:'お車の買い替え予定の反映',
+              basis:'本日この話題が出ましたが、ライフイベントに車の買い替えが登録されていません。',
+              tasks:[ { who:'cust', text:'次の買い替え時期とおおよその予算をお聞かせください（○年ごと・○○万円）。' },
+                      { who:'staff', text:'買い替えの周期と金額を入れた場合の資産推移をお出しします。' } ] };
+          } },
+        { id:'talk.hoken', cat:'hoken', src:'talk', impact:4, urgency:3,
+          when: function(c){
+            return talkHas(/保険|証券|共済|保障/) && c.ins.length===0 && c.insFlat===0;
+          },
+          make: function(){
+            return { title:'ご加入中の保障の棚卸し',
+              basis:'本日この話題が出ましたが、加入中の保障がツールに入っていないため、必要保障額から差し引けていません。',
+              tasks:[ { who:'cust', text:'加入中の保険の証券をご用意ください（保険種類・保険金額・保険期間・月払保険料が分かるもの）。' } ] };
+          } }
+      ];
+      // ツールが自動生成する文にNG表現が混じっていないか、出力前に必ず通す
+      const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
+      function nextAssertSafe(list){
+        list.forEach(function(it){
+          [it.title, it.basis].concat(it.tasks.map(function(t){ return t.text; })).forEach(function(s){
+            if(NEXT_NG_RE.test(s) && window.console) console.error('[next] 表現の見直しが必要:', it.id, s);
+          });
+        });
+        return list;
+      }
+      function nextResolve(v, c){ return (typeof v === 'function') ? v(c) : v; }
+      function nextSignals(c){
+        const out = [];
+        NEXT_RULES.forEach(function(rule, i){
+          let ok = false;
+          try{ ok = !!rule.when(c); }catch(e){ ok = false; }
+          if(!ok) return;
+          let body; try{ body = rule.make(c); }catch(e){ return; }
+          const impact = nextResolve(rule.impact, c), urgency = nextResolve(rule.urgency, c);
+          out.push({ id:rule.id, cat:rule.cat, src:rule.src, order:i, impact:impact, urgency:urgency,
+            score: impact*2 + urgency + (rule.blocker ? 2 : 0),
+            title:body.title, basis:body.basis, caution:body.caution || '',
+            tasks:(body.tasks||[]).map(function(t){
+              const days = nextDueDays(t.who, urgency);
+              return { who:t.who, text:t.text, due:nextDueLabel(days) };
+            }) });
+        });
+        return out;
+      }
+      const NEXT_SRC_ORDER = { calc:0, plan:1, talk:2, blank:3 };
+      function rankNext(list, max){
+        max = max || 5;
+        list.sort(function(a,b){
+          return (b.score - a.score)
+              || (NEXT_SRC_ORDER[a.src] - NEXT_SRC_ORDER[b.src])
+              || (a.order - b.order);
+        });
+        const main = [], rest = [], perCat = {}; let blankN = 0;
+        list.forEach(function(it){
+          const cn = perCat[it.cat] || 0;
+          const full = (main.length >= max) || (cn >= 2) || (it.src==='blank' && blankN >= 2);
+          if(full){ if(rest.length < 10) rest.push(it); return; }
+          main.push(it); perCat[it.cat] = cn + 1; if(it.src==='blank') blankN++;
+        });
+        return { main:nextAssertSafe(main), rest:nextAssertSafe(rest) };
+      }
+      function nextItemHTML(it, t){
+        return '<label class="nx-item" data-nx="' + esc(it.id + '|' + t.who) + '">'
+          + '<input type="checkbox">'
+          + '<span class="nx-body">'
+          +   '<b class="nx-lead">' + esc(it.title) + '：</b>'
+          +   '<span class="nx-txt">' + esc(t.text) + '</span>'
+          +   '<span class="nx-basis">根拠：' + esc(it.basis) + '</span>'
+          +   (it.caution ? '<span class="nx-caution">※ ' + esc(it.caution) + '</span>' : '')
+          + '</span>'
+          + '<span class="nx-due">' + esc(t.due) + '</span>'
+          + '</label>';
+      }
+      function renderNextHTML(res){
+        const pick = function(who){
+          return res.main.map(function(it){
+            return it.tasks.filter(function(t){ return t.who===who; })
+                           .map(function(t){ return nextItemHTML(it, t); }).join('');
+          }).join('');
+        };
+        const cust = pick('cust'), staff = pick('staff');
+        const disc = '<p class="nx-disclaimer">※ 上記は本日ご入力いただいた条件による<b>試算</b>にもとづく確認事項で、'
+          + '将来の受取額・運用成果・税額を保証するものではありません。前提が変わると結果も変わります。'
+          + '税額は税理士、公的年金の実額は年金事務所でご確認ください。<br>'
+          + '※ 特定の保険商品・金融商品をおすすめするものではありません。保障の詳細は約款および'
+          + '「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」をご確認ください。<br>'
+          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</p>';
+        if(!cust && !staff){
+          return '<p class="nx-empty">いまお出しする宿題はありません。次回は年1回の定点確認として、収入・ご家族・保障の変化をご確認ください。</p>' + disc;
+        }
+        const more = res.rest.length
+          ? '<details class="nx-more"><summary>そのほかに確認しておきたいこと（' + res.rest.length + '件）</summary>'
+            + res.rest.map(function(it){ return it.tasks.map(function(t){ return nextItemHTML(it,t); }).join(''); }).join('')
+            + '</details>' : '';
+        return (cust  ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-user"></i> お客様にお願いしたいこと</div>' + cust + '</div>' : '')
+             + (staff ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-briefcase"></i> 担当（当方）が行うこと</div>' + staff + '</div>' : '')
+             + more + disc;
+      }
+      function nextToText(res, head){
+        const line = function(it, t){
+          return '□ ' + it.title + '（' + t.due + '）：' + t.text + '\n   根拠：' + it.basis
+               + (it.caution ? '\n   ※ ' + it.caution : '');
+        };
+        const block = function(label, who){
+          const rows = res.main.map(function(it){
+            return it.tasks.filter(function(t){ return t.who===who; }).map(function(t){ return line(it,t); }).join('\n');
+          }).filter(Boolean);
+          return rows.length ? ('■ ' + label + '\n' + rows.join('\n') + '\n') : '';
+        };
+        /* テキストにも打消し表示を必ず付ける。
+           この文字列はコピーしてLINE・メールで顧客へ渡りうるため、画面の nx-disclaimer と同じ内容を末尾に置く
+           （議事録に取り込む場合は MN_NOTES と重なるが、単独コピーでも欠けないことを優先する） */
+        return (head || '次の一手') + '（次回までの宿題）\n'
+          + block('お客様にお願いしたいこと','cust')
+          + block('担当が行うこと','staff')
+          + '※ 上記は本日ご入力いただいた条件による試算にもとづく確認事項で、将来の受取額・運用成果・税額を保証するものではありません。前提が変わると結果も変わります。\n'
+          + '※ 特定の保険商品・金融商品をおすすめするものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」をご確認ください。\n'
+          + '※ 税額の判断は税理士、公的年金の実額は年金事務所でご確認ください。\n'
+          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。\n';
+      }
+      let nxLast = null;
+      /* 済チェックは「お名前」で顧客ごとに分ける。
+         ルールIDだけで持つと、A様で消化した宿題がB様の画面でも済に見えて宿題を取りこぼす */
+      function nxScope(){
+        const g = function(id){ return ($(id) && $(id).value.trim()) || ''; };
+        return g('h-name') + '/' + g('w-name');
+      }
+      function nxDone(){ try{ return JSON.parse(localStorage.getItem(NX_DONE_KEY)||'{}'); }catch(e){ return {}; } }
+      function nxRestoreDone(box){
+        const d = nxDone(), sc = nxScope();
+        box.querySelectorAll('.nx-item').forEach(function(el){
+          if(d[sc + '::' + el.dataset.nx]){ el.classList.add('is-done'); const c = el.querySelector('input'); if(c) c.checked = true; }
+        });
+      }
+      function nxRun(){
+        const box = $('next-actions'); if(!box) return;
+        let res = null;
+        try{ res = rankNext(nextSignals(buildNextContext()), 5); }
+        catch(e){ box.innerHTML = '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; return; }
+        nxLast = res;
+        box.innerHTML = renderNextHTML(res);
+        nxRestoreDone(box);
+        vcSyncDockH();
+      }
+      if($('next-actions')) $('next-actions').addEventListener('change', (e)=>{
+        const el = e.target.closest('.nx-item'); if(!el) return;
+        const on = el.querySelector('input') && el.querySelector('input').checked;
+        el.classList.toggle('is-done', !!on);
+        const d = nxDone(), k = nxScope() + '::' + el.dataset.nx;
+        if(on) d[k] = 1; else delete d[k];
+        try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){}
+      });
+
+      /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ---------- */
+      let mnSaveTimer = null;
+      function mnSaveSoon(){ if(mnSaveTimer) clearTimeout(mnSaveTimer); mnSaveTimer = setTimeout(mnSave, 800); }
+      function mnSave(){
+        try{
+          const doc = $('mn-doc');
+          // 「大きく開く」中は本文がモーダル側にいる。#mn-out 固定で読むと空を書き込み議事録が消える
+          const holder = doc ? doc.parentElement : $('mn-out');
+          localStorage.setItem(MN_KEY, JSON.stringify({
+            t: Date.now(), t0: mnT0,
+            u: mnUtter.slice(-1200),
+            html: holder ? holder.innerHTML : '',
+            att: ($('mn-attendees') && $('mn-attendees').value) || ''
+          }));
+        }catch(e){}   // 容量オーバー時は保存しないだけ（顧客データの保存を巻き添えにしない）
+      }
+      function mnRestore(){
+        let o = null;
+        try{ o = JSON.parse(localStorage.getItem(MN_KEY)||'null'); }catch(e){ o = null; }
+        if(!o){ vcCapRedraw(); return; }
+        if(Date.now() - (o.t||0) > MN_TTL){ try{ localStorage.removeItem(MN_KEY); }catch(e){} vcCapRedraw(); return; }
+        mnUtter = Array.isArray(o.u) ? o.u : [];
+        mnT0 = o.t0 || 0;
+        if(o.html && $('mn-out')) $('mn-out').innerHTML = o.html;
+        if(o.att && $('mn-attendees')) $('mn-attendees').value = o.att;
+        vcCapRedraw();
+      }
+
+      /* ---------- ドックの表示モード・タブ・高さ ---------- */
+      function vcSyncDockH(){
+        const on = !panel.hidden;
+        document.body.classList.toggle('vc-dock-on', on);
+        const h = on ? Math.ceil(panel.getBoundingClientRect().height) : 0;
+        document.documentElement.style.setProperty('--vc-dock-h', h + 'px');
+      }
+      function vcSaveUI(){
+        try{
+          localStorage.setItem(VC_UI_KEY, JSON.stringify({
+            m: panel.dataset.vcMode || 'mini',
+            tab: (document.querySelector('.vc-tab[aria-selected="true"]') || {}).dataset
+                 ? document.querySelector('.vc-tab[aria-selected="true"]').dataset.vcTab : 'cap',
+            auto: ($('vc-auto') && $('vc-auto').checked) ? 1 : 0
+          }));
+        }catch(e){}
+      }
+      function vcSetMode(m){
+        panel.dataset.vcMode = (m==='open') ? 'open' : 'mini';
+        const b = $('vc-expand');
+        if(b){
+          const open = panel.dataset.vcMode==='open';
+          b.setAttribute('aria-expanded', open ? 'true' : 'false');
+          b.innerHTML = '<i class="fa-solid fa-chevron-' + (open ? 'down' : 'up') + '"></i><span class="vc-sr">'
+                      + (open ? '小さくする' : '大きく表示') + '</span>';
+          b.title = open ? '小さくする' : '大きく表示';
+        }
+        vcCapInteractive(panel.dataset.vcMode === 'open');
+        if(!mnUtter.length && cap) cap.hidden = (panel.dataset.vcMode !== 'open');
+        vcSaveUI(); vcCapFollow(); vcSyncDockH();
+      }
+      function vcSetTab(t){
+        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', memo:'vc-pane-memo' };
+        if(!map[t]) t = 'cap';
+        document.querySelectorAll('.vc-tab').forEach(function(b){
+          const on = (b.dataset.vcTab===t);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+          b.tabIndex = on ? 0 : -1;   // roving tabindex（Tabは選択中のタブに入り、←→で移動する）
+        });
+        Object.keys(map).forEach(function(k){ const el = $(map[k]); if(el) el.hidden = (k!==t); });
+        if(panel.dataset.vcMode !== 'open') vcSetMode('open');
+        if(t==='memo') renderVcMemos();
+        vcSaveUI(); vcSyncDockH();
+      }
+      const vcTabEls = [].slice.call(document.querySelectorAll('.vc-tab'));
+      vcTabEls.forEach(function(b, i){
+        b.addEventListener('click', function(){ vcSetTab(b.dataset.vcTab); });
+        b.addEventListener('keydown', function(e){
+          const d = (e.key==='ArrowRight') ? 1 : (e.key==='ArrowLeft') ? -1 : 0;
+          if(!d) return;
+          e.preventDefault();
+          const n = vcTabEls[(i + d + vcTabEls.length) % vcTabEls.length];
+          n.focus(); vcSetTab(n.dataset.vcTab);
+        });
+      });
+      if($('vc-expand')) $('vc-expand').addEventListener('click', ()=>{
+        vcSetMode(panel.dataset.vcMode==='open' ? 'mini' : 'open');
+      });
+      if($('vc-auto')) $('vc-auto').addEventListener('change', vcSaveUI);
+      if($('mn-attendees')) $('mn-attendees').addEventListener('input', mnSaveSoon);
+      if($('mn-build')) $('mn-build').addEventListener('click', mnRun);
+      if($('mn-copy'))  $('mn-copy').addEventListener('click', mnCopy);
+      if($('mn-copy2')) $('mn-copy2').addEventListener('click', mnCopy);
+      if($('mn-dl'))    $('mn-dl').addEventListener('click', mnDownload);
+      if($('mn-dl2'))   $('mn-dl2').addEventListener('click', mnDownload);
+      if($('nx-build')) $('nx-build').addEventListener('click', nxRun);
+      if($('nx-copy'))  $('nx-copy').addEventListener('click', ()=>{
+        if(!nxLast){ alert('先に「次の一手を作る」を押してください。'); return; }
+        const txt = nextToText(nxLast, '次の一手');
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(function(){ setStatus('次の一手をコピーしました'); },
+                                                  function(){ mnCopyFallback(txt, '次の一手'); });
+        } else mnCopyFallback(txt, '次の一手');
+      });
+      if($('mn-undo')) $('mn-undo').addEventListener('click', mnRestorePrev);
+      // 議事録の編集欄への貼り付けは書式なしにそろえる（外部サイトのHTMLがそのまま保存・再注入されないように）
+      ['mn-out','mn-out-big'].forEach(function(id){
+        const el = $(id); if(!el) return;
+        el.addEventListener('paste', function(e){
+          if(!e.target.closest || !e.target.closest('#mn-doc')) return;
+          const t = (e.clipboardData || window.clipboardData).getData('text');
+          e.preventDefault();
+          document.execCommand('insertText', false, t);
+        });
+      });
+      if($('mn-out')) $('mn-out').addEventListener('input', mnSaveSoon);
+      if($('mn-out-big')) $('mn-out-big').addEventListener('input', mnSaveSoon);   // モーダル側の手直しも保存する
+      // 議事録の全画面表示：同じDOMを移し替える（2つに分裂して内容が食い違うのを防ぐ）
+      function mnBig(open){
+        const box = $('mn-out'), big = $('mn-out-big'), ov = $('mn-modal');
+        if(!box || !big || !ov) return;
+        if(open){ while(box.firstChild) big.appendChild(box.firstChild); ov.hidden = false; }
+        else { while(big.firstChild) box.appendChild(big.firstChild); ov.hidden = true; mnSave(); }
+      }
+      if($('mn-big')) $('mn-big').addEventListener('click', ()=>{
+        if(!$('mn-doc')){ alert('先に「概要を作る」を押してください。'); return; }
+        mnBig(true);
+      });
+      if($('mn-modal-close')) $('mn-modal-close').addEventListener('click', ()=> mnBig(false));
+      if($('mn-modal')) $('mn-modal').addEventListener('click', (e)=>{ if(e.target===$('mn-modal')) mnBig(false); });
+
+      /* ---------- ドックの開閉 ---------- */
       fab.hidden = false;
       fab.addEventListener('click', ()=>{
-        panel.classList.toggle('hidden');
-        if(!panel.classList.contains('hidden')) renderVcMemos();
+        panel.hidden = false;
+        renderVcMemos(); vcSyncDockH(); vcCapFollow();
       });
       $('vc-close').addEventListener('click', ()=>{
-        if(recOn){ try{ rec.stop(); }catch(e){} }
-        panel.classList.add('hidden');
+        vcStopRec();
+        panel.hidden = true;
+        vcSyncDockH();
       });
+      document.addEventListener('keydown', (e)=>{
+        if(e.key!=='Escape' || panel.hidden) return;
+        if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }
+        if(panel.dataset.vcMode==='open') vcSetMode('mini');
+      });
+      // ResizeObserver のコールバックで --vc-dock-h → body の padding が変わるため、1フレームに間引く
+      let dockRaf = 0;
+      function vcSyncDockSoon(){
+        if(dockRaf) return;
+        dockRaf = requestAnimationFrame(function(){ dockRaf = 0; vcSyncDockH(); });
+      }
+      if(window.ResizeObserver){ try{ new ResizeObserver(vcSyncDockSoon).observe(panel); }catch(e){} }
+      window.addEventListener('resize', vcSyncDockSoon);
+
+      // 起動時の復元（録音状態は復元しない＝リロードで勝手にマイクが動かないように）
+      (function(){
+        let ui = null;
+        try{ ui = JSON.parse(localStorage.getItem(VC_UI_KEY)||'null'); }catch(e){}
+        if(ui && $('vc-auto')) $('vc-auto').checked = (ui.auto !== 0);
+        mnRestore();
+        vcSetMode((ui && ui.m==='open') ? 'open' : 'mini');
+        vcSetTab((ui && ui.tab) || 'cap');
+        vcSetMode((ui && ui.m==='open') ? 'open' : 'mini');   // vcSetTabがopenへ倒すので最後に戻す
+      })();
+      nextWatchInputs();
       renderVcMemos();
+      vcSyncDockH();
     })();
     // 追従ナビの位置決め：プランバー（sticky）の高さを実測して --planbar-h にセット
     // （バーはflex-wrapで1〜2行に変わるため。単純な固定topだと重なってボタンが押せなくなる）
@@ -6144,18 +7727,51 @@
     // 追従状態（stuck）の検知：ナビ直前の番兵がプランバーの下端を越えたら nav-stuck。
     // ナビ自身ではなく番兵で測ることで、「行を隠す→ナビが縮む→解除→再表示…」のチラつきループを防ぐ
     (function(){
-      const sentinel = $('nav-sentinel');
-      if(!sentinel) return;
-      let ticking = false;
+      const sentinel = $('nav-sentinel'), nav = $('tool-nav'), spacer = $('nav-spacer');
+      if(!sentinel || !nav) return;
+      let ticking = false, baseDocH = 0;
+      /* 追従していない間にナビの実高（2行ぶん）と文書全体の高さを測っておき、
+         固定表示へ切り替えるときにスペーサーへ移す。これで空白の帯もジャンプも出ない。
+         マージンの相殺で数pxずれることがあるので、切替直後に文書高を測り直して差を吸収する */
+      // 計測は「追従していない定常状態」でのみ行う。切替の瞬間に測ると固定後の1行ぶん（縮んだ高さ）を拾ってしまう
+      const measure = ()=>{
+        if(!spacer) return;
+        const h = Math.ceil(nav.getBoundingClientRect().height);
+        if(h > 0) spacer.style.height = h + 'px';
+        baseDocH = document.documentElement.scrollHeight;
+      };
+      // 追従ナビはPC幅（min-width:1000px）だけの仕様。スマホでクラスが付くとスペーサーだけが残って空白になる
+      const navSticks = ()=> !window.matchMedia || window.matchMedia('(min-width:1000px)').matches;
       const check = ()=>{
         ticking = false;
-        const stuck = sentinel.getBoundingClientRect().top < _planbarH;
+        const stuck = navSticks() && (sentinel.getBoundingClientRect().top < _planbarH);
+        const was = document.body.classList.contains('nav-stuck');
+        if(stuck === was){ if(!stuck) measure(); return; }
         document.body.classList.toggle('nav-stuck', stuck);
+        if(!spacer) return;
+        if(!stuck){ spacer.style.display = 'none'; measure(); return; }
+        spacer.style.display = 'block';
+        if(baseDocH){
+          const diff = baseDocH - document.documentElement.scrollHeight;
+          if(diff) spacer.style.height = ((parseFloat(spacer.style.height) || 0) + diff) + 'px';
+        }
       };
       window.addEventListener('scroll', ()=>{
         if(ticking) return; ticking = true;
         requestAnimationFrame(check); setTimeout(check, 120);   // rAF停止環境でも追従
       }, {passive:true});
+      // 幅が変わるとナビの折返しで高さが変わる。追従中は一度そのまま測り直す
+      window.addEventListener('resize', ()=>{
+        if(!spacer) return;
+        if(document.body.classList.contains('nav-stuck')){
+          document.body.classList.remove('nav-stuck');
+          spacer.style.display = 'none';
+          const h = Math.ceil(nav.getBoundingClientRect().height);
+          if(h > 0) spacer.style.height = h + 'px';
+        }
+        check();
+      });
+      check();
     })();
     if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
@@ -6323,6 +7939,10 @@
     document.addEventListener('keydown', (e)=>{
       if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
       if((e.key||'').toLowerCase() !== 's') return;
+      // 議事録の下書きや入力欄を編集中のCtrl+SでPDF作成が走らないようにする（保存のつもりで押される）
+      if(e.target && e.target.closest && e.target.closest('#mn-doc, input, textarea, [contenteditable="true"]')){
+        e.preventDefault(); return;
+      }
       e.preventDefault();                      // ページ保存ダイアログを出させない
       if($('btn-send').disabled) return;       // 作成中の二重起動を防ぐ
       sendPDF();

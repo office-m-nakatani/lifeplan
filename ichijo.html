@@ -2661,9 +2661,10 @@
         <div class="vc-tools">
           <button type="button" class="btn btn-primary btn-sm" id="fam-add"><i class="fa-solid fa-user-plus"></i> 人を追加</button>
           <button type="button" class="btn btn-ghost btn-sm" id="fam-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="fam-clear"><i class="fa-solid fa-trash-can"></i> 家系図を消す</button>
         </div>
         <div id="fam-list"></div>
-        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。</p>
+        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>お体・介護の状況は要配慮個人情報</b>にあたります。<b>ご本人の同意をいただいた範囲だけ</b>記録し、確認できていない項目は「未確認」のままにしてください。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。<br>※ 内容は<b>お客様のお名前ごとに分けて</b>保存され、別のお客様のデータを読み込むと表示は入れ替わります。最後に更新してから<b>2週間で自動削除</b>されます（「家系図を消す」でいつでも削除できます）。</p>
       </div>
 
       <!-- メモタブ -->
@@ -5295,6 +5296,9 @@
         restoreWifeWork(saved.state);
         applyState(saved.state);
       }
+      /* 読み込んだお客様に合わせて、ドック側（家系図など）を出し直すための合図。
+         これが無いと、前のお客様のご親族が画面と「次の一手」に残る */
+      try{ document.dispatchEvent(new Event('lp-state-loaded')); }catch(e){}
     }
 
     /* ---------- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）---------- */
@@ -6675,12 +6679,14 @@
       });
       if($('vc-clear')) $('vc-clear').addEventListener('click', ()=>{
         if(!mnUtter.length) return;
-        if(!confirm('この端末に残っている文字起こしと、作成した概要・次の一手を消します。よろしいですか？')) return;
+        if(!confirm('この端末に残っている文字起こしと、作成した概要・次の一手・家系図（このお客様の分）を消します。よろしいですか？')) return;
         mnUtter = []; mnT0 = 0; capInterim = null; nxLast = null;
         mnBig(false);
         if($('mn-out')) $('mn-out').innerHTML = '';
         if($('next-actions')) $('next-actions').innerHTML = '';
         try{ localStorage.removeItem(MN_KEY); localStorage.removeItem(MN_KEY+'_prev'); localStorage.removeItem(NX_DONE_KEY); }catch(e){}
+        // 家系図（ご本人以外の個人情報）もここで消す。押した人は「面談の記録を消した」と受け取るため
+        famDrop(); famRender();
         vcCapRedraw(); setStatus('文字起こしを消しました'); vcSyncDockH();
       });
 
@@ -6693,7 +6699,7 @@
          ============================================================ */
       const MN_NOTES = [
         'この概要は、録音の文字起こしからツールが機械的に抜き出して作成した下書きです。発言の正確な再現を保証するものではありません。とくに金額・年齢・年数などの数字は聞き取りを誤ることがありますので、内容に相違がある場合は担当者までお知らせください。',
-        '記載の金額・年齢は、ご入力いただいた前提にもとづく試算です。税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。',
+        '本文の金額・年齢・年数は、面談でお話しされた内容をそのまま書き起こしたものです。「次の一手」など、ツールが計算した金額・年数は、ご入力いただいた前提にもとづく試算であり、税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。',
         '本メモは特定の保険商品・金融商品の推奨を目的とするものではありません。保障を見直す場合は、必要保障額を下回らない範囲でご検討ください（健康状態により再加入・増額ができない、保障に空白が生じる、貯蓄型は解約時に払込保険料を下回ることがある、などの点にご注意ください）。',
         'このメモは保険契約の内容を表すものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」を必ずご確認ください。税額の判断は税理士、公的年金の実額は年金事務所でご確認ください。',
         '作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。',
@@ -7609,12 +7615,49 @@
       const FAM_ASST = ['未確認','とくになし','ご実家あり','事業あり','農地・山林あり','賃貸物件あり'];
       const FAM_INTR = ['未確認','なし','検討中','ご紹介いただけそう'];
       var famPeople = [];
+      var famNameless = false;   // このタブで「お名前が空のまま」登録したか（引き継ぎの判断に使う）
+      /* ★2026-08-18（検証役検出・重大）家系図はお名前ごとに分けて持つ。
+         ひとつのキーに入れっぱなしにすると、A様の面談で入れたご親族（要介護・通院中など
+         要配慮個人情報）がB様の画面に残り、「次の一手」「概要」のコピーにも混ざる
+         （famBlockがご親族のお名前を出力するため）。「済チェック」（NX_DONE_KEY）と同じ考え方。
+         ・保存形式 { t:最終更新, m:{ 'ご本人名/配偶者名': [人…] } }
+         ・読むのは必ず「いまの画面のお名前」の分だけ＝お客様データを読み込むと自動で入れ替わる
+         ・文字起こしと同じく、最終更新から2週間（MN_TTL）で自動削除
+         ・お名前が空のまま登録した分は、同じタブで名前を入れたときだけ引き継ぐ（別のお客様には渡さない） */
+      function famBox(){
+        var o = null;
+        try{ o = JSON.parse(localStorage.getItem(FAM_KEY)||'null'); }catch(e){ o = null; }
+        if(Array.isArray(o)) return { m:{ '/': o } };   // 旧形式（お名前で分けていない）＝名無しの箱として扱う
+        if(!o || typeof o !== 'object' || !o.m) return { m:{} };
+        if(Date.now() - (o.t||0) > MN_TTL){ try{ localStorage.removeItem(FAM_KEY); }catch(e){} return { m:{} }; }
+        return { m:o.m };
+      }
+      function famWrite(m){
+        try{
+          if(Object.keys(m).length) localStorage.setItem(FAM_KEY, JSON.stringify({ t:Date.now(), m:m }));
+          else localStorage.removeItem(FAM_KEY);
+        }catch(e){}
+      }
       function famLoad(){
-        try{ const a = JSON.parse(localStorage.getItem(FAM_KEY)||'[]'); famPeople = Array.isArray(a) ? a : []; }
-        catch(e){ famPeople = []; }
+        const m = famBox().m, sc = nxScope();
+        let a = m[sc];
+        // 名無しで入れた分の引き継ぎ。コピーではなく移動にする（残すと次のお客様の画面にも出る）
+        if((!a || !a.length) && famNameless && sc !== '/' && m['/'] && m['/'].length){
+          a = m['/']; delete m['/']; m[sc] = a; famNameless = false; famWrite(m);
+        }
+        famPeople = Array.isArray(a) ? a : [];
       }
       function famSave(){
-        try{ localStorage.setItem(FAM_KEY, JSON.stringify(famPeople.slice(0,30))); }catch(e){}
+        const m = famBox().m, sc = nxScope();
+        if(famPeople.length) m[sc] = famPeople.slice(0,30);
+        else delete m[sc];
+        if(sc === '/' && famPeople.length) famNameless = true;
+        famWrite(m);
+      }
+      function famDrop(){
+        const m = famBox().m;
+        delete m[nxScope()];
+        famPeople = []; famNameless = false; famWrite(m);
       }
       function famSel(name, opts, val){
         return '<select data-fam="'+name+'">' + opts.map(function(o){
@@ -7676,9 +7719,12 @@
         const box = $('fam-list'); if(!box) return;
         box.innerHTML = famPeople.map(famRowHTML).join('');
       }
-      function famRender(){ famRenderTree(); famRenderList(); vcSyncDockH(); }
+      /* 描く直前・旗を立てる直前に必ず読み直す。お客様データの読み込みでお名前が変わるため、
+         変数に持ったままだと前のお客様のご親族が画面と出力に残る */
+      function famRender(){ famLoad(); famRenderTree(); famRenderList(); vcSyncDockH(); }
       // 「次の一手」へ渡す旗（原文は渡さず、状態と名前だけ）
       function famFlags(){
+        famLoad();
         const care = famPeople.filter(function(p){
           return p.health==='要支援' || p.health==='要介護' || p.health==='施設に入居'
               || (/父|母|祖父母/.test(p.rel||'') && (parseInt(p.age,10)||0) >= 75);
@@ -7689,14 +7735,25 @@
                  kaigoNames: care.map(function(p){ return p.name || p.rel; }).slice(0,3).join('・') || 'ご親族' };
       }
       function famText(){
+        famLoad();
         if(!famPeople.length) return '';
-        return '【家系図メモ】\n' + famPeople.map(function(p){
+        /* このテキストは事務所の記録・引き継ぎに貼られるため、単独で読んで判断できる状態にする。
+           誰の面談の分か（取り違え防止）・ご本人以外の情報である旨・お渡しの可否を必ず残す */
+        const who = ($('h-name') && $('h-name').value.trim()) || '';
+        return '【家系図メモ】' + (who ? '（' + who + '様の面談）' : '') + '\n'
+          + famPeople.map(function(p){
           return '・' + (p.rel||'') + '　' + (p.name||'') + (p.age ? '（'+p.age+'歳）' : '')
             + '　' + [p.live,p.health,p.asset,p.intro].filter(function(x){ return x && x!=='未確認'; }).join('／')
             + (p.memo ? '　' + p.memo : '');
-        }).join('\n') + '\n';
+        }).join('\n') + '\n'
+          + '―――\n'
+          + '※ ご本人からお聞きした範囲の下書きです。ご家族・ご親族の健康状態など要配慮個人情報にあたる内容は、ご本人の同意をいただいた範囲のみを記録しています（未確認の項目は「未確認」のままにしてください）。\n'
+          + '※ ご本人以外の方の個人情報を含みます。事務所内の記録としてお取り扱いいただき、お客様・第三者にそのままお渡しにならないでください。\n'
+          + '※ ご紹介は、ご本人とご紹介先の双方の同意をいただいてから行ってください。ご紹介先の連絡先はここに記録しないでください。\n'
+          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。\n';
       }
       if($('fam-add')) $('fam-add').addEventListener('click', ()=>{
+        famLoad();   // 押した時点のお名前の分に足す（お客様データ読み込み直後の取り違えを防ぐ）
         famPeople.push({ rel:'夫の父', name:'', age:'', live:'未確認', health:'未確認', asset:'未確認', intro:'未確認', memo:'' });
         famSave(); famRender();
       });
@@ -7723,6 +7780,14 @@
           navigator.clipboard.writeText(t).then(function(){ setStatus('家系図メモをコピーしました'); },
                                                 function(){ mnCopyFallback(t, '家系図メモ'); });
         } else mnCopyFallback(t, '家系図メモ');
+      });
+      /* ご親族の情報はご本人以外の個人情報なので、面談が終わったらその場で消せるようにする
+         （文字起こしを消すボタンは文字起こしが無いと押せないため、家系図には専用の削除を置く） */
+      if($('fam-clear')) $('fam-clear').addEventListener('click', ()=>{
+        famLoad();
+        if(!famPeople.length){ setStatus('家系図に登録がありません'); return; }
+        if(!confirm('この端末に残っている家系図（ご親族の情報）を消します。よろしいですか？')) return;
+        famDrop(); famRender(); setStatus('家系図を消しました');
       });
 
       /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ---------- */
@@ -7896,6 +7961,12 @@
       nextWatchInputs();
       renderVcMemos();
       famLoad();
+      /* お客様データ・共有リンクを読み込んだら、家系図を「そのお客様の分」に出し直す。
+         ドックは別のIIFEで外から関数を呼べないため、applyPlans() からのイベントで受ける */
+      document.addEventListener('lp-state-loaded', function(){ if($('vc-pane-fam')) famRender(); });
+      ['h-name','w-name'].forEach(function(id){
+        if($(id)) $(id).addEventListener('change', function(){ if($('vc-pane-fam')) famRender(); });
+      });
       vcFabUI();
       vcSyncDockH();
     })();

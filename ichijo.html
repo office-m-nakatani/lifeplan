@@ -509,13 +509,16 @@
     table.cfh td.dd{ background:#fdf1e7; }
     table.cfh th.cfh-y.dd{ background:#fdeede; color:#8a5a2a; }
     /* ライフイベント行は縦書き（日本語の表の型・セル幅を保ったまま内容が読める） */
+    /* 行事ごとに行を分けたので、高さは行（tr）側のインライン指定に従わせる（1行1種類ぶんだけの高さ） */
     table.cfh td.evtv{
       writing-mode:vertical-rl; text-orientation:mixed; white-space:normal;
       text-align:start; vertical-align:top; font-size:.7rem; line-height:1.5;
-      max-height:130px; height:130px; padding:6px 3px; overflow:hidden; font-weight:500;
+      padding:6px 3px; overflow:hidden; font-weight:500;
     }
     table.cfh td.evtv .ev-k{ font-weight:700; }
     table.cfh td.evtv:not(.dd):not(:empty){ background:#fbfdfc; }
+    /* イベント行の項目名は、金額行と区別できるよう控えめに */
+    table.cfh tr:has(td.evtv) .rowhead{ font-size:.72rem; font-weight:700; }
     /* 運用サマリー表：列を内容に合わせ、見出しを折り返して1画面に全列を収める */
     table.cf-summary{ table-layout:auto; }
     table.cf-summary th, table.cf-summary td{ width:auto !important; white-space:normal; overflow:visible; text-overflow:clip; padding:6px 6px; }
@@ -5393,17 +5396,41 @@
             return `<td class="${cls(r)}" style="color:${on?c.text:'#c2ccd6'}">${on?a:'—'}</td>`;
           }, `color:${c.text}`);
         });
-        // ライフイベント（縦書き）：取り崩し開始・入園入学・家族イベントを1セルに集約
-        addRow('ライフイベント', r=>{
-          const parts = [];
-          if(r.drawdownStart) parts.push('<span class="ev-k">取り崩し開始</span>');
-          for(let k=0; k<nKids; k++){
-            const m = eduMarker(r.childAges[k], kidsMeta[k]);
-            if(m && m.kind==='enter') parts.push(`<span class="ev-k" style="color:${childColor(k).text}">${esc(kidsMeta[k].name)} ${esc(m.label)}</span>`);
-          }
-          (r.eventList||[]).forEach(e=>{ if(e.type==='edu') return; parts.push(esc(e.label)); });
-          const full = parts.join('・').replace(/<[^>]+>/g,'');
-          return `<td class="evtv${cls(r)}"${full?` title="${full}"`:''}>${parts.join('　')}</td>`;
+        /* ライフイベントは「行事ごとに1行」へ分ける（2026-08-17夜 ユーザー指示）。
+           1つのセルに進学・イベント・取り崩しが積み重なると縦書きが潰れて読めないため、
+           お子さまの進学／ライフイベント／臨時収入／取り崩し開始 を別々の行にする。
+           行の高さはその行に出てくる最大文字数から決める（短い行は低く＝表を無駄に伸ばさない） */
+        const evtRows = [];
+        kidsMeta.forEach((k, ki)=>{
+          const c = childColor(ki);
+          evtRows.push({ label:`${esc(k.name)}の進学`, headStyle:`color:${c.text}`, cell:(r)=>{
+            const m = eduMarker(r.childAges[ki], kidsMeta[ki]);
+            if(!(m && m.kind==='enter')) return null;
+            return { text:m.label, title:`${k.name}：${m.full}`, html:`<span class="ev-k" style="color:${c.text}">${esc(m.label)}</span>` };
+          }});
+        });
+        evtRows.push({ label:'ライフイベント', cell:(r)=>{
+          const list = (r.eventList||[]).filter(e=> e.type!=='edu' && e.type!=='income').map(e=> e.label);
+          if(!list.length) return null;
+          return { text:list.join('・'), title:list.join('・'), html:list.map(esc).join('　') };
+        }});
+        evtRows.push({ label:'臨時収入', headStyle:'color:#2c7a52', cell:(r)=>{
+          const list = (r.eventList||[]).filter(e=> e.type==='income').map(e=> e.label);
+          if(!list.length) return null;
+          return { text:list.join('・'), title:list.join('・'), html:`<span class="ev-k" style="color:#2c7a52">${list.map(esc).join('　')}</span>` };
+        }});
+        evtRows.push({ label:'資産の取り崩し', headStyle:'color:#8a5a2a', cell:(r)=>
+          r.drawdownStart ? { text:'取り崩し開始', title:'ここから資産の取り崩しが始まります', html:'<span class="ev-k" style="color:#8a5a2a">取り崩し開始</span>' } : null });
+        evtRows.forEach(er=>{
+          const cells = rows.map(r=> er.cell(r));
+          if(!cells.some(Boolean)) return;                        // 予定が1つも無い行は出さない
+          const maxLen = cells.reduce((a,c)=> Math.max(a, c ? c.text.length : 0), 0);
+          const h = Math.min(Math.max(maxLen, 3) * 11 + 18, 132); // 縦書き1文字≒11px
+          rowsHtml.push(`<tr style="height:${h}px"><th class="rowhead"${er.headStyle?` style="${er.headStyle}"`:''}>${er.label}</th>` +
+            rows.map((r, i)=>{
+              const c = cells[i];
+              return `<td class="evtv${cls(r)}"${c?` title="${esc(c.title)}"`:''}>${c ? c.html : ''}</td>`;
+            }).join('') + '</tr>');
         });
         addRow('収入', r=> `<td class="${cls(r)}">${fmt(r.income)}</td>`);
         addRow('支出', r=> `<td class="${cls(r)}">${fmt(r.expense)}</td>`);

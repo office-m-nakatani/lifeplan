@@ -653,6 +653,55 @@
     .plan-tabs button.active{ background:var(--blue); color:#fff; }
     .plan-tabs button[data-plan="mirai"].active{ background:var(--yellow); color:#5a4a12; }
     .plan-hint{ font-size:.8rem; color:var(--ink-soft); line-height:1.55; flex:1 1 240px; }
+    /* ============================================================
+       画面切替ナビ（2026-08-17 刷新）
+       ・アコーディオン（①〜⑦の縦積み）を廃止し、上部の2段のボタン行で切り替える
+         1段目「入力する」＝入力セクション7つ／2段目「結果を見る」＝結果8つ
+       ・1画面に1つだけ表示（入れ替え式）。スマホはボタン行を横スクロール
+       ・印刷/PDF（pdf-mode）では従来どおり全セクションを展開する
+       ============================================================ */
+    .tool-nav{ display:grid; gap:8px; margin-top:10px; }
+    .tool-nav-row{ display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid var(--line);
+      border-radius:14px; padding:8px 12px; box-shadow:var(--shadow-soft);
+      min-width:0; }   /* gridの子はmin-width:autoで中身の幅まで広がるため、明示して横はみ出しを防ぐ */
+    .tool-nav-label{ flex:0 0 auto; font-size:.78rem; font-weight:800; color:var(--ink-soft);
+      display:flex; align-items:center; gap:6px; white-space:nowrap; }
+    .tool-nav-label i{ color:var(--blue); }
+    .tool-nav-row.tnr-result .tool-nav-label i{ color:var(--yellow); }
+    /* ボタン列：折り返さず横スクロール。右端をフェードさせ「まだ先がある」ことを見せる */
+    .tool-nav-scroll{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+      scrollbar-width:none; flex:1 1 auto; min-width:0;
+      -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px), transparent);
+              mask-image:linear-gradient(90deg,#000 calc(100% - 26px), transparent); }
+    .tool-nav-scroll::-webkit-scrollbar{ display:none; }
+    .tool-nav-scroll button{ flex:0 0 auto; white-space:nowrap; font-family:inherit; font-weight:700; font-size:.85rem;
+      min-height:44px; padding:8px 14px; border:1.5px solid var(--line); border-radius:999px; background:var(--bg-soft);
+      color:var(--ink); cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
+    .tool-nav-scroll button:hover{ background:var(--blue-pale); border-color:var(--blue-pale2); }
+    .tool-nav-scroll button.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+    .tool-nav-row.tnr-result .tool-nav-scroll button.active{ background:var(--blue-deep); border-color:var(--blue-deep); }
+    /* 表示切替の本体。印刷（@media print）と pdf-mode（印刷ボタン・PDF作成）では
+       無効化して従来どおり全セクションを出す（@media screen 限定＋:not(.pdf-mode)） */
+    body.tab-mode .layout{ display:block; }
+    @media screen{
+      body.tab-mode:not(.pdf-mode) #input-panel .acc:not(.view-active){ display:none !important; }
+      body.tab-mode:not(.pdf-mode) .results > *:not(.view-active){ display:none !important; }
+      body.tab-mode:not(.pdf-mode) .table-section[data-view]:not(.view-active){ display:none !important; }
+    }
+    body.tab-mode .results{ position:static; }
+    /* タブ表示中はアコーディオンとしての開閉をやめ、常に開いた状態にする */
+    body.tab-mode .acc .acc-body{ display:block; }
+    body.tab-mode .acc-head{ cursor:default; }
+    body.tab-mode .acc-chev{ display:none; }
+    /* 各入力セクション下の「次へ」導線 */
+    .sec-next{ display:flex; justify-content:flex-end; gap:8px; padding:4px 20px 18px; }
+    .sec-next .btn{ min-height:44px; }
+    /* 旧・画面下の「結果を見る」浮きボタンは、上の「結果を見る」行と重複するため出さない */
+    body.tab-mode .jump-result{ display:none !important; }
+    @media print{
+      .tool-nav{ display:none !important; }
+    }
+
     /* 差額：プラス＝青、マイナス＝赤（小さな文字） */
     .diff-plus{ color:#2f7cb5; font-weight:800; }
     .diff-minus{ color:#d05a6e; font-weight:800; }
@@ -865,7 +914,7 @@
       <div class="cust-main">
         <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
         <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
-        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">結果を見る</button>で「金融資産の推移」と「現状 と 将来 をくらべる」をご覧ください。そのあと、気になる数字（<b>①ご夫婦の年収</b>／<b>⑤毎月の積立額</b>／<b>③住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">資産の推移</button>と、上の「結果を見る」の行の「<b>現状と将来</b>」をご覧ください。そのあと、上の「入力する」の行から気になる数字（<b>ご家族の基本情報の年収</b>／<b>貯蓄・資産運用・年金の毎月の積立額</b>／<b>住まいの住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
         <p class="cust-expiry" id="cust-expiry"></p>
       </div>
       <div class="cust-actions">
@@ -905,6 +954,35 @@
     </div>
   </div>
 
+  <!-- ============================= 画面切替ナビ（入力する／結果を見る）============================= -->
+  <div class="wrap tool-nav no-print" id="tool-nav">
+    <div class="tool-nav-row tnr-input">
+      <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
+      <div class="tool-nav-scroll" id="nav-input">
+        <button type="button" data-nav-input="family">ご家族の基本情報</button>
+        <button type="button" data-nav-input="kids">お子さまの教育費</button>
+        <button type="button" data-nav-input="home">住まい</button>
+        <button type="button" data-nav-input="living">毎月の生活費</button>
+        <button type="button" data-nav-input="save">貯蓄・資産運用・年金</button>
+        <button type="button" data-nav-input="events">ライフイベント</button>
+        <button type="button" data-nav-input="insurance">加入中の保険</button>
+      </div>
+    </div>
+    <div class="tool-nav-row tnr-result">
+      <span class="tool-nav-label"><i class="fa-solid fa-chart-line"></i> 結果を見る</span>
+      <div class="tool-nav-scroll" id="nav-result">
+        <button type="button" data-nav-result="assets">資産の推移</button>
+        <button type="button" data-nav-result="compare">現状と将来</button>
+        <button type="button" data-nav-result="ichijo">一条の家との比較</button>
+        <button type="button" data-nav-result="hoken">もしもの保障</button>
+        <button type="button" data-nav-result="flow">収入と支出</button>
+        <button type="button" data-nav-result="ai">AI診断</button>
+        <button type="button" data-nav-result="cf">キャッシュフロー表</button>
+        <button type="button" data-nav-result="invest">積立・運用</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============================= MAIN ============================= -->
   <div class="wrap">
     <div id="print-plan-header"></div>
@@ -913,11 +991,11 @@
       <!-- ===================== 入力パネル ===================== -->
       <div class="panel" id="input-panel">
 
-        <!-- ① ご夫婦の基本情報 -->
-        <div class="acc open" data-acc>
+        <!-- ご家族の基本情報（旧①） -->
+        <div class="acc open" data-acc data-sec="family">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-blue"><i class="fa-solid fa-people-pulling"></i></span>
-            <span class="acc-title"><b>① ご夫婦の基本情報</b><span>年齢・収入・退職の予定</span></span>
+            <span class="acc-title"><b>ご家族の基本情報</b><span>年齢・収入・退職の予定</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -989,11 +1067,11 @@
           </div>
         </div>
 
-        <!-- ② お子さま・教育費 -->
-        <div class="acc open" data-acc>
+        <!-- お子さまの教育費（旧②） -->
+        <div class="acc open" data-acc data-sec="kids">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-yellow"><i class="fa-solid fa-children"></i></span>
-            <span class="acc-title"><b>② お子さま・教育費</b><span>人数と進路プランで自動計算</span></span>
+            <span class="acc-title"><b>お子さまの教育費</b><span>人数と進路プランで自動計算</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1006,11 +1084,11 @@
           </div>
         </div>
 
-        <!-- ③ 住まい -->
-        <div class="acc" data-acc>
+        <!-- 住まい（旧③） -->
+        <div class="acc" data-acc data-sec="home">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-teal"><i class="fa-solid fa-house-chimney"></i></span>
-            <span class="acc-title"><b>③ 住まい</b><span>賃貸・持ち家・住宅ローン</span></span>
+            <span class="acc-title"><b>住まい</b><span>賃貸・持ち家・住宅ローン</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1049,7 +1127,7 @@
                   <li><b>超断熱・高気密</b>：i-smart等の主力商品で<b>断熱等級7・UA値0.25</b>が標準（省エネ基準の約3.5倍＝家全体が魔法瓶のイメージ）。<b>全館床暖房</b>で冬の朝も廊下や脱衣所まで寒くなりにくい</li>
                   <li><b>大容量の太陽光発電＋蓄電池</b>（平均搭載 約12kW・2024年度実績）で売電収入と自家消費</li>
                   <li><b>ハイドロテクトタイル外壁</b>（再塗装不要）で、30年の外壁メンテ費を抑えやすい</li>
-                  <li><b>耐震等級3（最高等級）が標準</b>→ 確認資料があれば<b>地震保険が50%割引</b>（「④生活費」の火災・地震保険に入力すると割引を自動計算）</li>
+                  <li><b>耐震等級3（最高等級）が標準</b>→ 確認資料があれば<b>地震保険が50%割引</b>（「毎月の生活費」の火災・地震保険に入力すると割引を自動計算）</li>
                   <li>高断熱＋太陽光は、国の<b>GX志向型補助金（2026年度は最大110万円等）</b>の対象になりやすい仕様（要件・予算枠あり）</li>
                 </ul>
                 <span class="ipn-note">※ いずれも一般的な目安です。地域・仕様・使用状況で変わります。金額は下の比較・入力欄で調整できます。</span>
@@ -1205,11 +1283,11 @@
           </div>
         </div>
 
-        <!-- ④ 毎月の生活費 -->
-        <div class="acc" data-acc>
+        <!-- 毎月の生活費（旧④） -->
+        <div class="acc" data-acc data-sec="living">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-cart-shopping"></i></span>
-            <span class="acc-title"><b>④ 毎月の生活費</b><span>項目ごとに入力（住居費は③で計算）</span></span>
+            <span class="acc-title"><b>毎月の生活費</b><span>項目ごとに入力（住居費は「住まい」で計算）</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1232,7 +1310,7 @@
               <div class="field" style="max-width:300px;">
                 <label>毎月の生活費（合計）</label>
                 <div class="input-unit"><input type="number" id="e-bulk" value="23" min="0" step="1"><span class="u">万円</span></div>
-                <span class="hint">住居費は③、老後の生活費は下で別計算します</span>
+                <span class="hint">住居費は「住まい」、老後の生活費は下で別計算します</span>
               </div>
             </div>
 
@@ -1296,11 +1374,11 @@
           </div>
         </div>
 
-        <!-- ⑤ 貯蓄・資産運用・年金 -->
-        <div class="acc" data-acc>
+        <!-- 貯蓄・資産運用・年金（旧⑤） -->
+        <div class="acc" data-acc data-sec="save">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-green"><i class="fa-solid fa-piggy-bank"></i></span>
-            <span class="acc-title"><b>⑤ 貯蓄・資産運用・年金</b><span>預貯金・NISA・iDeCo・年金</span></span>
+            <span class="acc-title"><b>貯蓄・資産運用・年金</b><span>預貯金・NISA・iDeCo・年金</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1341,11 +1419,11 @@
           </div>
         </div>
 
-        <!-- ⑥ ライフイベント -->
-        <div class="acc" data-acc>
+        <!-- ライフイベント（旧⑥） -->
+        <div class="acc" data-acc data-sec="events">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-violet"><i class="fa-solid fa-calendar-star"></i></span>
-            <span class="acc-title"><b>⑥ ライフイベント（任意）</b><span>車の買い替え・旅行・リフォームなど</span></span>
+            <span class="acc-title"><b>ライフイベント（任意）</b><span>車の買い替え・旅行・リフォームなど</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1354,11 +1432,11 @@
           </div>
         </div>
 
-        <!-- ⑦ 加入中の保険（死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。単身は診断対象外のため非表示 -->
-        <div class="acc" data-acc data-couple-only>
+        <!-- 加入中の保険（旧⑦。死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。単身は診断対象外のため非表示 -->
+        <div class="acc" data-acc data-couple-only data-sec="insurance">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
-            <span class="acc-title"><b>⑦ 加入中の保険</b><span>今の死亡保障を診断に反映</span></span>
+            <span class="acc-title"><b>加入中の保険</b><span>今の死亡保障を診断に反映</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1407,7 +1485,7 @@
               <span class="hint">加入中の保険の死亡保険金額をざっくり合計してください。収入保障保険は「月額×12か月×残り年数」で総額の目安に（例：月10万円×残り20年＝2,400万円）</span>
             </div>
 
-            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「④ 生活費」の生命保険欄で家計に反映。ここで入力した保障額は、AI診断「万が一の備え」の計算に使います。</span>
+            <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「毎月の生活費」の生命保険欄で家計に反映。ここで入力した保障額は、AI診断「万が一の備え」の計算に使います。</span>
           </div>
         </div>
 
@@ -1417,7 +1495,7 @@
       <div class="results" id="results">
 
         <!-- KPI：○歳時点の総資産額＋インフレ後の実質価値（年齢は編集できます）-->
-        <div class="kpi-grid">
+        <div class="kpi-grid" data-view="assets">
           <div class="kpi kpi-total">
             <div class="k-label"><input type="number" id="age-point-1" class="age-input" value="65" min="20" max="110"> 歳時点：総資産額</div>
             <div class="k-value" id="kpi-total-1">—</div>
@@ -1441,7 +1519,7 @@
         </div>
 
         <!-- 総合判定（KPIの直下＝結論を最初に見せる）-->
-        <div class="verdict good" id="verdict">
+        <div class="verdict good" id="verdict" data-view="assets">
           <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
           <div>
             <b id="verdict-title">計算中…</b>
@@ -1450,13 +1528,13 @@
         </div>
 
         <!-- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）-->
-        <div class="card">
+        <div class="card" data-view="assets">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
           <div class="chart-box tall"><canvas id="assetChart"></canvas></div>
         </div>
 
         <!-- 現状 と 将来 のくらべ（②の中核機能）-->
-        <div class="card" id="compare-card2">
+        <div class="card" id="compare-card2" data-view="compare">
           <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
           <div id="plan-effect"></div>
           <div class="chart-box"><canvas id="compareChart"></canvas></div>
@@ -1465,11 +1543,11 @@
 
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <!-- 賃貸選択時のプレースホルダー：看板機能（一条比較）の存在を予告し、1クリックで発火できるようにする -->
-        <div class="card no-print" id="ichijo-cta-placeholder" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
+        <div class="card no-print" id="ichijo-cta-placeholder" data-view="ichijo" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
           <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「一条の家で試す」を押すと、<b>一般住宅と一条工務店の家のランニングコストの差</b>がここに表示されます。</p>
           <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す（1クリックで比較）</button>
         </div>
-        <div class="card" id="ichijo-compare-card">
+        <div class="card" id="ichijo-compare-card" data-view="ichijo">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
           <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
           <div class="ic-level">
@@ -1501,7 +1579,7 @@
         <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
-        <div class="card" id="invest-diff-card">
+        <div class="card" id="invest-diff-card" data-view="invest">
           <div class="card-title card-title-long"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
           <div class="ivd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で比べる？</span>
@@ -1512,14 +1590,14 @@
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
             <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
-            <p class="hint" style="display:block; margin-top:8px;">※ <b>⑤で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄・資産運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
           </details>
         </div>
 
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
-        <div class="card" id="hoken-diff-card">
+        <div class="card" id="hoken-diff-card" data-view="hoken">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
-          <p class="hint" style="display:block; margin-bottom:8px;">⑦で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
+          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
             <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
@@ -1545,20 +1623,20 @@
           </div>
           <details class="ic-fold">
             <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
-            <p class="hint" style="display:block; margin-top:8px;">この金額は、⑦で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
-            <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、③の実際のローン返済や家計の資金繰りは変わりません。</p>
-            <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（⑦の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+            <p class="hint" style="display:block; margin-top:8px;">この金額は、「加入中の保険」で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
+            <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
         </div>
 
         <!-- 収支グラフ -->
-        <div class="card">
+        <div class="card" data-view="flow">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 年間の収入と支出</div>
           <div class="chart-box"><canvas id="flowChart"></canvas></div>
         </div>
 
         <!-- アドバイス（総括＋項目別の詳しい診断）-->
-        <div class="card">
+        <div class="card" data-view="ai">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AI診断と今後のアドバイス</div>
           <div id="advice-summary"></div>
           <p class="adv-cats-hint">▼ 項目をタップすると、その分野の<b>詳しい診断（総括・安心点・懸念点）</b>が表示されます</p>
@@ -1567,7 +1645,7 @@
         </div>
 
         <!-- お客様からの相談チャット -->
-        <div class="card no-print" id="chat-card">
+        <div class="card no-print" id="chat-card" data-view="ai">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AIになんでも相談チャット
             <button class="btn btn-primary btn-sm" id="open-reserve" style="margin-left:auto;"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約</button>
           </div>
@@ -1603,7 +1681,7 @@
     </div><!-- /layout -->
 
     <!-- ===================== キャッシュフロー表（全幅・レイアウト外で重なり防止）===================== -->
-    <div class="table-section">
+    <div class="table-section" data-view="cf">
       <div class="table-head">
         <h3><i class="fa-solid fa-table-cells"></i> 年齢別キャッシュフロー表</h3>
       </div>
@@ -2675,9 +2753,8 @@
       [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x===b));
       applyHtype();
       recompute();
-      if(htype==='ichijo' && window.innerWidth<=960){   // モバイル商談：切替と同時に比較カードを見せる
-        const c = $('ichijo-compare-card');
-        if(c && c.style.display!=='none') c.scrollIntoView({behavior:'smooth', block:'start'});
+      if(htype==='ichijo' && window.innerWidth<=960){   // モバイル商談：切替と同時に比較カードの画面を見せる
+        setTimeout(()=>{ if(typeof switchView==='function') switchView('result','ichijo'); }, 150);
       }
     });
     // 比較期間（35年＝返済期間に合わせた既定 ／ シミュレーション終了年齢まで ／ 年数を指定）
@@ -2790,7 +2867,7 @@
         + `・<b>自家消費の節約</b>は実際の電気代の8割程度を上限に計上しています（基本料金や夜間の買電は残るため）。<br>`
         + `・<b>出典</b>：一般住宅の光熱費は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
         + `・<b>比較に含めないもの</b>：一条側の設備更新費（約270〜390万円の施主試算）も、一般住宅側の給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。<br>`
-        + `・<b>③の「修繕費」欄との関係</b>：本体試算の修繕費（既定：一般15万円/年＝30年で約450万円）は<b>設備の交換・室内の補修まで含めた家全体の維持費</b>です。この比較カードのメンテ費は<b>外壁・屋根の塗替え分だけ</b>を取り出したもの（一般約300万円/30年）のため、金額の範囲が異なります（矛盾ではありません）。<br>`
+        + `・<b>「住まい」の「修繕費」欄との関係</b>：本体試算の修繕費（既定：一般15万円/年＝30年で約450万円）は<b>設備の交換・室内の補修まで含めた家全体の維持費</b>です。この比較カードのメンテ費は<b>外壁・屋根の塗替え分だけ</b>を取り出したもの（一般約300万円/30年）のため、金額の範囲が異なります（矛盾ではありません）。<br>`
         + `<span style="color:var(--ink-soft);">一条工務店非公式・Office-M（生命保険募集人）試算</span>`;
     }
     function drawIchijoChart(genTotal, ichTotal){
@@ -2822,7 +2899,7 @@
       });
     }
     // ヒーロー「一条の家で試す」＝現状プランは今の住まいのまま保持し、将来プランに切り替えてから
-    // 「これから購入」＋「一条工務店の家」を選ぶ（→「現状と将来をくらべる」に差額が出る）。③住まいも開いて前提を見せる
+    // 「これから購入」＋「一条工務店の家」を選ぶ（→「現状と将来をくらべる」に差額が出る）。比較カードの画面へ切り替える
     function tryIchijo(){
       if(typeof PLANS!=='undefined' && PLANS.active==='genjo' && typeof switchPlan==='function') switchPlan('mirai');
       const hs = document.getElementById('house-seg');
@@ -2830,10 +2907,8 @@
       if(buyBtn && !buyBtn.classList.contains('active')) buyBtn.click();
       const ib = htypeSeg && htypeSeg.querySelector('[data-htype="ichijo"]');
       if(ib && !ib.classList.contains('active')) ib.click();
-      const acc3 = hs && hs.closest('.acc');
-      if(acc3 && !acc3.classList.contains('open')) acc3.querySelector('.acc-head')?.click();
-      const c = $('ichijo-compare-card');
-      if(c) setTimeout(()=> c.scrollIntoView({behavior:'smooth', block:'start'}), 200);
+      // タブ化後：結果の「一条の家との比較」画面を開く（アコーディオンを開く操作は廃止）
+      setTimeout(()=>{ if(typeof switchView==='function') switchView('result','ichijo'); }, 150);
     }
     const tryIchijoBtn = $('btn-try-ichijo');
     if(tryIchijoBtn) tryIchijoBtn.addEventListener('click', tryIchijo);
@@ -3132,6 +3207,14 @@
     function applyHousehold(){
       $('wife-section').classList.toggle('hidden', isSingle());
       document.querySelectorAll('[data-couple-only]').forEach(el=> el.classList.toggle('hidden', isSingle()));
+      // タブ化対応：単身では「加入中の保険」の入力ボタンも隠し、開いていた場合はライフイベントへ退避
+      // （tab-mode はスクリプト末尾で付与される＝付与前の初期化中は下の切替を呼ばない。TDZ対策）
+      const nb = document.querySelector('[data-nav-input="insurance"]');
+      if(nb) nb.classList.toggle('hidden', isSingle());
+      if(isSingle() && document.body.classList.contains('tab-mode')){
+        const acc = document.querySelector('[data-sec="insurance"]');
+        if(acc && acc.classList.contains('view-active')) switchView('input','events',{noScroll:true});
+      }
     }
     householdSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
@@ -4397,7 +4480,7 @@
         };
         const sum = `「必要保障額」とは、万一のときに<b>足りなくなるお金（不足額）</b>のこと。将来かかるお金から、いまの備え（遺族年金＋遺された方の収入＋いまの資産${hasIns?'＋加入中の保険':''}）を差し引いた、<b>今から備えたい保障額のめやす</b>です（生命保険のほか、貯蓄などで備える方法もあります）。<br>`
           + needLine(hNameH(), nh) + `<br>` + needLine(wNameH(), nw)
-          + (hasIns ? `` : `<br><span style="font-size:.85em; color:var(--ink-soft);">※ すでに死亡保障にご加入の場合は「⑦ 加入中の保険」に入力すると、差し引いた不足額で診断します。</span>`);
+          + (hasIns ? `` : `<br><span style="font-size:.85em; color:var(--ink-soft);">※ すでに死亡保障にご加入の場合は「加入中の保険」に入力すると、差し引いた不足額で診断します。</span>`);
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
         if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
@@ -4455,7 +4538,7 @@
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
           sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
-                `③住まいで「これから購入」に切り替えると、購入した場合との比較ができます。「一条工務店の家（高性能）」を選ぶと、30年のランニングコスト差も表示されます。` /* 【一条フック】誘導文に一条明記 */],
+                `「住まい」で「これから購入」に切り替えると、購入した場合との比較ができます。「一条工務店の家（高性能）」を選ぶと、30年のランニングコスト差も表示されます。` /* 【一条フック】誘導文に一条明記 */],
           concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
@@ -4489,20 +4572,20 @@
         // 耐震等級3の割引は制度の話でメーカー固有ではない。一般住宅を選んだZEHの方にも案内する
         // （一条選択時は下の一条ブロックで同じ案内を出すので、ここでは重複させない）
         if(zeh && !(typeof htype!=='undefined' && htype==='ichijo'))
-          good.push(`耐震等級3の確認資料（性能評価書など）がある住宅なら、地震保険料は50%割引の対象です。④生活費の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
+          good.push(`耐震等級3の確認資料（性能評価書など）がある住宅なら、地震保険料は50%割引の対象です。「毎月の生活費」の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
         if(typeof htype!=='undefined' && htype==='ichijo'){   // 【一条フック】一条選択時の診断
           const ict = (typeof ichijoCompareTotal==='function') ? ichijoCompareTotal() : 0;
           if(ict>0) good.push(`一条工務店の家（高性能）を選択中。光熱費・太陽光・メンテの3項目で、一般住宅より30年で 約${fmt(ict)}万円 負担が軽くなる試算です（結果の比較カード参照・目安）。`);
-          good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。④生活費の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
+          good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。「毎月の生活費」の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
           con.push(`太陽光・タイル等の初期費用は建物側にかかります。30年の差額と初期費用はセットでご検討ください（無料相談でくわしく試算できます）。`);
         }
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
         if(rateType==='fixed') good.push(`固定金利のため、返済額が将来にわたって変わらず、家計計画が立てやすいです。`);
         if(ratio>25) con.push(`返済負担率 約${ratio}% はやや重め。頭金の増額や返済期間の調整で軽くできます。`);
-        if(balAt>0.5) con.push(`退職後は収入が年金中心に下がります。${payAge}歳時点の残高 約${fmt(balAt)}万円 を「払い続ける」か「退職金等で一括返済する」か、③の「指定年齢での住宅ローンの扱い」で切り替えて、老後の資産への影響を比較しておきましょう。`);
+        if(balAt>0.5) con.push(`退職後は収入が年金中心に下がります。${payAge}歳時点の残高 約${fmt(balAt)}万円 を「払い続ける」か「退職金等で一括返済する」か、「住まい」の「指定年齢での住宅ローンの扱い」で切り替えて、老後の資産への影響を比較しておきましょう。`);
         if(balAt>0.5 && !willLump) con.push(`現在は「支払いを継続」の設定です。継続なら手元資金を厚く残せますが、年金からの返済が${finishAge}歳まで続きます。金利より運用利回りが高ければ継続が有利になる場合もあります。`);
         if(!single && loanType()==='solo-h' && currentLoanBalance()>0) con.push(`${esc(hNameH())}の単独ローンのため、${esc(wNameH())}に万一のときローンが残る点に注意です。`);
-        if(rateType!=='fixed') con.push(`変動金利（${rateType==='step5'?'5年':'10年'}ごと見直し）を選択中です。金利が上昇した場合は毎月の返済額が増えます。③の「金利タイプ」で上昇シナリオを入力し、負担がどこまで増えるか事前に確認しておくと安心です。`);
+        if(rateType!=='fixed') con.push(`変動金利（${rateType==='step5'?'5年':'10年'}ごと見直し）を選択中です。金利が上昇した場合は毎月の返済額が増えます。「住まい」の「金利タイプ」で上昇シナリオを入力し、負担がどこまで増えるか事前に確認しておくと安心です。`);
         con.push(`団信が守るのは死亡・高度障害が中心です。働けなくなった場合の返済は残るため、就業不能への備えとセットで考えると安心です。`);
         if(houseType==='buy') con.push(`火災保険はローン実行までに加入が必要です。住宅購入は、生命保険をまとめて見直す良い節目でもあります。`);
         con.push(`固定資産税・修繕費（年 約${fmt(num('prop-tax',0)+num('maint',0))}万円）も継続してかかります。`);
@@ -4756,7 +4839,7 @@
             </table>
           </div>`;
       } else {
-        summary.innerHTML = `<p class="at-note">「⑤ 貯蓄・資産運用」で運用商品（NISA・iDeCo・保険など）を追加すると、ここに項目ごとの内訳が表示されます。</p>`;
+        summary.innerHTML = `<p class="at-note">「貯蓄・資産運用・年金」で運用商品（NISA・iDeCo・保険など）を追加すると、ここに項目ごとの内訳が表示されます。</p>`;
       }
 
       /* ② 年次推移（西暦・夫・妻・子・預貯金・各商品・運用合計。単身時は妻を省略）*/
@@ -4786,18 +4869,105 @@
        初期化・イベント登録
        ============================================================ */
     // アコーディオン開閉
-    document.querySelectorAll('[data-acc] .acc-head').forEach(h=>{
-      h.addEventListener('click', ()=> h.parentElement.classList.toggle('open'));
+    /* 旧アコーディオンの開閉は廃止（2026-08-17 タブ化）。
+       tab-mode ではセクションは常に開いた状態で、表示の切替は上のボタン行（switchView）が担う */
+
+    /* ============================================================
+       画面切替（入力する7つ／結果を見る8つ）
+       ・1画面に1つだけ表示する入れ替え式。DOMからは消さない（display切替のみ）
+         → recompute() は非表示の入力欄からも値を読めるので計算は今までどおり
+       ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
+       ============================================================ */
+    const INPUT_VIEW_ORDER = ['family','kids','home','living','save','events','insurance'];
+    const INPUT_VIEW_LABEL = {
+      family:'ご家族の基本情報', kids:'お子さまの教育費', home:'住まい', living:'毎月の生活費',
+      save:'貯蓄・資産運用・年金', events:'ライフイベント', insurance:'加入中の保険'
+    };
+    let currentView = { type:'input', key:'family' };
+    function resizeChartsSoon(){
+      requestAnimationFrame(()=>{
+        try{
+          [typeof assetChart!=='undefined'&&assetChart, typeof flowChart!=='undefined'&&flowChart,
+           typeof compareChart2!=='undefined'&&compareChart2, typeof ichijoChart!=='undefined'&&ichijoChart,
+           typeof investDiffChart!=='undefined'&&investDiffChart, typeof hokenDiffChart!=='undefined'&&hokenDiffChart
+          ].forEach(c=>{ if(c && c.resize) c.resize(); });
+        }catch(e){}
+      });
+    }
+    function switchView(type, key, opts){
+      opts = opts || {};
+      // 単身のときは「加入中の保険」に入れない（セクション自体が診断対象外で非表示のため）
+      if(type==='input' && key==='insurance'){
+        const acc = document.querySelector('[data-sec="insurance"]');
+        if(acc && acc.classList.contains('hidden')) key = 'events';
+      }
+      currentView = { type, key };
+      document.querySelectorAll('#input-panel .acc').forEach(el=>
+        el.classList.toggle('view-active', type==='input' && el.dataset.sec===key));
+      document.querySelectorAll('[data-view]').forEach(el=>
+        el.classList.toggle('view-active', type==='result' && el.dataset.view===key));
+      // ボタンの選択状態と、横スクロール内での位置合わせ
+      document.querySelectorAll('#nav-input button').forEach(b=>{
+        const on = (type==='input' && b.dataset.navInput===key);
+        b.classList.toggle('active', on);
+        if(on && b.parentElement) b.parentElement.scrollTo({ left: Math.max(0, b.offsetLeft-40), behavior:'smooth' });
+      });
+      document.querySelectorAll('#nav-result button').forEach(b=>{
+        const on = (type==='result' && b.dataset.navResult===key);
+        b.classList.toggle('active', on);
+        if(on && b.parentElement) b.parentElement.scrollTo({ left: Math.max(0, b.offsetLeft-40), behavior:'smooth' });
+      });
+      if(type==='result') resizeChartsSoon();
+      if(!opts.noScroll){
+        const nav = $('tool-nav');
+        if(nav){ const y = nav.getBoundingClientRect().top + window.pageYOffset - 70; window.scrollTo({ top: Math.max(0,y) }); }
+      }
+    }
+    if($('nav-input')) $('nav-input').addEventListener('click', (e)=>{
+      const b = e.target.closest('button[data-nav-input]'); if(!b) return;
+      switchView('input', b.dataset.navInput);
     });
+    if($('nav-result')) $('nav-result').addEventListener('click', (e)=>{
+      const b = e.target.closest('button[data-nav-result]'); if(!b) return;
+      switchView('result', b.dataset.navResult);
+    });
+    // 各入力セクションの下に「次へ」導線を付ける（最後は「結果を見る」）
+    (function(){
+      INPUT_VIEW_ORDER.forEach((key, i)=>{
+        const acc = document.querySelector('[data-sec="'+key+'"]'); if(!acc) return;
+        const body = acc.querySelector('.acc-body'); if(!body) return;
+        const nav = document.createElement('div');
+        nav.className = 'sec-next no-print';
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'btn btn-primary btn-sm';
+        const setLabel = ()=>{
+          // 次の「表示されている」セクションを探す（単身では「加入中の保険」を飛ばす）
+          let nk = null;
+          for(let j=i+1; j<INPUT_VIEW_ORDER.length; j++){
+            const a = document.querySelector('[data-sec="'+INPUT_VIEW_ORDER[j]+'"]');
+            if(a && !a.classList.contains('hidden')){ nk = INPUT_VIEW_ORDER[j]; break; }
+          }
+          if(nk){ btn.dataset.next = nk; btn.innerHTML = '次へ：' + INPUT_VIEW_LABEL[nk] + ' <i class="fa-solid fa-arrow-right"></i>'; }
+          else { btn.dataset.next = ''; btn.innerHTML = '結果を見る <i class="fa-solid fa-chart-line"></i>'; }
+        };
+        setLabel();
+        btn.addEventListener('click', ()=>{
+          setLabel();   // 世帯タイプの切替で次のセクションが変わっている可能性があるため押した瞬間に引き直す
+          if(btn.dataset.next) switchView('input', btn.dataset.next);
+          else switchView('result', 'assets');
+        });
+        nav.appendChild(btn);
+        body.appendChild(nav);
+      });
+    })();
+    document.body.classList.add('tab-mode');
+    switchView('input', 'family', { noScroll:true });
 
     // すべての入力変更で再計算
     $('input-panel').addEventListener('input', recompute);
 
-    // 「結果を見る」：URLのハッシュ（共有リンクのデータ）を書き換えずに結果へスクロール
-    const gotoResults = ()=>{
-      const el = $('results') || document.querySelector('.results');
-      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
-    };
+    // 「結果を見る」：資産の推移の画面へ切り替える（URLのハッシュ＝共有リンクのデータは触らない）
+    const gotoResults = ()=>{ switchView('result', 'assets'); };
     if($('jump-result')) $('jump-result').addEventListener('click', gotoResults);
     if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
@@ -4988,7 +5158,7 @@
 
     /* ============================================================
        個別診断エンジン（費用ゼロのルールベース）
-       「保険は必要？」等の質問に、ヒアリングせず①〜⑥の入力と
+       「保険は必要？」等の質問に、ヒアリングせず各セクションの入力と
        シミュレーション結果をまるごと読み込んで、その方の数字で即答する
        ============================================================ */
     function buildProfile(){
@@ -5264,7 +5434,7 @@
           const rec = Math.max(1, Math.min(Math.floor(surplus/24), 10));
           return diagBox(facts, 'warn',
             `診断：<b>始める余地は十分</b>ありそうです。一般的には月${fmt(rec)}万円程度から始める方が多い水準です。`,
-            `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。左の「⑤資産運用」に追加すると、このシミュレーションにすぐ反映されます。`);
+            `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。上の「貯蓄・資産運用・年金」に追加すると、このシミュレーションにすぐ反映されます。`);
         }
         return diagBox(facts, 'ok',
           `診断：いまの積立を<b>続けてOK</b>です。運用効果は退職時で <b>約${fmt(ben)}万円</b> のプラスです。`,
@@ -5277,7 +5447,7 @@
         if(!p.children.length){
           return diagBox([famFact(p)], 'warn',
             `診断：お子さまの情報が未入力です。`,
-            `左の「<b>② お子さま</b>」で年齢と進学プランを追加していただくと、教育費の総額と毎月の準備額を自動で診断します。`);
+            `上の「<b>お子さまの教育費</b>」で年齢と進学プランを追加していただくと、教育費の総額と毎月の準備額を自動で診断します。`);
         }
         const univ = (c)=>{ const i = HIGHED[c.highEd] || HIGHED.none; return i.years*i.annual + (c.lodging==='boarding' ? LODGING_ANNUAL*i.years : 0); };
         const facts = [ famFact(p),
@@ -5298,7 +5468,7 @@
           const yrsAll = Math.max(p.endAge - p.hAge, 0);
           return diagBox([ famFact(p), `住まい：賃貸（家賃 月<b>${fmt(rent)}万円</b>）`, `${p.endAge}歳までの家賃総額：約<b>${fmt(rent*12*yrsAll)}万円</b>` ],
             'warn', `診断：生涯の家賃負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
-            `左の「③住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`);
+            `上の「住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`);
         }
         const down = num('down',0);
         const schedule = buildLoanSchedule();
@@ -5327,9 +5497,9 @@
         const retireTalk = (balAt>0.5
           ? `<br><br><b>退職後の返済プラン：</b>退職後は収入が年金中心に下がるため、${payAge}歳時点の残高 約${fmt(balAt)}万円 の扱いが老後家計のカギです。${willLump
               ? `いまは「一括返済」の設定で、退職金等で清算すれば以後の固定費が軽くなります（手元資金の減らしすぎには注意）。`
-              : `いまは「支払いを継続」の設定です。退職金等での一括返済に切り替えると年金生活の固定費が軽くなる一方、手元資金は減ります。③の設定で切り替えて比較できます。`}`
+              : `いまは「支払いを継続」の設定です。退職金等での一括返済に切り替えると年金生活の固定費が軽くなる一方、手元資金は減ります。「住まい」の設定で切り替えて比較できます。`}`
           : `<br><br>${finishAge}歳で完済予定のため、退職後にローンは残りません。年金生活の固定費が軽く、安心して住まいを持ち続けられます。`)
-          + (rateType!=='fixed' ? `<br><br><b>変動金利のご注意：</b>${rateType==='step5'?'5年':'10年'}ごとに金利が見直されるため、将来の金利上昇局面では毎月の返済額が増える可能性があります。左の「③住まい・金利タイプ」で見直し時期ごとの想定金利を変えて、上昇時の負担増をあらかじめ確認しておくと安心です。` : '');
+          + (rateType!=='fixed' ? `<br><br><b>変動金利のご注意：</b>${rateType==='step5'?'5年':'10年'}ごとに金利が見直されるため、将来の金利上昇局面では毎月の返済額が増える可能性があります。上の「住まい」の金利タイプで見直し時期ごとの想定金利を変えて、上昇時の負担増をあらかじめ確認しておくと安心です。` : '');
         if(ratio<=25){
           return diagBox(facts, 'ok',
             `診断：返済負担率${ratio}%は<b>無理のない範囲</b>です。`,
@@ -5337,7 +5507,7 @@
         }
         return diagBox(facts, 'warn',
           `診断：返済負担率${ratio}%は<b>やや重め</b>です（目安は25%以内）。`,
-          `①頭金を増やす ②返済期間を延ばす ③物件価格を見直す のいずれかで負担率を下げられます。左の「③住まい」の数字を変えると、この場で効果を確認できます。` + retireTalk);
+          `①頭金を増やす ②返済期間を延ばす ③物件価格を見直す のいずれかで負担率を下げられます。上の「住まい」の数字を変えると、この場で効果を確認できます。` + retireTalk);
       },
 
       /* iDeCo */
@@ -5469,7 +5639,7 @@
       const total = ichijoCompareTotal();
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const facts = [
-        `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（③住まいの「太陽光・蓄電池の設定」から計算）`,
+        `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（「住まい」の「太陽光・蓄電池の設定」から計算）`,
         `年間発電量の目安：約<b>${fmt(m.gen)}kWh</b>。うち自家消費${Math.round(m.selfRate*100)}%＝電気代の節約 約${m.selfMan.toFixed(1)}万円/年、売電は初年度 約${m.sellY1.toFixed(1)}万円/年`,
         `太陽光の30年収支：約<b>${fmt(m.solar30)}万円</b>（売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(Math.round(m.selfMan*30))}万円。2026年度FITの単価カーブで計算）`,
         `高断熱の光熱費削減：年 約${fmt(m.utilSave)}万円 × 30年 ＝ 約<b>${fmt(m.utilSave*30)}万円</b>（自家消費とは別枠）`,
@@ -5480,7 +5650,7 @@
         ? ((total - m.initCost > 0)
             ? `太陽光・蓄電池の<b>初期費用（目安 約${fmt(m.initCost)}万円）は別途</b>のため、差し引きでは30年で約${fmt(total-m.initCost)}万円プラスの計算になります（建物価格差はさらに別途＝比較カード参照）。卒FIT後は8円で売るより32円の買電を減らす<b>自家消費が有利</b>です。地域・間取り・電気の使い方で大きく変わるため、正確な金額は無料相談で試算できます。`
             : `太陽光・蓄電池の<b>初期費用（目安 約${fmt(m.initCost)}万円）は別途</b>のため、差し引きでは30年でおおむね相殺〜マイナスの計算になります（建物価格差も別途＝比較カード参照）。快適性・停電時の安心は金額外の価値としてご検討ください。正確な金額は無料相談で試算できます。`)
-        : `いまは「一般的な住宅」を選択中です。③住まいの「住宅の性能タイプ」で<b>一条工務店の家（高性能）</b>を選ぶと、太陽光kW・蓄電池・地域の設定から本体の試算にも反映されます。`;
+        : `いまは「一般的な住宅」を選択中です。「住まい」の「住宅の性能タイプ」で<b>一条工務店の家（高性能）</b>を選ぶと、太陽光kW・蓄電池・地域の設定から本体の試算にも反映されます。`;
       return diagBox(facts, 'ok', verdict, body);
     };
     /* ══════ 【一条工務店 専用ロジック② ここまで】 ══════ */
@@ -5497,7 +5667,7 @@
         '<b>気密（C値・c値）とは</b>：家全体の「すき間」の合計面積を床面積で割った数値で、小さいほど気密が高い家です。一条は<b>全棟で気密測定</b>を行い、実測平均は<b>約0.59 cm²/㎡</b>（社内基準0.7以下・超えたら補修してから引き渡し）。かつての国の基準は5.0だったので約8分の1のすき間ですが、現在の省エネ基準にはC値の規定自体がない点も含め、実測で示しているのが特長です。',
         '<b>全館床暖房の電気代</b>：関東・関西では冬のピーク月で<b>1.8〜2.5万円程度</b>が目安。「月5万円」といった話は寒冷地・大面積のピーク値で、全国平均ではありません。',
         '<b>光熱費は本当に安い？</b>：電気代単体は高く見えても、ガス代・灯油代が0円のオール電化＋高断熱で、総額では一般住宅より<b>年3〜12万円ほど安くなる傾向</b>です（あくまで目安）。',
-        '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。売電単価は2026年度FITで<b>10kW以上＝19円が5年間→8.3円の事業用区分</b>、10kW未満＝24円が4年間です。<b>卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利</b>なため、蓄電池との組み合わせが定番です。このツールは③住まいで搭載kW・蓄電池・地域を入れると収支を自動計算します。',
+        '<b>太陽光は得か</b>：平均搭載容量は<b>約12kW</b>（2024年度実績・全国平均の約2倍）。売電単価は2026年度FITで<b>10kW以上＝19円が5年間→8.3円の事業用区分</b>、10kW未満＝24円が4年間です。<b>卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利</b>なため、蓄電池との組み合わせが定番です。このツールは「住まい」で搭載kW・蓄電池・地域を入れると収支を自動計算します。',
         '<b>タイル外壁のメンテ</b>：ハイドロテクトタイルは光触媒で汚れが雨で落ち、<b>再塗装が不要</b>。必要なのは25〜30年目ごろのシーリング打ち替え（<b>足場代込みで約70〜100万円</b>の施主試算もあり幅があります）と洗浄程度が目安です。',
         '<b>一般サイディングとの差</b>：窯業サイディングは約10年ごとに再塗装（1回60〜150万円）。外壁・屋根の塗替え分として、30年で<b>約60〜180万円</b>の差が目安です（一条側の設備更新費は含みません）。',
         '<b>一条側のメンテナンス費</b>：全館床暖房の熱源機・ロスガード90・太陽光パワコン等、設備の30年更新費は<b>施主試算で約270〜390万円</b>。外壁で浮く分とは別にかかるため、この試算では外壁の差だけを比較しています。',
@@ -6416,7 +6586,7 @@
         'そのご不安、そのままにせず今日ここで軽くしましょう。'
       ]);
       if(key==='edu' && !cats.find(x=> x.key==='edu')){
-        return empathy + `<span class="diag-verdict warn">お子さまの情報が未入力です。左の「② お子さま」で年齢と進学プランを追加していただくと、教育費の必要額と毎月の積立目安を診断できます。</span>`;
+        return empathy + `<span class="diag-verdict warn">お子さまの情報が未入力です。上の「お子さまの教育費」で年齢と進学プランを追加していただくと、教育費の必要額と毎月の積立目安を診断できます。</span>`;
       }
       const c = cats.find(x=> x.key===key) || cats[0];
       // 保険は詳しく踏み込みすぎず、結論＋安心材料だけ（詳細設計は専門家と一緒に）
@@ -7536,6 +7706,8 @@
         const adv = $('cust-advisor-wrap'); if(adv) adv.classList.remove('hidden');   // 担当者用の切替はフッターに小さく出す
         updatePlanTabs();   // プランの説明文をお客様向けの言い回しに切り替える（customer-mode 付与後に呼ぶ）
         updateCustExpiry(); // 「変更した内容がこの端末に残るのはあと何日か」を表示
+        // お客様は「担当者が作った結果を見る」ために開くので、最初から資産の推移を表示する
+        if(typeof switchView==='function') switchView('result','assets',{noScroll:true});
 
         // 前回の続きがあれば、続きから／共有された内容から を選んでいただく
         const saved = readSharedDraft();

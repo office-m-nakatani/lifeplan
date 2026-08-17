@@ -401,7 +401,8 @@
     }
     .kpi .k-label{ font-size:.78rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
     .kpi .k-label i{ color:var(--blue); }
-    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; }
+    /* keep-all：スマホで桁数が増えたとき「万」と「円」の間で折り返して1文字だけ次行に落ちるのを防ぐ（折り返すなら数字と単位の間） */
+    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; word-break:keep-all; }
     .kpi .k-value small{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
     .kpi .k-sub{ font-size:.74rem; color:var(--ink-soft); margin-top:2px; }
     .kpi.accent-yellow{ background:var(--yellow-pale); border-color:#f3e3a9; }
@@ -507,6 +508,17 @@
     .lock-msg{ font-size:.85rem; color:var(--ink-soft); margin-bottom:10px; line-height:1.6; }
     .lock-err{ color:var(--bad); font-size:.82rem; margin-top:6px; min-height:1.2em; }
     .req{ color:var(--bad); }
+    /* 予約フォーム：個人情報の利用目的の明示と同意 */
+    .rv-privacy{ border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--bg-soft); padding:10px 12px; margin:2px 0 12px; }
+    .rv-privacy > b{ display:block; font-size:.84rem; margin-bottom:6px; }
+    .rv-privacy p{ margin:0 0 6px; font-size:.78rem; color:var(--ink-soft); line-height:1.65; }
+    .rv-privacy summary{ cursor:pointer; font-size:.78rem; font-weight:700; color:var(--blue-deep); }
+    .rv-privacy details[open] summary{ margin-bottom:6px; }
+    .rv-privacy ul{ margin:0; padding-left:1.15em; font-size:.78rem; color:var(--ink-soft); line-height:1.65; }
+    .rv-privacy li + li{ margin-top:3px; }
+    /* 同意はスマホでも押しやすいよう行全体をタップ領域にする（高さ44px以上） */
+    .rv-agree{ display:flex; align-items:center; gap:10px; font-size:.84rem; font-weight:700; line-height:1.5; cursor:pointer; margin-top:10px; padding:11px 10px; min-height:44px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); }
+    .rv-agree input{ width:20px; height:20px; margin:0; flex:none; }
     .btn-full{ width:100%; margin-top:6px; }
     .field textarea{ width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; resize:vertical; }
     .field textarea:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,159,212,.18); }
@@ -738,6 +750,8 @@
 
     /* スクロールヒント */
     .scroll-hint{ font-size:.74rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    /* 表示期間で絞っているときにキャッシュフロー表へ出す説明 */
+    .cf-horizon-note{ font-size:.78rem; line-height:1.6; color:var(--ink); background:var(--warn-pale); border:1.5px solid var(--warn); border-radius:10px; padding:8px 10px; margin:0 0 10px; }
 
     /* スマホでは省略する要素 */
     @media(max-width:560px){
@@ -1526,6 +1540,8 @@
         <h3><i class="fa-solid fa-table-cells"></i> 年齢別キャッシュフロー表</h3>
       </div>
       <p class="scroll-hint">金額の単位：万円<span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
+      <!-- 表示期間を絞っているときだけ出す。切替UIは上の「金融資産の推移」にあるので、行が少ない理由が分かるようにする -->
+      <p class="cf-horizon-note hidden" id="cf-horizon-note"></p>
       <div class="table-scroll">
         <table class="cf">
           <thead>
@@ -1751,6 +1767,21 @@
           </div>
           <div class="field"><label>ご希望日時（任意）</label><input type="text" id="rv-when" placeholder="例：来週の平日午後、土曜の午前 など"></div>
           <div class="field"><label>ご質問・メッセージ（任意）</label><textarea id="rv-msg" rows="3" placeholder="気になることをご自由にご記入ください"></textarea></div>
+          <div class="rv-privacy">
+            <b><i class="fa-solid fa-shield-halved"></i> ご入力いただく個人情報の取り扱い</b>
+            <p><b>利用目的</b>：無料相談のご予約受付・日程調整のご連絡と、ご相談内容に応じたご案内（保険・資産運用・相続・住宅資金など）のために利用します。ご相談内容によっては、具体的な保険商品のご案内を行う場合があります。</p>
+            <p>マイナンバー・口座番号・クレジットカード番号などは<b>ご記入にならないでください</b>。</p>
+            <details>
+              <summary>取得する情報・送信方法・第三者提供・保管について</summary>
+              <ul>
+                <li><b>取得する情報</b>：この画面でご記入いただくお名前・ご連絡先・ご相談内容・ご希望日時・メッセージのみです。シミュレーターに入力された金額などのデータは含みません。</li>
+                <li><b>送信方法</b>：お使いのメールソフトが開き、Office-M（<b>y.nakatani@office-m-tax.com</b>）宛のメールとして送信されます。この画面から外部のサーバーへ自動送信されることはありません。</li>
+                <li><b>第三者提供</b>：法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。</li>
+                <li><b>保管・訂正・削除</b>：ご相談対応に必要な期間のみ保管します。内容の確認・訂正・削除をご希望の場合は上記メールアドレスへご連絡ください。</li>
+              </ul>
+            </details>
+            <label class="rv-agree" for="rv-agree"><input type="checkbox" id="rv-agree"><span>上記の利用目的に同意して送信します <span class="req">*</span></span></label>
+          </div>
           <button class="btn btn-primary btn-full" id="rv-submit" type="button"><i class="fa-solid fa-paper-plane"></i> この内容で予約する</button>
           <p class="lock-err" id="rv-err"></p>
         </div>
@@ -2590,6 +2621,16 @@
       recompute();
     });
     if($('ic-horizon-custom')) $('ic-horizon-custom').addEventListener('input', ()=>{ if(ichijoHorizon==='custom') recompute(); });
+    // キャッシュフロー表は切替UIから離れているため、絞っているときだけ理由を出す（PDFにも残す＝no-printにしない）
+    function updateCfHorizonNote(allRows, shownRows){
+      const el = $('cf-horizon-note'); if(!el) return;
+      const cut = shownRows.length < allRows.length;
+      el.classList.toggle('hidden', !cut);
+      if(cut){
+        const last = shownRows[shownRows.length-1];
+        el.innerHTML = `この表は「金融資産の推移」の<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
+      }
+    }
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
     const loanRateTypeSeg = $('loan-ratetype-seg');
@@ -3383,13 +3424,15 @@
         $('verdict-text').innerHTML = `終了時（${endAge}歳）の総資産は <b>${fmt(endRow.net)}万円</b> の見込みです。`;
       }
 
-      // 資産推移の「表示期間」で、グラフ・表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）
+      // 資産推移の「表示期間」で、グラフとキャッシュフロー表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）。
+      // 資産運用の詳細（asset-modal）は切替UIが見えない場所にあり、「満期残高」が打ち切り年の残高に化けるので必ず全期間で描く。
       const viewRows = (ichijoHorizon==='end') ? rows : rows.slice(0, Math.max(ichijoHorizonYears(), 1));
       drawAssetChart(viewRows);
       drawFlowChart(viewRows);
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
       drawTable(viewRows);
-      drawAssetTable(viewRows);
+      drawAssetTable(rows);
+      updateCfHorizonNote(rows, viewRows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       updateIchijoHorizonLabel();   // 「終了年齢まで」ボタンのラベルをend-ageに同期
@@ -6199,7 +6242,8 @@
        ============================================================ */
     const OFFICE_EMAIL = 'y.nakatani@office-m-tax.com';
     const reserveModal = $('reserve-modal');
-    function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; reserveModal.hidden=false; }
+    // 同意チェックは開くたびに外す（前回の同意を引き継がない＝取得のたびに利用目的へ同意いただく）
+    function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; if($('rv-agree')) $('rv-agree').checked=false; reserveModal.hidden=false; }
     $('open-reserve').addEventListener('click', openReserve);
     $('reserve-close').addEventListener('click', ()=> reserveModal.hidden=true);
     reserveModal.addEventListener('click', (e)=>{ if(e.target===reserveModal) reserveModal.hidden=true; });
@@ -6208,6 +6252,7 @@
       const topic=$('rv-topic').value;
       if(!name || !contact){ $('rv-err').textContent='お名前とご連絡先を入力してください。'; return; }
       if(!topic){ $('rv-err').textContent='ご相談内容を選択してください。'; return; }
+      if($('rv-agree') && !$('rv-agree').checked){ $('rv-err').textContent='個人情報の利用目的をご確認のうえ、同意にチェックを入れてください。'; return; }
       const when=($('rv-when').value||'').trim(), msg=($('rv-msg').value||'').trim();
       const body = `お名前：${name}\nご連絡先：${contact}\nご相談内容：${topic}\nご希望日時：${when||'（指定なし）'}\nメッセージ：${msg||'（なし）'}\n\n―― ライフプランシミュレーターからの予約 ――`;
       const mailto = `mailto:${OFFICE_EMAIL}?subject=${encodeURIComponent('ライフプラン無料相談のご予約')}&body=${encodeURIComponent(body)}`;

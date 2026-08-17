@@ -407,7 +407,8 @@
     }
     .kpi .k-label{ font-size:.78rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
     .kpi .k-label i{ color:var(--blue); }
-    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; }
+    /* keep-all：スマホで桁数が増えたとき「万」と「円」の間で折り返して1文字だけ次行に落ちるのを防ぐ（折り返すなら数字と単位の間） */
+    .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; word-break:keep-all; }
     .kpi .k-value small{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
     .kpi .k-sub{ font-size:.74rem; color:var(--ink-soft); margin-top:2px; }
     .kpi.accent-yellow{ background:var(--yellow-pale); border-color:#f3e3a9; }
@@ -514,6 +515,17 @@
     .lock-msg{ font-size:.85rem; color:var(--ink-soft); margin-bottom:10px; line-height:1.6; }
     .lock-err{ color:var(--bad); font-size:.82rem; margin-top:6px; min-height:1.2em; }
     .req{ color:var(--bad); }
+    /* 予約フォーム：個人情報の利用目的の明示と同意 */
+    .rv-privacy{ border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--bg-soft); padding:10px 12px; margin:2px 0 12px; }
+    .rv-privacy > b{ display:block; font-size:.84rem; margin-bottom:6px; }
+    .rv-privacy p{ margin:0 0 6px; font-size:.78rem; color:var(--ink-soft); line-height:1.65; }
+    .rv-privacy summary{ cursor:pointer; font-size:.78rem; font-weight:700; color:var(--blue-deep); }
+    .rv-privacy details[open] summary{ margin-bottom:6px; }
+    .rv-privacy ul{ margin:0; padding-left:1.15em; font-size:.78rem; color:var(--ink-soft); line-height:1.65; }
+    .rv-privacy li + li{ margin-top:3px; }
+    /* 同意はスマホでも押しやすいよう行全体をタップ領域にする（高さ44px以上） */
+    .rv-agree{ display:flex; align-items:center; gap:10px; font-size:.84rem; font-weight:700; line-height:1.5; cursor:pointer; margin-top:10px; padding:11px 10px; min-height:44px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); }
+    .rv-agree input{ width:20px; height:20px; margin:0; flex:none; }
     .btn-full{ width:100%; margin-top:6px; }
     .field textarea{ width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:1rem; color:var(--ink); background:#fff; resize:vertical; }
     .field textarea:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
@@ -707,40 +719,17 @@
     body.tab-mode .acc-head{ cursor:default; }
     body.tab-mode .acc-chev{ display:none; }
     /* ============================================================
-       入力欄の密度（2026-08-17）
+       入力欄の密度（2026-08-17改）
        タブ化で .layout が1カラムになり、入力パネルが全幅1204pxまで広がった結果、
        .grid3 の1マスが 183px → 378px に倍増し「食費」に378px×97px を使っていた。
-       (1)入力パネルだけ幅を絞る (2)PC幅ではラベル左・入力右の1行にする、の2段構えで直す。
+       対策＝入力パネルの幅を②の入力カラム相当（約680px）へ絞るだけにする。
+       ※「PC幅ではラベル左・入力右の1行」も試したが、ラベル幅がまちまちで
+         間隔がガタつき見づらいとユーザー判断（2026-08-17）。②と同じ
+         「ラベル上・入力下」の型に戻した。横並び化を再提案しないこと。
        印刷・PDFには効かせない（@media screen ＋ :not(.pdf-mode)）。
        ============================================================ */
     @media screen{
-      body.tab-mode:not(.pdf-mode) #input-panel{ max-width:920px; margin-left:auto; margin-right:auto; }
-    }
-    @media screen and (min-width:900px){
-      /* 単位つきの数値入力だけを横並びにする（ラベル＋入力ボックス＋単位が1行に収まるもの） */
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit),
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit){
-        flex-direction:row; flex-wrap:wrap; align-items:center; align-content:flex-start;
-        column-gap:10px; row-gap:4px;
-      }
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > label,
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > label{
-        min-height:0; display:block; flex:1 1 auto; min-width:0; line-height:1.45;
-      }
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .input-unit,
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .input-unit{
-        flex:0 0 auto; width:130px;
-      }
-      /* ヒント・差額バッジ・セグメントは行を独占させる（横並びの行に流れ込ませない） */
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .hint,
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .hint,
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .fdiff,
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .fdiff,
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .seg,
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .seg{ flex:1 1 100%; }
-      /* お名前と終了年齢は文字数が多いので広めに */
-      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit > input.name-ctr) > .input-unit{ width:172px; }
-      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit > #end-age) > .input-unit{ width:152px; }
+      body.tab-mode:not(.pdf-mode) #input-panel{ max-width:680px; margin-left:auto; margin-right:auto; }
     }
     #end-age{ padding-right:56px; }   /* 単位「歳まで」が3文字ぶん広く、値と重なるため */
     /* 生年月日（元号・年・月・日） */
@@ -887,6 +876,8 @@
 
     /* スクロールヒント */
     .scroll-hint{ font-size:.74rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    /* 表示期間で絞っているときにキャッシュフロー表へ出す説明（切替UIは別画面にあるため） */
+    .cf-horizon-note{ font-size:.78rem; line-height:1.6; color:var(--ink); background:var(--warn-pale); border:1.5px solid var(--warn); border-radius:10px; padding:8px 10px; margin:0 0 10px; }
 
     /* スマホでは省略する要素 */
     @media(max-width:560px){
@@ -1604,6 +1595,18 @@
         <!-- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）-->
         <div class="card" data-view="assets">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 金融資産の推移</div>
+          <!-- 表示期間：グラフと表の「見せる年数」だけを絞る。下の一条比較カードの「比較期間」とは別物 -->
+          <div class="ic-level no-print">
+            <span class="ic-level-label">表示期間：</span>
+            <div class="seg" id="view-horizon-seg">
+              <button type="button" data-vhorizon="end" class="active"><span id="view-horizon-end-label">100歳まで</span></button>
+              <button type="button" data-vhorizon="35">35年</button>
+              <button type="button" data-vhorizon="custom">年数を指定</button>
+            </div>
+            <span id="view-horizon-custom-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:6px;">
+              <input type="number" id="view-horizon-custom" value="35" min="1" max="80" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">年間
+            </span>
+          </div>
           <div class="chart-box tall"><canvas id="assetChart"></canvas></div>
         </div>
 
@@ -1760,6 +1763,8 @@
         <h3><i class="fa-solid fa-table-cells"></i> 年齢別キャッシュフロー表</h3>
       </div>
       <p class="scroll-hint">金額の単位：万円<span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
+      <!-- 表示期間を絞っているときだけ出す。この画面には切替UIが無いので、行が少ない理由が分かるようにする -->
+      <p class="cf-horizon-note hidden" id="cf-horizon-note"></p>
       <div class="table-scroll">
         <table class="cf">
           <thead>
@@ -2000,6 +2005,21 @@
           </div>
           <div class="field"><label>ご希望日時（任意）</label><input type="text" id="rv-when" placeholder="例：来週の平日午後、土曜の午前 など"></div>
           <div class="field"><label>ご質問・メッセージ（任意）</label><textarea id="rv-msg" rows="3" placeholder="気になることをご自由にご記入ください"></textarea></div>
+          <div class="rv-privacy">
+            <b><i class="fa-solid fa-shield-halved"></i> ご入力いただく個人情報の取り扱い</b>
+            <p><b>利用目的</b>：無料相談のご予約受付・日程調整のご連絡と、ご相談内容に応じたご案内（保険・資産運用・相続・住宅資金など）のために利用します。ご相談内容によっては、具体的な保険商品のご案内を行う場合があります。</p>
+            <p>マイナンバー・口座番号・クレジットカード番号などは<b>ご記入にならないでください</b>。</p>
+            <details>
+              <summary>取得する情報・送信方法・第三者提供・保管について</summary>
+              <ul>
+                <li><b>取得する情報</b>：この画面でご記入いただくお名前・ご連絡先・ご相談内容・ご希望日時・メッセージのみです。シミュレーターに入力された金額などのデータは含みません。</li>
+                <li><b>送信方法</b>：お使いのメールソフトが開き、Office-M（<b>y.nakatani@office-m-tax.com</b>）宛のメールとして送信されます。この画面から外部のサーバーへ自動送信されることはありません。</li>
+                <li><b>第三者提供</b>：法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。</li>
+                <li><b>保管・訂正・削除</b>：ご相談対応に必要な期間のみ保管します。内容の確認・訂正・削除をご希望の場合は上記メールアドレスへご連絡ください。</li>
+              </ul>
+            </details>
+            <label class="rv-agree" for="rv-agree"><input type="checkbox" id="rv-agree"><span>上記の利用目的に同意して送信します <span class="req">*</span></span></label>
+          </div>
           <button class="btn btn-primary btn-full" id="rv-submit" type="button"><i class="fa-solid fa-paper-plane"></i> この内容で予約する</button>
           <p class="lock-err" id="rv-err"></p>
         </div>
@@ -2982,6 +3002,56 @@
       recompute();
     });
     if($('ic-horizon-custom')) $('ic-horizon-custom').addEventListener('input', ()=>{ if(ichijoHorizon==='custom') recompute(); });
+
+    /* ---------- 「金融資産の推移」の表示期間切替（35年 ／ 終了年齢まで ／ 年数を指定）----------
+       既定＝終了年齢まで（全期間）。グラフと表の表示年数だけを絞り込み、計算・総合判定・AI診断は全期間のまま。
+       ★ 上の ichijoHorizon（一般住宅と一条の「比較期間」）とは別物。変数もUIも混ぜないこと。 */
+    let viewHorizon = 'end';
+    function viewHorizonYears(){
+      if(viewHorizon === 'custom') return Math.min(Math.max(Math.round(num('view-horizon-custom', 35)), 1), 80);
+      if(viewHorizon === '35') return 35;
+      const endAge  = num('end-age', 100);
+      const baseAge = num('h-age', 35);
+      return Math.min(Math.max(endAge - baseAge, 1), 85);   // 現在の年齢〜終了年齢
+    }
+    function updateViewHorizonLabel(){
+      const el = $('view-horizon-end-label');
+      if(el) el.textContent = `${num('end-age',100)}歳まで`;
+    }
+    const viewHorizonSeg = $('view-horizon-seg');
+    // 保存データからの復元用。'end' / '35' はプリセット、'c20' のような c付きは「年数を指定」。
+    // （c を付けないと「年数を指定で35年」がプリセットの35年に化けてボタンの選択がずれる）
+    function setViewHorizon(v){
+      const s = String(v || 'end');
+      const mode = (s==='end' || s==='35') ? s : 'custom';
+      viewHorizon = mode;
+      if(mode==='custom'){
+        const n = parseInt(s.replace(/^c/, ''), 10);
+        const el = $('view-horizon-custom');
+        if(el) el.value = Math.min(Math.max(isNaN(n) ? 35 : n, 1), 80);
+      }
+      if(viewHorizonSeg) [...viewHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.vhorizon===mode));
+      const cw = $('view-horizon-custom-wrap'); if(cw) cw.classList.toggle('hidden', mode!=='custom');
+    }
+    if(viewHorizonSeg) viewHorizonSeg.addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      viewHorizon = b.dataset.vhorizon;
+      [...viewHorizonSeg.children].forEach(x=> x.classList.toggle('active', x===b));
+      const cw = $('view-horizon-custom-wrap'); if(cw) cw.classList.toggle('hidden', viewHorizon!=='custom');
+      recompute();
+    });
+    if($('view-horizon-custom')) $('view-horizon-custom').addEventListener('input', ()=>{ if(viewHorizon==='custom') recompute(); });
+    // キャッシュフロー表は別画面で切替UIが見えないため、絞っているときだけ理由を出す（PDFにも残す＝no-printにしない）
+    function updateCfHorizonNote(allRows, shownRows){
+      const el = $('cf-horizon-note'); if(!el) return;
+      const cut = shownRows.length < allRows.length;
+      el.classList.toggle('hidden', !cut);
+      if(cut){
+        const last = shownRows[shownRows.length-1];
+        el.innerHTML = `この表は「資産と収支」画面の<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには「資産と収支」画面で表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
+      }
+    }
+
     // 太陽光の詳細入力（kW・蓄電池・地域）→ 変更のたびにZEH値と比較カードを再計算
     const ichijoRegionSeg = $('ichijo-region-seg');
     if(ichijoRegionSeg) ichijoRegionSeg.addEventListener('click', (e)=>{
@@ -3933,11 +4003,16 @@
         $('verdict-text').innerHTML = `終了時（${endAge}歳）の総資産は <b>${fmt(endRow.net)}万円</b> の見込みです。`;
       }
 
-      drawAssetChart(rows);
-      drawFlowChart(rows);
+      // 「金融資産の推移」の表示期間で、グラフとキャッシュフロー表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）。
+      // 資産運用の詳細（asset-modal）は切替UIが見えない場所にあり、「満期残高」が打ち切り年の残高に化けるので必ず全期間で描く。
+      updateViewHorizonLabel();
+      const viewRows = (viewHorizon==='end') ? rows : rows.slice(0, Math.max(viewHorizonYears(), 1));
+      drawAssetChart(viewRows);
+      drawFlowChart(viewRows);
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
-      drawTable(rows);
+      drawTable(viewRows);
       drawAssetTable(rows);
+      updateCfHorizonNote(rows, viewRows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
@@ -7017,7 +7092,8 @@
        ============================================================ */
     const OFFICE_EMAIL = 'y.nakatani@office-m-tax.com';
     const reserveModal = $('reserve-modal');
-    function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; reserveModal.hidden=false; }
+    // 同意チェックは開くたびに外す（前回の同意を引き継がない＝取得のたびに利用目的へ同意いただく）
+    function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; if($('rv-agree')) $('rv-agree').checked=false; reserveModal.hidden=false; }
     $('open-reserve').addEventListener('click', openReserve);
     $('reserve-close').addEventListener('click', ()=> reserveModal.hidden=true);
     reserveModal.addEventListener('click', (e)=>{ if(e.target===reserveModal) reserveModal.hidden=true; });
@@ -7026,6 +7102,7 @@
       const topic=$('rv-topic').value;
       if(!name || !contact){ $('rv-err').textContent='お名前とご連絡先を入力してください。'; return; }
       if(!topic){ $('rv-err').textContent='ご相談内容を選択してください。'; return; }
+      if($('rv-agree') && !$('rv-agree').checked){ $('rv-err').textContent='個人情報の利用目的をご確認のうえ、同意にチェックを入れてください。'; return; }
       const when=($('rv-when').value||'').trim(), msg=($('rv-msg').value||'').trim();
       const body = `お名前：${name}\nご連絡先：${contact}\nご相談内容：${topic}\nご希望日時：${when||'（指定なし）'}\nメッセージ：${msg||'（なし）'}\n\n―― ライフプランシミュレーターからの予約 ――`;
       const mailto = `mailto:${OFFICE_EMAIL}?subject=${encodeURIComponent('ライフプラン無料相談のご予約')}&body=${encodeURIComponent(body)}`;
@@ -7097,6 +7174,7 @@
         wifeSchedule: readWifeWork(),
         house: houseType,
         htype, ichijoRegion, ichijoHorizon,   // 【一条フック】住宅の性能タイプ・日射区分・比較期間を保存（太陽光kW/蓄電池はfieldsで自動保存）
+        viewHorizon: (viewHorizon==='custom') ? ('c'+viewHorizonYears()) : viewHorizon,   // 「金融資産の推移」の表示期間（比較期間とは別。年数指定は 'c20' の形で保存）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
         expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
         kasaiCycle: kasaiCycle(),
@@ -7156,6 +7234,7 @@
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
+      setViewHorizon(s.viewHorizon || 'end');   // 「金融資産の推移」の表示期間を復元（この項目が無い旧保存は全期間に戻す）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
       userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない

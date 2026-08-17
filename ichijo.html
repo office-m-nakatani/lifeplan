@@ -811,6 +811,10 @@
          --planbar-h にセット（バーはflex-wrapで高さが変わるため固定値にしない）。
          これが無いとプランバーがナビ1行目を覆い、家族・住まい等のボタンが押せなくなる（検証役検出） */
       body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:var(--planbar-h, 84px); z-index:45; background:var(--bg); padding:8px 0 6px; }
+      /* 追従中（nav-stuck）は「今いる側」の行だけ残す（入力中は入力行のみ・結果中は結果行のみ＝ユーザー指示）。
+         判定は #nav-sentinel（ナビ直前の高さ0の番兵）で行い、ナビ自身の高さ変化によるチラつきを避ける */
+      body.tab-mode.nav-stuck.view-input:not(.pdf-mode) #tool-nav .tnr-result{ display:none; }
+      body.tab-mode.nav-stuck.view-result:not(.pdf-mode) #tool-nav .tnr-input{ display:none; }
     }
     /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
        min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
@@ -1113,6 +1117,8 @@
   </div>
 
   <!-- ============================= 画面切替ナビ（入力する／結果を見る）============================= -->
+  <!-- 番兵：ナビが張り付いたか（stuck）をスクロールで判定するための目印。高さ0 -->
+  <div id="nav-sentinel" aria-hidden="true"></div>
   <div class="wrap tool-nav no-print" id="tool-nav">
     <div class="tool-nav-row tnr-input">
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
@@ -1449,23 +1455,26 @@
               <div class="subgroup-title"><span class="tag" style="background:#fdecef;color:#a8497e;">食</span> 食費・日用品</div>
               <div class="grid3">
                 <div class="field"><label>食費</label><div class="input-unit"><input type="number" id="e-food" value="7" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>外食費</label><div class="input-unit"><input type="number" id="e-eatout" value="0" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">食費と分けて把握したい場合に（食費に含めていれば0のまま）</span></div>
                 <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>雑費</label><div class="input-unit"><input type="number" id="e-misc" value="0" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">どの項目にも入らない細かな支出</span></div>
               </div>
               <div class="subgroup-title sgt-plain"><span class="tag" style="background:#e6f2fb;color:#2f7cb5;">光</span> 水道・光熱・通信</div>
               <div class="grid3">
-                <div class="field"><label>水道</label><div class="input-unit"><input type="number" id="e-water" value="0.5" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>電気</label><div class="input-unit"><input type="number" id="e-elec" value="1.2" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガス</label><div class="input-unit"><input type="number" id="e-gas" value="0.8" min="0" step="0.1"><span class="u">万円</span></div></div>
+                <div class="field"><label>水道</label><div class="input-unit"><input type="number" id="e-water" value="0.5" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ネット代</label><div class="input-unit"><input type="number" id="e-net" value="0.5" min="0" step="0.5"><span class="u">万円</span></div></div>
               </div>
               <div class="subgroup-title sgt-plain"><span class="tag" style="background:#eef0f4;color:#5b6b7d;">車</span> 車・保険</div>
               <div class="grid3">
-                <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>車検代（月割り）</label><div class="input-unit"><input type="number" id="e-shaken" value="0" min="0" step="0.1"><span class="u">万円</span></div><span class="hint">2年ごとの車検・整備費用を月割りで（例：12万円→0.5）</span></div>
                 <div class="field"><label>損害保険（自動車・傷害）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
+                <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
               </div>
               <div class="subgroup-title sgt-plain"><span class="tag" style="background:#fdf1cf;color:#8a6a12;">他</span> お小遣い・その他</div>
               <div class="grid3">
@@ -1663,21 +1672,40 @@
                   </div>
                   <span class="hint">団体信用生命保険（団信）＝名義人に万一があると残債がゼロになる保険。ペアローンは夫婦それぞれが団信に加入します。</span>
                 </div>
-                <div class="field hidden" id="loan-share-field" style="max-width:360px;">
-                  <label><b id="loan-share-hname">夫</b> ： <b id="loan-share-wname">妻</b> の借入割合</label>
+                <div class="field hidden" id="loan-share-field" style="max-width:400px;">
+                  <label><b id="loan-share-hname">夫</b> ： <b id="loan-share-wname">妻</b> の借入割合（＝団信でカバーされる割合）</label>
                   <div class="ratio-row">
                     <div class="input-unit"><input type="number" id="loan-share-h" value="50" min="0" max="100" step="5"><span class="u">％</span></div>
                     <span class="ratio-colon">：</span>
                     <div class="input-unit"><input type="number" id="loan-share-w" value="50" min="0" max="100" step="5" readonly tabindex="-1"><span class="u">％</span></div>
                   </div>
-                  <span class="hint"><b id="loan-ratio-lbl">夫 50 ： 50 妻</b>。<b id="loan-share-hname2">夫</b>の割合を入れると<b id="loan-share-wname2">妻</b>は自動計算されます。</span>
+                  <span class="hint"><b id="loan-ratio-lbl">夫 50 ： 50 妻</b>。<b id="loan-share-hname2">夫</b>の割合を入れると<b id="loan-share-wname2">妻</b>は自動計算されます。それぞれに万一があったとき、<b>自分の割合の残債だけ</b>が団信でゼロになります（相手の割合は残ります）。</span>
                 </div>
               </div>
 
-              <!-- 団信の種類（がん団信などの上乗せ金利） -->
+              <!-- 団信の保障タイプ（名義人ごと）＋上乗せ金利。タイプはAI診断・もしもの保障の説明に反映 -->
               <div class="loan-payoff-box">
-                <div class="lp-title"><i class="fa-solid fa-notes-medical"></i> 団信の種類（上乗せ金利）</div>
-                <div class="field" style="max-width:340px;">
+                <div class="lp-title"><i class="fa-solid fa-notes-medical"></i> 団信の保障タイプ（上乗せ金利）</div>
+                <div class="grid2">
+                  <div class="field" id="dansin-type-h-field">
+                    <label><span id="dansin-type-hname">夫</span>の団信タイプ</label>
+                    <select id="dansin-type-h">
+                      <option value="general">一般団信（死亡・高度障害で残債0）</option>
+                      <option value="gan">がん団信（＋がん診断で残債0）</option>
+                      <option value="sandai">三大疾病団信（＋がん・急性心筋梗塞・脳卒中で残債0）</option>
+                    </select>
+                  </div>
+                  <div class="field hidden" id="dansin-type-w-field">
+                    <label><span id="dansin-type-wname">妻</span>の団信タイプ</label>
+                    <select id="dansin-type-w">
+                      <option value="general">一般団信（死亡・高度障害で残債0）</option>
+                      <option value="gan">がん団信（＋がん診断で残債0）</option>
+                      <option value="sandai">三大疾病団信（＋がん・急性心筋梗塞・脳卒中で残債0）</option>
+                    </select>
+                  </div>
+                </div>
+                <span class="hint" style="display:block; margin-top:4px;">がん・三大疾病タイプは<b>「診断・所定の状態で残債が全額免除」となる型</b>を想定しています（一部免除型・条件は金融機関により異なります）。選んだタイプは<b>AI診断と「万が一（保障）」の説明</b>に反映されます。</span>
+                <div class="field" style="max-width:340px; margin-top:10px;">
                   <label>団信の上乗せ金利（がん団信・ワイド団信など）</label>
                   <div class="input-unit"><input type="number" id="dansin-extra" value="0" min="0" max="1" step="0.05"><span class="u">％</span></div>
                   <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算し、「住まい」の毎月の返済額にも反映されます。</span>
@@ -1882,7 +1910,7 @@
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
         <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
-          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。詳しい前提は下の「前提・ご注意」をご覧ください。</p>
+          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
             <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
@@ -2788,7 +2816,9 @@
       }
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
-    const LIVING_IDS = ['e-food','e-water','e-elec','e-gas','e-daily','e-cloth','e-life','e-nonlife','e-car','e-fuel','e-phone','e-net','e-pocket','e-hobby','e-other'];
+    // 2026-08-17夜 追加3項目（e-eatout/e-misc/e-shaken）は既定0＝既存の保存データ・デモ合計23万円に影響しない。
+    // SHARE_FIELD_IDSには足さない（'!'付きで自動往復）
+    const LIVING_IDS = ['e-food','e-eatout','e-water','e-elec','e-gas','e-daily','e-cloth','e-misc','e-life','e-nonlife','e-car','e-fuel','e-shaken','e-phone','e-net','e-pocket','e-hobby','e-other'];
     function readLivingMonthly(){
       const simple = document.querySelector('#exp-seg button.active')?.dataset.exp === 'simple';
       if(simple) return num('e-bulk',0);
@@ -3669,10 +3699,19 @@
       if($('loan-share-hname2')) $('loan-share-hname2').textContent = hn;
       if($('loan-share-wname2')) $('loan-share-wname2').textContent = wn;
       if($('loan-ratio-lbl'))    $('loan-ratio-lbl').textContent    = `${hn} ${shH} ： ${shW} ${wn}`;
+      if($('dansin-type-hname')) $('dansin-type-hname').textContent = hn;
+      if($('dansin-type-wname')) $('dansin-type-wname').textContent = wn;
     }
+    // 団信の保障タイプ（一般/がん/三大疾病）。名義に入っている人のぶんだけ選択欄を出す
+    function dansinTypeOf(who){ return ($('dansin-type-'+who) && $('dansin-type-'+who).value) || 'general'; }
+    const DANSIN_TYPE_LABEL = { general:'一般（死亡・高度障害）', gan:'がん団信', sandai:'三大疾病団信' };
     function updateLoanShareUI(){
-      const isPair = loanType()==='pair';
+      const t = loanType();
+      const isPair = t==='pair';
       if($('loan-share-field')) $('loan-share-field').classList.toggle('hidden', !isPair);
+      // 団信タイプ欄：夫は「妻の単独」以外で表示、妻は「夫の単独」以外かつ夫婦のときだけ表示
+      if($('dansin-type-h-field')) $('dansin-type-h-field').classList.toggle('hidden', t==='solo-w');
+      if($('dansin-type-w-field')) $('dansin-type-w-field').classList.toggle('hidden', t==='solo-h' || isSingle());
       updateLoanLabels();
     }
     if(loanTypeSeg) loanTypeSeg.addEventListener('click', (e)=>{
@@ -4623,6 +4662,16 @@
       const card = $('hoken-diff-card'); if(!card) return;
       const tbl = $('hkd-table'), segEl = $('hkd-member-seg'), box = card.querySelector('.chart-box');
       if($('hkd-hname')) $('hkd-hname').textContent = hNameH();
+      // 団信の保障タイプを説明に反映（死亡保障の数字はタイプで変わらないことを明示＝誤解防止）
+      const tn = $('hkd-dansin-type');
+      if(tn){
+        if(houseType!=='rent' && typeof dansinTypeOf==='function'){
+          const who = ['h','w'].filter(k=> loanShareOf(k)>0 && (k==='h' || !isSingle()));
+          const lbls = who.map(k=> `${esc(k==='h'?hNameH():wNameH())}＝${DANSIN_TYPE_LABEL[dansinTypeOf(k)]}`);
+          const hasUp = who.some(k=> dansinTypeOf(k)!=='general');
+          tn.innerHTML = lbls.length ? `団信タイプ：<b>${lbls.join('／')}</b>。${hasUp ? 'がん・三大疾病での残債免除は<b>生前の保障</b>のため、この表（死亡保障）の金額には含めていません。' : ''}` : '';
+        } else tn.innerHTML = '';
+      }
       const g = PLANS.genjo.sum, m = PLANS.mirai.sum;
       if(diffCardPlaceholder(tbl, box, g, m)){ segEl.innerHTML=''; return; }
       // 団信の前提：「返済を続ける」＝実際のローン残高どおり ／ 「○歳で完済とみなす」＝その年齢以降は団信0
@@ -4982,7 +5031,17 @@
           + (hasIns ? `` : `<br><span style="font-size:.85em; color:var(--ink-soft);">※ すでに死亡保障にご加入の場合は「加入中の保険」に入力すると、差し引いた不足額で診断します。</span>`);
         const good=[], con=[];
         good.push(`公的な遺族年金（${esc(hNameH())}死亡時 約${fmt(nh.pensionYear)}万円/年）が、遺されたご家族の生活を下支えします。`);
-        if(houseType!=='rent' && currentLoanBalance()>0) good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`);
+        if(houseType!=='rent' && currentLoanBalance()>0){
+          // 団信の保障タイプ（一般/がん/三大疾病）を診断に反映（名義に入っている人のぶんだけ）
+          const dsWho = ['h','w'].filter(k=> loanShareOf(k)>0);
+          const dsUp  = dsWho.filter(k=> dansinTypeOf(k)!=='general')
+            .map(k=> `${esc(k==='h'?hNameH():wNameH())}＝${dansinTypeOf(k)==='gan' ? 'がん団信（がんと診断された場合も残債0の型を想定）' : '三大疾病団信（がん・急性心筋梗塞・脳卒中で残債0の型を想定）'}`);
+          good.push(`住宅ローンは団信付きで、名義人に万一の際は残債（約${fmt(currentLoanBalance())}万円）がゼロになります。`
+            + (dsUp.length ? `さらに ${dsUp.join('、')} のため、<b>大きな病気で収入が下がる局面でも住居費が守られやすい</b>設計です（免除の条件・範囲は金融機関・商品により異なります）。` : ''));
+          if(dsWho.length && dsWho.every(k=> dansinTypeOf(k)==='general')){
+            con.push(`団信は<b>死亡・高度障害のとき</b>に残債がゼロになる保障が基本で、<b>がん・三大疾病などの療養中は返済が続きます</b>。がん団信・三大疾病保障付き団信（上乗せ金利の目安 +0.1〜0.3%）や就業不能保険で備える考え方もあります（保障内容・条件は金融機関により異なります。「団信・生命保険」画面で設定できます）。`);
+          }
+        }
         if(hasIns && (nh.rawNeed>0 || nw.rawNeed>0) && nh.ins>=nh.rawNeed && nw.ins>=nw.rawNeed) good.push(`加入中の保険（${esc(hNameH())} 約${fmt(nh.ins)}万円／${esc(wNameH())} 約${fmt(nw.ins)}万円）で、計算上の必要保障額をカバーできる計算です。`);
         if(nh.insHasIncome || nw.insHasIncome) good.push(`収入保障保険（家族収入・逓減型）は、お子さまの成長とともに必要保障額が小さくなる考え方に沿った形の保険です（受取総額は年々減っていきます。診断では満了までの残り期間分に換算しています）。`);
         if(!hasIns && both<=0) good.push(`いまの資産と公的保障で、必要保障額をおおむねカバーできる計算です。現在のご入力条件では、大きな死亡保障がなくても備えられている状態と考えられます。`);
@@ -5523,6 +5582,9 @@
         members = RESULT_GROUPS[key];
       }
       currentView = { type, key };
+      // 追従ナビ用：いま入力中か結果を見ているか（nav-stuck時に反対側の行を隠す判定に使う）
+      document.body.classList.toggle('view-input',  type==='input');
+      document.body.classList.toggle('view-result', type==='result');
       if(type==='input') inputVisited[key] = true;
       document.querySelectorAll('#input-panel .acc').forEach(el=>
         el.classList.toggle('view-active', type==='input' && members.includes(el.dataset.sec)));
@@ -5633,16 +5695,34 @@
     }
     // 追従ナビの位置決め：プランバー（sticky）の高さを実測して --planbar-h にセット
     // （バーはflex-wrapで1〜2行に変わるため。単純な固定topだと重なってボタンが押せなくなる）
+    let _planbarH = 84;
     (function(){
       const bar = document.querySelector('.plan-wrap');
       if(!bar) return;
       const setH = ()=>{
         const h = bar.getBoundingClientRect().height;
-        document.documentElement.style.setProperty('--planbar-h', Math.ceil(h + 8 + 4) + 'px');   // 8=バーのtop、4=すき間
+        _planbarH = Math.ceil(h + 8 + 4);   // 8=バーのtop、4=すき間
+        document.documentElement.style.setProperty('--planbar-h', _planbarH + 'px');
       };
       setH();
       if(typeof ResizeObserver!=='undefined'){ new ResizeObserver(setH).observe(bar); }
       window.addEventListener('resize', setH);
+    })();
+    // 追従状態（stuck）の検知：ナビ直前の番兵がプランバーの下端を越えたら nav-stuck。
+    // ナビ自身ではなく番兵で測ることで、「行を隠す→ナビが縮む→解除→再表示…」のチラつきループを防ぐ
+    (function(){
+      const sentinel = $('nav-sentinel');
+      if(!sentinel) return;
+      let ticking = false;
+      const check = ()=>{
+        ticking = false;
+        const stuck = sentinel.getBoundingClientRect().top < _planbarH;
+        document.body.classList.toggle('nav-stuck', stuck);
+      };
+      window.addEventListener('scroll', ()=>{
+        if(ticking) return; ticking = true;
+        requestAnimationFrame(check); setTimeout(check, 120);   // rAF停止環境でも追従
+      }, {passive:true});
     })();
     if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
@@ -7605,6 +7685,7 @@
       if($('ins-total-h')) $('ins-total-h').value = 0;
       if($('ins-total-w')) $('ins-total-w').value = 0;
       if($('dansin-extra')) $('dansin-extra').value = 0;   // 団信上乗せ金利も同様（この欄がない旧保存で前のお客様の値が残らないように）
+      ['dansin-type-h','dansin-type-w'].forEach(id=>{ const el=$(id); if(el) el.value='general'; });   // 団信タイプも同様にリセット
       // 生年月日も同様。localStorage の保存読込は fields の埋め戻しが無いため、
       // これが無いと前のお客様の生年月日が残り、年齢欄と食い違って「◯歳に更新」が出る
       ['h-b-era','w-b-era'].forEach(id=>{ const el=$(id); if(el) el.value='seireki'; });

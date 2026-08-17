@@ -656,7 +656,7 @@
     /* ============================================================
        画面切替ナビ（2026-08-17 刷新）
        ・アコーディオン（①〜⑦の縦積み）を廃止し、上部の2段のボタン行で切り替える
-         1段目「入力する」＝入力セクション7つ／2段目「結果を見る」＝結果8つ
+         1段目「入力する」＝入力6つ／2段目「結果を見る」＝結果6つ（近い内容は同じ画面にまとめる）
        ・1画面に1つだけ表示（入れ替え式）。スマホはボタン行を横スクロール
        ・印刷/PDF（pdf-mode）では従来どおり全セクションを展開する
        ============================================================ */
@@ -680,6 +680,19 @@
     .tool-nav-scroll button:hover{ background:var(--blue-pale); border-color:var(--blue-pale2); }
     .tool-nav-scroll button.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
     .tool-nav-row.tnr-result .tool-nav-scroll button.active{ background:var(--blue-deep); border-color:var(--blue-deep); }
+    /* 入力済みの目印。
+       is-filled＝開始時の内容から変更あり（＝この面談で入力した）／is-visited＝開いたが未変更。
+       チェック印の場所を最初から確保しておく（点灯時に幅が動くと横スクロール中のナビがずれて誤タップになる）。
+       新規ルールはすべて :not(.active) を付ける（選択中の濃い塗りを塗り潰さないため）。 */
+    #nav-input button::before{
+      content:"\f00c"; font-family:"Font Awesome 6 Free"; font-weight:900; font-size:.72rem;
+      margin-right:6px; color:transparent;
+    }
+    #nav-input button.is-filled::before{ color:var(--good); }
+    #nav-input button.is-filled.active::before{ color:#fff; }
+    #nav-input button.is-filled:not(.active){ background:var(--blue-pale); border-color:var(--blue-pale2); color:var(--blue-deep); }
+    #nav-input button.is-filled:not(.active):hover{ background:var(--blue-pale2); }
+    #nav-input button.is-visited:not(.is-filled):not(.active){ border-style:dashed; border-color:var(--blue-pale2); color:var(--ink-soft); }
     /* 表示切替の本体。印刷（@media print）と pdf-mode（印刷ボタン・PDF作成）では
        無効化して従来どおり全セクションを出す（@media screen 限定＋:not(.pdf-mode)） */
     body.tab-mode .layout{ display:block; }
@@ -693,6 +706,60 @@
     body.tab-mode .acc .acc-body{ display:block; }
     body.tab-mode .acc-head{ cursor:default; }
     body.tab-mode .acc-chev{ display:none; }
+    /* ============================================================
+       入力欄の密度（2026-08-17）
+       タブ化で .layout が1カラムになり、入力パネルが全幅1204pxまで広がった結果、
+       .grid3 の1マスが 183px → 378px に倍増し「食費」に378px×97px を使っていた。
+       (1)入力パネルだけ幅を絞る (2)PC幅ではラベル左・入力右の1行にする、の2段構えで直す。
+       印刷・PDFには効かせない（@media screen ＋ :not(.pdf-mode)）。
+       ============================================================ */
+    @media screen{
+      body.tab-mode:not(.pdf-mode) #input-panel{ max-width:920px; margin-left:auto; margin-right:auto; }
+    }
+    @media screen and (min-width:900px){
+      /* 単位つきの数値入力だけを横並びにする（ラベル＋入力ボックス＋単位が1行に収まるもの） */
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit),
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit){
+        flex-direction:row; flex-wrap:wrap; align-items:center; align-content:flex-start;
+        column-gap:10px; row-gap:4px;
+      }
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > label,
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > label{
+        min-height:0; display:block; flex:1 1 auto; min-width:0; line-height:1.45;
+      }
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .input-unit,
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .input-unit{
+        flex:0 0 auto; width:130px;
+      }
+      /* ヒント・差額バッジ・セグメントは行を独占させる（横並びの行に流れ込ませない） */
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .hint,
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .hint,
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .fdiff,
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .fdiff,
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit) > .seg,
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit) > .seg{ flex:1 1 100%; }
+      /* お名前と終了年齢は文字数が多いので広めに */
+      body.tab-mode:not(.pdf-mode) .grid3 > .field:has(> .input-unit > input.name-ctr) > .input-unit{ width:172px; }
+      body.tab-mode:not(.pdf-mode) .grid2 > .field:has(> .input-unit > #end-age) > .input-unit{ width:152px; }
+    }
+    #end-age{ padding-right:56px; }   /* 単位「歳まで」が3文字ぶん広く、値と重なるため */
+    /* 生年月日（元号・年・月・日） */
+    .bd-field{ margin-bottom:12px; }
+    .bd-row{ display:grid; grid-template-columns:84px 1.25fr .85fr .85fr; gap:6px; align-items:center; }
+    .bd-row select{ padding-left:10px; padding-right:26px; }
+    .bd-row .input-unit input{ padding-left:8px; padding-right:26px; }
+    .bd-row .input-unit .u{ right:7px; font-size:.72rem; }
+    @media(max-width:400px){ .bd-row{ grid-template-columns:1fr 1fr; } }
+    .bd-hint{ margin-top:2px; }
+    .bd-warn{ color:#bf5656; font-weight:600; }
+    .bd-apply{ border:1.5px solid var(--blue); background:#fff; color:var(--blue-deep); border-radius:8px;
+      font-family:inherit; font-size:.72rem; font-weight:700; padding:2px 8px; cursor:pointer; }
+    .bd-apply:hover{ background:var(--blue-pale); }
+    /* お客様モードでは年齢の一括更新を出さない（担当者の提案の年齢が1タップでずれるため） */
+    body.customer-mode .bd-apply{ display:none !important; }
+    /* 生活費のカテゴリ小見出し（2つ目以降は区切り線を引く） */
+    body.tab-mode .subgroup-title.sgt-plain{ margin-top:18px; padding-top:12px; border-top:1px solid var(--line); }
+
     /* 各入力セクション下の「次へ」導線 */
     .sec-next{ display:flex; justify-content:flex-end; gap:8px; padding:4px 20px 18px; }
     .sec-next .btn{ min-height:44px; }
@@ -914,7 +981,7 @@
       <div class="cust-main">
         <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
         <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
-        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">資産の推移</button>と、上の「結果を見る」の行の「<b>現状と将来</b>」をご覧ください。そのあと、上の「入力する」の行から気になる数字（<b>ご家族の基本情報の年収</b>／<b>貯蓄・資産運用・年金の毎月の積立額</b>／<b>住まいの住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">資産と収支</button>と、上の「結果を見る」の行の「<b>現状と将来</b>」をご覧ください。そのあと、上の「入力する」の行から気になる数字（<b>ご家族の基本情報の年収</b>／<b>貯蓄・資産運用・年金の毎月の積立額</b>／<b>住まいの住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
         <p class="cust-expiry" id="cust-expiry"></p>
       </div>
       <div class="cust-actions">
@@ -960,7 +1027,6 @@
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
       <div class="tool-nav-scroll" id="nav-input">
         <button type="button" data-nav-input="family">ご家族の基本情報</button>
-        <button type="button" data-nav-input="kids">お子さまの教育費</button>
         <button type="button" data-nav-input="home">住まい</button>
         <button type="button" data-nav-input="living">毎月の生活費</button>
         <button type="button" data-nav-input="save">貯蓄・資産運用・年金</button>
@@ -970,15 +1036,15 @@
     </div>
     <div class="tool-nav-row tnr-result">
       <span class="tool-nav-label"><i class="fa-solid fa-chart-line"></i> 結果を見る</span>
+      <!-- 近い内容は同じ画面にまとめる（同じ data-view 値を複数の要素に付けると同時に表示される）
+           assets＝KPI＋総合判定＋資産の推移＋年間の収入と支出／compare＝現状と将来＋積立・運用 -->
       <div class="tool-nav-scroll" id="nav-result">
-        <button type="button" data-nav-result="assets">資産の推移</button>
-        <button type="button" data-nav-result="compare">現状と将来</button>
+        <button type="button" data-nav-result="assets">資産と収支</button>
         <button type="button" data-nav-result="ichijo">一条の家との比較</button>
+        <button type="button" data-nav-result="compare">現状と将来</button>
         <button type="button" data-nav-result="hoken">もしもの保障</button>
-        <button type="button" data-nav-result="flow">収入と支出</button>
-        <button type="button" data-nav-result="ai">AI診断</button>
+        <button type="button" data-nav-result="ai">AI診断・相談</button>
         <button type="button" data-nav-result="cf">キャッシュフロー表</button>
-        <button type="button" data-nav-result="invest">積立・運用</button>
       </div>
     </div>
   </div>
@@ -995,7 +1061,7 @@
         <div class="acc open" data-acc data-sec="family">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-blue"><i class="fa-solid fa-people-pulling"></i></span>
-            <span class="acc-title"><b>ご家族の基本情報</b><span>年齢・収入・退職の予定</span></span>
+            <span class="acc-title"><b>ご家族の基本情報</b><span>年齢・収入・お子さま・退職の予定</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1010,6 +1076,7 @@
 
             <div class="subgroup">
               <div class="subgroup-title"><span class="tag">夫</span></div>
+              <div class="bd-slot" data-birth="h"></div>
               <div class="grid3">
                 <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="h-name" class="name-ctr" placeholder="夫"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="h-age" value="35" min="18" max="70"><span class="u">歳</span></div></div>
@@ -1022,6 +1089,7 @@
 
             <div class="subgroup" id="wife-section">
               <div class="subgroup-title spouse"><span class="tag">妻</span></div>
+              <div class="bd-slot" data-birth="w"></div>
               <div class="grid3">
                 <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" class="name-ctr" placeholder="妻"><span class="u">様</span></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="w-age" value="33" min="18" max="70"><span class="u">歳</span></div></div>
@@ -1046,6 +1114,17 @@
               <span>「年収（額面）」を入力すると、社会保険料・所得税・住民税を概算して<strong>手取り</strong>を自動計算します（扶養控除等は未考慮の目安）。家計の計算には手取りを使います。</span>
             </div>
 
+            <!-- お子さま・教育費（旧「お子さまの教育費」セクションから統合。id は一切変えていない） -->
+            <div class="subgroup" style="margin-top:6px;">
+              <div class="subgroup-title"><span class="tag" style="background:#fdf1cf;color:#8a6a12;">子</span> お子さま・教育費</div>
+              <div id="children-list"></div>
+              <button class="btn-add" id="add-child" type="button"><i class="fa-solid fa-plus"></i> お子さまを追加</button>
+              <div class="note">
+                <i class="fa-solid fa-lightbulb"></i>
+                <span>教育費は文部科学省などの平均をもとに、年齢に応じて自動で見込みます（幼稚園〜大学）。進路プランを切り替えると金額が変わります。</span>
+              </div>
+            </div>
+
             <div class="grid2" style="margin-top:14px;">
               <div class="field">
                 <label>シミュレーション終了（夫の年齢）</label>
@@ -1063,23 +1142,6 @@
               <div id="income-events-list"></div>
               <button class="btn-add" id="add-income" type="button"><i class="fa-solid fa-plus"></i> 臨時収入を追加</button>
               <span class="hint">相続・贈与・満期金など、指定した年齢に一度入る収入を加算します。</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- お子さまの教育費（旧②） -->
-        <div class="acc open" data-acc data-sec="kids">
-          <button class="acc-head" type="button">
-            <span class="acc-ico ico-yellow"><i class="fa-solid fa-children"></i></span>
-            <span class="acc-title"><b>お子さまの教育費</b><span>人数と進路プランで自動計算</span></span>
-            <i class="fa-solid fa-chevron-down acc-chev"></i>
-          </button>
-          <div class="acc-body">
-            <div id="children-list"></div>
-            <button class="btn-add" id="add-child" type="button"><i class="fa-solid fa-plus"></i> お子さまを追加</button>
-            <div class="note">
-              <i class="fa-solid fa-lightbulb"></i>
-              <span>教育費は文部科学省などの平均をもとに、年齢に応じて自動で見込みます（幼稚園〜大学）。進路プランを切り替えると金額が変わります。</span>
             </div>
           </div>
         </div>
@@ -1316,19 +1378,31 @@
 
             <!-- 項目ごとに入力 -->
             <div class="conditional" data-exp-panel="detail">
+              <!-- 15項目をベタ並びにせず、探せる単位（4カテゴリ）に分ける。
+                   .field の中身・id・value は1文字も変えていない（位置を移しただけ） -->
+              <div class="subgroup-title"><span class="tag" style="background:#fdecef;color:#a8497e;">食</span> 食費・日用品</div>
               <div class="grid3">
                 <div class="field"><label>食費</label><div class="input-unit"><input type="number" id="e-food" value="7" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+              </div>
+              <div class="subgroup-title sgt-plain"><span class="tag" style="background:#e6f2fb;color:#2f7cb5;">光</span> 水道・光熱・通信</div>
+              <div class="grid3">
                 <div class="field"><label>水道</label><div class="input-unit"><input type="number" id="e-water" value="0.5" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>電気</label><div class="input-unit"><input type="number" id="e-elec" value="1.2" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガス</label><div class="input-unit"><input type="number" id="e-gas" value="0.8" min="0" step="0.1"><span class="u">万円</span></div></div>
-                <div class="field"><label>日用品</label><div class="input-unit"><input type="number" id="e-daily" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>損害保険（自動車・傷害）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
-                <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
-                <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ネット代</label><div class="input-unit"><input type="number" id="e-net" value="0.5" min="0" step="0.5"><span class="u">万円</span></div></div>
+              </div>
+              <div class="subgroup-title sgt-plain"><span class="tag" style="background:#eef0f4;color:#5b6b7d;">車</span> 車・保険</div>
+              <div class="grid3">
+                <div class="field"><label>車維持費（駐車場代）</label><div class="input-unit"><input type="number" id="e-car" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>生命保険（掛け捨て）</label><div class="input-unit"><input type="number" id="e-life" value="1.5" min="0" step="0.5"><span class="u">万円</span></div></div>
+                <div class="field"><label>損害保険（自動車・傷害）</label><div class="input-unit"><input type="number" id="e-nonlife" value="0.5" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">火災・地震保険は下の専用欄へ</span></div>
+              </div>
+              <div class="subgroup-title sgt-plain"><span class="tag" style="background:#fdf1cf;color:#8a6a12;">他</span> お小遣い・その他</div>
+              <div class="grid3">
                 <div class="field"><label>お小遣い</label><div class="input-unit"><input type="number" id="e-pocket" value="3" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>趣味・交際費</label><div class="input-unit"><input type="number" id="e-hobby" value="2" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>その他</label><div class="input-unit"><input type="number" id="e-other" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
@@ -1455,7 +1529,7 @@
               <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
               <div class="note" style="margin-bottom:8px;">
                 <i class="fa-solid fa-scale-balanced"></i>
-                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、結果の「万一のときの死亡保障額」カードでご覧いただけます。保険料が変わった分を「⑤ 貯蓄・資産運用」等にまわした場合の総資産の変化は、下の「現状と将来をくらべる」で確認できます。</span>
+                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「もしもの保障」でご覧いただけます。保険料が変わった分を「貯蓄・資産運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「現状と将来」で確認できます。</span>
               </div>
               <div class="note" style="margin-bottom:0;">
                 <i class="fa-solid fa-file-lines"></i>
@@ -1538,7 +1612,7 @@
           <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
           <div id="plan-effect"></div>
           <div class="chart-box"><canvas id="compareChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、下の「万一のときの死亡保障額」もあわせてご確認ください。</p>
+          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「もしもの保障」もあわせてご確認ください。</p>
         </div>
 
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
@@ -1579,7 +1653,7 @@
         <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
-        <div class="card" id="invest-diff-card" data-view="invest">
+        <div class="card" id="invest-diff-card" data-view="compare">
           <div class="card-title card-title-long"><i class="fa-solid fa-chart-line"></i> 資産運用のくらべ（現状のまま続けた場合 と 将来プラン）</div>
           <div class="ivd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で比べる？</span>
@@ -1590,7 +1664,7 @@
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
             <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
-            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄・資産運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず下の「万一のときの死亡保障額」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄・資産運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず上の「結果を見る」の「もしもの保障」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
           </details>
         </div>
 
@@ -1629,8 +1703,8 @@
           </details>
         </div>
 
-        <!-- 収支グラフ -->
-        <div class="card" data-view="flow">
+        <!-- 収支グラフ（「資産と収支」画面に同居。資産の増減とその原因を1画面で見せる） -->
+        <div class="card" id="flow-card" data-view="assets">
           <div class="card-title"><i class="fa-solid fa-chart-column"></i> 年間の収入と支出</div>
           <div class="chart-box"><canvas id="flowChart"></canvas></div>
         </div>
@@ -1987,6 +2061,120 @@
     const $ = (id) => document.getElementById(id);
     const num = (id, def=0) => { const v = parseFloat($(id)?.value); return isNaN(v) ? def : v; };
 
+    /* ============================================================
+       生年月日（西暦・和暦）→ 満年齢の自動計算
+       ・年齢欄は残す（手入力も可）。生年月日が空なら従来どおり年齢だけで動く
+       ・シミュレーション本体は整数の満年齢しか使わないので、計算式には一切触れない
+       ・「年齢欄を勝手に書き換えない」ことを最優先にしている。保存データを開いただけで
+         全員の年齢が+1されると、資産推移・教育費・必要保障額が無言で変わるため
+       ============================================================ */
+    const BIRTH_ERAS = {
+      seireki:{ label:'西暦', base:0,    from:null,          to:null },
+      reiwa:  { label:'令和', base:2018, from:'2019-05-01',  to:null },
+      heisei: { label:'平成', base:1988, from:'1989-01-08',  to:'2019-04-30' },
+      showa:  { label:'昭和', base:1925, from:'1926-12-25',  to:'1989-01-07' },
+      taisho: { label:'大正', base:1911, from:'1912-07-30',  to:'1926-12-24' },
+      meiji:  { label:'明治', base:1867, from:'1868-10-23',  to:'1912-07-29' }
+    };
+    // 和暦の年 → 西暦（西暦選択時はそのまま）
+    function eraToSeireki(era, y){
+      const e = BIRTH_ERAS[era] || BIRTH_ERAS.seireki;
+      return e.base ? e.base + y : y;
+    }
+    // 実在する日付か（2月30日などを弾く）
+    function validYMD(y, m, d){
+      if(!(y>0 && m>=1 && m<=12 && d>=1 && d<=31)) return false;
+      const dt = new Date(y, m-1, d);
+      return dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d;
+    }
+    // 満年齢（今日基準。誕生日前なら1つ引く）
+    function ageFromYMD(y, m, d){
+      const t = new Date();
+      let a = t.getFullYear() - y;
+      const before = (t.getMonth()+1 < m) || (t.getMonth()+1===m && t.getDate() < d);
+      if(before) a -= 1;
+      return a;
+    }
+    // その元号の期間から外れていたら注意文を返す（計算は止めない）
+    function eraRangeNote(era, y, m, d){
+      const e = BIRTH_ERAS[era];
+      if(!e || !e.base) return '';
+      const s = `${y}-${('0'+m).slice(-2)}-${('0'+d).slice(-2)}`;
+      const iso = `${eraToSeireki(era,y)}-${('0'+m).slice(-2)}-${('0'+d).slice(-2)}`;
+      if(e.from && iso < e.from) return `${e.label}${y}年${m}月${d}日は${e.label}の始まり（${e.from}）より前です。元号をご確認ください。`;
+      if(e.to   && iso > e.to)   return `${e.label}${y}年${m}月${d}日は${e.label}の終わり（${e.to}）より後です。元号をご確認ください。`;
+      return '';
+    }
+    // 元号セレクトのHTML（西暦を既定にする＝共有データを増やさないため defaultSelected を西暦にする）
+    function birthEraOptions(){
+      return Object.keys(BIRTH_ERAS).map(k=>
+        `<option value="${k}"${k==='seireki'?' selected':''}>${BIRTH_ERAS[k].label}</option>`).join('');
+    }
+    /* 生年月日の入力欄一式を1画面ぶん組み立てる。
+       idPrefix があれば id 付き（夫・妻）、無ければ class 版（お子さまの動的行） */
+    function birthFieldHTML(idPrefix){
+      const id = n => idPrefix ? ` id="${idPrefix}-b-${n}"` : '';
+      const cl = n => idPrefix ? '' : ` ch-b-${n}`;
+      return `<div class="field bd-field">
+          <label>生年月日（西暦・和暦どちらでも）</label>
+          <div class="bd-row">
+            <select class="bd-era${cl('era')}"${id('era')}>${birthEraOptions()}</select>
+            <div class="input-unit"><input type="number" class="bd-y${cl('y')}"${id('y')} min="1" max="2200" inputmode="numeric" placeholder="年"><span class="u">年</span></div>
+            <div class="input-unit"><input type="number" class="bd-m${cl('m')}"${id('m')} min="1" max="12" inputmode="numeric" placeholder="月"><span class="u">月</span></div>
+            <div class="input-unit"><input type="number" class="bd-d${cl('d')}"${id('d')} min="1" max="31" inputmode="numeric" placeholder="日"><span class="u">日</span></div>
+          </div>
+          <span class="hint bd-hint${cl('hint')}"${id('hint')}></span>
+        </div>`;
+    }
+    const hwBirthEls = (p)=>({ era:$(p+'-b-era'), y:$(p+'-b-y'), m:$(p+'-b-m'), d:$(p+'-b-d'),
+                               hint:$(p+'-b-hint'), age:$(p+'-age') });
+    const chBirthEls = (row)=>({ era:row.querySelector('.ch-b-era'), y:row.querySelector('.ch-b-y'),
+                                 m:row.querySelector('.ch-b-m'), d:row.querySelector('.ch-b-d'),
+                                 hint:row.querySelector('.ch-b-hint'), age:row.querySelector('.ch-age') });
+    /* 生年月日 → 年齢の同期。
+       write=false（復元直後など）は年齢欄を絶対に書き換えず、ヒントだけ出す。 */
+    function syncBirth(els, write){
+      if(!els || !els.era || !els.y || !els.m || !els.d || !els.hint) return;
+      const y0 = parseInt(els.y.value,10), m = parseInt(els.m.value,10), d = parseInt(els.d.value,10);
+      if(!(y0>0) || !(m>0) || !(d>0)){ els.hint.innerHTML=''; return; }   // 3つそろうまで何もしない
+      const era = els.era.value || 'seireki';
+      const y = eraToSeireki(era, y0);
+      if(!validYMD(y, m, d)){ els.hint.innerHTML = '<span class="bd-warn">その日付は存在しないようです。</span>'; return; }
+      const warn = eraRangeNote(era, y0, m, d);
+      const age = ageFromYMD(y, m, d);
+      const lo = parseFloat(els.age && els.age.min), hi = parseFloat(els.age && els.age.max);
+      const outOfRange = !(age>=0) || (!isNaN(lo) && age<lo) || (!isNaN(hi) && age>hi);
+      const seirekiLbl = `西暦${y}年${m}月${d}日`;
+      if(outOfRange){
+        els.hint.innerHTML = `${seirekiLbl}（満${age}歳）。<span class="bd-warn">年齢の入力欄の範囲外のため、自動入力していません。</span>`
+          + (warn ? `<br><span class="bd-warn">${warn}</span>` : '');
+        return;
+      }
+      const cur = parseFloat(els.age && els.age.value);
+      if(write && els.age && cur !== age){ els.age.value = age; }
+      const same = (parseFloat(els.age && els.age.value) === age);
+      // お客様モードでは「◯歳に更新」ボタンを出さない（1タップで担当者の提案の年齢がずれるため）
+      const cust = document.body.classList.contains('customer-mode');
+      const gap = (!same && !cust)
+        ? ` <button type="button" class="bd-apply no-print">${age}歳に更新</button>`
+        : (!same ? `（年齢欄は${els.age.value}歳のままです）` : '');
+      els.hint.innerHTML = `${seirekiLbl} → 満${age}歳${gap}`
+        + (warn ? `<br><span class="bd-warn">${warn}</span>` : '');
+    }
+    function bindBirth(els){
+      if(!els || !els.era) return;
+      [els.era, els.y, els.m, els.d].forEach(el=>{
+        if(!el) return;
+        el.addEventListener('input',  ()=> syncBirth(els, true));
+        el.addEventListener('change', ()=> syncBirth(els, true));
+      });
+    }
+    // 表示だけ引き直す（年齢欄は書き換えない）
+    function refreshBirthHints(){
+      ['h','w'].forEach(p=>{ const e=hwBirthEls(p); if(e.era) syncBirth(e, false); });
+      document.querySelectorAll('#children-list > div').forEach(row=> syncBirth(chBirthEls(row), false));
+    }
+
     /* お子さまごとの色（第一子・第二子…で色分け） */
     const CHILD_COLORS = [
       { bg:'#fbe7f0', border:'#e2849a', text:'#b35a7d' },  // 第一子：ピンク
@@ -2046,7 +2234,9 @@
     const eventsList = $('events-list');
     const incomeEventsList = $('income-events-list');
 
-    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', gender='boy'){
+    // birth は必ず末尾の引数にする（途中に入れると呼び出し側の位置引数がずれて進学先・通学形態が壊れる）
+    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', gender='boy', birth=null){
+      const b = birth || {};
       const div = document.createElement('div');
       div.className = 'row-item child-row';
       const highOpts = Object.entries(HIGHED).map(([v,o])=> `<option value="${v}"${v===highEd?' selected':''}>${o.label}</option>`).join('');
@@ -2059,6 +2249,7 @@
           </div>
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
+        ${birthFieldHTML(null)}
         <div class="cr-grid cr-top">
           <div class="field"><label>お名前</label><div class="input-unit"><input type="text" class="ch-name name-ctr" placeholder="お子さま" value="${(name||'').replace(/"/g,'&quot;')}"><span class="u ch-suffix">${gender==='girl'?'ちゃん':'君'}</span></div></div>
           <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" class="ch-age" value="${age}" min="0" max="30"><span class="u">歳</span></div></div>
@@ -2079,6 +2270,14 @@
           </div>
         </div>
         <p class="cr-quote"></p>`;
+      // 保存されていた生年月日を戻す（この時点では年齢欄を書き換えない＝復元で年齢がずれないように）
+      if(b.y){
+        const e = chBirthEls(div);
+        if(e.era) e.era.value = b.era || 'seireki';
+        if(e.y) e.y.value = b.y; if(e.m) e.m.value = b.m || ''; if(e.d) e.d.value = b.d || '';
+      }
+      // 総当たりリスナーより先に登録する（年齢更新 → recompute の順を保証する）
+      bindBirth(chBirthEls(div));
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); renumberChildPlaceholders(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', ()=>{ updateChildQuote(div); recompute(); }));
       div.querySelector('.cr-gender-seg').addEventListener('click', (e)=>{
@@ -2090,6 +2289,7 @@
       childrenList.appendChild(div);
       renumberChildPlaceholders();
       updateChildQuote(div);
+      syncBirth(chBirthEls(div), false);   // 表示だけ（年齢欄は触らない）
     }
     // お子さまのお名前欄プレースホルダを「子1・子2…」と薄色で自動採番（夫・妻と同じ薄さ）
     function renumberChildPlaceholders(){
@@ -3656,6 +3856,7 @@
     function recompute(){
       updateNetDisplay();
       updateEventWifeAges();
+      refreshBirthHints();      // 生年月日の表示だけ更新（年齢欄は書き換えない）
       updateLoanBalanceHint();
       updateMonthlyPayDisplay();
       updateLivingTotal();
@@ -3741,6 +3942,7 @@
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
+      scheduleMarks();         // 「入力する」ボタンの入力済み表示を更新（1フレーム1回に畳む）
     }
 
     /* ---------- 自動保存（ドラフト）：誤リロード・タブ閉じでも入力が消えないように ----------
@@ -3946,6 +4148,7 @@
       // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）は表示しない
       const hideNeg = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
       panel.querySelectorAll('input[type="number"][id]').forEach(el=>{
+        if(el.closest('.bd-row')) return;   // 生年月日は「現状比」の対象外（年・月・日に差額の意味がなく、列もずれる）
         if(!(el.id in base)) return;
         const cur = parseFloat(el.value), prev = parseFloat(base[el.id]);
         if(!isFinite(cur) || !isFinite(prev) || cur===prev) return;
@@ -4873,17 +5076,65 @@
        tab-mode ではセクションは常に開いた状態で、表示の切替は上のボタン行（switchView）が担う */
 
     /* ============================================================
-       画面切替（入力する7つ／結果を見る8つ）
+       画面切替（入力する6つ／結果を見る6つ。同じ data-view 値を複数要素に付けると同時表示される）
        ・1画面に1つだけ表示する入れ替え式。DOMからは消さない（display切替のみ）
          → recompute() は非表示の入力欄からも値を読めるので計算は今までどおり
        ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
        ============================================================ */
-    const INPUT_VIEW_ORDER = ['family','kids','home','living','save','events','insurance'];
+    const INPUT_VIEW_ORDER = ['family','home','living','save','events','insurance'];
     const INPUT_VIEW_LABEL = {
-      family:'ご家族の基本情報', kids:'お子さまの教育費', home:'住まい', living:'毎月の生活費',
+      family:'ご家族の基本情報', home:'住まい', living:'毎月の生活費',
       save:'貯蓄・資産運用・年金', events:'ライフイベント', insurance:'加入中の保険'
     };
     let currentView = { type:'input', key:'family' };
+
+    /* ---------- 入力済みの目印 ----------
+       このツールはデモ初期値が全欄に入っているため「値が入っている＝入力済み」では
+       起動直後に全部点灯して意味がない。判定は必ず「開始時の内容から変わったか」。
+       判定は state ではなく DOM の指紋で行う。collectState の fields は id→値のフラット辞書で
+       セクション情報を持たず、id→セクションの対応表を手書きすると SHARE_FIELD_IDS と
+       二重管理になって取り違え事故の源になるため。 */
+    let inputBaseline = null;                     // 開始時（デモ初期値／共有された内容）の指紋
+    const inputVisited = Object.create(null);     // 一度でも開いたセクション
+    function sectionFingerprint(key){
+      const acc = document.querySelector('#input-panel .acc[data-sec="'+key+'"]');
+      if(!acc) return '';
+      const parts = [];
+      acc.querySelectorAll('input, select').forEach(el=>{
+        if(el.closest('#stress-box')) return;     // もしもの検証は表示専用（保存対象外）
+        const v = (el.type==='checkbox' || el.type==='radio') ? (el.checked?'1':'0') : el.value;
+        parts.push((el.id || el.className || '') + '=' + v);
+      });
+      acc.querySelectorAll('button.active').forEach(b=>{
+        if(b.closest('#stress-box')) return;
+        parts.push('@' + JSON.stringify(b.dataset));
+      });
+      return parts.join('|');
+    }
+    function captureInputBaseline(){
+      inputBaseline = Object.create(null);
+      INPUT_VIEW_ORDER.forEach(k=>{ inputBaseline[k] = sectionFingerprint(k); });
+    }
+    function refreshInputMarks(){
+      if(!inputBaseline) return;
+      if(typeof _refreshingSum!=='undefined' && _refreshingSum) return;   // 裏で他プランの値がDOMに入っている間は読まない
+      const cust = document.body.classList.contains('customer-mode');
+      INPUT_VIEW_ORDER.forEach(k=>{
+        const btn = document.querySelector('#nav-input button[data-nav-input="'+k+'"]');
+        if(!btn) return;
+        const changed = (inputBaseline[k] !== undefined) && (sectionFingerprint(k) !== inputBaseline[k]);
+        btn.classList.toggle('is-filled', changed);
+        btn.classList.toggle('is-visited', !changed && !!inputVisited[k]);
+        btn.title = changed ? (cust ? '変更したところ' : '入力済み（最初の内容から変更あり）')
+                  : (inputVisited[k] ? '開きました（まだ変更なし）' : '');
+      });
+    }
+    let _markTimer = null;
+    function scheduleMarks(){
+      if(_markTimer) return;
+      _markTimer = requestAnimationFrame(()=>{ _markTimer = null; refreshInputMarks(); });
+    }
+
     function resizeChartsSoon(){
       requestAnimationFrame(()=>{
         try{
@@ -4901,7 +5152,13 @@
         const acc = document.querySelector('[data-sec="insurance"]');
         if(acc && acc.classList.contains('hidden')) key = 'events';
       }
+      /* 指定されたビューが存在しないときは安全側へ倒す。
+         これが無いと、存在しないキーを渡した瞬間に view-active がどこにも付かず
+         入力パネルまたは結果パネルが真っ白になる（コンソールにエラーが出ないので気付けない）。 */
+      if(type==='input'  && !document.querySelector('#input-panel .acc[data-sec="'+key+'"]')) key = 'family';
+      if(type==='result' && !document.querySelector('[data-view="'+key+'"]'))                 key = 'assets';
       currentView = { type, key };
+      if(type==='input') inputVisited[key] = true;
       document.querySelectorAll('#input-panel .acc').forEach(el=>
         el.classList.toggle('view-active', type==='input' && el.dataset.sec===key));
       document.querySelectorAll('[data-view]').forEach(el=>
@@ -4917,6 +5174,7 @@
         b.classList.toggle('active', on);
         if(on && b.parentElement) b.parentElement.scrollTo({ left: Math.max(0, b.offsetLeft-40), behavior:'smooth' });
       });
+      scheduleMarks();
       if(type==='result') resizeChartsSoon();
       if(!opts.noScroll){
         const nav = $('tool-nav');
@@ -4965,6 +5223,24 @@
 
     // すべての入力変更で再計算
     $('input-panel').addEventListener('input', recompute);
+
+    /* 生年月日：夫・妻の欄を差し込んで配線する。
+       #input-panel への委譲はバブル段階なので、ここで直接付けたリスナーが必ず先に走る
+       （年齢を更新してから recompute が動く）。 */
+    document.querySelectorAll('.bd-slot[data-birth]').forEach(slot=>{
+      slot.innerHTML = birthFieldHTML(slot.dataset.birth);
+    });
+    bindBirth(hwBirthEls('h'));
+    bindBirth(hwBirthEls('w'));
+    // 「◯歳に更新」：お客様モードでは絶対に発火させない（担当者の提案の年齢が1タップでずれるため）
+    document.addEventListener('click', (e)=>{
+      const b = e.target.closest('.bd-apply'); if(!b) return;
+      if(document.body.classList.contains('customer-mode')) return;
+      const row = b.closest('#children-list > div');
+      const els = row ? chBirthEls(row) : (b.closest('.subgroup') && b.closest('.subgroup').id==='wife-section' ? hwBirthEls('w') : hwBirthEls('h'));
+      syncBirth(els, true);
+      recompute();
+    });
 
     // 「結果を見る」：資産の推移の画面へ切り替える（URLのハッシュ＝共有リンクのデータは触らない）
     const gotoResults = ()=>{ switchView('result', 'assets'); };
@@ -5447,7 +5723,7 @@
         if(!p.children.length){
           return diagBox([famFact(p)], 'warn',
             `診断：お子さまの情報が未入力です。`,
-            `上の「<b>お子さまの教育費</b>」で年齢と進学プランを追加していただくと、教育費の総額と毎月の準備額を自動で診断します。`);
+            `上の「<b>ご家族の基本情報</b>」にある<b>お子さま・教育費</b>で年齢と進学プランを追加していただくと、教育費の総額と毎月の準備額を自動で診断します。`);
         }
         const univ = (c)=>{ const i = HIGHED[c.highEd] || HIGHED.none; return i.years*i.annual + (c.lodging==='boarding' ? LODGING_ANNUAL*i.years : 0); };
         const facts = [ famFact(p),
@@ -6586,7 +6862,7 @@
         'そのご不安、そのままにせず今日ここで軽くしましょう。'
       ]);
       if(key==='edu' && !cats.find(x=> x.key==='edu')){
-        return empathy + `<span class="diag-verdict warn">お子さまの情報が未入力です。上の「お子さまの教育費」で年齢と進学プランを追加していただくと、教育費の必要額と毎月の積立目安を診断できます。</span>`;
+        return empathy + `<span class="diag-verdict warn">お子さまの情報が未入力です。上の「ご家族の基本情報」にある<b>お子さま・教育費</b>で年齢と進学プランを追加していただくと、教育費の必要額と毎月の積立目安を診断できます。</span>`;
       }
       const c = cats.find(x=> x.key===key) || cats[0];
       // 保険は詳しく踏み込みすぎず、結論＋安心材料だけ（詳細設計は専門家と一緒に）
@@ -6829,7 +7105,14 @@
         loanType: loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h',
         loanRateType: loanRateTypeSeg?.querySelector('button.active')?.dataset.ratetype || 'fixed',
         loanRepayType: loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri',
-        children: [...childrenList.querySelectorAll('.child-row')].map(r=>({ name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, gender:r.querySelector('.cr-gender-seg button.active')?.dataset.gender||'boy' })),
+        children: [...childrenList.querySelectorAll('.child-row')].map(r=>{
+          const o = { name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, gender:r.querySelector('.cr-gender-seg button.active')?.dataset.gender||'boy' };
+          // 生年月日は3つそろったときだけ書き出す（配列行は差分圧縮が効かないため、
+          // 使っていない顧客の共有データを無駄に伸ばさない＝LINEでのリンク切れ対策）
+          const by=r.querySelector('.ch-b-y'), bm=r.querySelector('.ch-b-m'), bd=r.querySelector('.ch-b-d'), be=r.querySelector('.ch-b-era');
+          if(by && by.value && bm && bm.value && bd && bd.value){ o.bEra = (be&&be.value)||'seireki'; o.bY = by.value; o.bM = bm.value; o.bD = bd.value; }
+          return o;
+        }),
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
@@ -6850,7 +7133,12 @@
       if($('ins-total-h')) $('ins-total-h').value = 0;
       if($('ins-total-w')) $('ins-total-w').value = 0;
       if($('dansin-extra')) $('dansin-extra').value = 0;   // 団信上乗せ金利も同様（この欄がない旧保存で前のお客様の値が残らないように）
-      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy')));
+      // 生年月日も同様。localStorage の保存読込は fields の埋め戻しが無いため、
+      // これが無いと前のお客様の生年月日が残り、年齢欄と食い違って「◯歳に更新」が出る
+      ['h-b-era','w-b-era'].forEach(id=>{ const el=$(id); if(el) el.value='seireki'; });
+      ['h-b-y','h-b-m','h-b-d','w-b-y','w-b-m','w-b-d'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+      (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy'),
+        (c.bY ? { era:c.bEra, y:c.bY, m:c.bM, d:c.bD } : null)));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
@@ -7589,6 +7877,7 @@
     eventRow(50,'家族旅行（記念）',80);
     applyHousePanels();
     recompute();
+    captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
 
     // ② プラン比較の初期化：読み込み時は「現状プラン」から
     PLANS.genjo.state = collectState();
@@ -7692,6 +7981,7 @@
         shareOrigin = JSON.parse(JSON.stringify(decoded));
         draftHold = true;                    // 復元の選択が終わるまで自動保存しない
         applyPlans(decoded);
+        captureInputBaseline();   // お客様モードの基準は「担当者から共有された内容」＝お客様ご自身の変更だけが点く
         setCurrentSave(null);
         document.body.classList.add('customer-mode');
         modal.hidden = true;

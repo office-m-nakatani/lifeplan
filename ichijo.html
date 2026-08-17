@@ -5629,6 +5629,9 @@
       requestAnimationFrame(run);
       setTimeout(run, 150);
     }
+    // 追従ナビの上端オフセット（プランバーの実測高＋余白）。実測値は下の初期化で入る。
+    // switchView より前に var で置く（switchView は初期化中にも呼ばれるためTDZを避ける）
+    var _planbarH = 84;
     function switchView(type, key, opts){
       opts = opts || {};
       /* 旧キー（'home'・'compare'等）もグループに解決する。存在しないキーは groupOf* が
@@ -5683,7 +5686,8 @@
       if(!opts.noScroll){
         const anchor = $('nav-sentinel') || $('tool-nav');
         if(anchor){
-          const y = anchor.getBoundingClientRect().top + window.pageYOffset - 8;
+          // 追従ナビ（sticky）の高さぶん余計に上げないと、新しいパートの見出しがナビの裏に隠れる（検証役検出）
+          const y = anchor.getBoundingClientRect().top + window.pageYOffset - (_planbarH + 8);
           // behavior:'instant' で即時に移動（html{scroll-behavior:smooth} を明示的に上書き。
           // smoothだと連続タップで途中の位置に取り残されることがある）
           try{ window.scrollTo({ top: Math.max(0, y), behavior:'instant' }); }
@@ -5765,7 +5769,6 @@
     }
     // 追従ナビの位置決め：プランバー（sticky）の高さを実測して --planbar-h にセット
     // （バーはflex-wrapで1〜2行に変わるため。単純な固定topだと重なってボタンが押せなくなる）
-    let _planbarH = 84;
     (function(){
       const bar = document.querySelector('.plan-wrap');
       if(!bar) return;

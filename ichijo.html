@@ -746,8 +746,9 @@
         display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
       }
     }
-    /* グリッドの子は中身（グラフ・表）の幅で膨らまないよう明示（横はみ出し防止） */
-    .view-wrap{ min-width:0; }
+    /* ラッパーは .results と同じ縦flex＋18px間隔を引き継ぐ（無いとラッパー内のカードが密着する）。
+       min-width:0 はグリッドの子が中身（グラフ・表）の幅で膨らまないための明示（横はみ出し防止） */
+    .view-wrap{ display:flex; flex-direction:column; gap:18px; min-width:0; }
     /* 結果ナビ「AIに相談する」ボタン：チャット導線を目立たせる（ゴールドの差し色） */
     #nav-result button[data-nav-result="chat"]{ background:var(--yellow-pale); border-color:var(--yellow-soft); color:#8a6a12; font-weight:800; }
     #nav-result button[data-nav-result="chat"]:hover{ background:var(--yellow-soft); }

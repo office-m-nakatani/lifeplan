@@ -2941,7 +2941,11 @@
     function insRow(who='h', type='shunyu', name='', amount=0, monthly=0, endAge=65, keep='keep'){
       const div = document.createElement('div');
       div.className = 'row-item ins-row';
-      const whoOpts = insWhoMembers().map(m=> `<option value="${m.key}"${who===m.key?' selected':''}>${esc(m.label)}</option>`).join('');
+      // 復元時、いまの家族構成に無い被保険者（単身表示中に夫婦データを読み込む等）でも値を失わないよう
+      // hiddenのoptionを足しておく（refreshInsWhoOptions と同じ考え方）
+      const _members = insWhoMembers();
+      let whoOpts = _members.map(m=> `<option value="${m.key}"${who===m.key?' selected':''}>${esc(m.label)}</option>`).join('');
+      if(!_members.some(m=> m.key===who)) whoOpts += `<option value="${esc(who)}" selected hidden>${esc(insWhoFallbackLabel(who))}</option>`;
       const ot = (v,l)=> `<option value="${v}"${type===v?' selected':''}>${l}</option>`;
       div.innerHTML = `
         <div class="ir-head">
@@ -3075,15 +3079,30 @@
       }));
       return insCoverAtAge(list, key, age);
     }
-    // 保険行の被保険者プルダウンを、現在の家族構成（夫・妻・お子さま）に合わせて作り直す（選択中の値は保持）
+    // 保険行の被保険者プルダウンを、現在の家族構成（夫・妻・お子さま）に合わせて作り直す（選択中の値は必ず保持）。
+    // ★選択肢に無い値（単身表示中の「妻」など）は 'h' に倒さず、hiddenのoptionを足して現在値を温存する。
+    //   倒すと「単身に切替→夫婦に戻す」だけで妻の保険が夫に付け替わり、夫の死亡保障が過大に合算される
+    //   （必要保障額をカバーできていると誤判定させる向き＝保障減額の判断を誤らせる。2026-08-17 検証役検出）
+    function insWhoFallbackLabel(key){
+      if(key==='w') return wNameH();
+      if(key && key.charAt(0)==='c'){
+        const kids = readChildren(); const i = parseInt(key.slice(1),10);
+        return (kids[i] && kids[i].name) ? kids[i].name : 'お子さま';
+      }
+      return hNameH();
+    }
     function refreshInsWhoOptions(){
       const list = $('ins-list'); if(!list) return;
       const members = insWhoMembers();
       list.querySelectorAll('.ins-who').forEach(sel=>{
         const cur = sel.value || 'h';
-        const keep = members.some(m=> m.key===cur) ? cur : 'h';
-        sel.innerHTML = members.map(m=> `<option value="${m.key}"${m.key===keep?' selected':''}>${esc(m.label)}</option>`).join('');
-        sel.value = keep;
+        let html = members.map(m=> `<option value="${m.key}"${m.key===cur?' selected':''}>${esc(m.label)}</option>`).join('');
+        if(!members.some(m=> m.key===cur)){
+          // いまの家族構成に無い被保険者：見えない選択肢として残し、構成が戻れば元どおり表示される
+          html += `<option value="${esc(cur)}" selected hidden>${esc(insWhoFallbackLabel(cur))}</option>`;
+        }
+        sel.innerHTML = html;
+        sel.value = cur;
       });
     }
     // ⑦の一番上「死亡保障の合計」を更新（家族ごとに表示。将来プランでは現状比の増減を表示。基本生活費の合計と同じ考え方）
@@ -5658,9 +5677,18 @@
       });
       scheduleMarks();
       if(type==='result') resizeChartsSoon();
+      /* 画面を切り替えたら、その画面の先頭から読めるように必ず上へ戻す（ユーザー指示 2026-08-17夜）。
+         下までスクロールした状態でボタンを押しても、下のままだと新しいパートの頭が見えないため。
+         ナビ（sticky）とプランバーに隠れない位置＝番兵の少し上へ。behavior:'auto' で即時に移動する。 */
       if(!opts.noScroll){
-        const nav = $('tool-nav');
-        if(nav){ const y = nav.getBoundingClientRect().top + window.pageYOffset - 70; window.scrollTo({ top: Math.max(0,y) }); }
+        const anchor = $('nav-sentinel') || $('tool-nav');
+        if(anchor){
+          const y = anchor.getBoundingClientRect().top + window.pageYOffset - 8;
+          // behavior:'instant' で即時に移動（html{scroll-behavior:smooth} を明示的に上書き。
+          // smoothだと連続タップで途中の位置に取り残されることがある）
+          try{ window.scrollTo({ top: Math.max(0, y), behavior:'instant' }); }
+          catch(e){ window.scrollTo(0, Math.max(0, y)); }
+        }
       }
     }
     if($('nav-input')) $('nav-input').addEventListener('click', (e)=>{

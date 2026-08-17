@@ -784,14 +784,28 @@
       body.tab-mode:not(.pdf-mode) .results.rpair-2{
         display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
       }
-      /* 「資産と収支」もPC幅は左右2画面：KPIと総合判定は全幅、2つのグラフ（資産推移／年間収支）を左右に */
+      /* 「お金（資産と収支）」もPC幅は左右2画面：総合判定とKPIは全幅、2つのグラフ（資産推移／年間収支）を左右に。
+         align-items:stretch＋カードのflex化で左右のカードの高さを揃える（右のグラフが下まで伸びる） */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"]{
-        display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;
+        display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:stretch;
       }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid,
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1/-1; }
       /* KPIは全幅を活かして4枚横並び（65歳・実質・100歳・実質が1行で見渡せる） */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-template-columns:repeat(4,1fr); }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card{ display:flex; flex-direction:column; margin-bottom:0; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card .chart-box{ flex:1 1 auto; height:auto; min-height:260px; }
+      /* AI診断は全幅1パート：左＝総括と項目ボタン、右＝タップした項目の詳しい診断（2画面ぶんの幅で読む） */
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card{
+        display:grid; grid-template-columns:1fr 1.15fr; gap:0 22px; align-items:start;
+      }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .card-title,
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > #advice-summary{ grid-column:1/-1; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-cats-hint,
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-cats{ grid-column:1; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-detail{
+        grid-column:2; grid-row:3 / span 2; margin-top:0;
+      }
       /* 画面切替ナビを追従させる（スクロールしても常に切替できる）。スマホは画面を圧迫するため従来どおり。
          ★プランバー（.plan-wrap sticky top:8 z-60）の「下」に張り付ける：topはJSが実測して
          --planbar-h にセット（バーはflex-wrapで高さが変わるため固定値にしない）。
@@ -1058,7 +1072,7 @@
       <div class="cust-main">
         <div class="cust-title"><i class="fa-solid fa-hand-sparkles"></i> <span id="cust-hello">お客様専用ページ</span></div>
         <p class="cust-lead">担当者が作成したシミュレーションです。<b>年収・積立額・住宅ローンなどの数字は、ご自身で自由に変更してお試しいただけます。</b>変更した内容は<b>このスマホ・パソコンの中だけ</b>に自動保存され、外部には送信されません（次に開いたときも続きから確認できます）。いつでも「最初の内容に戻す」で元に戻せます。</p>
-        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">資産と収支</button>と、上の「結果を見る」の行の「<b>一条比較・現状と将来</b>」をご覧ください。そのあと、上の「入力する」の行から気になる数字（<b>ご家族・住まいの年収</b>／<b>貯蓄運用・年金の毎月の積立額</b>／<b>ご家族・住まいの住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
+        <p class="cust-guide"><b>おすすめの見かた：</b>まず<button type="button" class="cust-inline-link" id="cust-goto-result">お金（資産と収支）</button>をご覧ください（全体の判定と「現状 と 将来」のくらべが1画面にまとまっています）。そのあと、上の「入力する」の行から気になる数字（<b>ご家族・住まいの年収</b>／<b>貯蓄運用・年金の毎月の積立額</b>／<b>ご家族・住まいの住宅ローンの金額</b>）を変えると、結果がその場で変わります。</p>
         <p class="cust-expiry" id="cust-expiry"></p>
       </div>
       <div class="cust-actions">
@@ -1112,12 +1126,14 @@
     </div>
     <div class="tool-nav-row tnr-result">
       <span class="tool-nav-label"><i class="fa-solid fa-chart-line"></i> 結果を見る</span>
-      <!-- 似た内容どうしをペアにする（値はJSの RESULT_GROUPS のキー。2画面のペアはPC幅で左右に並ぶ）
-           assets単独／ichijo＝一条比較＋現状と将来／hoken＝もしもの保障＋AI診断／cf単独／chat単独 -->
+      <!-- テーマで分ける（2026-08-17夜 ユーザー指示「お金・家・万が一・相談の雰囲気で」。値はJSの RESULT_GROUPS のキー）
+           assets＝お金（資産と収支＋現状と将来のくらべ）／ichijo＝家（一条比較）／hoken＝万が一（保障）／
+           ai＝AI診断（全幅1パート）／cf＝キャッシュフロー表／chat＝相談 -->
       <div class="tool-nav-scroll" id="nav-result">
-        <button type="button" data-nav-result="assets"><i class="fa-solid fa-chart-column"></i> 資産と収支</button>
-        <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-scale-balanced"></i> 一条比較・現状と将来</button>
-        <button type="button" data-nav-result="hoken"><i class="fa-solid fa-file-shield"></i> もしもの保障・AI診断</button>
+        <button type="button" data-nav-result="assets"><i class="fa-solid fa-coins"></i> お金（資産と収支）</button>
+        <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-house-chimney-window"></i> 家（一条比較）</button>
+        <button type="button" data-nav-result="hoken"><i class="fa-solid fa-file-shield"></i> 万が一（保障）</button>
+        <button type="button" data-nav-result="ai"><i class="fa-solid fa-robot"></i> AI診断</button>
         <button type="button" data-nav-result="cf"><i class="fa-solid fa-table-cells"></i> キャッシュフロー表</button>
         <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
       </div>
@@ -1632,7 +1648,7 @@
             <div class="conditional hidden" data-house-panel="buy owned">
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><b>団信（団体信用生命保険）</b>＝名義人に万一があると<b>残りの住宅ローンがゼロになる</b>保険。つまり住宅ローンを組むと、残債分の死亡保障を持っているのと同じ状態になります。右の「任意の生命保険」は<b>団信でカバーされない生活費・教育費のための保障</b>として考えると整理しやすいです。団信込みの保障額の推移は「結果を見る」の<b>もしもの保障・AI診断</b>でご覧いただけます。</span>
+                <span><b>団信（団体信用生命保険）</b>＝名義人に万一があると<b>残りの住宅ローンがゼロになる</b>保険。つまり住宅ローンを組むと、残債分の死亡保障を持っているのと同じ状態になります。右の「任意の生命保険」は<b>団信でカバーされない生活費・教育費のための保障</b>として考えると整理しやすいです。団信込みの保障額の推移は「結果を見る」の<b>万が一（保障）</b>でご覧いただけます。</span>
               </div>
 
               <!-- 住宅ローンの組み方（万一の保障の計算に反映）-->
@@ -1694,7 +1710,7 @@
               <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
               <div class="note" style="margin-bottom:8px;">
                 <i class="fa-solid fa-scale-balanced"></i>
-                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「もしもの保障・AI診断」でご覧いただけます。保険料が変わった分を「貯蓄運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「一条比較・現状と将来」で確認できます。</span>
+                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「万が一（保障）」でご覧いただけます。保険料が変わった分を「貯蓄運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「お金（資産と収支）」の「現状 と 将来 をくらべる」で確認できます。</span>
               </div>
               <div class="note" style="margin-bottom:0;">
                 <i class="fa-solid fa-file-lines"></i>
@@ -1737,6 +1753,15 @@
              ペア表示（.results.rpair-2）のときは2つのラッパーがCSSグリッドで左右に並ぶ -->
         <div class="view-wrap" data-view="assets">
 
+        <!-- 総合判定（結論を最初に見せる。2026-08-17夜 ユーザー指示でKPIより上へ）-->
+        <div class="verdict good" id="verdict">
+          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <b id="verdict-title">計算中…</b>
+            <span id="verdict-text"></span>
+          </div>
+        </div>
+
         <!-- KPI：○歳時点の総資産額＋インフレ後の実質価値（年齢は編集できます）-->
         <div class="kpi-grid">
           <div class="kpi kpi-total">
@@ -1758,15 +1783,6 @@
             <div class="k-label">上記の実質価値（インフレ後）</div>
             <div class="k-value" id="kpi-real-2">—</div>
             <div class="kpi-diff" id="kpi-diff-r2"></div>
-          </div>
-        </div>
-
-        <!-- 総合判定（KPIの直下＝結論を最初に見せる）-->
-        <div class="verdict good" id="verdict">
-          <div class="verdict-ico"><i class="fa-solid fa-circle-check"></i></div>
-          <div>
-            <b id="verdict-title">計算中…</b>
-            <span id="verdict-text"></span>
           </div>
         </div>
 
@@ -1841,7 +1857,7 @@
           <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
           <div id="plan-effect"></div>
           <div class="chart-box"><canvas id="compareChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「もしもの保障・AI診断」もあわせてご確認ください。</p>
+          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「万が一（保障）」もあわせてご確認ください。</p>
         </div>
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
@@ -1856,7 +1872,7 @@
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
             <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
-            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず上の「結果を見る」の「もしもの保障・AI診断」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず上の「結果を見る」の「万が一（保障）」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
           </details>
         </div>
 
@@ -3252,7 +3268,7 @@
       el.classList.toggle('hidden', !cut);
       if(cut){
         const last = shownRows[shownRows.length-1];
-        el.innerHTML = `この表は「資産と収支」画面の「金融資産の推移」にある<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには「資産と収支」画面で表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
+        el.innerHTML = `この表は「お金（資産と収支）」画面の「金融資産の推移」にある<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには「お金（資産と収支）」画面で表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
       }
     }
 
@@ -5412,7 +5428,9 @@
     const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'] };
     const INPUT_GROUP_ORDER = ['family','living','save','insurance'];
     const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険' };
-    const RESULT_GROUPS = { assets:['assets'], ichijo:['ichijo','compare'], hoken:['hoken','ai'], cf:['cf'], chat:['chat'] };
+    /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／家＝一条比較／万が一＝保障／
+       AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
+    const RESULT_GROUPS = { assets:['assets','compare'], ichijo:['ichijo'], hoken:['hoken'], ai:['ai'], cf:['cf'], chat:['chat'] };
     function groupOfInput(key){
       if(INPUT_GROUPS[key]) return key;
       for(const g of INPUT_GROUP_ORDER){ if(INPUT_GROUPS[g].includes(key)) return g; }
@@ -5510,11 +5528,12 @@
         el.classList.toggle('view-active', type==='input' && members.includes(el.dataset.sec)));
       document.querySelectorAll('[data-view]').forEach(el=>
         el.classList.toggle('view-active', type==='result' && members.includes(el.dataset.view)));
-      // ペア（2画面表示）のときだけPC幅で左右2カラムにする（入力・結果とも）
+      // ペア（2画面表示）のときだけPC幅で左右2カラムにする（入力のみ。
+      // 結果はテーマ分けで縦積みに統一＝rpair-2は常に外す。CSSは将来の再利用のため残置）
       const ip = $('input-panel');
       if(ip) ip.classList.toggle('pair-2', type==='input' && members.length===2);
       const rp = $('results');
-      if(rp) rp.classList.toggle('rpair-2', type==='result' && members.length===2);
+      if(rp) rp.classList.remove('rpair-2');
       // チャットのショートカット：チャット画面を見ている間は隠す
       const fab = $('chat-fab');
       if(fab) fab.hidden = (type==='result' && key==='chat');

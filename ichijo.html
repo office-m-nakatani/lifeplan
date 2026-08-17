@@ -606,6 +606,13 @@
     .chat-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--yellow); color:#5a4a12; border:none; border-radius:999px; padding:7px 14px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; margin:2px 4px 2px 0; }
     .chat-cta-no{ background:#eef2f6; color:#5b6b7d; }
     .chat-cta:hover{ background:var(--yellow-soft); }
+    /* 選択済みのご不安ボタン（同じ項目を二重に押せないように） */
+    .chat-cta.is-done{ background:#eceff2; color:#98a4b0; cursor:default; }
+    .chat-cta.is-done:hover{ background:#eceff2; }
+    /* 診断のあとに「ほかに気になるところ」を伺うブロック */
+    .worry-more{ margin-top:12px; padding:10px 12px; border:1.5px dashed var(--blue-pale2); border-radius:12px; background:var(--blue-pale); }
+    .worry-more > b{ display:block; margin-bottom:4px; color:var(--blue-deep); }
+    .worry-more-note{ display:block; margin-top:8px; font-size:.75rem; color:var(--ink-soft); }
     /* スマホでは指で確実に押せる大きさ（44px）を確保する */
     @media (max-width:640px){
       .chat-cta{ min-height:44px; padding:10px 16px; }
@@ -7425,6 +7432,19 @@
        安心材料といま打てる手を提示して、不安を軽くする
        ============================================================ */
     const WORRY_LABEL = { retire:'老後のお金', edu:'教育費', housing:'住宅ローン・住まい', hoken:'万一のときの備え', overall:'家計全体' };
+    // 不安ボタンの並び（診断後に「まだ聞いていない項目」を出し直すために配列で持つ）
+    const WORRY_CHIPS = [
+      { key:'retire',  icon:'fa-umbrella-beach',  label:'老後のお金' },
+      { key:'edu',     icon:'fa-graduation-cap',  label:'教育費' },
+      { key:'housing', icon:'fa-house',           label:'住宅ローン' },
+      { key:'hoken',   icon:'fa-shield-halved',   label:'万一のとき' },
+      { key:'overall', icon:'fa-comment-dots',    label:'全体的に不安' }
+    ];
+    const worryAsked = {};   // 一度診断した項目（残りを出し直すときに除く）
+    const worryChipsHTML = (keys)=> `<div class="chat-cta-wrap">`
+      + WORRY_CHIPS.filter(c=> keys.includes(c.key))
+          .map(c=> `<button class="chat-cta" type="button" data-worry="${c.key}"><i class="fa-solid ${c.icon}"></i> ${c.label}</button>`).join('')
+      + `</div>`;
     function worryPrompt(){
       const open = pickOne([
         'お気持ち、よく分かります。同じご不安をお持ちの方は多いです。',
@@ -7432,13 +7452,21 @@
         '大丈夫です。不安は「数字で見える」と、ぐっと小さくなります。'
       ]);
       return `${open}<br><b>いちばん気になるのは、どれに近いですか？</b> 選んでいただければ、ご入力データをもとに安心材料と対策を診断します。`
-        + `<div class="chat-cta-wrap">`
-        + `<button class="chat-cta" type="button" data-worry="retire"><i class="fa-solid fa-umbrella-beach"></i> 老後のお金</button>`
-        + `<button class="chat-cta" type="button" data-worry="edu"><i class="fa-solid fa-graduation-cap"></i> 教育費</button>`
-        + `<button class="chat-cta" type="button" data-worry="housing"><i class="fa-solid fa-house"></i> 住宅ローン</button>`
-        + `<button class="chat-cta" type="button" data-worry="hoken"><i class="fa-solid fa-shield-halved"></i> 万一のとき</button>`
-        + `<button class="chat-cta" type="button" data-worry="overall"><i class="fa-solid fa-comment-dots"></i> 全体的に不安</button>`
-        + `</div>`;
+        + worryChipsHTML(WORRY_CHIPS.map(c=> c.key));
+    }
+    /* 診断のあとに「まだ選ばれていない不安」を続けて伺う（2026-08-17夜 ユーザー指示）。
+       1つ答えて終わりにせず、他の不安も拾って面談の材料にするための導線 */
+    function worryFollowUp(){
+      const rest = WORRY_CHIPS.map(c=> c.key).filter(k=> !worryAsked[k] && k!=='overall');
+      if(!rest.length) return '';
+      const lead = pickOne([
+        'ほかに気になっているところはありますか？',
+        'この点以外に、心配なことはありますか？',
+        'ほかにも気がかりなことがあれば、続けて確認できます。'
+      ]);
+      return `<div class="worry-more"><b>${lead}</b>気になる項目をタップいただくと、同じように<b>ご入力の数字で</b>診断します。`
+        + worryChipsHTML(rest)
+        + `<span class="worry-more-note">とくに無ければ、このまま無料相談でまとめてご確認いただけます。</span></div>`;
     }
     // 現在の入力から項目別診断データを取得（AI診断と同じ分析エンジンを共用）
     function getCats(){
@@ -7473,7 +7501,8 @@
                 : `計算上、<b>遺族年金などの公的保障といまの資産でカバーできる結果です</b>。保障が重複していないか、内容の確認がおすすめです。`);
         }
         return empathy + `<span class="diag-verdict ${c.tone}">${concl}</span>`
-          + `どんな保障をどう組むかは、ご家庭ごとに最適解が異なります。<b>数字の裏付けを一緒に確認する</b>のが、いちばんの安心につながります。` + CTA_HTML;
+          + `どんな保障をどう組むかは、ご家庭ごとに最適解が異なります。<b>数字の裏付けを一緒に確認する</b>のが、いちばんの安心につながります。`
+          + worryFollowUp() + CTA_HTML;
       }
       const goods = (c.good||[]).slice(0,3);
       const cons  = (c.concern||[]).slice(0,2);
@@ -7481,7 +7510,8 @@
         + `<span class="diag-verdict ${c.tone}">${c.sum}</span>`
         + (goods.length ? `<div class="adv-sec-title good"><i class="fa-solid fa-circle-check"></i> 安心できる材料</div><ul class="adv-points good">${goods.map(g=>`<li>${g}</li>`).join('')}</ul>` : '')
         + (cons.length ? `<div class="adv-sec-title concern"><i class="fa-solid fa-triangle-exclamation"></i> いま打てる手</div><ul class="adv-points concern">${cons.map(g=>`<li>${g}</li>`).join('')}</ul>` : '')
-        + `<br>不安は放置せず、数字で確かめるのがいちばんの近道です。左の入力を変えて試すこともできますし、専門家と一緒に確認すれば、安心して次の一歩に進めます。` + CTA_HTML;
+        + `<br>不安は放置せず、数字で確かめるのがいちばんの近道です。左の入力を変えて試すこともできますし、専門家と一緒に確認すれば、安心して次の一歩に進めます。`
+        + worryFollowUp() + CTA_HTML;
     }
     // 「考え中」の演出つきでボットが答える
     function botThinkThen(fn){
@@ -7539,6 +7569,10 @@
       const w = e.target.closest('[data-worry]');
       if(w){
         const key = w.dataset.worry;
+        worryAsked[key] = true;   // 診断済みにして、次の「ほかに気になるところ」から外す
+        // 押し終わったボタン群は選択済みとして無効化（同じ項目を二重に押せないように）
+        const wrap = w.closest('.chat-cta-wrap');
+        if(wrap) wrap.querySelectorAll('[data-worry]').forEach(b=>{ b.disabled = true; b.classList.add('is-done'); });
         addMsg('user', esc((WORRY_LABEL[key]||'') + 'が不安です'));
         botThinkThen(()=> worryAnswer(key));
         return;

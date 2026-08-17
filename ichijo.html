@@ -666,10 +666,10 @@
     .plan-tabs button[data-plan="mirai"].active{ background:var(--yellow); color:#5a4a12; }
     .plan-hint{ font-size:.8rem; color:var(--ink-soft); line-height:1.55; flex:1 1 240px; }
     /* ============================================================
-       画面切替ナビ（2026-08-17 刷新）
+       画面切替ナビ（2026-08-17 刷新 → 同日ペア化）
        ・アコーディオン（①〜⑦の縦積み）を廃止し、上部の2段のボタン行で切り替える
-         1段目「入力する」＝入力6つ／2段目「結果を見る」＝結果6つ（近い内容は同じ画面にまとめる）
-       ・1画面に1つだけ表示（入れ替え式）。スマホはボタン行を横スクロール
+         1段目「入力する」＝4ペア（PC幅は左右2カラム）／2段目「結果を見る」＝4群（縦に連結）＋チャット独立
+       ・スマホはボタン行を横スクロール、ペアは縦積み
        ・印刷/PDF（pdf-mode）では従来どおり全セクションを展開する
        ============================================================ */
     .tool-nav{ display:grid; gap:8px; margin-top:10px; }
@@ -730,7 +730,31 @@
        ============================================================ */
     @media screen{
       body.tab-mode:not(.pdf-mode) #input-panel{ max-width:680px; margin-left:auto; margin-right:auto; }
+      /* ペア表示中は1枚目の「次へ」を隠す（2枚目の下の1つだけ残す。スマホの縦積みでも同じ） */
+      body.tab-mode:not(.pdf-mode) #input-panel.pair-2 .acc.view-active:has(~ .acc.view-active) .sec-next{ display:none; }
     }
+    /* 入力のペア表示（2026-08-17）：PC幅では2セクションを左右に並べ、1画面で見渡せるようにする。
+       スマホ（<1000px）は従来どおり縦積み。1セクションだけのとき（単身の団信のみ等）は pair-2 が付かず中央1カラムのまま */
+    @media screen and (min-width:1000px){
+      body.tab-mode:not(.pdf-mode) #input-panel.pair-2{
+        max-width:1240px; display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start;
+      }
+    }
+    /* 結果ナビ「AIに相談する」ボタン：チャット導線を目立たせる（ゴールドの差し色） */
+    #nav-result button[data-nav-result="chat"]{ background:var(--yellow-pale); border-color:var(--yellow-soft); color:#8a6a12; font-weight:800; }
+    #nav-result button[data-nav-result="chat"]:hover{ background:var(--yellow-soft); }
+    #nav-result button[data-nav-result="chat"].active{ background:var(--yellow); border-color:var(--yellow); color:#5a4a12; }
+    /* チャットへのショートカット（右下常駐） */
+    .chat-fab{
+      position:fixed; right:14px; bottom:14px; z-index:60;
+      font-family:inherit; font-weight:800; font-size:.88rem; min-height:48px; padding:12px 18px;
+      border:0; border-radius:999px; background:var(--blue-deep); color:#fff; cursor:pointer;
+      box-shadow:0 6px 20px rgba(44,122,82,.35); display:inline-flex; align-items:center; gap:8px;
+    }
+    .chat-fab:hover{ background:var(--blue); }
+    /* hidden属性はUAのdisplay:noneより上のdisplay指定が勝ってしまうため明示して消す */
+    .chat-fab[hidden], body:not(.tab-mode) .chat-fab, .pdf-mode .chat-fab{ display:none !important; }
+    @media print{ .chat-fab{ display:none !important; } }
     #end-age{ padding-right:56px; }   /* 単位「歳まで」が3文字ぶん広く、値と重なるため */
     /* 生年月日（元号・年・月・日） */
     .bd-field{ margin-bottom:12px; }
@@ -1016,26 +1040,23 @@
   <div class="wrap tool-nav no-print" id="tool-nav">
     <div class="tool-nav-row tnr-input">
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
+      <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
-        <button type="button" data-nav-input="family">ご家族の基本情報</button>
-        <button type="button" data-nav-input="home">住まい</button>
-        <button type="button" data-nav-input="living">毎月の生活費</button>
-        <button type="button" data-nav-input="save">貯蓄・資産運用・年金</button>
-        <button type="button" data-nav-input="events">ライフイベント</button>
-        <button type="button" data-nav-input="insurance">加入中の保険</button>
+        <button type="button" data-nav-input="family">ご家族・住まい</button>
+        <button type="button" data-nav-input="living">生活費・ライフイベント</button>
+        <button type="button" data-nav-input="save">貯蓄運用・年金</button>
+        <button type="button" data-nav-input="insurance">団信・生命保険</button>
       </div>
     </div>
     <div class="tool-nav-row tnr-result">
       <span class="tool-nav-label"><i class="fa-solid fa-chart-line"></i> 結果を見る</span>
-      <!-- 近い内容は同じ画面にまとめる（同じ data-view 値を複数の要素に付けると同時に表示される）
-           assets＝KPI＋総合判定＋資産の推移＋年間の収入と支出／compare＝現状と将来＋積立・運用 -->
+      <!-- 似た内容どうしを同じ画面にまとめる（値はJSの RESULT_GROUPS のキー。同じ data-view 値を複数の要素に付けると同時に表示される）
+           assets＝KPI＋総合判定＋資産推移＋収支＋CF表／ichijo＝一条比較＋現状と将来／hoken＝もしもの保障＋AI診断／chat＝相談チャット単独 -->
       <div class="tool-nav-scroll" id="nav-result">
-        <button type="button" data-nav-result="assets">資産と収支</button>
-        <button type="button" data-nav-result="ichijo">一条の家との比較</button>
-        <button type="button" data-nav-result="compare">現状と将来</button>
-        <button type="button" data-nav-result="hoken">もしもの保障</button>
-        <button type="button" data-nav-result="ai">AI診断・相談</button>
-        <button type="button" data-nav-result="cf">キャッシュフロー表</button>
+        <button type="button" data-nav-result="assets">資産と収支・CF表</button>
+        <button type="button" data-nav-result="ichijo">一条比較・現状と将来</button>
+        <button type="button" data-nav-result="hoken">もしもの保障・AI診断</button>
+        <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
       </div>
     </div>
   </div>
@@ -1240,7 +1261,7 @@
                 </div>
               </div>
 
-              <!-- 毎月のローン返済額（自動計算）＋ボーナス払い -->
+              <!-- 毎月のローン返済額（自動計算）＋ボーナス払い。団信の上乗せ金利は「団信・生命保険」画面へ移動（2026-08-17） -->
               <div class="loan-monthly-box">
                 <div class="lp-title"><i class="fa-solid fa-calculator"></i> 毎月のローン返済額（自動計算）</div>
                 <div class="grid2">
@@ -1249,13 +1270,9 @@
                     <div class="input-unit"><input type="number" id="loan-bonus-pay" value="0" min="0" step="5"><span class="u">万円</span></div>
                     <span class="hint">毎月の返済とは別に、ボーナス月（年2回）にまとめて上乗せ返済する金額です。0なら通常返済のみ。</span>
                   </div>
-                  <div class="field">
-                    <label>団信の上乗せ金利（がん団信・ワイド団信など）</label>
-                    <div class="input-unit"><input type="number" id="dansin-extra" value="0" min="0" max="1" step="0.05"><span class="u">％</span></div>
-                    <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算します。</span>
-                  </div>
                 </div>
                 <div class="loan-monthly-result" id="loan-monthly-result">毎月の返済額：計算中…</div>
+                <span class="hint" style="display:block; margin-top:6px;">がん団信などの<b>団信の上乗せ金利</b>は、上の「団信・生命保険」画面で設定できます（設定するとここの返済額にも反映されます）。</span>
               </div>
 
               <div class="note">
@@ -1278,28 +1295,7 @@
                 </div>
               </div>
 
-              <!-- 住宅ローンの組み方（万一の保障の計算に反映）-->
-              <div class="loan-payoff-box" data-couple-only>
-                <div class="lp-title"><i class="fa-solid fa-people-roof"></i> 住宅ローンの組み方（万一のときの保障に反映）</div>
-                <div class="field">
-                  <label>ローンの名義・団体信用生命保険（団信）</label>
-                  <div class="seg seg-wrap" id="loan-type-seg">
-                    <button type="button" data-loantype="solo-h" class="active">夫の単独（夫が団信）</button>
-                    <button type="button" data-loantype="solo-w">妻の単独（妻が団信）</button>
-                    <button type="button" data-loantype="pair">ペアローン（夫婦）</button>
-                  </div>
-                  <span class="hint">団体信用生命保険（団信）＝名義人に万一があると残債がゼロになる保険。ペアローンは夫婦それぞれが団信に加入します。</span>
-                </div>
-                <div class="field hidden" id="loan-share-field" style="max-width:360px;">
-                  <label><b id="loan-share-hname">夫</b> ： <b id="loan-share-wname">妻</b> の借入割合</label>
-                  <div class="ratio-row">
-                    <div class="input-unit"><input type="number" id="loan-share-h" value="50" min="0" max="100" step="5"><span class="u">％</span></div>
-                    <span class="ratio-colon">：</span>
-                    <div class="input-unit"><input type="number" id="loan-share-w" value="50" min="0" max="100" step="5" readonly tabindex="-1"><span class="u">％</span></div>
-                  </div>
-                  <span class="hint"><b id="loan-ratio-lbl">夫 50 ： 50 妻</b>。<b id="loan-share-hname2">夫</b>の割合を入れると<b id="loan-share-wname2">妻</b>は自動計算されます。</span>
-                </div>
-              </div>
+              <!-- ローンの名義・団信の box は「団信・生命保険」画面へ移動（2026-08-17。idは不変） -->
 
               <!-- 残債・一括返済オプション（基準年齢は変更可・初期値65歳） -->
               <div class="loan-payoff-box">
@@ -1443,7 +1439,7 @@
         <div class="acc" data-acc data-sec="save">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-green"><i class="fa-solid fa-piggy-bank"></i></span>
-            <span class="acc-title"><b>貯蓄・資産運用・年金</b><span>預貯金・NISA・iDeCo・年金</span></span>
+            <span class="acc-title"><b>貯蓄・資産運用</b><span>預貯金・NISA・iDeCo</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1463,6 +1459,21 @@
                 <span><strong>まとまった資金</strong>＝今ある運用残高や一括投資額、<strong>毎月の積立</strong>＝つみたて額です。種類で「その他」を選ぶと商品名を自由に入力できます。商品ごとに利回りを変えられます。</span>
               </div>
             </div>
+            <div class="note">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>退職後に預貯金が足りなくなると、投資資産から自動で取り崩す計算にしています。長く運用するほど複利が効きます。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 公的年金（貯蓄・資産運用から独立。ペア表示で右側に並ぶ） -->
+        <div class="acc" data-acc data-sec="pension">
+          <button class="acc-head" type="button">
+            <span class="acc-ico ico-yellow"><i class="fa-solid fa-landmark"></i></span>
+            <span class="acc-title"><b>公的年金</b><span>受給開始の年齢・見込みの月額</span></span>
+            <i class="fa-solid fa-chevron-down acc-chev"></i>
+          </button>
+          <div class="acc-body">
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
               <div class="grid2 pension-grid">
@@ -1476,10 +1487,6 @@
                   <span class="hint">自営業（国民年金のみ）は満額でも1人 月約6.8万円。厚生年金の上乗せがない分、iDeCo等での上積みが重要です</span>
                 </div>
               </div>
-            </div>
-            <div class="note">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>退職後に預貯金が足りなくなると、投資資産から自動で取り崩す計算にしています。長く運用するほど複利が効きます。</span>
             </div>
           </div>
         </div>
@@ -1497,11 +1504,69 @@
           </div>
         </div>
 
+        <!-- 団信（住宅ローンの保険）。住まいから名義・上乗せ金利を移設（2026-08-17・idは不変）。
+             単身でも上乗せ金利は使うため acc 自体は couple-only にしない（名義boxのみ couple-only） -->
+        <div class="acc" data-acc data-sec="dansin">
+          <button class="acc-head" type="button">
+            <span class="acc-ico ico-teal"><i class="fa-solid fa-shield-halved"></i></span>
+            <span class="acc-title"><b>団信（住宅ローンの保険）</b><span>ローンの名義・がん団信などの上乗せ</span></span>
+            <i class="fa-solid fa-chevron-down acc-chev"></i>
+          </button>
+          <div class="acc-body">
+            <!-- 賃貸のときは案内だけ表示（applyHousePanels が住まいのプランに連動して切替える） -->
+            <div class="conditional" data-house-panel="rent">
+              <div class="note">
+                <i class="fa-solid fa-circle-info"></i>
+                <span><b>団体信用生命保険（団信）</b>は住宅ローンに付く保険で、名義人に万一があると<b>ローン残債の返済がなくなります</b>。「住まい」で<b>「これから購入」または「購入済み」</b>を選ぶと、ここでローンの名義（誰が団信に入るか）や、がん団信などの上乗せ金利を設定できます。</span>
+              </div>
+            </div>
+            <div class="conditional hidden" data-house-panel="buy owned">
+              <div class="note">
+                <i class="fa-solid fa-circle-info"></i>
+                <span><b>団信（団体信用生命保険）</b>＝名義人に万一があると<b>残りの住宅ローンがゼロになる</b>保険。つまり住宅ローンを組むと、残債分の死亡保障を持っているのと同じ状態になります。右の「任意の生命保険」は<b>団信でカバーされない生活費・教育費のための保障</b>として考えると整理しやすいです。団信込みの保障額の推移は「結果を見る」の<b>もしもの保障・AI診断</b>でご覧いただけます。</span>
+              </div>
+
+              <!-- 住宅ローンの組み方（万一の保障の計算に反映）-->
+              <div class="loan-payoff-box" data-couple-only style="margin-top:0;">
+                <div class="lp-title"><i class="fa-solid fa-people-roof"></i> 住宅ローンの組み方（万一のときの保障に反映）</div>
+                <div class="field">
+                  <label>ローンの名義・団体信用生命保険（団信）</label>
+                  <div class="seg seg-wrap" id="loan-type-seg">
+                    <button type="button" data-loantype="solo-h" class="active">夫の単独（夫が団信）</button>
+                    <button type="button" data-loantype="solo-w">妻の単独（妻が団信）</button>
+                    <button type="button" data-loantype="pair">ペアローン（夫婦）</button>
+                  </div>
+                  <span class="hint">団体信用生命保険（団信）＝名義人に万一があると残債がゼロになる保険。ペアローンは夫婦それぞれが団信に加入します。</span>
+                </div>
+                <div class="field hidden" id="loan-share-field" style="max-width:360px;">
+                  <label><b id="loan-share-hname">夫</b> ： <b id="loan-share-wname">妻</b> の借入割合</label>
+                  <div class="ratio-row">
+                    <div class="input-unit"><input type="number" id="loan-share-h" value="50" min="0" max="100" step="5"><span class="u">％</span></div>
+                    <span class="ratio-colon">：</span>
+                    <div class="input-unit"><input type="number" id="loan-share-w" value="50" min="0" max="100" step="5" readonly tabindex="-1"><span class="u">％</span></div>
+                  </div>
+                  <span class="hint"><b id="loan-ratio-lbl">夫 50 ： 50 妻</b>。<b id="loan-share-hname2">夫</b>の割合を入れると<b id="loan-share-wname2">妻</b>は自動計算されます。</span>
+                </div>
+              </div>
+
+              <!-- 団信の種類（がん団信などの上乗せ金利） -->
+              <div class="loan-payoff-box">
+                <div class="lp-title"><i class="fa-solid fa-notes-medical"></i> 団信の種類（上乗せ金利）</div>
+                <div class="field" style="max-width:340px;">
+                  <label>団信の上乗せ金利（がん団信・ワイド団信など）</label>
+                  <div class="input-unit"><input type="number" id="dansin-extra" value="0" min="0" max="1" step="0.05"><span class="u">％</span></div>
+                  <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算し、「住まい」の毎月の返済額にも反映されます。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 加入中の保険（旧⑦。死亡保障）：AI診断「万が一の備え」の必要保障額から差し引く。単身は診断対象外のため非表示 -->
         <div class="acc" data-acc data-couple-only data-sec="insurance">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-pink"><i class="fa-solid fa-file-shield"></i></span>
-            <span class="acc-title"><b>加入中の保険</b><span>今の死亡保障を診断に反映</span></span>
+            <span class="acc-title"><b>任意の生命保険（加入中）</b><span>今の死亡保障を診断に反映</span></span>
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
@@ -1520,7 +1585,7 @@
               <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
               <div class="note" style="margin-bottom:8px;">
                 <i class="fa-solid fa-scale-balanced"></i>
-                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「もしもの保障」でご覧いただけます。保険料が変わった分を「貯蓄・資産運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「現状と将来」で確認できます。</span>
+                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「もしもの保障・AI診断」でご覧いただけます。保険料が変わった分を「貯蓄運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「一条比較・現状と将来」で確認できます。</span>
               </div>
               <div class="note" style="margin-bottom:0;">
                 <i class="fa-solid fa-file-lines"></i>
@@ -1667,7 +1732,7 @@
           <div class="chart-box"><canvas id="investDiffChart"></canvas></div>
           <details class="ic-fold">
             <summary><i class="fa-solid fa-circle-info"></i> 前提・ご注意を見る</summary>
-            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄・資産運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず上の「結果を見る」の「もしもの保障」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ <b>「貯蓄運用・年金」で入力した運用資産（時価）</b>の比較です（預貯金は含みません）。運用の成果は<b>保証されるものではなく</b>、ここでの差は積立額・利回りなど<b>ご入力の違いによる試算上の差</b>です（純粋な利回りの効果だけを示すものではありません）。<b>この比較もご夫婦が生存し続けた前提の試算です。</b>万一の保障を減らす判断材料として単独で用いず、必ず上の「結果を見る」の「もしもの保障・AI診断」とあわせてご確認ください。総資産全体の比較は上の「現状 と 将来 をくらべる」をご覧ください。</p>
           </details>
         </div>
 
@@ -1721,8 +1786,8 @@
           <div class="adv-detail" id="advice-detail"></div>
         </div>
 
-        <!-- お客様からの相談チャット -->
-        <div class="card no-print" id="chat-card" data-view="ai">
+        <!-- お客様からの相談チャット（2026-08-17 AI診断から独立した画面に。data-view="chat"） -->
+        <div class="card no-print" id="chat-card" data-view="chat">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AIになんでも相談チャット
             <button class="btn btn-primary btn-sm" id="open-reserve" style="margin-left:auto;"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約</button>
           </div>
@@ -2036,6 +2101,9 @@
 
   <!-- 共有リンク（#share=…）を壊さないよう、href ではなくスクロールで結果へ移動する -->
   <button type="button" id="jump-result" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</button>
+
+  <!-- チャットへのショートカット（画面右下に常駐。チャット画面表示中は隠す） -->
+  <button type="button" id="chat-fab" class="chat-fab no-print" hidden><i class="fa-solid fa-comments"></i> AIに相談</button>
 
   <!-- ============================= FOOTER ============================= -->
   <footer class="foot">
@@ -3041,14 +3109,14 @@
       recompute();
     });
     if($('view-horizon-custom')) $('view-horizon-custom').addEventListener('input', ()=>{ if(viewHorizon==='custom') recompute(); });
-    // キャッシュフロー表は別画面で切替UIが見えないため、絞っているときだけ理由を出す（PDFにも残す＝no-printにしない）
+    // キャッシュフロー表は切替UIから離れているため、絞っているときだけ理由を出す（PDFにも残す＝no-printにしない）
     function updateCfHorizonNote(allRows, shownRows){
       const el = $('cf-horizon-note'); if(!el) return;
       const cut = shownRows.length < allRows.length;
       el.classList.toggle('hidden', !cut);
       if(cut){
         const last = shownRows[shownRows.length-1];
-        el.innerHTML = `この表は「資産と収支」画面の<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには「資産と収支」画面で表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
+        el.innerHTML = `この表は上の「金融資産の推移」の<b>表示期間（${shownRows.length}年）</b>で絞り込んでいます（${esc(hNameH())}${last.hAge}歳・${last.year}年まで）。全期間をご覧になるには表示期間を<b>${num('end-age',100)}歳まで</b>に戻してください。`;
       }
     }
 
@@ -3477,13 +3545,11 @@
     function applyHousehold(){
       $('wife-section').classList.toggle('hidden', isSingle());
       document.querySelectorAll('[data-couple-only]').forEach(el=> el.classList.toggle('hidden', isSingle()));
-      // タブ化対応：単身では「加入中の保険」の入力ボタンも隠し、開いていた場合はライフイベントへ退避
+      // ペア化対応：単身でも団信（上乗せ金利）は使うため「団信・生命保険」ボタンは残す。
+      // 表示中のグループを引き直して、ペア（2枚）↔1枚の切替を反映する
       // （tab-mode はスクリプト末尾で付与される＝付与前の初期化中は下の切替を呼ばない。TDZ対策）
-      const nb = document.querySelector('[data-nav-input="insurance"]');
-      if(nb) nb.classList.toggle('hidden', isSingle());
-      if(isSingle() && document.body.classList.contains('tab-mode')){
-        const acc = document.querySelector('[data-sec="insurance"]');
-        if(acc && acc.classList.contains('view-active')) switchView('input','events',{noScroll:true});
+      if(document.body.classList.contains('tab-mode')){
+        switchView(currentView.type, currentView.key, {noScroll:true});
       }
     }
     householdSeg.addEventListener('click', (e)=>{
@@ -5117,7 +5183,7 @@
             </table>
           </div>`;
       } else {
-        summary.innerHTML = `<p class="at-note">「貯蓄・資産運用・年金」で運用商品（NISA・iDeCo・保険など）を追加すると、ここに項目ごとの内訳が表示されます。</p>`;
+        summary.innerHTML = `<p class="at-note">「貯蓄運用・年金」で運用商品（NISA・iDeCo・保険など）を追加すると、ここに項目ごとの内訳が表示されます。</p>`;
       }
 
       /* ② 年次推移（西暦・夫・妻・子・預貯金・各商品・運用合計。単身時は妻を省略）*/
@@ -5151,16 +5217,35 @@
        tab-mode ではセクションは常に開いた状態で、表示の切替は上のボタン行（switchView）が担う */
 
     /* ============================================================
-       画面切替（入力する6つ／結果を見る6つ。同じ data-view 値を複数要素に付けると同時表示される）
-       ・1画面に1つだけ表示する入れ替え式。DOMからは消さない（display切替のみ）
+       画面切替（2026-08-17 ペア化）
+       ・入力＝4グループ（各2セクション。PC幅では左右2カラム、スマホは縦積み）
+       ・結果＝4グループ（似た内容を縦に連結。チャットは独立）
+       ・グループのキーは旧キーを引き継ぐ（switchView('input','home') のような旧呼び出しも
+         groupOf* で自グループに解決されるため壊れない）
+       ・1画面に1グループだけ表示する入れ替え式。DOMからは消さない（display切替のみ）
          → recompute() は非表示の入力欄からも値を読めるので計算は今までどおり
        ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
        ============================================================ */
-    const INPUT_VIEW_ORDER = ['family','home','living','save','events','insurance'];
-    const INPUT_VIEW_LABEL = {
-      family:'ご家族の基本情報', home:'住まい', living:'毎月の生活費',
-      save:'貯蓄・資産運用・年金', events:'ライフイベント', insurance:'加入中の保険'
-    };
+    const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance'];   // 指紋・基準の単位（全acc）
+    const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'] };
+    const INPUT_GROUP_ORDER = ['family','living','save','insurance'];
+    const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険' };
+    const RESULT_GROUPS = { assets:['assets','cf'], ichijo:['ichijo','compare'], hoken:['hoken','ai'], chat:['chat'] };
+    function groupOfInput(key){
+      if(INPUT_GROUPS[key]) return key;
+      for(const g of INPUT_GROUP_ORDER){ if(INPUT_GROUPS[g].includes(key)) return g; }
+      return 'family';
+    }
+    function groupOfResult(key){
+      if(RESULT_GROUPS[key]) return key;
+      for(const g in RESULT_GROUPS){ if(RESULT_GROUPS[g].includes(key)) return g; }
+      return 'assets';
+    }
+    // 表示できるacc（単身で「任意の生命保険」が hidden のときなどは除外される）
+    function visibleAcc(k){
+      const a = document.querySelector('#input-panel .acc[data-sec="'+k+'"]');
+      return (a && !a.classList.contains('hidden')) ? a : null;
+    }
     let currentView = { type:'input', key:'family' };
 
     /* ---------- 入力済みの目印 ----------
@@ -5188,20 +5273,21 @@
     }
     function captureInputBaseline(){
       inputBaseline = Object.create(null);
-      INPUT_VIEW_ORDER.forEach(k=>{ inputBaseline[k] = sectionFingerprint(k); });
+      INPUT_SECTIONS.forEach(k=>{ inputBaseline[k] = sectionFingerprint(k); });
     }
     function refreshInputMarks(){
       if(!inputBaseline) return;
       if(typeof _refreshingSum!=='undefined' && _refreshingSum) return;   // 裏で他プランの値がDOMに入っている間は読まない
       const cust = document.body.classList.contains('customer-mode');
-      INPUT_VIEW_ORDER.forEach(k=>{
-        const btn = document.querySelector('#nav-input button[data-nav-input="'+k+'"]');
+      INPUT_GROUP_ORDER.forEach(g=>{
+        const btn = document.querySelector('#nav-input button[data-nav-input="'+g+'"]');
         if(!btn) return;
-        const changed = (inputBaseline[k] !== undefined) && (sectionFingerprint(k) !== inputBaseline[k]);
+        // グループ内のどれかのセクションが変わっていれば「入力済み」
+        const changed = INPUT_GROUPS[g].some(k=> (inputBaseline[k] !== undefined) && (sectionFingerprint(k) !== inputBaseline[k]));
         btn.classList.toggle('is-filled', changed);
-        btn.classList.toggle('is-visited', !changed && !!inputVisited[k]);
+        btn.classList.toggle('is-visited', !changed && !!inputVisited[g]);
         btn.title = changed ? (cust ? '変更したところ' : '入力済み（最初の内容から変更あり）')
-                  : (inputVisited[k] ? '開きました（まだ変更なし）' : '');
+                  : (inputVisited[g] ? '開きました（まだ変更なし）' : '');
       });
     }
     let _markTimer = null;
@@ -5222,22 +5308,33 @@
     }
     function switchView(type, key, opts){
       opts = opts || {};
-      // 単身のときは「加入中の保険」に入れない（セクション自体が診断対象外で非表示のため）
-      if(type==='input' && key==='insurance'){
-        const acc = document.querySelector('[data-sec="insurance"]');
-        if(acc && acc.classList.contains('hidden')) key = 'events';
+      /* 旧キー（'home'・'compare'等）もグループに解決する。存在しないキーは groupOf* が
+         既定グループへ倒すので、view-active がどこにも付かず真っ白になる事故は起きない。 */
+      let members = [];
+      if(type==='input'){
+        key = groupOfInput(key);
+        members = INPUT_GROUPS[key].filter(k=> visibleAcc(k));
+        if(!members.length){ key = 'family'; members = INPUT_GROUPS.family.filter(k=> visibleAcc(k)); }
+      } else {
+        key = groupOfResult(key);
+        members = RESULT_GROUPS[key];
       }
-      /* 指定されたビューが存在しないときは安全側へ倒す。
-         これが無いと、存在しないキーを渡した瞬間に view-active がどこにも付かず
-         入力パネルまたは結果パネルが真っ白になる（コンソールにエラーが出ないので気付けない）。 */
-      if(type==='input'  && !document.querySelector('#input-panel .acc[data-sec="'+key+'"]')) key = 'family';
-      if(type==='result' && !document.querySelector('[data-view="'+key+'"]'))                 key = 'assets';
       currentView = { type, key };
       if(type==='input') inputVisited[key] = true;
       document.querySelectorAll('#input-panel .acc').forEach(el=>
-        el.classList.toggle('view-active', type==='input' && el.dataset.sec===key));
+        el.classList.toggle('view-active', type==='input' && members.includes(el.dataset.sec)));
       document.querySelectorAll('[data-view]').forEach(el=>
-        el.classList.toggle('view-active', type==='result' && el.dataset.view===key));
+        el.classList.toggle('view-active', type==='result' && members.includes(el.dataset.view)));
+      // ペア（2セクション表示）のときだけPC幅で左右2カラムにする
+      const ip = $('input-panel');
+      if(ip) ip.classList.toggle('pair-2', type==='input' && members.length===2);
+      // チャットのショートカット：チャット画面を見ている間は隠す
+      const fab = $('chat-fab');
+      if(fab) fab.hidden = (type==='result' && key==='chat');
+      // チャット画面を開いたらPCでは入力欄へフォーカス（スマホはキーボードが出て邪魔なのでしない）
+      if(type==='result' && key==='chat' && window.innerWidth>900){
+        setTimeout(()=>{ try{ $('chat-text').focus({preventScroll:true}); }catch(e){} }, 80);
+      }
       // ボタンの選択状態と、横スクロール内での位置合わせ
       document.querySelectorAll('#nav-input button').forEach(b=>{
         const on = (type==='input' && b.dataset.navInput===key);
@@ -5264,33 +5361,36 @@
       const b = e.target.closest('button[data-nav-result]'); if(!b) return;
       switchView('result', b.dataset.navResult);
     });
-    // 各入力セクションの下に「次へ」導線を付ける（最後は「結果を見る」）
+    // 各入力セクションの下に「次へ」導線を付ける（グループ単位。最後は「結果を見る」）。
+    // ペア表示中はCSSが1枚目の「次へ」を隠すので、見えるのは常にグループ末尾の1つだけ
     (function(){
-      INPUT_VIEW_ORDER.forEach((key, i)=>{
-        const acc = document.querySelector('[data-sec="'+key+'"]'); if(!acc) return;
-        const body = acc.querySelector('.acc-body'); if(!body) return;
-        const nav = document.createElement('div');
-        nav.className = 'sec-next no-print';
-        const btn = document.createElement('button');
-        btn.type = 'button'; btn.className = 'btn btn-primary btn-sm';
-        const setLabel = ()=>{
-          // 次の「表示されている」セクションを探す（単身では「加入中の保険」を飛ばす）
-          let nk = null;
-          for(let j=i+1; j<INPUT_VIEW_ORDER.length; j++){
-            const a = document.querySelector('[data-sec="'+INPUT_VIEW_ORDER[j]+'"]');
-            if(a && !a.classList.contains('hidden')){ nk = INPUT_VIEW_ORDER[j]; break; }
-          }
-          if(nk){ btn.dataset.next = nk; btn.innerHTML = '次へ：' + INPUT_VIEW_LABEL[nk] + ' <i class="fa-solid fa-arrow-right"></i>'; }
-          else { btn.dataset.next = ''; btn.innerHTML = '結果を見る <i class="fa-solid fa-chart-line"></i>'; }
-        };
-        setLabel();
-        btn.addEventListener('click', ()=>{
-          setLabel();   // 世帯タイプの切替で次のセクションが変わっている可能性があるため押した瞬間に引き直す
-          if(btn.dataset.next) switchView('input', btn.dataset.next);
-          else switchView('result', 'assets');
+      INPUT_GROUP_ORDER.forEach((g, gi)=>{
+        INPUT_GROUPS[g].forEach(secKey=>{
+          const acc = document.querySelector('[data-sec="'+secKey+'"]'); if(!acc) return;
+          const body = acc.querySelector('.acc-body'); if(!body) return;
+          const nav = document.createElement('div');
+          nav.className = 'sec-next no-print';
+          const btn = document.createElement('button');
+          btn.type = 'button'; btn.className = 'btn btn-primary btn-sm';
+          const setLabel = ()=>{
+            // 次の「表示できるセクションを持つ」グループを探す（単身でも団信があるため保険グループは残る）
+            let ng = null;
+            for(let j=gi+1; j<INPUT_GROUP_ORDER.length; j++){
+              const cand = INPUT_GROUP_ORDER[j];
+              if(INPUT_GROUPS[cand].some(k=> visibleAcc(k))){ ng = cand; break; }
+            }
+            if(ng){ btn.dataset.next = ng; btn.innerHTML = '次へ：' + INPUT_GROUP_LABEL[ng] + ' <i class="fa-solid fa-arrow-right"></i>'; }
+            else { btn.dataset.next = ''; btn.innerHTML = '結果を見る <i class="fa-solid fa-chart-line"></i>'; }
+          };
+          setLabel();
+          btn.addEventListener('click', ()=>{
+            setLabel();   // 世帯タイプの切替で次のグループ構成が変わっている可能性があるため押した瞬間に引き直す
+            if(btn.dataset.next) switchView('input', btn.dataset.next);
+            else switchView('result', 'assets');
+          });
+          nav.appendChild(btn);
+          body.appendChild(nav);
         });
-        nav.appendChild(btn);
-        body.appendChild(nav);
       });
     })();
     document.body.classList.add('tab-mode');
@@ -5320,6 +5420,11 @@
     // 「結果を見る」：資産の推移の画面へ切り替える（URLのハッシュ＝共有リンクのデータは触らない）
     const gotoResults = ()=>{ switchView('result', 'assets'); };
     if($('jump-result')) $('jump-result').addEventListener('click', gotoResults);
+    // チャットのショートカット（右下常駐）
+    if($('chat-fab')){
+      $('chat-fab').hidden = false;
+      $('chat-fab').addEventListener('click', ()=> switchView('result','chat'));
+    }
     if($('cust-goto-result')) $('cust-goto-result').addEventListener('click', gotoResults);
 
     // 妻の働き方を変える予定：ON/OFFと期間追加
@@ -5785,7 +5890,7 @@
           const rec = Math.max(1, Math.min(Math.floor(surplus/24), 10));
           return diagBox(facts, 'warn',
             `診断：<b>始める余地は十分</b>ありそうです。一般的には月${fmt(rec)}万円程度から始める方が多い水準です。`,
-            `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。上の「貯蓄・資産運用・年金」に追加すると、このシミュレーションにすぐ反映されます。`);
+            `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。上の「貯蓄運用・年金」に追加すると、このシミュレーションにすぐ反映されます。`);
         }
         return diagBox(facts, 'ok',
           `診断：いまの積立を<b>続けてOK</b>です。運用効果は退職時で <b>約${fmt(ben)}万円</b> のプラスです。`,

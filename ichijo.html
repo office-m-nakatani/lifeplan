@@ -881,46 +881,49 @@
        ============================================================ */
     :root{
       --vc-dock-h:0px;
-      --vc-rec-on:#b8524f;   /* 録音中の赤。--bad(#d97b7b)は白文字でコントラスト不足のため専用色 */
+      /* ★2026-08-18 録音中の色は「濃い緑」。赤＋点滅は商談中に視界の端で明滅して気が散る
+         というユーザー指摘で廃止（点滅アニメーションも削除）。白文字とのコントラストは 8.3:1 */
+      --vc-rec-on:#1d5c3f;
     }
-    .vc-fab{ bottom:72px; background:var(--yellow); color:#5a4a12; box-shadow:0 6px 20px rgba(227,169,72,.4); }
-    .vc-fab:hover{ background:var(--yellow-soft); }
-    /* 録音中はドックを閉じ、この右下ボタンだけを濃い色にして知らせる（商談中に画面を占領しないため） */
-    .vc-fab.rec-on{ background:var(--vc-rec-on); color:#fff; box-shadow:0 6px 22px rgba(184,82,79,.45); font-variant-numeric:tabular-nums; }
-    .vc-fab.rec-on:hover{ background:#a4433f; }
-    .vc-fab.rec-on i{ animation:vcPulse 1.1s ease-in-out infinite; }
-    /* ドック表示中：音声FABは隠し、チャットFABはドックの上へ逃がす */
-    body.vc-dock-on .vc-fab{ display:none !important; }
-    body.vc-dock-on .chat-fab{ bottom:calc(14px + var(--vc-dock-h)); }
-    /* 「次へ」やフッターがドックに隠れないよう下駄をはかせる（印刷・PDFには効かせない）。
-       展開時（スマホは76vh）にそのまま入れると画面1枚ぶんの空白がぶら下がるので頭打ちにする */
-    body.vc-dock-on:not(.pdf-mode){ padding-bottom:min(var(--vc-dock-h), 40vh); }
+    /* 音声メモの入口は上の操作バー（保存・読み込みの右）。録音中はこのボタンが濃い緑になり経過時間を出す */
+    #vc-open-btn.rec-on{ background:var(--vc-rec-on); border-color:var(--vc-rec-on); color:#fff; font-variant-numeric:tabular-nums; }
+    #vc-open-btn.rec-on:hover{ background:#164a32; border-color:#164a32; }
+    /* 音声メモは全画面。開いている間はチャットFABを隠し、背面のスクロールも止める
+       （背面が動くと、ドックの中をスクロールしたいのにページが動いてしまう） */
+    body.vc-dock-on .chat-fab{ display:none !important; }
+    body.vc-dock-on{ overflow:hidden; }
 
+    /* ★2026-08-18 全画面化（ユーザー指示「音声メモを押すと画面全体に表示」）。
+       下端の帯だったころは、375pxで中身（家系図の入力欄・ボタン・注意書き）が画面外に出るのに
+       スクロールも効かず、追加した人を消すことすらできなかった（検証役が実測）。
+       画面いっぱいの面にして、中身は #vc-more の中だけでスクロールさせる。 */
     .vc-dock{
-      position:fixed; left:14px; right:14px; bottom:0; z-index:70;
+      position:fixed; inset:0; z-index:80;
       display:flex; flex-direction:column;
-      background:var(--card); border:1.5px solid var(--line); border-bottom:0;
-      border-radius:16px 16px 0 0; box-shadow:0 -10px 28px rgba(44,122,82,.14);
+      background:var(--card); border:0;
       padding-bottom:env(safe-area-inset-bottom, 0px);
     }
     /* display:flex を指定しているので hidden 属性の打消しを明示する（UA既定に勝たれるため） */
     .vc-dock[hidden]{ display:none !important; }
-    .pdf-mode .vc-dock, .pdf-mode .vc-fab{ display:none !important; }
-    @media print{ .vc-dock, .vc-fab{ display:none !important; } body.vc-dock-on{ padding-bottom:0 !important; } }
+    .pdf-mode .vc-dock{ display:none !important; }
+    @media print{ .vc-dock{ display:none !important; } }
     /* お客様モード（共有リンクを開いたお客様の画面）では担当者の下書きを出さない */
-    body.customer-mode .vc-dock, body.customer-mode .vc-fab{ display:none !important; }
-    /* 録音中は面を赤くせず上辺のラインで示す（視界の端が明滅し続けないように） */
-    .vc-dock::before{ content:""; display:block; height:2.5px; border-radius:16px 16px 0 0; background:transparent; }
+    body.customer-mode .vc-dock, body.customer-mode #vc-open-btn{ display:none !important; }
+    /* 録音中は面を塗らず上辺のラインで示す */
+    .vc-dock::before{ content:""; display:block; height:3px; background:transparent; }
     .vc-dock.rec-on::before{ background:var(--vc-rec-on); }
-    .vc-dock[data-vc-mode="open"]{ max-height:min(58vh, 580px); }
+    /* 中身のスクロール。**flexの子は min-height:auto のままだと縮まない**ので 0 を明示する。
+       これが無いと #vc-more が内容の高さのまま伸び、下端が画面外に出て永久に触れなくなる */
+    #vc-more{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    /* 全画面なので「小さくする」は無い（閉じるは × のみ） */
+    #vc-expand{ display:none !important; }
 
     /* ---------- 操作バー（ミニ・展開 共通） ---------- */
     .vc-bar{ display:flex; align-items:center; gap:8px; padding:8px 10px; }
     .vc-bar .vc-grow{ flex:1 1 auto; min-width:0; }
     #vc-rec{ flex:0 0 auto; min-height:44px; padding:10px 16px; }
     #vc-rec.rec-on{ background:var(--vc-rec-on); border-color:var(--vc-rec-on); color:#fff; }
-    #vc-rec.rec-on i{ animation:vcPulse 1.1s ease-in-out infinite; }
-    @keyframes vcPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+    /* 点滅（vcPulse）は廃止。商談中に光り続けるものを画面に置かない（ユーザー指示 2026-08-18） */
     .vc-elapsed{ flex:0 0 auto; font-size:.8rem; font-weight:800; color:var(--vc-rec-on); font-variant-numeric:tabular-nums; }
     .vc-elapsed[hidden]{ display:none; }
     .vc-status{ display:block; font-size:.78rem; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -1011,7 +1014,7 @@
     .vc-dock[data-vc-mode="mini"] .vc-pane{ display:none !important; }
     /* お客様モードでは担当者の下書きタブを出さない（保険の勧誘に読めないようにするため） */
     body.customer-mode .vc-tab[data-vc-tab="minutes"],
-    body.customer-mode .vc-tab[data-vc-tab="next"],
+    body.customer-mode .vc-tab[data-vc-tab="family"],
     body.customer-mode #mn-modal{ display:none !important; }
 
     /* ---------- 議事録の体裁（番号＋テーマ／リード語: 本文） ---------- */
@@ -1074,7 +1077,8 @@
     .fam-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(122px,1fr)); gap:8px; align-items:end;
       padding:9px 10px; margin-bottom:8px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
     .fam-row label{ display:block; font-size:.72rem; color:var(--ink-soft); margin-bottom:2px; }
-    .fam-row input, .fam-row select{ width:100%; min-height:40px; padding:8px 9px; border:1.5px solid var(--line);
+    /* 44px＝指で押せる最小の高さ（検証役の実測で40pxだったため引き上げ） */
+    .fam-row input, .fam-row select{ width:100%; min-height:44px; padding:8px 9px; border:1.5px solid var(--line);
       border-radius:9px; font-family:inherit; font-size:.85rem; background:#fff; color:var(--ink); }
     .fam-row input:focus, .fam-row select:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
     .fam-row .fam-memo{ grid-column:1/-1; }
@@ -1091,7 +1095,6 @@
 
     /* ---------- 375pxスマホ ---------- */
     @media(max-width:560px){
-      .vc-dock{ left:0; right:0; border-left:0; border-right:0; border-radius:14px 14px 0 0; }
       .vc-bar .vc-lbl{ display:none; }
       #vc-rec{ width:44px; padding:0; justify-content:center; }
       /* タブ・チップは横スクロールするがスクロールバーを消しているため、右端をぼかして続きがあると分かるようにする */
@@ -1100,9 +1103,7 @@
                 mask-image:linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
       }
       .vc-tab{ padding:8px 12px; font-size:.82rem; }
-      .vc-dock[data-vc-mode="open"]{ max-height:none; height:76vh; }
       .vc-dock[data-vc-mode="open"] .vc-cap{ height:auto; max-height:26vh; min-height:96px; }
-      .vc-dock[data-vc-mode="open"] .vc-pane{ flex:1 1 auto; }
       .nx-item{ flex-wrap:wrap; }
       .nx-due{ margin-left:27px; }
     }
@@ -1335,7 +1336,9 @@
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
-        <button class="btn btn-ghost btn-sm" id="btn-print"><i class="fa-solid fa-print"></i> 印刷</button>
+        <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
+             右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
+        <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
         <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div><!-- 【一条フック】「一条の家で試す」はヒーローから削除（賃貸時の比較カード位置のプレースホルダー btn-try-ichijo2 から起動） -->
     </div>
@@ -2576,9 +2579,6 @@
   <!-- チャットへのショートカット（画面右下に常駐。チャット画面表示中は隠す） -->
   <button type="button" id="chat-fab" class="chat-fab no-print" hidden><i class="fa-solid fa-comments"></i> AIに相談</button>
 
-  <!-- 音声メモのショートカット（ドックを閉じている間だけ表示） -->
-  <button type="button" id="vc-fab" class="chat-fab vc-fab no-print" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
-
   <!-- ===================== 音声メモ・自動入力（下端ドック）=====================
        画面下端の帯。横を塞がないので、録音中も入力欄・結果がそのまま読める。
        ミニ＝録音ボタン＋字幕2行／展開＝文字起こし・議事録・次の一手・メモ。
@@ -2607,7 +2607,6 @@
       <div class="vc-tabs" role="tablist" aria-label="音声メモの表示">
         <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
         <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
-        <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
         <button type="button" id="vc-tab-family"  class="vc-tab" role="tab" data-vc-tab="family"  aria-selected="false" aria-controls="vc-pane-fam"><i class="fa-solid fa-sitemap"></i> 家系図</button>
         <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
       </div>
@@ -2645,18 +2644,12 @@
         <div id="mn-out"></div>
       </div>
 
-      <!-- 次の一手タブ -->
-      <div class="vc-pane" id="vc-pane-next" role="tabpanel" aria-labelledby="vc-tab-next" hidden>
-        <div class="vc-tools">
-          <button type="button" class="btn btn-primary btn-sm" id="nx-build"><i class="fa-solid fa-list-check"></i> 次の一手を作る</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> コピー</button>
-        </div>
-        <div id="next-actions"></div>
-      </div>
+      <!-- 【削除 2026-08-18】次の一手タブ（ユーザー指示）。ルール定義（NEXT_RULES）と
+           生成関数は残してあるが、画面からは出さない＝#nx-build が無いので動かない -->
 
       <!-- 家系図タブ：ご両親・ご兄弟・ご親戚を記録し、介護・相続・ご紹介の話につなげる -->
       <div class="vc-pane" id="vc-pane-fam" role="tabpanel" aria-labelledby="vc-tab-family" hidden>
-        <p class="hint" style="display:block; margin:2px 0 8px;">ご本人・配偶者・お子さまは入力内容から自動で並びます。ご両親・ご兄弟・ご親戚・ご友人を足すと、<b>介護・相続・ご紹介</b>の確認事項が「次の一手」に出ます。</p>
+        <p class="hint" style="display:block; margin:2px 0 8px;">ご本人・配偶者・お子さまは入力内容から自動で並びます。ご両親・ご兄弟・ご親戚・ご友人を足すと、<b>介護・相続・ご紹介</b>の話につながるご家族の状況を、面談の記録として残せます（「コピー」で担当者の記録に貼れます）。</p>
         <div class="fam-tree" id="fam-tree"></div>
         <div class="vc-tools">
           <button type="button" class="btn btn-primary btn-sm" id="fam-add"><i class="fa-solid fa-user-plus"></i> 人を追加</button>
@@ -2664,7 +2657,7 @@
           <button type="button" class="btn btn-ghost btn-sm" id="fam-clear"><i class="fa-solid fa-trash-can"></i> 家系図を消す</button>
         </div>
         <div id="fam-list"></div>
-        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>お体・介護の状況は要配慮個人情報</b>にあたります。<b>ご本人の同意をいただいた範囲だけ</b>記録し、確認できていない項目は「未確認」のままにしてください。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。<br>※ 内容は<b>お客様のお名前ごとに分けて</b>保存され、別のお客様のデータを読み込むと表示は入れ替わります。最後に更新してから<b>2週間で自動削除</b>されます（「家系図を消す」でいつでも削除できます）。</p>
+        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>お体・介護の状況は要配慮個人情報</b>にあたります。ここでの「本人」は<b>その記載対象となるご親族ご自身</b>です（お客様の同意では代わりになりません）。<b>ご親族ご本人の同意が得られた範囲だけ</b>記録し、確認できていない項目は「未確認」のままにしてください。<br>※ 利用目的は<b>この面談の家計試算と、担当者の記録・引き継ぎ</b>に限ります。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。<br>※ 内容は<b>お客様のお名前ごとに分けて</b>保存され、別のお客様のデータを読み込むと表示は入れ替わります。最後に更新してから<b>2週間で自動削除</b>されます（「家系図を消す」でいつでも削除できます）。</p>
       </div>
 
       <!-- メモタブ -->
@@ -6118,38 +6111,9 @@
       const b = e.target.closest('button[data-nav-result]'); if(!b) return;
       switchView('result', b.dataset.navResult);
     });
-    // 各入力セクションの下に「次へ」導線を付ける（グループ単位。最後は「結果を見る」）。
-    // ペア表示中はCSSが1枚目の「次へ」を隠すので、見えるのは常にグループ末尾の1つだけ
-    (function(){
-      INPUT_GROUP_ORDER.forEach((g, gi)=>{
-        INPUT_GROUPS[g].forEach(secKey=>{
-          const acc = document.querySelector('[data-sec="'+secKey+'"]'); if(!acc) return;
-          const body = acc.querySelector('.acc-body'); if(!body) return;
-          const nav = document.createElement('div');
-          nav.className = 'sec-next no-print';
-          const btn = document.createElement('button');
-          btn.type = 'button'; btn.className = 'btn btn-primary btn-sm';
-          const setLabel = ()=>{
-            // 次の「表示できるセクションを持つ」グループを探す（単身でも団信があるため保険グループは残る）
-            let ng = null;
-            for(let j=gi+1; j<INPUT_GROUP_ORDER.length; j++){
-              const cand = INPUT_GROUP_ORDER[j];
-              if(INPUT_GROUPS[cand].some(k=> visibleAcc(k))){ ng = cand; break; }
-            }
-            if(ng){ btn.dataset.next = ng; btn.innerHTML = '次へ：' + INPUT_GROUP_LABEL[ng] + ' <i class="fa-solid fa-arrow-right"></i>'; }
-            else { btn.dataset.next = ''; btn.innerHTML = '結果を見る <i class="fa-solid fa-chart-line"></i>'; }
-          };
-          setLabel();
-          btn.addEventListener('click', ()=>{
-            setLabel();   // 世帯タイプの切替で次のグループ構成が変わっている可能性があるため押した瞬間に引き直す
-            if(btn.dataset.next) switchView('input', btn.dataset.next);
-            else switchView('result', 'assets');
-          });
-          nav.appendChild(btn);
-          body.appendChild(nav);
-        });
-      });
-    })();
+    /* 【削除 2026-08-18】各入力セクション下の「次へ：◯◯」「結果を見る」導線（ユーザー指示「次へは全て削除」）。
+       移動は上部の切替ナビ（#tool-nav）で行う。復活させる場合は INPUT_GROUP_ORDER を回して
+       .sec-next を差し込むだけ（CSSの .sec-next は残してある）。 */
     document.body.classList.add('tab-mode');
     switchView('input', 'family', { noScroll:true });
 
@@ -6195,7 +6159,8 @@
        　（const だとTDZで起動が半壊する。過去に esc / penMode で2回事故あり）
        ============================================================ */
     (function(){
-      const fab = $('vc-fab'), panel = $('vc-dock');
+      // 入口は操作バーの「音声メモ」ボタン（旧・右下の浮きボタン。2026-08-18に移設）
+      const fab = $('vc-open-btn'), panel = $('vc-dock');
       if(!fab || !panel) return;
       const VC_MEMO_KEY = 'lifeplan_ichijo_vmemo_v1';
       const VC_UI_KEY   = 'lifeplan_ichijo_vcui_v1';     // ミニ/展開・選択タブ・自動反映のON/OFF
@@ -6437,6 +6402,8 @@
       let capStick = true, capInterim = null;
       function vcTimeLabel(ms){
         const s = Math.max(0, Math.floor(ms/1000));
+        // 1時間を超えたら「1:05:30」。分に繰り上げないと長い面談で「録音中 128:07」になる
+        if(s >= 3600) return Math.floor(s/3600) + ':' + String(Math.floor(s/60)%60).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
         return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
       }
       function vcCapAtBottom(){
@@ -6533,6 +6500,7 @@
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recBtn = $('vc-rec'), status = $('vc-status'), elapsedEl = $('vc-elapsed');
       let rec = null, recOn = false, recWanted = false, elapsedTimer = null;
+      let recErrMsg = '';   // マイク不許可などのエラー文。停止処理の定型文で消されないように覚えておく
       function setStatus(t){ if(status) status.textContent = t; }
       function vcAutoOn(){ const c = $('vc-auto'); return !c || c.checked; }
       function vcElapsedTick(){
@@ -6579,7 +6547,8 @@
         vcCapSetInterim('');
         if(elapsedTimer){ clearInterval(elapsedTimer); elapsedTimer = null; }
         if(elapsedEl) elapsedEl.hidden = true;
-        setStatus(mnUtter.length ? '録音を終了しました。「ミーティング概要」タブで概要を作れます' : '');
+        // マイク不許可などのエラーが出ていたら、それを消さずに出し続ける（録れたと誤解させない）
+        setStatus(recErrMsg || (mnUtter.length ? '録音を終了しました。「ミーティング概要」タブで概要を作れます' : ''));
         mnSave();
       }
       function vcStartRec(){
@@ -6615,10 +6584,13 @@
           if(ev.error==='no-speech') return;      // 長時間録音では普通に起きる。止めない
           if(ev.error==='not-allowed' || ev.error==='service-not-allowed'){
             recWanted = false;
-            setStatus('マイクの使用が許可されていません（ブラウザのマイク設定をご確認ください）');
+            // このメッセージは直後の onend → vcStopRec() の setStatus に必ず上書きされるため、
+            // 覚えておいて向こうで出し直す（そうしないと「録音を終了しました」に化けて録れたと誤解する）
+            recErrMsg = 'マイクの使用が許可されていません（ブラウザのマイク設定をご確認ください）';
+            setStatus(recErrMsg);
             // 録音開始でドックを閉じているため、開き直さないとこのエラーが誰にも見えない
-            panel.hidden = false; vcSyncDockH();
-          } else setStatus('認識できませんでした（'+ev.error+'）');
+            panel.hidden = false; vcSetMode('open'); vcSyncDockH();
+          } else { recErrMsg = '認識できませんでした（'+ev.error+'）'; setStatus(recErrMsg); }
         };
         rec.onend = ()=>{
           recOn = false;
@@ -6650,7 +6622,10 @@
             try{ sessionStorage.setItem('lifeplan_ichijo_rec_ok','1'); }catch(e){}
           }
           recWanted = true;
-          if(!mnT0 || !mnUtter.length) mnT0 = Date.now();
+          recErrMsg = '';   // 前回のエラー表示は持ち越さない
+          // 前日以前の文字起こしが端末に残っていると、その開始時刻からの経過になって
+          // 「録音中 1560:07」になる（検証役が実測）。12時間以上前なら今回の面談として測り直す
+          if(!mnT0 || !mnUtter.length || (Date.now() - mnT0 > 12*60*60*1000)) mnT0 = Date.now();
           if(elapsedTimer) clearInterval(elapsedTimer);
           elapsedTimer = setInterval(vcElapsedTick, 1000);
           vcStartRec();
@@ -6699,7 +6674,7 @@
          ============================================================ */
       const MN_NOTES = [
         'この概要は、録音の文字起こしからツールが機械的に抜き出して作成した下書きです。発言の正確な再現を保証するものではありません。とくに金額・年齢・年数などの数字は聞き取りを誤ることがありますので、内容に相違がある場合は担当者までお知らせください。',
-        '本文の金額・年齢・年数は、面談でお話しされた内容をそのまま書き起こしたものです。「次の一手」など、ツールが計算した金額・年数は、ご入力いただいた前提にもとづく試算であり、税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。',
+        '本文の金額・年齢・年数は、面談でお話しされた内容をそのまま書き起こしたものです。ツールが計算した金額・年数は、ご入力いただいた前提にもとづく試算であり、税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。',
         '本メモは特定の保険商品・金融商品の推奨を目的とするものではありません。保障を見直す場合は、必要保障額を下回らない範囲でご検討ください（健康状態により再加入・増額ができない、保障に空白が生じる、貯蓄型は解約時に払込保険料を下回ることがある、などの点にご注意ください）。',
         'このメモは保険契約の内容を表すものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」を必ずご確認ください。税額の判断は税理士、公的年金の実額は年金事務所でご確認ください。',
         '作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。',
@@ -6726,10 +6701,14 @@
       const MN_NG     = /(?:必ず|絶対|確実に|確実です|保証(?:し|され)|元本保証|元本割れ(?:しま?せん)|割れないタイプ|値下がりしません|損しません|損はしません|儲か|得します|お得|有利です|有利になり|おすすめ|お勧め|お薦め|オススメ|推奨し|入るべき|加入すべき|やめるべき|解約すべき|見直すべき|減らすべき|回すべき|(?:入|加入|解約|やめ|減らし|見直し)た(?:方|ほう)がいい|やめても大丈夫|要らない|いらないです|もったいない|一番良い|一番いい|一番条件|ベストです|最適です|間違いない|不要です|必要ありません|十分です|節税になります|節税効果|税金は?かかりません|かからないと思います|今がチャンス|今のうちに入|倍になっている|堅いところ|(?:に|へ)しましょう|しちゃいましょう|(?:ほう|方)が(?:効率的|有利|得|安い|多い|いい|良い)|(?:総資産|手元に残る|残るお金|資産)[^。]{0,10}(?:増えます|増える|多くなります|多くなる)|(?:回す|回した|回せば|減らせば|見直せば|にすれば)[^。]{0,12}(?:増え|得|有利|多く|プラス))/;
       // 否定・疑問・条件つきの言い方は断定ではない（「減らすべきかどうかは…」まで消すと中立な発言が落ちる）
       const MN_NG_OK  = /(?:ではありません|ではない|わけでは|かどうか|か迷|ますか|でしょうか|とは限らない|ではなく|ません)/;
+      /* 打消しの言い回し（MN_NG_OK）があっても必ず落とす言い方。
+         「減らしても問題ありません」は文中の「ません」でMN_NG_OKに救われてしまい、
+         勧誘そのものの一文が概要に載っていた（検証役の指摘） */
+      const MN_NG_HARD = /(?:減らしても(?:問題|大丈夫)|過大です|多すぎます|(?:解約|減らし|やめ|乗り換え|回し)[^。]{0,10}ましょう)/;
       const MN_BRAND  = /[ァ-ヶ一-龥A-Za-z]{2,6}(?:生命保険|損害保険|生命|損保|火災海上|海上火災|共済)(?![保])|(?:アフラック|かんぽ|東京海上|三井住友海上|あいおい|損保ジャパン|SOMPO|メットライフ|アクサ|チューリッヒ|プルデンシャル|ジブラルタ|マニュライフ|ネオファースト|はなさく|FWD|ライフネット|メディケア|なないろ|ニッセイ|明治安田|eMAXIS|オルカン|ひふみ|SBI証券|楽天証券|マネックス|野村證券|大和証券)/i;
       // 会社名ではない一般語（控除・団体保険・共済・団信）は落とさない
       const MN_BRAND_OK = /(?:生命保険料控除|保険料控除|団体信用生命|団信|団体生命|会社の生命|職場の生命|県民共済|都民共済|府民共済|全労済|こくみん共済|共済に|共済の|共済を)/;
-      function mnHasNG(t){ return MN_NG.test(t) && !MN_NG_OK.test(t); }
+      function mnHasNG(t){ return MN_NG_HARD.test(t) || (MN_NG.test(t) && !MN_NG_OK.test(t)); }
       function mnHasBrand(t){ return MN_BRAND.test(t) && !MN_BRAND_OK.test(t); }
       const MN_STOPLEAD = /^(?:これ|それ|あれ|ここ|そこ|今日|今回|先ほど|さっき|私|僕|うち|そちら|お客様|皆さん|一応|結論|お子さん|奥さん|旦那|主人|お父さん|お母さん|ご主人)/;
 
@@ -6997,7 +6976,9 @@
         return String(t||'')
           .replace(/(?:かなと思って(?:います|いて)|という感じ(?:です|でした)|なんですよね|ですかね|みたいな感じ|というふうに)/g, '')
           .replace(/(?:いちばん|一番)/g, '最も')
-          .replace(/(?:すごく|めっちゃ|かなり|結構|ちょっと)/g, '')
+          // 程度を表す語のうち「かなり・結構」は残す。「かなり不安」を「不安」に丸めると
+          // 面談記録として温度が落ちる（検証役の指摘）。話し言葉くささの強い語だけ落とす
+          .replace(/(?:すごく|めっちゃ|めちゃくちゃ|めちゃ)/g, '')
           .replace(/、{2,}/g, '、')
           .replace(/^[、。\s]+/, '')
           .replace(/。{2,}/g, '。');
@@ -7613,14 +7594,14 @@
          ・介護・相続・ご紹介のきっかけを「次の一手」へ渡す（famFlags）
          ・第三者の個人情報になるため、この端末のlocalStorageのみ。共有リンク・保存データには含めない
          ============================================================ */
-      const FAM_KEY  = 'lifeplan_ichijo_family_v1';
+      const FAM_KEY     = 'lifeplan_ichijo_family_v1';
+      const FAM_TMP_KEY = 'lifeplan_ichijo_family_tmp';   // お名前が空のあいだの置き場（タブを閉じると消える）
       const FAM_RELS = ['夫の父','夫の母','妻の父','妻の母','夫の兄弟姉妹','妻の兄弟姉妹','祖父母','親戚','ご友人','その他'];
       const FAM_LIVE = ['未確認','同居','近居','遠方'];
       const FAM_HEAL = ['未確認','お元気','通院中','要支援','要介護','施設に入居','ご逝去'];
       const FAM_ASST = ['未確認','とくになし','ご実家あり','事業あり','農地・山林あり','賃貸物件あり'];
       const FAM_INTR = ['未確認','なし','検討中','ご紹介いただけそう'];
       var famPeople = [];
-      var famNameless = false;   // このタブで「お名前が空のまま」登録したか（引き継ぎの判断に使う）
       /* ★2026-08-18（検証役検出・重大）家系図はお名前ごとに分けて持つ。
          ひとつのキーに入れっぱなしにすると、A様の面談で入れたご親族（要介護・通院中など
          要配慮個人情報）がB様の画面に残り、「次の一手」「概要」のコピーにも混ざる
@@ -7629,40 +7610,72 @@
          ・読むのは必ず「いまの画面のお名前」の分だけ＝お客様データを読み込むと自動で入れ替わる
          ・文字起こしと同じく、最終更新から2週間（MN_TTL）で自動削除
          ・お名前が空のまま登録した分は、同じタブで名前を入れたときだけ引き継ぐ（別のお客様には渡さない） */
+      /* お名前が空のあいだ（＝このツールは名前未入力でも動く）に入れた分は、
+         localStorage に置くと翌日ひらいた別のお客様の画面にそのまま出てしまう（検証役が実測）。
+         そこで **タブを閉じたら消える sessionStorage** に置き、名前を入れたときだけ引き継ぐ。 */
+      function famTmp(){
+        try{ const a = JSON.parse(sessionStorage.getItem(FAM_TMP_KEY)||'[]'); return Array.isArray(a) ? a : []; }
+        catch(e){ return []; }
+      }
+      function famTmpWrite(a){
+        try{
+          if(a && a.length) sessionStorage.setItem(FAM_TMP_KEY, JSON.stringify(a.slice(0,30)));
+          else sessionStorage.removeItem(FAM_TMP_KEY);
+        }catch(e){}
+      }
       function famBox(){
         var o = null;
         try{ o = JSON.parse(localStorage.getItem(FAM_KEY)||'null'); }catch(e){ o = null; }
-        if(Array.isArray(o)) return { m:{ '/': o } };   // 旧形式（お名前で分けていない）＝名無しの箱として扱う
-        if(!o || typeof o !== 'object' || !o.m) return { m:{} };
-        if(Date.now() - (o.t||0) > MN_TTL){ try{ localStorage.removeItem(FAM_KEY); }catch(e){} return { m:{} }; }
-        return { m:o.m };
+        // 旧形式（お名前で分けていない単純な配列）は、誰の分か分からず期限も持てないので読まずに消す
+        if(!o || typeof o !== 'object' || Array.isArray(o) || !o.m){
+          if(o){ try{ localStorage.removeItem(FAM_KEY); }catch(e){} }
+          return {};
+        }
+        const m = o.m; let changed = false;
+        // 期限は**お客様ごと**に持つ。箱でひとつだと、別のお客様を更新するたびに全員が延命する
+        Object.keys(m).forEach(function(k){
+          const b = m[k];
+          if(!b || !Array.isArray(b.p) || (Date.now() - (b.t||0) > MN_TTL)){ delete m[k]; changed = true; }
+        });
+        if(changed) famWrite(m);
+        return m;
       }
       function famWrite(m){
         try{
-          if(Object.keys(m).length) localStorage.setItem(FAM_KEY, JSON.stringify({ t:Date.now(), m:m }));
+          if(Object.keys(m).length) localStorage.setItem(FAM_KEY, JSON.stringify({ m:m }));
           else localStorage.removeItem(FAM_KEY);
         }catch(e){}
       }
       function famLoad(){
-        const m = famBox().m, sc = nxScope();
-        let a = m[sc];
-        // 名無しで入れた分の引き継ぎ。コピーではなく移動にする（残すと次のお客様の画面にも出る）
-        if((!a || !a.length) && famNameless && sc !== '/' && m['/'] && m['/'].length){
-          a = m['/']; delete m['/']; m[sc] = a; famNameless = false; famWrite(m);
-        }
-        famPeople = Array.isArray(a) ? a : [];
+        const sc = nxScope();
+        if(sc === '/'){ famPeople = famTmp(); return; }   // お名前が空＝このタブの一時分だけ
+        const b = famBox()[sc];
+        famPeople = (b && Array.isArray(b.p)) ? b.p : [];
       }
       function famSave(){
-        const m = famBox().m, sc = nxScope();
-        if(famPeople.length) m[sc] = famPeople.slice(0,30);
+        const sc = nxScope();
+        if(sc === '/'){ famTmpWrite(famPeople); return; }
+        const m = famBox();
+        if(famPeople.length) m[sc] = { t:Date.now(), p:famPeople.slice(0,30) };
         else delete m[sc];
-        if(sc === '/' && famPeople.length) famNameless = true;
         famWrite(m);
       }
+      /* お名前を入れた瞬間だけ、名前が空のあいだに入れた分をその方へ引き継ぐ。
+         **お客様データの読み込み（lp-state-loaded）からは絶対に呼ばない**
+         ＝読み込んだ別のお客様に、前のお客様のご親族が付け替わるため（検証役が実測） */
+      function famAdopt(){
+        const sc = nxScope(); if(sc === '/') return;
+        const tmp = famTmp(); if(!tmp.length) return;
+        const m = famBox();
+        if(m[sc] && m[sc].p && m[sc].p.length) return;   // すでにその方の分があるときは混ぜない
+        m[sc] = { t:Date.now(), p:tmp };
+        famWrite(m); famTmpWrite([]);
+      }
       function famDrop(){
-        const m = famBox().m;
-        delete m[nxScope()];
-        famPeople = []; famNameless = false; famWrite(m);
+        const sc = nxScope();
+        famPeople = [];
+        if(sc === '/'){ famTmpWrite([]); return; }
+        const m = famBox(); delete m[sc]; famWrite(m);
       }
       function famSel(name, opts, val){
         return '<select data-fam="'+name+'">' + opts.map(function(o){
@@ -7673,7 +7686,7 @@
         return '<div class="fam-row" data-fam-i="'+i+'">'
           + '<div><label>続柄</label>'+famSel('rel', FAM_RELS, p.rel)+'</div>'
           + '<div><label>お名前・呼び方</label><input type="text" data-fam="name" value="'+esc(p.name||'')+'" placeholder="例：お義父さま"></div>'
-          + '<div><label>年齢</label><input type="number" data-fam="age" value="'+(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
+          + '<div><label>年齢</label><input type="number" data-fam="age" value="'+esc(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
           + '<div><label>お住まい</label>'+famSel('live', FAM_LIVE, p.live)+'</div>'
           + '<div><label>お体・介護</label>'+famSel('health', FAM_HEAL, p.health)+'</div>'
           + '<div><label>資産の論点</label>'+famSel('asset', FAM_ASST, p.asset)+'</div>'
@@ -7752,13 +7765,16 @@
             + (p.memo ? '　' + p.memo : '');
         }).join('\n') + '\n'
           + '―――\n'
-          + '※ ご本人からお聞きした範囲の下書きです。ご家族・ご親族の健康状態など要配慮個人情報にあたる内容は、ご本人の同意をいただいた範囲のみを記録しています（未確認の項目は「未確認」のままにしてください）。\n'
-          + '※ ご本人以外の方の個人情報を含みます。事務所内の記録としてお取り扱いいただき、お客様・第三者にそのままお渡しにならないでください。\n'
-          + '※ ご紹介は、ご本人とご紹介先の双方の同意をいただいてから行ってください。ご紹介先の連絡先はここに記録しないでください。\n'
-          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。\n';
+          + '※ お客様からお聞きした範囲の下書きです。健康状態など要配慮個人情報にあたる内容は、記載対象となるご親族ご本人の同意が得られた範囲のみを記録しています（未確認の項目は「未確認」のままです）。\n'
+          + '※ 利用目的は、この面談の家計試算と、担当者の記録・引き継ぎに限ります。\n'
+          + '※ お客様以外の方の個人情報を含みます。事務所内の記録としてお取り扱いいただき、お客様・第三者にそのままお渡しにならないでください。\n'
+          + '※ ご紹介は、お客様とご紹介先の双方の同意をいただいてから行ってください。ご紹介先の連絡先はここに記録しないでください。\n'
+          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。\n';
       }
       if($('fam-add')) $('fam-add').addEventListener('click', ()=>{
         famLoad();   // 押した時点のお名前の分に足す（お客様データ読み込み直後の取り違えを防ぐ）
+        // 保存できるのは30人まで。画面にだけ増えて保存されない（リロードで黙って消える）のを防ぐ
+        if(famPeople.length >= 30){ setStatus('家系図に登録できるのは30人までです'); return; }
         famPeople.push({ rel:'夫の父', name:'', age:'', live:'未確認', health:'未確認', asset:'未確認', intro:'未確認', memo:'' });
         famSave(); famRender();
       });
@@ -7842,7 +7858,8 @@
         }catch(e){}
       }
       function vcSetMode(m){
-        panel.dataset.vcMode = (m==='open') ? 'open' : 'mini';
+        // 2026-08-18：全画面化にともないミニ表示は廃止（開くときは常に全画面）
+        panel.dataset.vcMode = 'open';
         const b = $('vc-expand');
         if(b){
           const open = panel.dataset.vcMode==='open';
@@ -7856,7 +7873,7 @@
         vcSaveUI(); vcCapFollow(); vcSyncDockH();
       }
       function vcSetTab(t){
-        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', family:'vc-pane-fam', memo:'vc-pane-memo' };
+        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', family:'vc-pane-fam', memo:'vc-pane-memo' };   // next（次の一手）は2026-08-18に削除
         if(!map[t]) t = 'cap';
         document.querySelectorAll('.vc-tab').forEach(function(b){
           const on = (b.dataset.vcTab===t);
@@ -7931,6 +7948,7 @@
       fab.hidden = false;
       fab.addEventListener('click', ()=>{
         panel.hidden = false;
+        vcSetMode('open');   // 全画面で開く（ユーザー指示 2026-08-18）
         renderVcMemos(); vcSyncDockH(); vcCapFollow();
       });
       $('vc-close').addEventListener('click', ()=>{
@@ -7941,7 +7959,7 @@
       document.addEventListener('keydown', (e)=>{
         if(e.key!=='Escape' || panel.hidden) return;
         if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }
-        if(panel.dataset.vcMode==='open') vcSetMode('mini');
+        panel.hidden = true; vcSyncDockH();   // 全画面なので Esc は閉じる
       });
       // ResizeObserver のコールバックで --vc-dock-h → body の padding が変わるため、1フレームに間引く
       let dockRaf = 0;
@@ -7968,9 +7986,9 @@
       famLoad();
       /* お客様データ・共有リンクを読み込んだら、家系図を「そのお客様の分」に出し直す。
          ドックは別のIIFEで外から関数を呼べないため、applyPlans() からのイベントで受ける */
-      document.addEventListener('lp-state-loaded', function(){ if($('vc-pane-fam')) famRender(); });
+      document.addEventListener('lp-state-loaded', function(){ if($('vc-pane-fam')) famRender(); });   // famAdoptは呼ばない
       ['h-name','w-name'].forEach(function(id){
-        if($(id)) $(id).addEventListener('change', function(){ if($('vc-pane-fam')) famRender(); });
+        if($(id)) $(id).addEventListener('change', function(){ famAdopt(); if($('vc-pane-fam')) famRender(); });
       });
       vcFabUI();
       vcSyncDockH();
@@ -8136,12 +8154,9 @@
     }
 
     // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力
-    $('btn-print').addEventListener('click', ()=>{
-      enterPdfMode();
-      const done = ()=>{ exitPdfMode(); window.removeEventListener('afterprint', done); };
-      window.addEventListener('afterprint', done);
-      setTimeout(()=> window.print(), 120);
-    });
+    /* 【削除 2026-08-18】印刷ボタン（ユーザー指示。その位置は音声メモの入口にした）。
+       印刷用のスタイルと enterPdfMode/exitPdfMode はPDF作成が使うので残す。
+       ブラウザのメニューからの印刷（Ctrl+P）は @media print が効くのでこれまでどおり */
 
     // PDF作成：結果を画像化→A4複数ページのPDFにして保存（ダウンロード）
     async function sendPDF(){

@@ -165,6 +165,37 @@
     .kaigo-pair .subgroup{ margin-top:0; }
     .kaigo-side.side-off{ display:none; }
     .kg-more{ margin-top:10px; }
+    /* 側の切替は「どちらを見ているか」が一目で分かるように、選択中を塗る（既定の.segは白地で弱い） */
+    #kaigo-side-seg{ background:var(--blue-pale); }
+    #kaigo-side-seg button{ padding:9px 20px; color:var(--ink-soft); }
+    #kaigo-side-seg button.active{ background:var(--blue-deep); color:#fff; box-shadow:0 3px 10px rgba(44,122,82,.28); }
+    /* 家系図（3世代・続柄の枝つき） */
+    .kt-gen{ padding:10px 12px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; margin-bottom:8px; }
+    .kt-gen-l{ font-size:.74rem; font-weight:800; color:var(--ink-soft); margin-bottom:7px; display:flex; align-items:center; gap:8px; }
+    .kt-gen-l .kt-add{ margin-left:auto; }
+    .kt-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
+    .kt-fam{ display:flex; gap:6px; align-items:stretch; padding:6px; border:1.5px dashed var(--blue-pale2); border-radius:12px; background:#fff; }
+    .kt-fam-l{ writing-mode:vertical-rl; font-size:.66rem; font-weight:800; color:var(--blue-deep); padding:2px 1px; opacity:.75; }
+    .kt-card{ min-width:112px; display:flex; flex-direction:column; gap:2px; padding:7px 10px; border-radius:10px;
+      background:#fff; border:1.5px solid var(--line); font-size:.8rem; line-height:1.4; }
+    .kt-card b{ font-size:.85rem; }
+    .kt-card .kt-sub{ color:var(--ink-soft); font-size:.71rem; }
+    .kt-card.is-self{ border-color:var(--blue-deep); background:var(--blue-pale); }
+    .kt-card.is-care{ border-color:var(--warn); background:var(--warn-pale); }
+    .kt-card.is-gone{ opacity:.5; }
+    .kt-card.is-male{ border-left:4px solid #6ea8dc; }
+    .kt-card.is-female{ border-left:4px solid #e3899f; }
+    .kt-del{ align-self:flex-start; border:none; background:none; cursor:pointer; color:var(--ink-soft); font-size:.72rem; padding:2px 0 0; }
+    .kt-del:hover{ color:var(--bad); }
+    .kt-empty{ font-size:.76rem; color:var(--ink-soft); }
+    .kt-extra{ display:grid; grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); gap:6px; align-items:end;
+      padding:7px 9px; margin-top:6px; background:#fff; border:1.5px solid var(--line); border-radius:10px; }
+    .kt-extra label{ display:block; font-size:.68rem; color:var(--ink-soft); margin-bottom:2px; }
+    .kt-extra input, .kt-extra select{ width:100%; min-height:38px; padding:6px 8px; border:1.5px solid var(--line);
+      border-radius:8px; font-family:inherit; font-size:.8rem; background:#fff; }
+    .kt-sibs{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; font-size:.78rem; color:var(--ink-soft); }
+    .kt-sibs .kt-sib-field{ display:inline-flex; align-items:center; gap:5px; }
+    .kt-sibs input{ width:58px; min-height:38px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; }
     .acc-title{ flex:1; }
     .acc-title b{ display:block; font-size:1.05rem; }
     .acc-title span{ font-size:.82rem; color:var(--ink-soft); font-weight:500; }
@@ -2131,13 +2162,23 @@
           <div class="acc-body">
             <p class="hint" style="display:block; margin-bottom:10px;">ご両親の年齢・お住まい・介護の見通しを整理すると、<b>「誰が・どこで・いくらで」</b>の備えが見えてきます。お体の状況など<b>デリケートな内容は、お聞きできた範囲だけ</b>で大丈夫です（未確認のままで構いません）。<br>※ この欄の内容は<b>お客様データの保存・共有リンクに含まれます</b>（ご自身の設計資料のため）。ご親族に関わる内容は、お客様が把握・同意されている範囲でご記入ください。</p>
 
-            <!-- 家系図（3世代・家族の歴史） -->
-            <div class="subgroup-title"><i class="fa-solid fa-sitemap"></i> 家系図（わが家の3世代）</div>
-            <div class="fam-tree" id="kaigo-tree" style="margin-bottom:12px;"></div>
+            <!-- 家系図（ご主人側・奥さま側の枝／ご兄弟の人数と続柄／上下の世代も追加できる） -->
+            <div class="subgroup-title"><i class="fa-solid fa-sitemap"></i> 家系図（わが家の系図）</div>
+            <div id="kaigo-tree" style="margin-bottom:12px;"></div>
 
-            <div class="field" style="margin-bottom:12px; max-width:300px;">
-              <label>わたしたちのお住まい（都道府県）</label>
-              <select id="kaigo-home-pref" class="kaigo-pref-home"></select>
+            <!-- 上下の世代は人数が可変なのでJSONで1本に持つ（#input-panel内＝保存・共有に自動で乗る） -->
+            <input type="hidden" id="kg-extra-up" value="[]">
+            <input type="hidden" id="kg-extra-down" value="[]">
+
+            <!-- お住まいは下のご両親の枠と同じ「箱」に入れて、横幅を揃える（ユーザー指示 2026-08-19） -->
+            <div class="subgroup" style="margin-top:0; margin-bottom:12px;">
+              <div class="subgroup-title"><i class="fa-solid fa-house"></i> わたしたちのお住まい</div>
+              <div class="grid2">
+                <div class="field">
+                  <label>都道府県<span class="hint">（ご両親との距離の判定に使います）</span></label>
+                  <select id="kaigo-home-pref" class="kaigo-pref-home"></select>
+                </div>
+              </div>
             </div>
 
             <!-- 夫側・妻側 ×（父・母）＝4人分。idの規則：kg-{hf|hm|wf|wm}-{項目}
@@ -2151,6 +2192,12 @@
               <button type="button" data-kaigoside="w" data-couple-only><span data-kaigo-seg="w">妻</span>のご両親</button>
             </div>
             <div class="kaigo-side" data-kaigo-side="h">
+              <!-- ご本人の兄弟姉妹（介護の担い手・費用の分担に直結するため、人数と順番を先に聞く） -->
+              <div class="kt-sibs" style="margin:0 0 10px;">
+                <span><i class="fa-solid fa-users"></i> <b data-kaigo-seg2="h">夫</b>さまは</span>
+                <span class="kt-sib-field"><input type="number" id="kg-h-sibs" min="1" max="10" value="1">人きょうだいの</span>
+                <span class="kt-sib-field"><input type="number" id="kg-h-order" min="1" max="10" value="1">番目</span>
+              </div>
               <div class="kaigo-pair">
                 <div class="subgroup" data-kaigo="hf">
                   <div class="subgroup-title"><i class="fa-solid fa-user"></i> <span data-kaigo-title="hf">夫のお父さま</span></div>
@@ -2160,10 +2207,10 @@
                     <div class="field"><label>お住まい</label><select id="kg-hf-pref" class="kaigo-pref-parent"></select></div>
                   </div>
                   <div class="grid2 kg-more hidden" data-kg-more="hf">
-                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
-                    <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-hf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
-                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
-                    <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-hf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option value="ご自身（この世帯）" data-kg-me="hf">ご自身（この世帯）</option><option value="ご自身の兄弟姉妹" data-kg-sib="hf">ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                    <div class="field"><label><span data-kg-me="hf">ご自身</span>が介護を担う可能性</label><select id="kg-hf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option value="ご自身が援助する可能性" data-kg-me="hf">ご自身が援助する可能性</option><option value="兄弟姉妹で分担" data-kg-sib="hf">兄弟姉妹で分担</option></select></div>
+                    <div class="field"><label>そのとき<span data-kg-me="hf">ご自身</span>が働き方を変える可能性</label><select id="kg-hf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
                     <div class="field"><label>老人ホーム等の施設</label><select id="kg-hf-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
                   </div>
                 </div>
@@ -2175,16 +2222,21 @@
                     <div class="field"><label>お住まい<span class="hint">（お父さまの県が自動で入ります。別の県なら変更を）</span></label><select id="kg-hm-pref" class="kaigo-pref-parent"></select></div>
                   </div>
                   <div class="grid2 kg-more hidden" data-kg-more="hm">
-                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
-                    <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-hm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
-                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
-                    <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-hm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option value="ご自身（この世帯）" data-kg-me="hm">ご自身（この世帯）</option><option value="ご自身の兄弟姉妹" data-kg-sib="hm">ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                    <div class="field"><label><span data-kg-me="hm">ご自身</span>が介護を担う可能性</label><select id="kg-hm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option value="ご自身が援助する可能性" data-kg-me="hm">ご自身が援助する可能性</option><option value="兄弟姉妹で分担" data-kg-sib="hm">兄弟姉妹で分担</option></select></div>
+                    <div class="field"><label>そのとき<span data-kg-me="hm">ご自身</span>が働き方を変える可能性</label><select id="kg-hm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
                     <div class="field"><label>老人ホーム等の施設</label><select id="kg-hm-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="kaigo-side side-off" data-kaigo-side="w" data-couple-only>
+              <div class="kt-sibs" style="margin:0 0 10px;">
+                <span><i class="fa-solid fa-users"></i> <b data-kaigo-seg2="w">妻</b>さまは</span>
+                <span class="kt-sib-field"><input type="number" id="kg-w-sibs" min="1" max="10" value="1">人きょうだいの</span>
+                <span class="kt-sib-field"><input type="number" id="kg-w-order" min="1" max="10" value="1">番目</span>
+              </div>
               <div class="kaigo-pair">
                 <div class="subgroup" data-kaigo="wf">
                   <div class="subgroup-title"><i class="fa-solid fa-user"></i> <span data-kaigo-title="wf">妻のお父さま</span></div>
@@ -2194,10 +2246,10 @@
                     <div class="field"><label>お住まい</label><select id="kg-wf-pref" class="kaigo-pref-parent"></select></div>
                   </div>
                   <div class="grid2 kg-more hidden" data-kg-more="wf">
-                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
-                    <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-wf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
-                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
-                    <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-wf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option value="ご自身（この世帯）" data-kg-me="wf">ご自身（この世帯）</option><option value="ご自身の兄弟姉妹" data-kg-sib="wf">ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                    <div class="field"><label><span data-kg-me="wf">ご自身</span>が介護を担う可能性</label><select id="kg-wf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option value="ご自身が援助する可能性" data-kg-me="wf">ご自身が援助する可能性</option><option value="兄弟姉妹で分担" data-kg-sib="wf">兄弟姉妹で分担</option></select></div>
+                    <div class="field"><label>そのとき<span data-kg-me="wf">ご自身</span>が働き方を変える可能性</label><select id="kg-wf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
                     <div class="field"><label>老人ホーム等の施設</label><select id="kg-wf-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
                   </div>
                 </div>
@@ -2209,10 +2261,10 @@
                     <div class="field"><label>お住まい<span class="hint">（お父さまの県が自動で入ります。別の県なら変更を）</span></label><select id="kg-wm-pref" class="kaigo-pref-parent"></select></div>
                   </div>
                   <div class="grid2 kg-more hidden" data-kg-more="wm">
-                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
-                    <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-wm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
-                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
-                    <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-wm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                    <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option value="ご自身（この世帯）" data-kg-me="wm">ご自身（この世帯）</option><option value="ご自身の兄弟姉妹" data-kg-sib="wm">ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                    <div class="field"><label><span data-kg-me="wm">ご自身</span>が介護を担う可能性</label><select id="kg-wm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                    <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option value="ご自身が援助する可能性" data-kg-me="wm">ご自身が援助する可能性</option><option value="兄弟姉妹で分担" data-kg-sib="wm">兄弟姉妹で分担</option></select></div>
+                    <div class="field"><label>そのとき<span data-kg-me="wm">ご自身</span>が働き方を変える可能性</label><select id="kg-wm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
                     <div class="field"><label>老人ホーム等の施設</label><select id="kg-wm-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
                   </div>
                 </div>
@@ -4334,6 +4386,34 @@
       document.querySelectorAll('.kaigo-pref-parent').forEach(function(el){ el.innerHTML = opts(['未選択','同居']); });
     })();
     function kgV(key, item){ const el = $('kg-'+key+'-'+item); return el ? el.value : ''; }
+    /* 上の世代（祖父母など）・下の世代（お孫さまなど）は人数が決まらないので、
+       hidden の JSON 1本（#kg-extra-up / #kg-extra-down）に持つ。
+       #input-panel 内の input なので collectState が自動で保存・共有に載せる
+       （欄を増やしても共有3表は伸ばさない仕組みのまま） */
+    function kgExtra(kind){
+      const el = $('kg-extra-'+kind); if(!el) return [];
+      try{ const a = JSON.parse(el.value || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+    }
+    function kgExtraWrite(kind, list){
+      const el = $('kg-extra-'+kind); if(!el) return;
+      el.value = JSON.stringify(list.slice(0, 12));
+      el.dispatchEvent(new Event('input', { bubbles:true }));   // 自動保存（ドラフト）を走らせる
+    }
+    // 追加した人の1枚（続柄・お名前・性別・年齢・ご健在）。値は入力のたびにJSONへ書き戻す
+    function ktExtraHTML(kind, i, p){
+      const rel = kind === 'up'
+        ? ['祖父','祖母','曽祖父','曽祖母','その他']
+        : ['お孫さま','ひ孫さま','甥・姪','その他'];
+      const opt = function(list, v){ return list.map(function(o){ return '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join(''); };
+      return '<div class="kt-extra" data-kt-kind="'+kind+'" data-kt-i="'+i+'">'
+        + '<div><label>続柄</label><select data-kt="rel">'+opt(rel, p.rel)+'</select></div>'
+        + '<div><label>お名前・呼び方</label><input type="text" data-kt="name" value="'+esc(p.name||'')+'" placeholder="例：父方の祖母"></div>'
+        + '<div><label>性別</label><select data-kt="sex">'+opt(['男性','女性'], p.sex)+'</select></div>'
+        + '<div><label>年齢</label><input type="number" data-kt="age" value="'+esc(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
+        + '<div><label>ご健在</label><select data-kt="alive">'+opt(['ご健在','他界された','未確認'], p.alive)+'</select></div>'
+        + '<div><button type="button" class="kt-del" data-kt-del="1"><i class="fa-solid fa-trash-can"></i> 削除</button></div>'
+        + '</div>';
+    }
     function kaigoParentInfo(pk){
       const alive = kgV(pk.key,'alive'), age = num('kg-'+pk.key+'-age', 0);
       const pref = kgV(pk.key,'pref'), home = ($('kaigo-home-pref') && $('kaigo-home-pref').value) || '未選択';
@@ -4346,9 +4426,10 @@
       if(alive !== 'ご健在') return Object.assign(info, { score:0, level:null, why:[] });
       if(age >= 80){ sc += 2; why.push(age+'歳（80歳以上）'); } else if(age >= 75){ sc += 1; why.push(age+'歳（75歳以上）'); }
       if(far){ sc += 1; why.push('遠方（'+pref+'）＝通いの交通費・時間の負担'); }
-      if(info.self === '高い'){ sc += 2; why.push('ご自身が担う可能性が高い'); }
-      else if(info.self === 'ある'){ sc += 1; why.push('ご自身が担う可能性あり'); }
-      if(info.fund === 'ご自身が援助する可能性'){ sc += 2; why.push('費用をご自身が援助する可能性'); }
+      const meNm = (pk.side === 'h' ? hNameH() : wNameH());   // 「ご自身」ではなくお名前で書く
+      if(info.self === '高い'){ sc += 2; why.push(meNm + 'が担う可能性が高い'); }
+      else if(info.self === 'ある'){ sc += 1; why.push(meNm + 'が担う可能性あり'); }
+      if(info.fund === 'ご自身が援助する可能性'){ sc += 2; why.push('費用を' + meNm + 'が援助する可能性'); }
       else if(info.fund === '未定'){ sc += 1; why.push('費用の出どころが未定'); }
       if(info.work === '転職・離職の可能性'){ sc += 2; why.push('働き方を大きく変える可能性（収入減の直撃）'); }
       else if(info.work === '時短・在宅などで調整' || info.work === 'わからない'){ sc += 1; why.push('働き方の調整の可能性'); }
@@ -4374,6 +4455,21 @@
       const segH = document.querySelector('[data-kaigo-seg="h"]'), segW = document.querySelector('[data-kaigo-seg="w"]');
       if(segH) segH.textContent = hNameH();
       if(segW) segW.textContent = wNameH();
+      document.querySelectorAll('[data-kaigo-seg2]').forEach(function(el){
+        el.textContent = (el.dataset.kaigoSeg2 === 'h' ? hNameH() : wNameH());
+      });
+      /* 「ご自身」ではどなたか分かりにくいので、その側のお名前で呼ぶ（ユーザー指示 2026-08-19）。
+         option には value 属性を固定してあるので、表示だけ差し替えても保存データは変わらない */
+      document.querySelectorAll('[data-kg-me]').forEach(function(el){
+        const nm = (el.dataset.kgMe.charAt(0) === 'h' ? hNameH() : wNameH());
+        el.textContent = (el.tagName === 'OPTION')
+          ? (el.value === 'ご自身（この世帯）' ? nm + 'ご自身（この世帯）' : nm + 'が援助する可能性')
+          : nm + 'ご自身';
+      });
+      document.querySelectorAll('[data-kg-sib]').forEach(function(el){
+        const nm = (el.dataset.kgSib.charAt(0) === 'h' ? hNameH() : wNameH());
+        el.textContent = (el.value === '兄弟姉妹で分担') ? nm + 'のごきょうだいで分担' : nm + 'のごきょうだい';
+      });
       // 「ご健在」を選んだ方だけ詳しい質問を出す（質問攻めに見せない）
       KAIGO_PARENTS.forEach(function(pk){
         const more = document.querySelector('[data-kg-more="'+pk.key+'"]');
@@ -4385,21 +4481,61 @@
         const sg = $('kaigo-side-seg');
         if(sg) [...sg.children].forEach(function(b){ b.classList.toggle('active', b.dataset.kaigoside === 'h'); });
       }
-      // ── 家系図（3世代・家族の歴史）──
-      const ps = kaigoParents();
-      const pChips = ps.map(function(x){
-        if(x.alive === '他界された') return chip(kgLabel(x.pk), 'ご逝去', 'is-gone');
+      // ── 家系図：ご主人側・奥さま側の枝を分け、続柄・性別・年齢が読める形にする ──
+      const single = isSingle();
+      const card = function(name, sub, cls){
+        return '<div class="kt-card'+(cls ? ' '+cls : '')+'"><b>'+esc(name)+'</b>'
+             + (sub ? '<span class="kt-sub">'+esc(sub)+'</span>' : '') + '</div>';
+      };
+      const parentCard = function(x){
+        const sexCls = x.pk.role === 'f' ? ' is-male' : ' is-female';
+        if(x.alive === '他界された') return card(kgLabel(x.pk), 'ご逝去', 'is-gone' + sexCls);
         const sub = [(x.age ? x.age+'歳' : ''), (x.pref !== '未選択' ? x.pref : ''), (x.alive === '未確認' ? '未確認' : '')].filter(Boolean).join('・');
-        return chip(kgLabel(x.pk), sub || 'ご健在', x.level === 'high' || x.level === 'mid' ? 'is-care' : '');
-      }).join('');
-      let me = chip(hNameH(), 'ご本人（'+num('h-age',35)+'歳）');
-      if(!isSingle()) me += chip(wNameH(), '配偶者（'+num('w-age',33)+'歳）');
-      let kidChips = '';
-      try{ kidChips = readChildren().map(function(c2){ return chip(c2.name, c2.age+'歳'); }).join(''); }catch(e){}
+        return card(kgLabel(x.pk), sub || 'ご健在', (x.level === 'high' || x.level === 'mid' ? 'is-care' : '') + sexCls);
+      };
+      const ps = kaigoParents();
+      const branch = function(side){
+        const two = ps.filter(function(x){ return x.pk.side === side; }).map(parentCard).join('');
+        if(!two) return '';
+        return '<div class="kt-fam"><span class="kt-fam-l">'+esc(side === 'h' ? hNameH() : wNameH())+'の親</span>' + two + '</div>';
+      };
+      // 祖父母など「上の世代」（自由に追加できる。使う機会は少ないが相続の話で効く）
+      const upHtml = kgExtra('up').map(function(p, i){ return ktExtraHTML('up', i, p); }).join('');
+      // ご本人の世代：ご本人・配偶者＋きょうだいの人数と順番
+      const sibLine = function(side){
+        const n = num('kg-'+side+'-sibs', 1), o = num('kg-'+side+'-order', 1);
+        if(n <= 1) return 'ひとりっ子';
+        return n + '人きょうだいの' + o + '番目';
+      };
+      let meHtml = '<div class="kt-fam"><span class="kt-fam-l">ご本人</span>'
+        + card(hNameH(), num('h-age',35)+'歳・'+sibLine('h'), 'is-self is-male');
+      if(!single) meHtml += card(wNameH(), num('w-age',33)+'歳・'+sibLine('w'), 'is-self is-female');
+      meHtml += '</div>';
+      // お子さまの世代（①ご家族の基本情報から自動。性別も反映）
+      /* お子さまは①ご家族の基本情報から。性別はreadChildrenが返さないので行の選択を直接読む
+         （readChildrenのnameは敬称つきで返るため、ここでは付け直さない） */
+      let kidCards = '';
+      try{
+        const rows = [...childrenList.querySelectorAll('.row-item')];
+        kidCards = readChildren().map(function(c2, i){
+          const girl = rows[i] && rows[i].querySelector('.cr-gender-seg button.active') &&
+                       rows[i].querySelector('.cr-gender-seg button.active').dataset.gender === 'girl';
+          return card(c2.name, c2.age+'歳・第'+(i+1)+'子', girl ? 'is-female' : 'is-male');
+        }).join('');
+      }catch(e){}
+      const downHtml = kgExtra('down').map(function(p, i){ return ktExtraHTML('down', i, p); }).join('');
+      /* 世代の箱：カードは横並び（.kt-row）、追加した人の入力欄はその下に全幅で置く
+         （.kt-row の中に入れると flex で縦につぶれて読めなくなる。実測で確認） */
+      const genBox = function(label, body, kind, extras){
+        return '<div class="kt-gen"><div class="kt-gen-l"><i class="fa-solid fa-code-branch"></i> '+label
+          + (kind ? '<button type="button" class="btn btn-ghost btn-sm kt-add" data-kt-add="'+kind+'"><i class="fa-solid fa-plus"></i> 追加</button>' : '')
+          + '</div><div class="kt-row">' + body + '</div>' + (extras || '') + '</div>';
+      };
       tree.innerHTML =
-        '<div class="fam-gen"><span class="fam-gen-l">親の世代</span>' + (pChips || '<span class="fam-empty">下の欄にご両親の情報を入力すると表示されます</span>') + '</div>'
-        + '<div class="fam-gen"><span class="fam-gen-l">ご本人の世代</span>' + me + '</div>'
-        + '<div class="fam-gen"><span class="fam-gen-l">お子さまの世代</span>' + (kidChips || '<span class="fam-empty">お子さまの登録はありません</span>') + '</div>';
+        genBox('祖父母・上の世代', (upHtml ? '' : '<span class="kt-empty">必要なときだけ「追加」で登録できます（相続のご相談で使います）</span>'), 'up', upHtml)
+        + genBox('親の世代', (branch('h') + (single ? '' : branch('w'))) || '<span class="kt-empty">下の欄にご両親の情報を入力すると表示されます</span>', '')
+        + genBox('ご本人の世代', meHtml, '')
+        + genBox('お子さま・下の世代', (kidCards || '<span class="kt-empty">「ご家族・住まい」でお子さまを登録すると表示されます</span>'), 'down', downHtml);
       // ── リスクの見える化 ──
       const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
       if(!alive.length){
@@ -4420,10 +4556,20 @@
     // 介護欄の変更で家系図・リスクを描き直す（試算自体には影響しない欄なので専用リスナー）
     (function(){
       const secEl = document.querySelector('[data-sec="kaigo"]');
-      if(secEl){ secEl.addEventListener('input', kaigoRender); secEl.addEventListener('change', kaigoRender); }
-      ['h-name','w-name','h-age','w-age'].forEach(function(id){
+      /* 家系図の中の入力（追加した世代）は、1文字ごとに描き直すと入力中の欄ごと作り直されて
+         フォーカスも入力値も飛ぶ（実測で年齢が保存されなかった）。中の編集は onEdit が
+         JSONへ書き戻し、描き直しは select の確定・追加・削除のときだけにする */
+      const fromTree = function(e){ return !!(e.target.closest && (e.target.closest('#kaigo-tree') || (e.target.id||'').indexOf('kg-extra-') === 0)); };
+      if(secEl){
+        secEl.addEventListener('input',  function(e){ if(!fromTree(e)) kaigoRender(); });
+        secEl.addEventListener('change', function(e){ if(!fromTree(e)) kaigoRender(); });
+      }
+      ['h-name','w-name','h-age','w-age','kg-h-sibs','kg-h-order','kg-w-sibs','kg-w-order'].forEach(function(id){
         const el = $(id); if(el) el.addEventListener('input', kaigoRender);
       });
+      // お子さまの追加・削除・年齢変更も家系図に反映する
+      const cl = $('children-list');
+      if(cl){ cl.addEventListener('input', kaigoRender); cl.addEventListener('click', function(){ setTimeout(kaigoRender, 0); }); }
       // お客様データ・共有リンクの読み込みで欄が入れ替わったら描き直す
       document.addEventListener('lp-state-loaded', function(){ try{ kaigoRender(); }catch(e){} });
       // ご主人側／奥さま側の切替
@@ -4441,6 +4587,38 @@
           if(m.value === '未選択' && f.value !== '未選択'){ m.value = f.value; kaigoRender(); }
         });
       });
+      // 家系図：上の世代・下の世代の追加／削除／編集（描き直しは値を書き戻してから）
+      const treeEl = $('kaigo-tree');
+      if(treeEl){
+        treeEl.addEventListener('click', function(e){
+          const add = e.target.closest('[data-kt-add]');
+          if(add){
+            const kind = add.dataset.ktAdd, list = kgExtra(kind);
+            list.push(kind === 'up' ? { rel:'祖父', name:'', sex:'男性', age:'', alive:'未確認' }
+                                    : { rel:'お孫さま', name:'', sex:'男性', age:'', alive:'ご健在' });
+            kgExtraWrite(kind, list); kaigoRender(); return;
+          }
+          const del = e.target.closest('[data-kt-del]');
+          if(del){
+            const box = del.closest('[data-kt-kind]'); if(!box) return;
+            const kind = box.dataset.ktKind, list = kgExtra(kind);
+            list.splice(parseInt(box.dataset.ktI, 10), 1);
+            kgExtraWrite(kind, list); kaigoRender();
+          }
+        });
+        const onEdit = function(e){
+          const f = e.target.closest('[data-kt]'); if(!f) return;
+          const box = f.closest('[data-kt-kind]'); if(!box) return;
+          const kind = box.dataset.ktKind, i = parseInt(box.dataset.ktI, 10), list = kgExtra(kind);
+          if(!list[i]) return;
+          list[i][f.dataset.kt] = f.value;
+          kgExtraWrite(kind, list);
+          // 入力中に描き直すとフォーカスが飛ぶので、selectの確定時だけ作り直す
+          if(f.tagName === 'SELECT') kaigoRender();
+        };
+        treeEl.addEventListener('input', onEdit);
+        treeEl.addEventListener('change', onEdit);
+      }
     })();
     function loanShareOf(who){
       const t = loanType();

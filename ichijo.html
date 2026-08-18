@@ -158,6 +158,7 @@
     .ico-violet{ background:linear-gradient(135deg,#9fb8e8,#7a93cf); }
     .ico-pink{ background:linear-gradient(135deg,#f0a6b6,#e2849a); }
     .ico-teal{ background:linear-gradient(135deg,#6fc7c7,#48a7a7); }
+    .ico-orange{ background:linear-gradient(135deg,#eba36f,#d98a5f); }
     .acc-title{ flex:1; }
     .acc-title b{ display:block; font-size:1.05rem; }
     .acc-title span{ font-size:.82rem; color:var(--ink-soft); font-weight:500; }
@@ -1442,6 +1443,7 @@
         <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
         <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
         <button type="button" data-nav-input="insurance"><i class="fa-solid fa-shield-halved"></i> 団信・生命保険</button>
+        <button type="button" data-nav-input="kaigo"><i class="fa-solid fa-hand-holding-medical"></i> 介護</button>
       </div>
     </div>
     <div class="tool-nav-row tnr-result">
@@ -2103,6 +2105,91 @@
             </div>
 
             <span class="hint" style="display:block; margin-top:8px;">※ 毎月の保険料は「毎月の生活費」の生命保険欄で家計に反映。ここで入力した保障額は、AI診断「万が一の備え」の計算に使います。</span>
+          </div>
+        </div>
+
+        <!-- ===================== ご両親の介護（2026-08-19 ユーザー指示で新設）=====================
+             夫・妻それぞれのご両親4人分の「年齢・健在・お住まい・担い手・費用・働き方・施設」を記録し、
+             家系図（3世代）と介護リスクをその場で見える化する。
+             ・入力idはすべて #input-panel 内＝collectStateが自動で保存・共有リンクにも自動往復
+               （共有3表は伸ばさない既定の仕組み。お客様ご自身の設計資料に含める前提の欄）
+             ・妻側のご両親は単身世帯では非表示（data-couple-only） -->
+        <div class="acc" data-acc data-sec="kaigo">
+          <button class="acc-head" type="button">
+            <span class="acc-ico ico-orange"><i class="fa-solid fa-hand-holding-medical"></i></span>
+            <span class="acc-title"><b>ご両親の介護</b><span>家系図と介護リスクを見える化</span></span>
+            <i class="fa-solid fa-chevron-down acc-chev"></i>
+          </button>
+          <div class="acc-body">
+            <p class="hint" style="display:block; margin-bottom:10px;">ご両親の年齢・お住まい・介護の見通しを整理すると、<b>「誰が・どこで・いくらで」</b>の備えが見えてきます。お体の状況など<b>デリケートな内容は、お聞きできた範囲だけ</b>で大丈夫です（未確認のままで構いません）。<br>※ この欄の内容は<b>お客様データの保存・共有リンクに含まれます</b>（ご自身の設計資料のため）。ご親族に関わる内容は、お客様が把握・同意されている範囲でご記入ください。</p>
+
+            <!-- 家系図（3世代・家族の歴史） -->
+            <div class="subgroup-title"><i class="fa-solid fa-sitemap"></i> 家系図（わが家の3世代）</div>
+            <div class="fam-tree" id="kaigo-tree" style="margin-bottom:12px;"></div>
+
+            <div class="field" style="margin-bottom:12px; max-width:300px;">
+              <label>わたしたちのお住まい（都道府県）</label>
+              <select id="kaigo-home-pref" class="kaigo-pref-home"></select>
+            </div>
+
+            <!-- 夫側・妻側 ×（父・母）＝4人分。idの規則：kg-{hf|hm|wf|wm}-{項目} -->
+            <div class="subgroup" data-kaigo="hf">
+              <div class="subgroup-title"><i class="fa-solid fa-user"></i> 夫のお父さま</div>
+              <div class="grid2">
+                <div class="field"><label>ご健在ですか</label><select id="kg-hf-alive" class="kg-alive"><option>未確認</option><option>ご健在</option><option>他界された</option></select></div>
+                <div class="field"><label>年齢</label><div class="input-unit"><input type="number" id="kg-hf-age" min="40" max="120" placeholder="例：72"><span class="u">歳</span></div></div>
+                <div class="field"><label>お住まい</label><select id="kg-hf-pref" class="kaigo-pref-parent"></select></div>
+                <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-hf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
+                <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-hf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                <div class="field"><label>老人ホーム等の施設</label><select id="kg-hf-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
+              </div>
+            </div>
+            <div class="subgroup" data-kaigo="hm">
+              <div class="subgroup-title"><i class="fa-solid fa-user"></i> 夫のお母さま</div>
+              <div class="grid2">
+                <div class="field"><label>ご健在ですか</label><select id="kg-hm-alive" class="kg-alive"><option>未確認</option><option>ご健在</option><option>他界された</option></select></div>
+                <div class="field"><label>年齢</label><div class="input-unit"><input type="number" id="kg-hm-age" min="40" max="120" placeholder="例：70"><span class="u">歳</span></div></div>
+                <div class="field"><label>お住まい</label><select id="kg-hm-pref" class="kaigo-pref-parent"></select></div>
+                <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-hm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-hm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-hm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
+                <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-hm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                <div class="field"><label>老人ホーム等の施設</label><select id="kg-hm-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
+              </div>
+            </div>
+            <div class="subgroup" data-kaigo="wf" data-couple-only>
+              <div class="subgroup-title"><i class="fa-solid fa-user"></i> 妻のお父さま</div>
+              <div class="grid2">
+                <div class="field"><label>ご健在ですか</label><select id="kg-wf-alive" class="kg-alive"><option>未確認</option><option>ご健在</option><option>他界された</option></select></div>
+                <div class="field"><label>年齢</label><div class="input-unit"><input type="number" id="kg-wf-age" min="40" max="120" placeholder="例：68"><span class="u">歳</span></div></div>
+                <div class="field"><label>お住まい</label><select id="kg-wf-pref" class="kaigo-pref-parent"></select></div>
+                <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wf-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-wf-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wf-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
+                <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-wf-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                <div class="field"><label>老人ホーム等の施設</label><select id="kg-wf-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
+              </div>
+            </div>
+            <div class="subgroup" data-kaigo="wm" data-couple-only>
+              <div class="subgroup-title"><i class="fa-solid fa-user"></i> 妻のお母さま</div>
+              <div class="grid2">
+                <div class="field"><label>ご健在ですか</label><select id="kg-wm-alive" class="kg-alive"><option>未確認</option><option>ご健在</option><option>他界された</option></select></div>
+                <div class="field"><label>年齢</label><div class="input-unit"><input type="number" id="kg-wm-age" min="40" max="120" placeholder="例：66"><span class="u">歳</span></div></div>
+                <div class="field"><label>お住まい</label><select id="kg-wm-pref" class="kaigo-pref-parent"></select></div>
+                <div class="field"><label>介護のとき、主に面倒をみる方</label><select id="kg-wm-carer"><option>未定</option><option>親ご本人・その配偶者</option><option>ご自身（この世帯）</option><option>ご自身の兄弟姉妹</option><option>施設・外部サービス中心</option></select></div>
+                <div class="field"><label>ご自身が介護を担う可能性</label><select id="kg-wm-self"><option>わからない</option><option>高い</option><option>ある</option><option>低い</option></select></div>
+                <div class="field"><label>介護費用は誰が出す想定</label><select id="kg-wm-fund"><option>未定</option><option>親ご本人の資産・年金</option><option>ご自身が援助する可能性</option><option>兄弟姉妹で分担</option></select></div>
+                <div class="field"><label>そのとき働き方を変える可能性</label><select id="kg-wm-work"><option>わからない</option><option>変えない予定</option><option>時短・在宅などで調整</option><option>転職・離職の可能性</option></select></div>
+                <div class="field"><label>老人ホーム等の施設</label><select id="kg-wm-home"><option>未定</option><option>施設を検討</option><option>在宅を希望</option></select></div>
+              </div>
+            </div>
+
+            <!-- 介護リスクの見える化（入力から自動判定） -->
+            <div class="subgroup-title"><i class="fa-solid fa-triangle-exclamation"></i> 介護リスクの見える化</div>
+            <div id="kaigo-risk"></div>
+            <span class="hint" style="display:block; margin-top:8px;">※ 介護費用の目安：在宅中心の平均で<b>一時的な費用 約74万円＋月 約8.3万円×平均約5年1か月＝一人あたり合計 約580万円</b>（生命保険文化センターの調査平均）。施設の場合は<b>月 約12〜15万円＋入居一時金</b>が別途かかることが一般的です。<b>費用は介護を受けるご本人の資産・年金から出すのが原則</b>で、公的介護保険で自己負担は1〜3割に抑えられます。<br>※ 金額は平均にもとづく目安であり、要介護度・地域・サービス内容で大きく変わります。</span>
           </div>
         </div>
 
@@ -4193,6 +4280,99 @@
     const loanTypeSeg = $('loan-type-seg');
     const loanType = ()=> loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h';
     // who='h'|'w' の借入（団信）割合を 0〜1 で返す
+    /* ============================================================
+       ご両親の介護（2026-08-19 ユーザー指示で新設）
+       ・kg-{hf|hm|wf|wm}-{alive|age|pref|carer|self|fund|work|home} の4人×8項目＋世帯の都道府県
+       ・入力は #input-panel 内＝保存・共有リンクへ自動で乗る（共有3表は伸ばさない仕組みのまま）
+       ・家系図（#kaigo-tree）＝親世代・本人世代・子世代の3世代チップ表示（家族の歴史）
+       ・介護リスク（#kaigo-risk）＝年齢・距離・担い手・費用・働き方から自動判定
+       ============================================================ */
+    const KAIGO_PREFS = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+    const KAIGO_PARENTS = [
+      { key:'hf', side:'h', label:'夫のお父さま' }, { key:'hm', side:'h', label:'夫のお母さま' },
+      { key:'wf', side:'w', label:'妻のお父さま' }, { key:'wm', side:'w', label:'妻のお母さま' }
+    ];
+    // 都道府県セレクトの選択肢を流し込む（47件×5個をHTMLに直書きしない）
+    (function(){
+      const opts = (head)=> head.concat(KAIGO_PREFS).map(function(o){ return '<option>'+o+'</option>'; }).join('');
+      document.querySelectorAll('.kaigo-pref-home').forEach(function(el){ el.innerHTML = opts(['未選択']); });
+      document.querySelectorAll('.kaigo-pref-parent').forEach(function(el){ el.innerHTML = opts(['未選択','同居']); });
+    })();
+    function kgV(key, item){ const el = $('kg-'+key+'-'+item); return el ? el.value : ''; }
+    function kaigoParentInfo(pk){
+      const alive = kgV(pk.key,'alive'), age = num('kg-'+pk.key+'-age', 0);
+      const pref = kgV(pk.key,'pref'), home = ($('kaigo-home-pref') && $('kaigo-home-pref').value) || '未選択';
+      const far = (pref !== '未選択' && pref !== '同居' && home !== '未選択' && pref !== home);
+      const info = { pk, alive, age, pref, far,
+                     carer: kgV(pk.key,'carer'), self: kgV(pk.key,'self'),
+                     fund: kgV(pk.key,'fund'), work: kgV(pk.key,'work'), home: kgV(pk.key,'home') };
+      // リスク採点：年齢・距離・担い手・費用・働き方・施設の未定
+      let sc = 0; const why = [];
+      if(alive !== 'ご健在') return Object.assign(info, { score:0, level:null, why:[] });
+      if(age >= 80){ sc += 2; why.push(age+'歳（80歳以上）'); } else if(age >= 75){ sc += 1; why.push(age+'歳（75歳以上）'); }
+      if(far){ sc += 1; why.push('遠方（'+pref+'）＝通いの交通費・時間の負担'); }
+      if(info.self === '高い'){ sc += 2; why.push('ご自身が担う可能性が高い'); }
+      else if(info.self === 'ある'){ sc += 1; why.push('ご自身が担う可能性あり'); }
+      if(info.fund === 'ご自身が援助する可能性'){ sc += 2; why.push('費用をご自身が援助する可能性'); }
+      else if(info.fund === '未定'){ sc += 1; why.push('費用の出どころが未定'); }
+      if(info.work === '転職・離職の可能性'){ sc += 2; why.push('働き方を大きく変える可能性（収入減の直撃）'); }
+      else if(info.work === '時短・在宅などで調整' || info.work === 'わからない'){ sc += 1; why.push('働き方の調整の可能性'); }
+      if(info.home === '未定' && age >= 75){ sc += 1; why.push('施設か在宅かが未定'); }
+      return Object.assign(info, { score:sc, level: sc >= 5 ? 'high' : (sc >= 3 ? 'mid' : 'low'), why });
+    }
+    function kaigoParents(){
+      const single = isSingle();
+      return KAIGO_PARENTS.filter(function(pk){ return !(single && pk.side === 'w'); }).map(kaigoParentInfo);
+    }
+    function kaigoRender(){
+      const tree = $('kaigo-tree'), risk = $('kaigo-risk');
+      if(!tree || !risk) return;
+      const chip = function(name, sub, cls){
+        return '<span class="fam-chip'+(cls ? ' '+cls : '')+'"><b>'+esc(name)+'</b>'
+             + (sub ? '<span class="fam-sub">'+esc(sub)+'</span>' : '') + '</span>';
+      };
+      // ── 家系図（3世代・家族の歴史）──
+      const ps = kaigoParents();
+      const pChips = ps.map(function(x){
+        if(x.alive === '他界された') return chip(x.pk.label, 'ご逝去', 'is-gone');
+        const sub = [(x.age ? x.age+'歳' : ''), (x.pref !== '未選択' ? x.pref : ''), (x.alive === '未確認' ? '未確認' : '')].filter(Boolean).join('・');
+        return chip(x.pk.label, sub || 'ご健在', x.level === 'high' || x.level === 'mid' ? 'is-care' : '');
+      }).join('');
+      let me = chip(hNameH(), 'ご本人（'+num('h-age',35)+'歳）');
+      if(!isSingle()) me += chip(wNameH(), '配偶者（'+num('w-age',33)+'歳）');
+      let kidChips = '';
+      try{ kidChips = readChildren().map(function(c2){ return chip(c2.name, c2.age+'歳'); }).join(''); }catch(e){}
+      tree.innerHTML =
+        '<div class="fam-gen"><span class="fam-gen-l">親の世代</span>' + (pChips || '<span class="fam-empty">下の欄にご両親の情報を入力すると表示されます</span>') + '</div>'
+        + '<div class="fam-gen"><span class="fam-gen-l">ご本人の世代</span>' + me + '</div>'
+        + '<div class="fam-gen"><span class="fam-gen-l">お子さまの世代</span>' + (kidChips || '<span class="fam-empty">お子さまの登録はありません</span>') + '</div>';
+      // ── リスクの見える化 ──
+      const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
+      if(!alive.length){
+        risk.innerHTML = '<p class="hint" style="display:block;">「ご健在ですか」を入力すると、介護リスクの整理がここに表示されます。</p>';
+        return;
+      }
+      const lvLabel = { high:'備えの検討を', mid:'確認しておきたい', low:'いまは低め' };
+      const lvColor = { high:'var(--bad-pale)', mid:'var(--warn-pale)', low:'var(--good-pale)' };
+      risk.innerHTML = alive.map(function(x){
+        const why = x.why.length ? x.why.join('／') : '現時点で大きなリスク要因は見えていません';
+        return '<div style="margin:0 0 8px; padding:9px 12px; border-radius:10px; background:'+lvColor[x.level]+'; font-size:.84rem; line-height:1.7;">'
+          + '<b>'+esc(x.pk.label)+'：'+lvLabel[x.level]+'</b><br>'+esc(why)
+          + (x.level !== 'low' && x.work === '転職・離職の可能性' ? '<br>離職は収入だけでなく厚生年金・退職金にも響きます。<b>介護休業（通算93日・給付金67%）や時短</b>を先に検討する余地があります。' : '')
+          + (x.level !== 'low' && x.fund === '未定' ? '<br>費用は<b>親ご本人の資産・年金から</b>が原則です。まず親御さまの年金月額と預貯金の把握から始めるのが定石です。' : '')
+          + '</div>';
+      }).join('');
+    }
+    // 介護欄の変更で家系図・リスクを描き直す（試算自体には影響しない欄なので専用リスナー）
+    (function(){
+      const secEl = document.querySelector('[data-sec="kaigo"]');
+      if(secEl){ secEl.addEventListener('input', kaigoRender); secEl.addEventListener('change', kaigoRender); }
+      ['h-name','w-name','h-age','w-age'].forEach(function(id){
+        const el = $(id); if(el) el.addEventListener('input', kaigoRender);
+      });
+      // お客様データ・共有リンクの読み込みで欄が入れ替わったら描き直す
+      document.addEventListener('lp-state-loaded', function(){ try{ kaigoRender(); }catch(e){} });
+    })();
     function loanShareOf(who){
       const t = loanType();
       if(t==='solo-h') return who==='h' ? 1 : 0;
@@ -4290,6 +4470,8 @@
       if(document.body.classList.contains('tab-mode')){
         switchView(currentView.type, currentView.key, {noScroll:true});
       }
+      // 介護の家系図は妻側のご両親の表示/非表示が変わるため描き直す（関数はこの下で定義＝hoistで届く）
+      try{ kaigoRender(); }catch(e){}
     }
     householdSeg.addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
@@ -5770,6 +5952,33 @@
                     `税額の計算・申告は税理士の業務です。当事務所は税理士事務所を母体としており、そのままお繋ぎできます。` ] });
       }
 
+      /* ── ご両親の介護（2026-08-19追加・10枚目）──
+         「介護」入力欄（kg-*）から自動判定。入力が無ければ一般的な備えの案内にとどめる */
+      {
+        let ps = [];
+        try{ ps = kaigoParents().filter(x=> x.alive === 'ご健在'); }catch(e){}
+        const hi = ps.filter(x=> x.level === 'high'), mid = ps.filter(x=> x.level === 'mid');
+        const tone = hi.length ? 'bad' : (mid.length ? 'warn' : 'ok');
+        const sum = ps.length
+          ? `ご健在のご両親 ${ps.length}人について確認しました。` + (hi.length || mid.length
+              ? `<b>${[...hi, ...mid].map(x=> x.pk.label).join('・')}</b>に、備えを検討したい要因が見えています。`
+              : `現時点で大きな介護リスクの要因は見えていません。`)
+          : `「介護」の欄にご両親の状況を入力すると、ここに個別の診断が表示されます。介護は<b>突然始まり、平均で約5年続く</b>のが実態です。`;
+        const good = [
+          `介護費用は<b>介護を受けるご本人の資産・年金から</b>出すのが原則です。公的介護保険で自己負担は<b>1〜3割</b>に抑えられ、負担が重い月は<b>高額介護サービス費</b>で戻ります。`,
+          `仕事との両立には<b>介護休業（通算93日・賃金の67%の給付金）・介護休暇・時短</b>の制度があります。離職の前に必ず使える制度です。`,
+          `費用の目安は在宅中心の平均で<b>一人あたり合計約580万円</b>（一時費用約74万円＋月約8.3万円×約5年1か月・生命保険文化センター調査）。施設は月約12〜15万円＋入居一時金が一般的です。`
+        ];
+        const con = [];
+        [...hi, ...mid].forEach(x=>{
+          con.push(`<b>${x.pk.label}</b>：${x.why.join('／')}。`);
+        });
+        if(ps.some(x=> x.far)) con.push(`遠方の親御さまの介護は、<b>通いの交通費・時間</b>が費用の目安に上乗せになります。呼び寄せ・住み替え・地域包括支援センターへの相談も選択肢です。`);
+        if(!ps.length) con.push(`まず<b>親御さまの年齢とお住まい</b>だけでも入力しておくと、介護が視野に入る時期（目安：75歳〜）が家系図で見えるようになります。`);
+        con.push(`介護の方針・費用は<b>ご兄弟姉妹と早めに話し合っておく</b>のが最大の備えです。もめやすいのは「誰が担うか」より「費用の分担」です。`);
+        cats.push({ key:'kaigo', label:'介護', icon:'fa-hand-holding-medical', color:'#d98a5f', tone, sum, good, concern:con });
+      }
+
       return cats;
     }
 
@@ -6098,9 +6307,9 @@
        ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
        ============================================================ */
     const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance'];   // 指紋・基準の単位（全acc）
-    const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'] };
-    const INPUT_GROUP_ORDER = ['family','living','save','insurance'];
-    const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険' };
+    const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };
+    const INPUT_GROUP_ORDER = ['family','living','save','insurance','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）
+    const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／家＝一条比較／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
     const RESULT_GROUPS = { assets:['assets','compare'], ichijo:['ichijo'], hoken:['hoken'], ai:['ai'], cf:['cf'], chat:['chat'] };
@@ -11417,6 +11626,7 @@
     eventRow(45,'車の買い替え',200);
     eventRow(50,'家族旅行（記念）',80);
     applyHousePanels();
+    try{ kaigoRender(); }catch(e){}   // 介護の家系図・リスクの初期表示
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
     try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }

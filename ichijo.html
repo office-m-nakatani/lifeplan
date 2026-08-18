@@ -245,6 +245,7 @@
     @media(max-width:560px){ .cust-confirm-actions .btn{ flex:1 1 auto; justify-content:center; min-height:44px; } }
     /* お客様モードでは、担当者専用の操作（アカウント保存・共有リンク作成）を隠す */
     body.customer-mode #btn-save{ display:none !important; }
+    body.customer-mode #btn-share-top{ display:none !important; }   /* 共有リンクを作るのは担当者だけ */
     /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
     .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
       font-size:.78rem; text-decoration:underline; cursor:pointer; }
@@ -1068,6 +1069,13 @@
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
     .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
 
+    /* ---------- 結果画面の相談CTAカード ---------- */
+    .nx-cta-card{ text-align:center; padding:18px 16px; }
+    .nx-cta-lead{ font-size:.95rem; margin-bottom:8px; }
+    .nx-cta-opts{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .nx-cta-chip{ display:inline-block; padding:6px 12px; border:1.5px solid var(--blue-pale2);
+      border-radius:999px; background:var(--blue-pale); font-size:.8rem; font-weight:700; color:var(--blue-deep); }
+
     /* ---------- 提案の検討メモ（担当者専用）----------
        商品名と営業観点を含む社内メモ。誤ってお客様に見える事故を防ぐため、
        「社内用」と分かる濃い枠＋鍵アイコンで囲い、customer-mode/PDF/印刷では丸ごと消す */
@@ -1365,6 +1373,9 @@
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
+        <!-- 共有は面談の締めの主動線なのに、入口が保存モーダルの奥にしか無かった（検証役検出）。
+             ここから直接開けるようにする（ログインは不要＝共有はサーバーを使わない） -->
+        <button class="btn btn-ghost btn-sm" id="btn-share-top"><i class="fa-solid fa-share-nodes"></i> お客様に共有</button>
         <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div><!-- 【一条フック】「一条の家で試す」はヒーローから削除（賃貸時の比較カード位置のプレースホルダー btn-try-ichijo2 から起動） -->
     </div>
@@ -2158,6 +2169,14 @@
           <div class="chart-box"><canvas id="flowChart"></canvas></div>
         </div>
 
+        <!-- 商談の熱がいちばん高い画面に相談の出口を置く（検証役検出：結果画面にCTAが無かった）。
+             不安で終わらせず「打ち手はある」を3択で添える（恐怖訴求は打ち手とセットでのみ有効） -->
+        <div class="card no-print nx-cta-card">
+          <p class="nx-cta-lead">結果が気になったら、そのままにしないでください。<b>打ち手はあります。</b></p>
+          <p class="nx-cta-opts"><span class="nx-cta-chip">働き方・期間を見直す</span><span class="nx-cta-chip">支出を整える</span><span class="nx-cta-chip">積立・保障を調整する</span></p>
+          <button type="button" class="btn btn-primary" data-reserve-cta><i class="fa-solid fa-calendar-check"></i> この結果を担当者と一緒に確認する（無料相談）</button>
+        </div>
+
         </div><!-- /view-wrap assets -->
 
         <div class="view-wrap" data-view="ichijo">
@@ -2180,6 +2199,10 @@
             <span id="ic-horizon-custom-wrap" class="hidden" style="display:inline-flex; align-items:center; gap:6px;">
               <input type="number" id="ic-horizon-custom" value="20" min="1" max="70" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">年間
             </span>
+            <!-- 悲観側を自分から見せる（「盛った試算」と思われない仕掛け。表示専用＝保存・入力値は変えない） -->
+            <label class="no-print" style="display:inline-flex; align-items:center; gap:6px; font-size:.82rem; cursor:pointer;">
+              <input type="checkbox" id="ic-conserv" style="width:18px; height:18px; accent-color:var(--blue);"> 控えめに見る（発電−20%で試算）
+            </label>
           </div>
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
@@ -2205,7 +2228,7 @@
           <div class="card-title"><i class="fa-solid fa-scale-unbalanced-flip"></i> 現状 と 将来 をくらべる</div>
           <div id="plan-effect"></div>
           <div class="chart-box"><canvas id="compareChart"></canvas></div>
-          <p class="hint" style="display:block; margin-top:6px;">※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「万が一（保障）」もあわせてご確認ください。</p>
+          <p class="hint" style="display:block; margin-top:6px;">※ この総資産は<b>預貯金と運用資産の合計</b>で、<b>ご自宅の資産価値（土地・建物）は含めていません</b>。購入プランはローン返済で「住まいという資産」を積み上げていますが、その分はこの数字に表れないため、賃貸との比較では<b>購入側が実際より小さく見えます</b>。<br>※ この総資産の比較は<b>ご夫婦が生存し続けた前提の試算</b>で、万一の保障を減らす判断材料として単独で用いるものではありません。保障の見直しは、上の「結果を見る」の「万が一（保障）」もあわせてご確認ください。</p>
         </div>
 
         <!-- 現状⇔将来の追加くらべ①：資産運用の差（何歳時点でも差額を確認できる）-->
@@ -2260,6 +2283,13 @@
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
+        </div>
+
+        <!-- 保障の不足を見た直後に相談の出口を置く（不安のまま画面を閉じさせない） -->
+        <div class="card no-print nx-cta-card">
+          <p class="nx-cta-lead">不足が出ても、備え方は<b>1つではありません</b>。</p>
+          <p class="nx-cta-opts"><span class="nx-cta-chip">公的な給付を確認する</span><span class="nx-cta-chip">働き方・支出を見直す</span><span class="nx-cta-chip">保険・貯蓄で備える</span></p>
+          <button type="button" class="btn btn-primary" data-reserve-cta><i class="fa-solid fa-calendar-check"></i> わが家に合う備え方を相談する（無料）</button>
         </div>
 
         </div><!-- /view-wrap hoken -->
@@ -2455,7 +2485,7 @@
       </div>
       <div class="modal-body">
         <div id="share-setup">
-          <p class="at-note">いま画面に表示している<b>現状プラン・将来プランの両方</b>を、お客様がご自身のスマホ・パソコンで確認・操作できるリンクにします。データは<b>リンクの中に暗号化して埋め込むだけ</b>で、どこのサーバーにも送信・保存しません（費用もかかりません）。リンクは長くなりますが、LINE・メールともそのまま開けます。<br><b>有効期限は発行から2週間です。</b>期限を過ぎるとお客様の画面では開けなくなりますので、その場合はここで作り直してお送りください。</p>
+          <p class="at-note">いま画面に表示している<b>現状プラン・将来プランの両方</b>を、お客様がご自身のスマホ・パソコンで確認・操作できる形にします。内容は<b>暗号化した「データ（長い英数字）」とパスワード</b>でお渡しします。どこのサーバーにも送信・保存しません（費用もかかりません）。<b>リンク自体は短く、データは別のメッセージで送る</b>ため、LINEでも途中で切れません（送り方は作成後の画面でご案内します）。<br><b>有効期限は発行から2週間です。</b>期限を過ぎるとお客様の画面では開けなくなりますので、その場合はここで作り直してお送りください。</p>
           <div class="field" style="margin-bottom:12px;">
             <label>閲覧用パスワード（お客様にお伝えください）</label>
             <input type="text" id="share-pass" placeholder="例：Y2026kaigi など" autocomplete="off">
@@ -2660,7 +2690,9 @@
 
       <!-- ミーティング概要タブ（番号＋テーマ／リード語: 本文） -->
       <div class="vc-pane" id="vc-pane-min" role="tabpanel" aria-labelledby="vc-tab-minutes" hidden>
-        <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off"></div>
+        <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる） -->
+        <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off">
+          <label for="mn-next-date">次回</label><input type="text" id="mn-next-date" placeholder="例：9/1（月）19時〜 オンライン" autocomplete="off"></div>
         <div class="vc-tools">
           <button type="button" class="btn btn-primary btn-sm" id="mn-build"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-copy"><i class="fa-solid fa-copy"></i> コピー</button>
@@ -2748,6 +2780,7 @@
           <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
           <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
+          <li><b>総資産の範囲</b>：グラフ・表の「総資産」は<b>預貯金＋運用資産</b>の合計で、<b>ご自宅の資産価値（土地・建物）・退職金見込み・保険の解約返戻金は含めていません</b>。持ち家プランはローン返済で住まいという資産を積み上げているため、賃貸プランとの総資産比較では実際より不利に見えます。売却・住み替えまで考える場合は面談で個別に補正します。</li>
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。<b>団信の上乗せ金利</b>（がん団信等）を入力した場合は全期間の金利に加算します。「もしもの検証（ストレステスト）」は<b>表示のみの一時的な前提</b>で、保存されません（<b>実際の金利・収入の変動がその範囲に収まることを示すものではありません</b>）。</li>
@@ -3627,10 +3660,16 @@
       return kw < 10 ? (y<=4 ? 24 : (y<=10 ? 8.3 : 8))
                      : (y<=5 ? 19 : (y<=20 ? 8.3 : 8));
     }
-    function ichijoSolarModel(){
+    function ichijoSolarModel(conserv){
+      /* conserv=true は比較カードの「控えめに見る」（発電−20%）。
+         表示専用の係数で、applyHtype が書き込む zeh 欄・チャット診断・simulate には使わない
+         （入力値・保存データを変えないため）。顧客は営業の試算を「盛っている」前提で見るので、
+         悲観側を自分から見せられることが信頼になる（Web調査の結論）。
+         ※自家消費率は下げない：自家消費はもともと「実際の電気代の8割まで」の上限で
+           常に控えめに切られており（下のselfCap）、率を下げても数字がほぼ動かないことを実測済み */
       const kw   = Math.max(num('ichijo-solar-kw', 12), 0);
       const batt = Math.max(num('ichijo-battery-kwh', 7), 0);
-      const gen  = kw * ICHIJO_GEN_COEF[ichijoRegion];                  // 年間発電量（kWh）
+      const gen  = kw * ICHIJO_GEN_COEF[ichijoRegion] * (conserv ? 0.8 : 1);   // 年間発電量（kWh）
       const selfRate = Math.min(0.30 + batt*0.03, 0.60);                // 蓄電池で自家消費率アップ（上限60%）
       const selfKwh  = gen * selfRate;
       const sellKwh  = gen - selfKwh;
@@ -3812,7 +3851,8 @@
       card.style.display = show ? '' : 'none';
       const ph = $('ichijo-cta-placeholder'); if(ph) ph.style.display = show ? 'none' : '';   // 賃貸時は「試す」誘導を表示
       if(!show) return;
-      const m = ichijoSolarModel();
+      const conserv = !!($('ic-conserv') && $('ic-conserv').checked);
+      const m = ichijoSolarModel(conserv);
       const years = ichijoHorizonYears();                      // 比較期間：35年 ／ 終了年齢まで ／ 年数を指定
       updateIchijoHorizonLabel();
       const sol = ichijoSolarSum(m, years);                    // 太陽光：パネル寿命を考慮し31年目以降は見込まない
@@ -3824,11 +3864,22 @@
       const monthly = (total/(years*12)).toFixed(1);
       const gap = Math.max(num('ic-price-gap', 600), 0);                 // 一般住宅との建物価格差（編集可）
       const afterAll = total - m.initCost - gap;
+      /* 「高い」への直接回答：建物価格差をローンの月々に換算して、家計改善と同じ土俵で見せる。
+         （一条を断る理由の1位は価格。総額600万は重いが「月々◯万円 vs 家計改善◯万円」なら比べられる） */
+      let gapLine = '';
+      if(gap > 0){
+        const gr = Math.max(num('loan-rate', 0.95), 0) / 100 / 12, gn = Math.max(num('loan-term', 35), 1) * 12;
+        const gapMonthly = gr > 0 ? gap * gr / (1 - Math.pow(1 + gr, -gn)) : gap / gn;
+        gapLine = `建物価格差 ${fmt(gap)}万円は、返済期間${num('loan-term',35)}年・金利${num('loan-rate',0.95)}%なら<b>月々約${(Math.round(gapMonthly*10)/10).toLocaleString('ja-JP')}万円の上乗せ</b>に相当します（上の家計改善 約${monthly}万円/月と見比べてください）。`;
+      }
       const fairLine = afterAll > 0
         ? `さらに太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで差し引いても、<b>${horizonLbl}で約${fmt(afterAll)}万円プラス</b>の計算です。`
         : `太陽光・蓄電池の初期費用（約${fmt(m.initCost)}万円）と建物価格差（${fmt(gap)}万円）まで含めると、${horizonLbl}では<b>おおむね相殺（差し引き約${fmt(Math.abs(afterAll))}万円のマイナス）</b>の計算です。快適性・耐震・停電時の安心は金額外の価値としてご検討ください。`;
+      // 月々が小さいときは1日あたりに繰り下げて実感に寄せる（数百円なら日割りが最も伝わる）
+      const dailyYen = Math.round(monthly * 10000 / 30 / 10) * 10;
+      const dailyLine = (monthly > 0 && dailyYen > 0 && dailyYen <= 1500) ? `（1日あたり約${dailyYen.toLocaleString('ja-JP')}円）` : '';
       $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}で 約 ${fmt(total)}万円 の差<span style="font-size:1rem;">（試算）</span></div>`
-        + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>に相当する計算です（前提を変えると増減します・建物価格とは別）。${fairLine}</div>`;
+        + `<div class="ict-sub">この前提条件では、月々に直すと<b>約${monthly}万円の家計改善</b>${dailyLine}に相当する計算です（前提を変えると増減します・建物価格とは別）。${gapLine}${fairLine}</div>`;
       // 内訳バー（光熱費・太陽光・メンテの3項目）
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
@@ -3910,6 +3961,7 @@
     });
     // 建物価格差の変更 → 再計算
     if($('ic-price-gap')) $('ic-price-gap').addEventListener('input', recompute);
+    if($('ic-conserv')) $('ic-conserv').addEventListener('change', recompute);   // 控えめ表示（表示専用・保存対象外）
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
@@ -5116,6 +5168,7 @@
         { label:'将来プラン', data:pick(m), backgroundColor:'#3f9d7a', borderRadius:6, maxBarThickness:26 }
       ]};
       if(investDiffChart){ investDiffChart.data = data; investDiffChart.update(); return; }
+      if(typeof Chart === 'undefined') return;   // CDN不達でも表・診断は生かす（drawAssetChart参照）
       investDiffChart = new Chart($('investDiffChart').getContext('2d'), { type:'bar', data, options:{
         responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
         scales:{ y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} }, x:{ grid:{display:false} } },
@@ -5216,6 +5269,7 @@
         { label:`将来プラン（${memberLabel}）`, data:md, borderColor:'#3f9d7a', borderWidth:2.5, stepped:true, pointRadius:0, tension:0 }
       ]};
       if(hokenDiffChart){ hokenDiffChart.data = data; hokenDiffChart.update(); return; }
+      if(typeof Chart === 'undefined') return;   // CDN不達でも表・診断は生かす（drawAssetChart参照）
       hokenDiffChart = new Chart($('hokenDiffChart').getContext('2d'), { type:'line', data, options:{
         responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
         scales:{ y:{ beginAtZero:true, ticks:{ callback:v=> v.toLocaleString()+'万' }, grid:{color:'#eef3f8'} }, x:{ grid:{display:false}, ticks:{ maxTicksLimit:12 } } },
@@ -5343,9 +5397,23 @@
     }
 
     /* ---------- 資産推移グラフ（現預金残高＋運用総資産の積み上げ／総資産残高ライン）---------- */
+    /* Chart.js（CDN）が読めなかったときの案内。1回だけ・印刷/PDFには出さない */
+    function cdnWarn(){
+      if(document.getElementById('cdn-warn')) return;
+      const d = document.createElement('div');
+      d.id = 'cdn-warn'; d.className = 'no-print';
+      d.style.cssText = 'margin:10px auto; max-width:680px; padding:10px 14px; background:var(--warn-pale); border:1.5px solid var(--yellow-soft); border-radius:10px; font-size:.82rem; color:#7a5c0f; line-height:1.7;';
+      d.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 通信環境の問題でグラフの部品を読み込めませんでした。<b>数字・表・診断はこのままお使いいただけます。</b>グラフは電波の良い場所でページを再読み込みすると表示されます。';
+      const anchor = document.querySelector('.wrap.results') || document.getElementById('results') || document.body;
+      anchor.insertBefore(d, anchor.firstChild);
+    }
     let assetRowsCache = [];
     function drawAssetChart(rows){
       assetRowsCache = rows;
+      /* Chart.js（CDN）が読めない環境（客先の弱い電波・来客用Wi-Fi）でここが例外を投げると、
+         recompute の後続（CF表・AI診断・自動保存）まで全部止まる＝検証役検出の単一障害点。
+         グラフだけ諦めて数字・表・診断は生かす */
+      if(typeof Chart === 'undefined'){ cdnWarn(); return; }
       const labels = rows.map(r=> r.hAge+'歳');
       const totalD = rows.map(r=> Math.round(r.net));
 
@@ -5388,6 +5456,7 @@
 
     /* ---------- 収支グラフ ---------- */
     function drawFlowChart(rows){
+      if(typeof Chart === 'undefined') return;   // CDN不達でも表・診断は生かす（drawAssetChart参照）
       const step = rows.length>40?5:(rows.length>20?2:1);
       const pick = rows.filter((r,i)=> i%step===0);
       const labels = pick.map(r=> r.hAge+'歳');
@@ -6253,7 +6322,11 @@
         { id:'pension-monthly', label:'年金月額', keys:['年金月額','年金'], type:'man' },
         { id:'pension-age', label:'受給開始', keys:['受給開始'], type:'raw' },
         { id:'h-age', wid:'w-age', label:'年齢', keys:['年齢'], type:'raw' },
-        { id:'h-retire', wid:'w-retire', label:'退職予定', keys:['退職'], type:'raw' }
+        { id:'h-retire', wid:'w-retire', label:'退職予定', keys:['退職'], type:'raw' },
+        /* 一条商談の頻出語。看板機能（30年比較カード）の前提数字が会話だけで埋まるようにする
+           （「太陽光は12キロ」「蓄電池7キロワットアワー」）。※③住まいで一条を選ぶと出る欄 */
+        { id:'ichijo-solar-kw', label:'太陽光の容量', keys:['太陽光'], type:'raw' },
+        { id:'ichijo-battery-kwh', label:'蓄電池の容量', keys:['蓄電池'], type:'raw' }
       ];
       // 長い言い回しから先に照合（「住宅ローン総額」が「住宅ローン」に食われないように）
       const VC_MATCHERS = [];
@@ -6287,6 +6360,9 @@
       function vcParseSegment(seg){
         const raw = seg.normalize('NFKC').replace(/[,，\s]/g,'');
         if(!raw) return null;
+        /* お子さま・ご親族の数字（「息子の学費に月3万」「娘のお小遣い5千円」）が
+           世帯主の欄に落ちるのを防ぐ番人。該当の欄が無いので、反映せずメモへ回す */
+        if(/お?子(?:ども|供|さん)|息子|娘|長男|長女|次男|次女|三男|三女|お孫|孫の/.test(raw)) return null;
         const wife = /妻|奥様|奥さん|家内/.test(raw);
         /* どの欄かの決め方：最初の数字より前にあるキーのうち、いちばん数字に近いものを採る（同位置なら長いキー優先）。
            キーの長さだけで選ぶと「住宅ローンの金利は0.5%です」で『住宅ローン』が勝ち、
@@ -6354,6 +6430,17 @@
           if(!r){ unmatched.push(seg); return; }
           if(r.err){ skipped.push(r.err); return; }
           const el = $(r.id);
+          /* 録音中はドックを閉じている＝自動反映に気づく手掛かりが無い（検証役検出）。
+             金額の大きい欄が入力済みの値から大きく飛ぶ聞き取りは、黙って上書きせず保留する
+             （「年収は550…いや380万円」のような言い直し・誤認識で家計の土台が変わる事故の防止） */
+          if(['h-income','w-income','house-price','cash'].indexOf(r.id) >= 0){
+            const prev = parseFloat(el.value);
+            if(prev > 0 && r.value > 0 && Math.abs(r.value - prev) >= 100
+               && (r.value > prev * 1.3 || r.value < prev * 0.7)){
+              skipped.push(r.label + '：' + prev.toLocaleString('ja-JP') + '→' + r.value.toLocaleString('ja-JP') + ' と差が大きいため反映していません（下の欄から手直しして反映できます）');
+              return;
+            }
+          }
           undo.push({ id:r.id, prev: el.value });
           el.value = r.value;
           el.dispatchEvent(new Event('input', { bubbles:true }));
@@ -7061,7 +7148,8 @@
         const hm = function(x){ return x.getHours()+':'+String(x.getMinutes()).padStart(2,'0'); };
         return { dateLabel: d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate(),
                  start: hm(d), end: hm(e), minutes: last ? Math.max(1, Math.round(last/60000)) : 0,
-                 attendees: ($('mn-attendees') && $('mn-attendees').value.trim()) || '' };
+                 attendees: ($('mn-attendees') && $('mn-attendees').value.trim()) || '',
+                 next: ($('mn-next-date') && $('mn-next-date').value.trim()) || '' };
       }
       function mnRawLines(utters){
         return (utters||[]).map(function(u){
@@ -7141,7 +7229,8 @@
         let h = '<div class="mn-doc" id="mn-doc" contenteditable="true" spellcheck="false">';
         h += '<p class="mn-meta">' + esc(m.dateLabel) + ' ' + esc(m.start)
            + (m.minutes ? '〜' + esc(m.end) + '（約' + m.minutes + '分）' : '')
-           + (m.attendees ? '　ご出席：' + esc(m.attendees) : '') + '</p>';
+           + (m.attendees ? '　ご出席：' + esc(m.attendees) : '')
+           + (m.next ? '　次回：' + esc(m.next) : '') + '</p>';
         if(model.tooShort){
           h += '<p class="mn-item mn-empty">文字起こしが短いため、概要は作成していません。録音するか、下の欄に打ち込んでから「概要を作る」を押してください。</p>';
         } else if(model.noTheme){
@@ -7494,6 +7583,26 @@
                       { who:'staff', text:'ご紹介先にお渡しできる資料をご用意します。ご連絡はご本人とご紹介先の同意をいただいてから行います。' } ],
               caution:'ご紹介先の連絡先は、ご本人の同意なく取得・保管しません。' };
           } },
+        /* 【一条フック】一条の商談への橋2本（Web調査：契約の決定打は宿泊体験の「体感」、
+           紹介制度は来場前の手続きが条件＝知らずに来場すると使えない）。
+           勧誘にならない言い方（NEXT_NG_REを通る文型）で、確認・段取りだけを出す */
+        { id:'talk.ichijoTaiken', cat:'housing', src:'talk', impact:4, urgency:3,
+          when: function(){ return (typeof htype!=='undefined' && htype==='ichijo') || talkHas(/一条|展示場|モデルハウス|宿泊体験|床暖/); },
+          make: function(){
+            return { title:'一条工務店の宿泊体験の検討',
+              basis:'性能の違い（全館床暖房・気密断熱）は数字よりも一晩の体感で分かる、という声が多い設備です。宿泊体験は無料で、参加しても契約の義務はありません。',
+              tasks:[ { who:'cust', text:'泊まってみたい季節（冬の暖かさ／夏の涼しさ）と、ご都合のよい候補日をお聞かせください。' },
+                      { who:'staff', text:'宿泊体験で確認しておきたいポイント（光熱費メーター・室温・音・乾燥）の一覧をお渡しします。' } ],
+              caution:'宿泊体験の空き状況・実施条件は展示場により異なります。参加は契約を前提とするものではありません。' };
+          } },
+        { id:'talk.ichijoShokai', cat:'housing', src:'talk', impact:3, urgency:4,
+          when: function(){ return talkHas(/一条|展示場|モデルハウス|宿泊体験/); },
+          make: function(){
+            return { title:'一条工務店の紹介制度の手続き時期の確認',
+              basis:'一条工務店の紹介制度は、初回来場の前に手続きが済んでいることが条件とされています（来場後では使えません）。ご利用の予定がなくても、選択肢として先に確認だけしておくと安心です。',
+              tasks:[ { who:'cust', text:'展示場へ行く予定が決まりましたら、行く前にお知らせください（紹介制度を使うかどうかは、そのときに決めていただけます）。' } ],
+              caution:'制度の内容・特典は時期により変わります。最新の条件は一条工務店の公式情報でご確認ください。' };
+          } },
         { id:'talk.souzoku', cat:'tax', src:'talk', impact:3, urgency:2,
           when: function(){ return talkHas(/相続|贈与|実家|親御|義父|義母/); },
           make: function(){
@@ -7631,7 +7740,11 @@
         /* テキストにも打消し表示を必ず付ける。
            この文字列はコピーしてLINE・メールで顧客へ渡りうるため、画面の nx-disclaimer と同じ内容を末尾に置く
            （議事録に取り込む場合は MN_NOTES と重なるが、単独コピーでも欠けないことを優先する） */
+        /* 次回面談は必ず1行目に出す。空欄なら「この場で決める」を促す
+           （宿題の期限だけ切って別れると「ご連絡待ち」に落ちる＝面談の熱が冷める） */
+        const nextMeet = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
         return (head || '次の一手') + '（次回までの宿題）\n'
+          + '■ 次回面談：' + (nextMeet || '（未定。宿題の答え合わせの日程を、この場で仮でもお決めください）') + '\n'
           + block('お客様にお願いしたいこと','cust')
           + block('担当が行うこと','staff')
           + famBlock
@@ -7908,7 +8021,8 @@
             t: Date.now(), t0: mnT0,
             u: mnUtter.slice(-1200),
             html: holder ? holder.innerHTML : '',
-            att: ($('mn-attendees') && $('mn-attendees').value) || ''
+            att: ($('mn-attendees') && $('mn-attendees').value) || '',
+            nxt: ($('mn-next-date') && $('mn-next-date').value) || ''
           }));
         }catch(e){}   // 容量オーバー時は保存しないだけ（顧客データの保存を巻き添えにしない）
       }
@@ -7921,6 +8035,7 @@
         mnT0 = o.t0 || 0;
         if(o.html && $('mn-out')) $('mn-out').innerHTML = o.html;
         if(o.att && $('mn-attendees')) $('mn-attendees').value = o.att;
+        if(o.nxt && $('mn-next-date')) $('mn-next-date').value = o.nxt;
         vcCapRedraw();
       }
 
@@ -7988,6 +8103,7 @@
       if($('vc-auto')) $('vc-auto').addEventListener('change', vcSaveUI);
       if($('vc-show-cap')) $('vc-show-cap').addEventListener('change', ()=>{ vcCapRedraw(); vcCapSync(); vcSaveUI(); });
       if($('mn-attendees')) $('mn-attendees').addEventListener('input', mnSaveSoon);
+      if($('mn-next-date')) $('mn-next-date').addEventListener('input', mnSaveSoon);
       if($('mn-build')) $('mn-build').addEventListener('click', mnRun);
       if($('mn-copy'))  $('mn-copy').addEventListener('click', mnCopy);
       if($('mn-copy2')) $('mn-copy2').addEventListener('click', mnCopy);
@@ -8425,7 +8541,8 @@
         const who = (currentSaveName || (document.getElementById('h-name') && document.getElementById('h-name').value) || '').trim();
         pdf.save(who ? `ライフプラン_${who}.pdf` : 'ライフプラン.pdf');
       } catch(e){
-        alert('PDFの作成に失敗しました。恐れ入りますが「印刷」ボタンから「PDFに保存」をお試しください。');
+        // 「印刷」ボタンは2026-08-18に廃止済み。存在しないボタンへ誘導しない（検証役検出）
+        alert('PDFの作成に失敗しました。恐れ入りますが、ブラウザのメニュー（⋮ または「ファイル」）から「印刷」→「PDFに保存」をお試しください（キーボードの Ctrl+P でも開けます）。');
       } finally { exitPdfMode(); btn.disabled=false; btn.innerHTML=orig; }
     }
     $('btn-send').addEventListener('click', sendPDF);
@@ -8950,7 +9067,7 @@
       const facts = [
         `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（「住まい」の「太陽光・蓄電池の設定」から計算）`,
         `年間発電量の目安：約<b>${fmt(m.gen)}kWh</b>。うち自家消費${Math.round(m.selfRate*100)}%＝電気代の節約 約${m.selfMan.toFixed(1)}万円/年、売電は初年度 約${m.sellY1.toFixed(1)}万円/年`,
-        `太陽光の30年収支：約<b>${fmt(m.solar30)}万円</b>（売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(Math.round(m.selfMan*30))}万円。2026年度FITの単価カーブで計算）`,
+        `太陽光の30年収支：約<b>${fmt(m.solar30)}万円</b>（売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(m.self30)}万円。2026年度FITの単価カーブ・パネル劣化 年0.5%込み）`,
         `高断熱の光熱費削減：年 約${fmt(m.utilSave)}万円 × 30年 ＝ 約<b>${fmt(m.utilSave*30)}万円</b>（自家消費とは別枠）`,
         `メンテナンス費の差：30年で 約<b>${fmt(maint30)}万円</b>（外壁・屋根の塗替え分。一条側の設備更新費は含まず）`,
       ];
@@ -9047,7 +9164,7 @@
         probes:['マイホームを検討中なのですね。希望の物件価格と、頭金に充てられる額はどのくらいでしょうか？','現在の手取り年収と、毎月いくらまでなら返済に無理がなさそうかも教えてください。'],
         concl:'一般的には、<b>頭金＋諸費用</b>を準備し、返済負担率を手取りの2割前後に抑え、教育費・老後資金とのバランスで借入額を決めるのが安心です。控除や補助金も活用しましょう。' },
       nenkin:{ label:'年金・老後', re:/年金|老後|退職後|繰下|繰上げ受給|加給|ねんきん|セカンドライフ|リタイア|被保険者|保険料免除|学生納付特例|追納/,
-        facts:['公的年金は<b>国民年金（満額 月約6.8万円）＋厚生年金</b>です。','夫婦の標準的な受給は<b>月22万円前後</b>が目安です。','受給は<b>60〜75歳</b>で選べます。','<b>繰下げ</b>ると1か月+0.7%（最大75歳で+84%）増えます。','<b>繰上げ</b>ると減額（−0.4%/月）になります。','年下の配偶者がいると<b>加給年金</b>が付く場合があります。','不足分は<b>iDeCo・NISA</b>や就労延長で備えられます。','「ねんきん定期便」で見込み額を確認できます。','働きながら年金を受け取る場合の<b>在職老齢年金</b>：賃金と年金（老齢厚生年金の報酬比例部分）の合計が基準額を超えると、<b>超えた分の半額</b>が支給停止になります。基準額は<b>2026年4月に月51万円→65万円へ引き上げ</b>られ、働いても年金が減りにくくなりました（65万円は令和8年度の額。年度ごとに改定されます）。なお<b>老齢基礎年金は支給停止の対象外</b>です。','繰下げ待機中は<b>加給年金が受け取れない</b>点に注意が必要です。','60歳以降も<b>国民年金の任意加入</b>で満額に近づけられます。','会社員・公務員に扶養されている配偶者（年収130万円未満）は<b>第3号被保険者</b>です。ご自身で保険料を納めなくても国民年金に加入している扱いになり、その期間は将来の老齢基礎年金に反映されます。扶養から外れると第1号（自分で納付）または第2号（勤務先で加入）に変わります。','収入が少ない時期は、国民年金の<b>保険料免除</b>・納付猶予が使えます。<b>未納とは扱いが違い</b>、全額免除の期間も老齢基礎年金の<b>2分の1</b>が反映され、障害年金・遺族年金の受給資格にも算入されます。学生の方は<b>学生納付特例</b>があります。あとから10年以内なら追納して満額に近づけることもできます。'],
+        facts:['公的年金は<b>国民年金（満額 月約6.8万円）＋厚生年金</b>です。','夫婦の標準的な受給は<b>月22万円前後</b>が目安です。','受給は<b>60〜75歳</b>で選べます。','<b>繰下げ</b>ると1か月+0.7%（最大75歳で+84%）増えます。','<b>繰上げ</b>ると減額（−0.4%/月）になります。','年下の配偶者がいると<b>加給年金</b>が付く場合があります。','不足分は<b>iDeCo・NISA</b>や就労延長で備えられます。','「ねんきん定期便」で見込み額を確認できます。','働きながら年金を受け取る場合の<b>在職老齢年金</b>：賃金と年金（老齢厚生年金の報酬比例部分）の合計が基準額を超えると、<b>超えた分の半額</b>が支給停止になります。基準額は<b>2026年4月に月51万円→62万円へ引き上げ</b>られ、働いても年金が減りにくくなりました（62万円は令和8年度の額。年度ごとに改定されます）。なお<b>老齢基礎年金は支給停止の対象外</b>です。','繰下げ待機中は<b>加給年金が受け取れない</b>点に注意が必要です。','60歳以降も<b>国民年金の任意加入</b>で満額に近づけられます。','会社員・公務員に扶養されている配偶者（年収130万円未満）は<b>第3号被保険者</b>です。ご自身で保険料を納めなくても国民年金に加入している扱いになり、その期間は将来の老齢基礎年金に反映されます。扶養から外れると第1号（自分で納付）または第2号（勤務先で加入）に変わります。','収入が少ない時期は、国民年金の<b>保険料免除</b>・納付猶予が使えます。<b>未納とは扱いが違い</b>、全額免除の期間も老齢基礎年金の<b>2分の1</b>が反映され、障害年金・遺族年金の受給資格にも算入されます。学生の方は<b>学生納付特例</b>があります。あとから10年以内なら追納して満額に近づけることもできます。'],
         probes:['老後の年金が気になるのですね。見込みの受給額は確認されていますか？','退職後、毎月どのくらいの生活費を見込んでいらっしゃいますか？'],
         concl:'一般的には、<b>見込み受給額と老後生活費の差額</b>を把握し、不足分を<b>運用・繰下げ受給・就労延長</b>で補う設計が有効です。上のグラフでも確認できます。' },
       zeikin:{ label:'税金・節税', re:/節税|税金|控除|所得税|住民税|扶養|年末調整|確定申告|ふるさと|医療費|退職金|セルフメディ|e-?tax/i,
@@ -9221,10 +9338,10 @@
         '現行制度では「妻を亡くした55歳未満の夫」に遺族厚生年金が出ないなどの男女差がありますが、<b>2028年4月の改正で男女差は解消</b>へ向かいます（男性は改正で新たに5年有期の給付を受けられるようになります）。'
       ],
       ideco: [
-        'iDeCoは現在<b>65歳まで加入</b>できます（<b>2027年1月からは70歳未満まで拡大予定</b>）。受け取りは<b>60〜75歳</b>の間で選べます。',
+        'iDeCoは現在<b>65歳まで加入</b>できます（制度改正で<b>70歳未満まで拡大される予定</b>。施行時期は政令待ちです）。受け取りは<b>60〜75歳</b>の間で選べます。',
         'iDeCoの受け取りは<b>一時金なら退職所得控除、年金なら公的年金等控除</b>の対象。退職金と時期をずらすと控除を有効に使えます。',
         '企業年金がある会社員もiDeCoに入れます（掛金上限は企業年金の種類で変わります）。',
-        '<b>2027年1月からiDeCoの掛金上限が大幅アップ</b>予定：会社員（企業年金なし）は月2.3万円→<b>6.2万円</b>、自営業は月6.8万円→<b>7.5万円</b>に。老後資金づくりの節税枠が大きく広がります。'
+        '<b>iDeCoの掛金上限が大幅アップ</b>予定（<b>2026年12月拠出分＝口座引き落としは2027年1月</b>から）：会社員（企業年金なし）は月2.3万円→<b>6.2万円</b>、自営業は月6.8万円→<b>7.5万円</b>に。老後資金づくりの節税枠が大きく広がります。'
       ],
       jutaku: [
         '<b>フラット35とは</b>、住宅金融支援機構の全期間固定金利ローン。保証料ゼロ・繰上返済手数料無料が特長です。',
@@ -9254,7 +9371,7 @@
         '<b>iDeCoと企業型DCの関係</b>：勤務先に企業型DCがあっても、原則iDeCoに同時加入できます。ただし<b>マッチング拠出を選んでいる場合はiDeCoと併用できない</b>ため、どちらが有利かは掛金額と手数料で変わります。',
         '<b>小規模企業共済とは</b>、個人事業主や小規模企業の役員のための「自分でつくる退職金」制度です。掛金は<b>月1,000円〜7万円で全額が所得控除</b>、廃業・退任時に共済金として受け取れます（受取時は退職所得控除・公的年金等控除の対象）。iDeCoと<b>併用できる</b>のが大きな利点です。',
         '<b>確定拠出年金（DC）と確定給付企業年金（DB）の違い</b>：DCは運用成果で将来の受取額が変わり、運用のリスクと成果は本人のもの。DBは受取額があらかじめ決まっており、運用の責任は会社側にあります。',
-        '<b>2026年12月にiDeCoの枠が広がる予定です</b>（令和7年の年金制度改正）。会社員は勤務先の企業年金の有無による差をなくして<b>共通の上限 月6.2万円</b>へ、自営業の方はiDeCo・国民年金基金あわせて<b>月7.5万円</b>へ引き上げられ、<b>加入できる年齢の上限</b>も広がります。施行前の現在は従来の上限のままなので、拠出額の見直しは施行時期に合わせて検討しましょう。'
+        '<b>iDeCoの枠が広がる予定です</b>（令和7年の年金制度改正。<b>2026年12月拠出分＝口座引き落としは2027年1月</b>から）。会社員は勤務先の企業年金の有無による差をなくして<b>共通の上限 月6.2万円</b>へ、自営業の方はiDeCo・国民年金基金あわせて<b>月7.5万円</b>へ引き上げられ、<b>加入できる年齢の上限</b>も広がる予定です（年齢拡大の施行時期は政令待ち）。施行前の現在は従来の上限のままなので、拠出額の見直しは施行時期に合わせて検討しましょう。'
       ],
       hoken: [
         '<b>変額保険とは</b>、保険料の一部を株式・債券などで運用し、成果に応じて受取額が増減する保険です。<b>死亡保険金には最低保証があるのが一般的ですが、解約返戻金には最低保証がありません</b>。運用実績によっては払込額を下回ります。',
@@ -10155,6 +10272,8 @@
     const reserveModal = $('reserve-modal');
     // 同意チェックは開くたびに外す（前回の同意を引き継がない＝取得のたびに利用目的へ同意いただく）
     function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; if($('rv-agree')) $('rv-agree').checked=false; reserveModal.hidden=false; }
+    // 結果画面（お金・万が一）の相談CTAカード。チャット内の[data-reserve]とは別に全画面で拾う
+    document.addEventListener('click', (e)=>{ if(e.target.closest('[data-reserve-cta]')) openReserve(); });
     $('open-reserve').addEventListener('click', openReserve);
     $('reserve-close').addEventListener('click', ()=> reserveModal.hidden=true);
     reserveModal.addEventListener('click', (e)=>{ if(e.target===reserveModal) reserveModal.hidden=true; });
@@ -10923,6 +11042,7 @@
       shareModal.hidden=false;
     }
     if($('open-share')) $('open-share').addEventListener('click', openShareModal);
+    if($('btn-share-top')) $('btn-share-top').addEventListener('click', openShareModal);
     if($('share-modal-close')) $('share-modal-close').addEventListener('click', ()=> shareModal.hidden=true);
     shareModal.addEventListener('click', (e)=>{ if(e.target===shareModal) shareModal.hidden=true; });
     /* 共有リンクの飛び先。ローカルでfile://から開いていても、お客様の端末で開けるよう公開URLを使う。
@@ -11019,7 +11139,9 @@
     eventRow(45,'車の買い替え',200);
     eventRow(50,'家族旅行（記念）',80);
     applyHousePanels();
-    recompute();
+    /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
+       全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
+    try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
     captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
 
     // ② プラン比較の初期化：読み込み時は「現状プラン」から

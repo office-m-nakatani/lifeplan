@@ -169,15 +169,17 @@
     #kaigo-side-seg{ background:var(--blue-pale); }
     #kaigo-side-seg button{ padding:9px 20px; color:var(--ink-soft); }
     #kaigo-side-seg button.active{ background:var(--blue-deep); color:#fff; box-shadow:0 3px 10px rgba(44,122,82,.28); }
-    /* 家系図（3世代・続柄の枝つき） */
-    .kt-gen{ padding:10px 12px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; margin-bottom:8px; }
-    .kt-gen-l{ font-size:.74rem; font-weight:800; color:var(--ink-soft); margin-bottom:7px; display:flex; align-items:center; gap:8px; }
-    .kt-gen-l .kt-add{ margin-left:auto; }
-    .kt-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
-    .kt-fam{ display:flex; gap:6px; align-items:stretch; padding:6px; border:1.5px dashed var(--blue-pale2); border-radius:12px; background:#fff; }
-    .kt-fam-l{ writing-mode:vertical-rl; font-size:.66rem; font-weight:800; color:var(--blue-deep); padding:2px 1px; opacity:.75; }
-    .kt-card{ min-width:112px; display:flex; flex-direction:column; gap:2px; padding:7px 10px; border-radius:10px;
-      background:#fff; border:1.5px solid var(--line); font-size:.8rem; line-height:1.4; }
+    /* 家系図（一般的な系図の形：夫婦を横線、子はきょうだいの横棒から立ち上げ） */
+    .kt-scroll{ overflow-x:auto; padding-bottom:4px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
+    .kt-canvas{ position:relative; margin:0 auto; }
+    .kt-svg{ position:absolute; left:0; top:0; pointer-events:none; }
+    .kt-svg line{ stroke:#9db3c4; stroke-width:1.6; }
+    .kt-editors{ margin-top:8px; padding:9px 11px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
+    .kt-ed-t{ font-size:.74rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px; }
+    .kt-card{ position:absolute; display:flex; flex-direction:column; justify-content:center; gap:2px; padding:6px 8px; border-radius:10px;
+      background:#fff; border:1.5px solid var(--line); font-size:.78rem; line-height:1.35; text-align:center; box-sizing:border-box; }
+    .kt-card.is-dim{ background:var(--bg-soft); color:var(--ink-soft); border-style:dashed; }
+    .kt-card.is-extra{ border-color:var(--blue-pale2); }
     .kt-card b{ font-size:.85rem; }
     .kt-card .kt-sub{ color:var(--ink-soft); font-size:.71rem; }
     .kt-card.is-self{ border-color:var(--blue-deep); background:var(--blue-pale); }
@@ -4481,61 +4483,135 @@
         const sg = $('kaigo-side-seg');
         if(sg) [...sg.children].forEach(function(b){ b.classList.toggle('active', b.dataset.kaigoside === 'h'); });
       }
-      // ── 家系図：ご主人側・奥さま側の枝を分け、続柄・性別・年齢が読める形にする ──
+      /* ── 家系図（2026-08-19 ユーザー指示：一般的な系図の形に）──
+         世代を段に分け、夫婦は横線でつなぎ、その中点から下ろした線を
+         きょうだいの横棒で受けて各人へ立ち上げる（続柄が線で読める形）。
+         箱は絶対配置のHTML、線は背面のSVG。幅が足りないときは横スクロール。 */
       const single = isSingle();
-      const card = function(name, sub, cls){
-        return '<div class="kt-card'+(cls ? ' '+cls : '')+'"><b>'+esc(name)+'</b>'
-             + (sub ? '<span class="kt-sub">'+esc(sub)+'</span>' : '') + '</div>';
-      };
-      const parentCard = function(x){
-        const sexCls = x.pk.role === 'f' ? ' is-male' : ' is-female';
-        if(x.alive === '他界された') return card(kgLabel(x.pk), 'ご逝去', 'is-gone' + sexCls);
-        const sub = [(x.age ? x.age+'歳' : ''), (x.pref !== '未選択' ? x.pref : ''), (x.alive === '未確認' ? '未確認' : '')].filter(Boolean).join('・');
-        return card(kgLabel(x.pk), sub || 'ご健在', (x.level === 'high' || x.level === 'mid' ? 'is-care' : '') + sexCls);
-      };
       const ps = kaigoParents();
-      const branch = function(side){
-        const two = ps.filter(function(x){ return x.pk.side === side; }).map(parentCard).join('');
-        if(!two) return '';
-        return '<div class="kt-fam"><span class="kt-fam-l">'+esc(side === 'h' ? hNameH() : wNameH())+'の親</span>' + two + '</div>';
+      const BW = 104, BH = 52, GAP = 14, PITCH = BW + GAP, ROWH = 108, PAD = 10;
+      const nodes = [], seg = [];                       // seg=線分 {x1,y1,x2,y2}
+      const line = function(x1,y1,x2,y2){ seg.push({x1:x1,y1:y1,x2:x2,y2:y2}); };
+      const node = function(x, y, name, sub, cls){ nodes.push({x:x, y:y, name:name, sub:sub, cls:cls||''}); };
+      // 夫婦の線：2人の下を通してつなぐ（間にごきょうだいが入っても交差しない）。戻り値は中点
+      const couple = function(ax, bx, y){
+        const yy = y + BH + 13, cx1 = ax + BW/2, cx2 = bx + BW/2;
+        line(cx1, y + BH, cx1, yy); line(cx1, yy, cx2, yy); line(cx2, yy, cx2, y + BH);
+        return { x:(cx1 + cx2) / 2, y:yy };
       };
-      // 祖父母など「上の世代」（自由に追加できる。使う機会は少ないが相続の話で効く）
-      const upHtml = kgExtra('up').map(function(p, i){ return ktExtraHTML('up', i, p); }).join('');
-      // ご本人の世代：ご本人・配偶者＋きょうだいの人数と順番
-      const sibLine = function(side){
-        const n = num('kg-'+side+'-sibs', 1), o = num('kg-'+side+'-order', 1);
-        if(n <= 1) return 'ひとりっ子';
-        return n + '人きょうだいの' + o + '番目';
+      // 親（中点）→ 子どもたちへ：下ろす → 横棒 → 各人へ立ち上げる
+      const descend = function(from, kids, y){
+        if(!kids.length) return;
+        const barY = y - 22, xs = kids.map(function(k){ return k + BW/2; });
+        line(from.x, from.y, from.x, barY);
+        line(Math.min.apply(null, xs.concat([from.x])), barY, Math.max.apply(null, xs.concat([from.x])), barY);
+        xs.forEach(function(x){ line(x, barY, x, y); });
       };
-      let meHtml = '<div class="kt-fam"><span class="kt-fam-l">ご本人</span>'
-        + card(hNameH(), num('h-age',35)+'歳・'+sibLine('h'), 'is-self is-male');
-      if(!single) meHtml += card(wNameH(), num('w-age',33)+'歳・'+sibLine('w'), 'is-self is-female');
-      meHtml += '</div>';
-      // お子さまの世代（①ご家族の基本情報から自動。性別も反映）
-      /* お子さまは①ご家族の基本情報から。性別はreadChildrenが返さないので行の選択を直接読む
-         （readChildrenのnameは敬称つきで返るため、ここでは付け直さない） */
-      let kidCards = '';
+      const sibN = function(side){ return Math.min(Math.max(num('kg-'+side+'-sibs',1),1),10); };
+      const sibO = function(side){ return Math.min(Math.max(num('kg-'+side+'-order',1),1), sibN(side)); };
+      // 段のY座標（上の世代がある時だけ1段増やす）
+      const ups = kgExtra('up'), downs = kgExtra('down');
+      let y = PAD;
+      const yUp = ups.length ? y : null; if(ups.length) y += ROWH;
+      const yPar = y; y += ROWH;
+      const ySelf = y; y += ROWH;
+      const yKid = y;
+      let kids = [];
       try{
         const rows = [...childrenList.querySelectorAll('.row-item')];
-        kidCards = readChildren().map(function(c2, i){
-          const girl = rows[i] && rows[i].querySelector('.cr-gender-seg button.active') &&
-                       rows[i].querySelector('.cr-gender-seg button.active').dataset.gender === 'girl';
-          return card(c2.name, c2.age+'歳・第'+(i+1)+'子', girl ? 'is-female' : 'is-male');
-        }).join('');
+        kids = readChildren().map(function(c2, i){
+          const g = rows[i] && rows[i].querySelector('.cr-gender-seg button.active');
+          return { name:c2.name, sub:c2.age+'歳・第'+(i+1)+'子', girl: !!(g && g.dataset.gender === 'girl') };
+        });
       }catch(e){}
-      const downHtml = kgExtra('down').map(function(p, i){ return ktExtraHTML('down', i, p); }).join('');
-      /* 世代の箱：カードは横並び（.kt-row）、追加した人の入力欄はその下に全幅で置く
-         （.kt-row の中に入れると flex で縦につぶれて読めなくなる。実測で確認） */
-      const genBox = function(label, body, kind, extras){
-        return '<div class="kt-gen"><div class="kt-gen-l"><i class="fa-solid fa-code-branch"></i> '+label
-          + (kind ? '<button type="button" class="btn btn-ghost btn-sm kt-add" data-kt-add="'+kind+'"><i class="fa-solid fa-plus"></i> 追加</button>' : '')
-          + '</div><div class="kt-row">' + body + '</div>' + (extras || '') + '</div>';
+      const yDown = (kids.length || downs.length) ? (y += ROWH, yKid) : yKid;
+      const yDownRow = downs.length ? yKid + ROWH : null;
+
+      // ご本人の世代：[夫のごきょうだい…夫…] [妻…妻のごきょうだい…]（生まれ順のまま並べる）
+      let cur = PAD;
+      const hN = sibN('h'), hO = sibO('h'), hXs = [];
+      for(let i = 1; i <= hN; i++){ hXs.push(cur); cur += PITCH; }
+      const hSelfX = hXs[hO - 1];
+      let wXs = [], wSelfX = null;
+      if(!single){
+        cur += GAP;                                    // ご夫婦の間は少し広く
+        const wN = sibN('w'), wO = sibO('w');
+        for(let i = 1; i <= wN; i++){ wXs.push(cur); cur += PITCH; }
+        wSelfX = wXs[wO - 1];
+      }
+      const totalW = cur - GAP + PAD;
+      hXs.forEach(function(x, i){
+        if(i === hO - 1) node(x, ySelf, hNameH(), num('h-age',35)+'歳・第'+hO+'子', 'is-self is-male');
+        else node(x, ySelf, 'ごきょうだい', '第'+(i+1)+'子', 'is-dim');
+      });
+      wXs.forEach(function(x, i){
+        if(i === sibO('w') - 1) node(x, ySelf, wNameH(), num('w-age',33)+'歳・第'+sibO('w')+'子', 'is-self is-female');
+        else node(x, ySelf, 'ごきょうだい', '第'+(i+1)+'子', 'is-dim');
+      });
+      // 親の世代：それぞれのごきょうだい全体の中央に父・母を置く
+      const parentPair = function(side, xs){
+        const two = ps.filter(function(p2){ return p2.pk.side === side; });
+        if(!two.length || !xs.length) return null;
+        const mid = (Math.min.apply(null, xs) + Math.max.apply(null, xs) + BW) / 2;
+        const fx = mid - PITCH/2 - BW/2, mx = mid + PITCH/2 - BW/2;
+        two.forEach(function(p2){
+          const x = (p2.pk.role === 'f') ? fx : mx;
+          const sexCls = (p2.pk.role === 'f') ? ' is-male' : ' is-female';
+          if(p2.alive === '他界された'){ node(x, yPar, kgLabel(p2.pk), 'ご逝去', 'is-gone' + sexCls); return; }
+          const sub = [(p2.age ? p2.age+'歳' : ''), (p2.pref !== '未選択' ? p2.pref : ''), (p2.alive === '未確認' ? '未確認' : '')].filter(Boolean).join('・');
+          node(x, yPar, kgLabel(p2.pk), sub || 'ご健在', ((p2.level === 'high' || p2.level === 'mid') ? 'is-care' : '') + sexCls);
+        });
+        const mp = couple(fx, mx, yPar);
+        descend(mp, xs, ySelf);
+        return mp;
+      };
+      const hPar = parentPair('h', hXs);
+      const wPar = single ? null : parentPair('w', wXs);
+      // ご夫婦 → お子さま
+      if(!single && wSelfX != null){
+        const mp = couple(hSelfX, wSelfX, ySelf);
+        if(kids.length){
+          const kw = kids.length * PITCH - GAP;
+          let kx = Math.round(mp.x - kw/2);
+          kids.forEach(function(k){ node(kx, yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); kx += PITCH; });
+          descend(mp, kids.map(function(_, i){ return Math.round(mp.x - kw/2) + i*PITCH; }), yKid);
+        }
+      } else if(kids.length){
+        const kw = kids.length * PITCH - GAP;
+        let kx = Math.round(hSelfX + BW/2 - kw/2);
+        const from = { x:hSelfX + BW/2, y:ySelf + BH };
+        line(from.x, from.y, from.x, from.y + 13);
+        kids.forEach(function(k){ node(kx, yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); kx += PITCH; });
+        descend({ x:from.x, y:from.y + 13 }, kids.map(function(_, i){ return Math.round(hSelfX + BW/2 - kw/2) + i*PITCH; }), yKid);
+      }
+      // 上の世代・下の世代（自由入力。続柄は各行の指定に任せ、線は引かない）
+      const rowOf = function(list, yy, kindCls){
+        const w = list.length * PITCH - GAP;
+        let x = Math.round((totalW - w) / 2);
+        list.forEach(function(p2){
+          node(x, yy, (p2.name || p2.rel || 'ご親族'), [p2.rel, (p2.age ? p2.age+'歳' : ''), (p2.alive === '他界された' ? 'ご逝去' : '')].filter(Boolean).join('・'),
+               (p2.alive === '他界された' ? 'is-gone ' : '') + (p2.sex === '女性' ? 'is-female' : 'is-male') + ' ' + kindCls);
+          x += PITCH;
+        });
+      };
+      if(ups.length) rowOf(ups, yUp, 'is-extra');
+      if(downs.length) rowOf(downs, yDownRow, 'is-extra');
+      const totalH = (yDownRow != null ? yDownRow : (kids.length ? yKid : ySelf)) + BH + PAD;
+      // 描画（線は背面のSVG・箱は絶対配置）
+      const svg = '<svg class="kt-svg" width="'+totalW+'" height="'+totalH+'" viewBox="0 0 '+totalW+' '+totalH+'">'
+        + seg.map(function(s){ return '<line x1="'+s.x1+'" y1="'+s.y1+'" x2="'+s.x2+'" y2="'+s.y2+'"/>'; }).join('') + '</svg>';
+      const boxes = nodes.map(function(n){
+        return '<div class="kt-card '+n.cls+'" style="left:'+n.x+'px; top:'+n.y+'px; width:'+BW+'px; min-height:'+BH+'px;">'
+          + '<b>'+esc(n.name)+'</b>' + (n.sub ? '<span class="kt-sub">'+esc(n.sub)+'</span>' : '') + '</div>';
+      }).join('');
+      const upBtn = function(kind, label){
+        return '<button type="button" class="btn btn-ghost btn-sm" data-kt-add="'+kind+'"><i class="fa-solid fa-plus"></i> '+label+'</button>';
       };
       tree.innerHTML =
-        genBox('祖父母・上の世代', (upHtml ? '' : '<span class="kt-empty">必要なときだけ「追加」で登録できます（相続のご相談で使います）</span>'), 'up', upHtml)
-        + genBox('親の世代', (branch('h') + (single ? '' : branch('w'))) || '<span class="kt-empty">下の欄にご両親の情報を入力すると表示されます</span>', '')
-        + genBox('ご本人の世代', meHtml, '')
-        + genBox('お子さま・下の世代', (kidCards || '<span class="kt-empty">「ご家族・住まい」でお子さまを登録すると表示されます</span>'), 'down', downHtml);
+        '<div class="kt-scroll"><div class="kt-canvas" style="width:'+totalW+'px; height:'+totalH+'px;">' + svg + boxes + '</div></div>'
+        + '<div class="vc-tools" style="margin-top:8px;">' + upBtn('up','上の世代を追加（祖父母など）') + upBtn('down','下の世代を追加（お孫さまなど）') + '</div>'
+        + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2); }).join('') + '</div>' : '')
+        + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2); }).join('') + '</div>' : '');
       // ── リスクの見える化 ──
       const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
       if(!alive.length){

@@ -1016,7 +1016,9 @@
     .vc-dock[data-vc-mode="mini"] .vc-pane{ display:none !important; }
     /* お客様モードでは担当者の下書きタブを出さない（保険の勧誘に読めないようにするため） */
     body.customer-mode .vc-tab[data-vc-tab="minutes"],
+    body.customer-mode .vc-tab[data-vc-tab="next"],
     body.customer-mode .vc-tab[data-vc-tab="family"],
+    body.customer-mode #vc-pane-next, body.customer-mode #nx-plan-wrap,
     body.customer-mode #mn-modal{ display:none !important; }
 
     /* ---------- 議事録の体裁（番号＋テーマ／リード語: 本文） ---------- */
@@ -1065,6 +1067,25 @@
     .nx-disclaimer{ margin:8px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
     .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
+
+    /* ---------- 提案の検討メモ（担当者専用）----------
+       商品名と営業観点を含む社内メモ。誤ってお客様に見える事故を防ぐため、
+       「社内用」と分かる濃い枠＋鍵アイコンで囲い、customer-mode/PDF/印刷では丸ごと消す */
+    .nx-plan-wrap{ margin-top:20px; padding:12px 14px 14px; border:2px solid var(--yellow);
+      border-radius:14px; background:#fffdf5; }
+    .nx-plan-head{ display:flex; align-items:center; gap:8px; font-size:.92rem; font-weight:800; color:#7a5c0f; }
+    .np-sec{ margin:14px 0 4px; padding-bottom:4px; font-size:.9rem; font-weight:800;
+      color:var(--blue-deep); border-bottom:1.5px solid var(--blue-pale2); }
+    .np-item{ margin:0 0 12px; padding:9px 11px; background:#fff; border:1px solid var(--line); border-radius:10px; }
+    .np-item .np-t{ display:block; font-size:.86rem; font-weight:800; color:var(--ink); margin-bottom:3px; }
+    .np-item p{ margin:2px 0; font-size:.8rem; line-height:1.75; color:var(--ink); }
+    .np-item .np-k{ font-weight:800; color:var(--blue-deep); }
+    .np-item .np-risk .np-k{ color:#9c4a46; }
+    .np-item .np-point{ background:var(--blue-pale); border-radius:8px; padding:6px 9px; margin-top:5px; }
+    .np-note{ margin:10px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
+      border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; }
+    .pdf-mode .nx-plan-wrap{ display:none !important; }
+    @media print{ .nx-plan-wrap{ display:none !important; } }
 
     /* ---------- 家系図 ---------- */
     .fam-tree{ display:flex; flex-direction:column; gap:8px; margin:2px 0 10px; }
@@ -2612,6 +2633,7 @@
       <div class="vc-tabs" role="tablist" aria-label="音声メモの表示">
         <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
         <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
+        <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
         <button type="button" id="vc-tab-family"  class="vc-tab" role="tab" data-vc-tab="family"  aria-selected="false" aria-controls="vc-pane-fam"><i class="fa-solid fa-sitemap"></i> 家系図</button>
         <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
       </div>
@@ -2649,8 +2671,29 @@
         <div id="mn-out"></div>
       </div>
 
-      <!-- 【削除 2026-08-18】次の一手タブ（ユーザー指示）。ルール定義（NEXT_RULES）と
-           生成関数は残してあるが、画面からは出さない＝#nx-build が無いので動かない -->
+      <!-- 次の一手タブ（2026-08-18に一度削除→同日ユーザー指示で復活・提案検討メモを追加）。
+           上＝お客様に見せてよい宿題リスト（コピーはLINE・メールで渡りうる前提の文言）。
+           下＝担当者専用の提案検討メモ（商品名・単価向上の観点を含む。お客様に見せない・渡さない） -->
+      <div class="vc-pane" id="vc-pane-next" role="tabpanel" aria-labelledby="vc-tab-next" hidden>
+        <div class="vc-tools">
+          <button type="button" class="btn btn-primary btn-sm" id="nx-build"><i class="fa-solid fa-list-check"></i> 次の一手を作る</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+        </div>
+        <div id="next-actions"></div>
+
+        <!-- 担当者専用：提案の検討メモ。商品名（保険会社名）と営業観点を含むため、
+             お客様の画面（customer-mode）・PDF・印刷・共有リンク・議事録コピーには一切出さない。
+             コピーは専用ボタン（社内用の見出しが必ず付く）のみ -->
+        <div class="nx-plan-wrap" id="nx-plan-wrap">
+          <div class="nx-plan-head"><i class="fa-solid fa-lock"></i> 提案の検討メモ（担当者用）</div>
+          <p class="hint" style="display:block; margin:4px 0 8px;">試算の結果から、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
+          <div class="vc-tools">
+            <button type="button" class="btn btn-primary btn-sm" id="nx-plan-build"><i class="fa-solid fa-compass"></i> 検討メモを作る</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="nx-plan-copy"><i class="fa-solid fa-copy"></i> 社内用にコピー</button>
+          </div>
+          <div id="nx-plan"></div>
+        </div>
+      </div>
 
       <!-- 家系図タブ：ご両親・ご兄弟・ご親戚を記録し、介護・相続・ご紹介の話につなげる -->
       <div class="vc-pane" id="vc-pane-fam" role="tabpanel" aria-labelledby="vc-tab-family" hidden>
@@ -7915,7 +7958,7 @@
         vcSaveUI(); vcCapFollow(); vcSyncDockH();
       }
       function vcSetTab(t){
-        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', family:'vc-pane-fam', memo:'vc-pane-memo' };   // next（次の一手）は2026-08-18に削除
+        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', family:'vc-pane-fam', memo:'vc-pane-memo' };
         if(!map[t]) t = 'cap';
         document.querySelectorAll('.vc-tab').forEach(function(b){
           const on = (b.dataset.vcTab===t);
@@ -7958,6 +8001,140 @@
           navigator.clipboard.writeText(txt).then(function(){ setStatus('次の一手をコピーしました'); },
                                                   function(){ mnCopyFallback(txt, '次の一手'); });
         } else mnCopyFallback(txt, '次の一手');
+      });
+
+      /* ============================================================
+         提案の検討メモ（担当者専用・2026-08-18 ユーザー指示）
+         試算の結果から「どの仕組みで備えるのが合いそうか」を、リスクとリターンの両面
+         ＋提案の質を上げる観点（TOTの型）つきで担当者向けに整理する。
+         ・お客様に見せない・渡さない：customer-mode / pdf-mode / @media print で丸ごと非表示。
+           コピーは専用ボタンのみで、必ず【社内用】の見出しが付く。
+           nextToText（お客様に渡りうるコピー）・mnText（議事録）には一切混ぜない。
+         ・商品名（保険会社名）はこの社内メモだけに置く。お客様向けの出力に商品名を
+           出さない原則（保険業法300条1項・skill insurance-diagnosis）はそのまま。
+         ・保存しない（localStorageに置かない）＝毎回その場で作る。
+         ============================================================ */
+      function planItem(t, fit, risk, point){
+        return '<div class="np-item"><span class="np-t">' + t + '</span>'
+          + (fit  ? '<p><span class="np-k">向く場面：</span>' + fit + '</p>' : '')
+          + (risk ? '<p class="np-risk"><span class="np-k">必ず説明する不利益・リスク：</span>' + risk + '</p>' : '')
+          + (point? '<p class="np-point"><span class="np-k">提案の質を上げる一言：</span>' + point + '</p>' : '')
+          + '</div>';
+      }
+      function planBuild(){
+        let c = null, fam = { kaigo:false, souzoku:false, intro:false };
+        try{ c = buildNextContext(); }catch(e){ return '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; }
+        try{ fam = famFlags(); }catch(e){}
+
+        /* --- 1. 目的別：この試算で見えている必要資金に、どの仕組みが合うか --- */
+        let h = '';
+        if(c.n && (c.n.h.need > 0 || (!c.p.single && c.n.w.need > 0))){
+          const who = [c.n.h.need>0 ? hNameH()+'（不足 約'+fmt(c.n.h.need)+'万円）' : '',
+                       (!c.p.single && c.n.w.need>0) ? wNameH()+'（不足 約'+fmt(c.n.w.need)+'万円）' : ''].filter(Boolean).join('・');
+          h += planItem('遺族保障の不足 → 収入保障・定期・終身の使い分け（対象：' + esc(who) + '）',
+            '末子独立までの生活費の穴は<b>収入保障</b>（月額で受け取る・保障単価が最も割安・受取総額は年々減る）。一定期間の大きな保障は<b>定期</b>（更新型は更新後の保険料上昇に注意）。葬儀費用・整理資金など生涯必要な部分は<b>終身</b>（解約返戻金あり・同じ保障額なら保険料は高い）。',
+            '掛け捨ては解約しても戻らない。終身・養老は早期解約で払込保険料を下回る。健康状態により加入できないことがある。',
+            '不足額を1本でまかなわず、<b>「期間限定の大きな穴＝収入保障」「一生涯の整理資金＝終身」の2階建て</b>にすると、保障の意味がお客様に伝わりやすく、結果として設計単価も適正に上がる。'
+            + (!c.p.single && c.n.h.need>0 && c.n.w.need>0 ? 'ご夫婦それぞれに不足があるので、<b>同じ面談で世帯として同時設計</b>するのが自然。' : ''));
+        }
+        if(c.p.eduRemain > 0 && c.p.children.length){
+          h += planItem('教育資金 約' + fmt(c.p.eduRemain) + '万円 → 「保障つきで貯める」か「運用で増やしながら貯める」か',
+            '時期をずらせない資金。<b>NISA（つみたて）</b>＝非課税・いつでも使えるが値動きあり。<b>低解約返戻型終身・学資</b>＝親の万一に保障が残る・返戻は固定的。<b>変額養老</b>＝満期を進学に合わせられ運用次第で増えるが、満期金は運用実績で変動。'
+            + (c.yg ? '（いちばん下のお子さまの大学入学まで およそ' + Math.max(18 - c.yg.age, 0) + '年）' : ''),
+            '貯蓄型は中途解約で元本割れ。変額は満期保険金・解約返戻金に最低保証がないのが一般的（死亡保険金には最低保証）。NISAは元本変動・保障なし。',
+            '進学直前の2〜3年は値動きのある資産から<b>値動きのない置き場所へ移す「出口」まで設計して見せる</b>と、運用提案の不安が消え、締結後の追加相談にもつながる。');
+        }
+        if(c.p.depletion || (c.gs && c.p.hRetire)){
+          h += planItem('老後資金' + (c.p.depletion ? '（' + esc(hNameH()) + ' ' + c.p.depletion.hAge + '歳ごろに資金が不足する試算）' : ''),
+            '<b>iDeCo</b>＝掛金が全額所得控除・60歳まで引き出せない（拘束が逆に貯まる仕組みになる）。<b>NISA</b>＝非課税・流動性あり。<b>個人年金（円建て・定額）</b>＝受取額が読める。<b>変額個人年金・外貨建て終身</b>＝増える余地がある分、運用実績・為替で受取額が変わる。',
+            'iDeCoは原則60歳まで引き出し不可。外貨建ては為替で円換算の受取額が変動し、市場価格調整（MVA）で中途解約時に目減りすることがある。',
+            '<b>ねんきん定期便と退職金見込みの確認を宿題にする</b>と次回面談が確定する。退職金の受け取り時期が見えたら、一時払い（円・外貨）の受け皿提案の入口になる。');
+        }
+        if(fam.souzoku || c.p.hAge >= 55){
+          h += planItem('相続・資産承継' + (fam.souzoku ? '（家系図に資産の論点あり）' : ''),
+            '<b>一時払い終身</b>＝生命保険の非課税枠（500万円×法定相続人）・受取人指定で「誰に渡すか」を契約で決められる・遺産分割協議の外で現金が早く届く。円建てのほか外貨建て・変額型。',
+            '一時払いは資金の流動性が下がる。外貨型は為替、変額型は運用実績で受取額が変動。契約年齢・健康状態の条件あり。',
+            'お客様ご自身よりも<b>親世代の資産の話が出たとき</b>が本番。非課税枠の説明は「ご両親を交えた面談」の自然な入口になり、ご紹介にもつながる（家系図タブの記録を使う）。');
+        }
+        if(c.p.children.length > 0 || c.loanBal > 0){
+          h += planItem('働けない期間・医療の空白（この試算の対象外）',
+            '死亡保障だけでは<b>「生きて働けない期間」</b>が空白になる。<b>就業不能</b>＝傷病手当金（会社員）で足りない分だけ。<b>医療・がん</b>＝高額療養費を踏まえ、先進医療・通院・一時金の要否をご意向で。',
+            '公的保障（高額療養費・傷病手当金）との重複に注意。更新型は更新後に保険料が上がる。',
+            '死亡保障の設計が決まった直後に「では、生きて働けなくなった場合は？」と続けるのが自然な流れ。<b>世帯の保障設計が1枚の図で完成する</b>と、お客様の納得感と設計単価が同時に上がる。');
+        }
+        if(c.p.cashNow >= Math.max(c.defense * 2, 1000)){
+          h += planItem('手元資金が厚い（預貯金 約' + fmt(c.p.cashNow) + '万円）→ 当面使わないお金の置き場所',
+            '生活防衛資金（目安 約' + fmt(c.defense) + '万円）と数年内に使う予定額を除いた<b>「当面使わないお金」</b>が対象。<b>一時払い終身（円・外貨）</b>＝保障と据置の増加、<b>NISA</b>＝流動性を残した運用、の組み合わせ。',
+            '一時払いは中途解約で元本割れの期間がある。外貨型は為替・MVA。インフレ局面では預貯金のままでも実質目減りする（これも伝える）。',
+            '先に<b>お金の色分け（守るお金・使うお金・当面使わないお金）をお客様と一緒にやる</b>と、提案が「売り込み」でなく「仕分けの結果」になり、解約リスクも下がる。');
+        }
+        const goal = h ? '<div class="np-sec">1. この試算で見えている目的別の設計候補</div>' + h
+                       : '<div class="np-sec">1. この試算で見えている目的別の設計候補</div><p class="nx-empty">いまの入力からは大きな不足が見えていません。年1回の定点確認と、ライフイベント（出産・住宅・転職・相続）での見直しを。</p>';
+
+        /* --- 2. リスクとリターンの総合整理（いつも表示） --- */
+        const rr = '<div class="np-sec">2. リスクとリターンの総合整理（ご案内のときの並べ方）</div>'
+          + '<div class="np-item"><p>'
+          + '<span class="np-k">預貯金</span>：増えないが減らない。ただしインフレで実質目減り。流動性は最高。<br>'
+          + '<span class="np-k">円建て終身・養老・個人年金</span>：受取額が読める・保障つき。リターンは低め、早期解約で元本割れ。<br>'
+          + '<span class="np-k">変額（養老・終身・個人年金）</span>：運用実績しだいで増える余地。満期金・解約返戻金に最低保証がないのが一般的（死亡保険金には最低保証）。保険関係費がかかる。<br>'
+          + '<span class="np-k">外貨建て（終身・一時払い）</span>：円建てより高い予定利率が見込める一方、為替で円換算の受取額が変動。市場価格調整（MVA）・為替手数料。<br>'
+          + '<span class="np-k">NISA</span>：運用益非課税・いつでも売却可。値動きあり・保障なし。<br>'
+          + '<span class="np-k">iDeCo</span>：掛金所得控除＋運用益非課税。60歳まで引き出せない・保障なし。</p>'
+          + '<p class="np-point"><span class="np-k">ご案内の順番：</span>リターンが高い候補ほど「値動き・為替・中途解約の目減り」が大きい。先に<b>ご意向（増やしたい／減らしたくない／保障がほしい／いつ使うか）</b>を確認し、<b>1つの商品でなく目的別の組み合わせ</b>で並べて見せる。リスクは商品ごとに必ずリターンと同じ声の大きさで説明する。</p></div>';
+
+        /* --- 3. よく使う商品の適合メモ（社内） --- */
+        const pr = '<div class="np-sec">3. よく使う商品の適合メモ（社内・商品名はお客様の意向確認後に）</div>'
+          + planItem('チューリッヒ生命：変額養老',
+            '教育資金・退職時期など<b>「使う時期が決まっている目標」</b>に満期を合わせる設計。運用で増やしたい意向のお客様。',
+            '満期保険金・解約返戻金は運用実績で変動し最低保証なし（死亡保険金には最低保証）。特別勘定の保険関係費。出口（満期前後の受け取り方）の説明まで必須。',
+            '「満期＝進学の年」に設定して<b>ゴールから逆算した提案書</b>にすると、変額の値動きの不安より「間に合う仕組み」として伝わる。')
+          + planItem('チューリッヒ生命：医療',
+            '死亡保障の設計後に「生きて働けない・入院する場合」の空白を埋める。',
+            '高額療養費・傷病手当金との重複。更新型は更新後保険料。給付条件（入院日数・通院）の限定。',
+            '医療単体で売らず、<b>世帯の保障図の「最後のピース」</b>として出すと自然。ご夫婦同時加入の割引や特約の有無は最新の募集資料で確認。')
+          + planItem('マニュライフ生命：ドル建て終身',
+            '長期の死亡保障＋外貨分散。相続の受け皿（非課税枠）にも。円建てより高い予定利率が見込める。',
+            '<b>為替リスク（払込も受取も円換算額が変動）</b>・市場価格調整（MVA）・為替手数料・早期解約の元本割れ。「ドルのまま受け取れる」選択肢も含め出口まで説明。',
+            '為替の話を避けずに<b>「円だけで持つこともリスク」という資産の置き場所の話</b>から入ると、通貨分散の必然性が伝わる。')
+          + planItem('マニュライフ生命：一時払い終身',
+            '当面使わない資金・退職金の受け皿・相続非課税枠と受取人指定。',
+            '流動性の低下・解約控除やMVAで元本割れの期間・（外貨型は）為替。健康状態・年齢の引受条件。',
+            '<b>「いくら入れるか」でなく「どのお金を入れるか」から話す</b>（色分けした「当面使わないお金」の範囲内で）。相続目的なら受取人指定の意味をご家族の顔ぶれで具体化する。')
+          + '<p class="np-note">※ 記載は商品類型の一般的な特徴の覚え書きです。実際の商品内容・名称・特約・手数料は<b>最新の募集資料・契約締結前交付書面で必ず確認</b>し、提案・比較はその記載にもとづいて行ってください。特定商品のご案内は<b>お客様の意向を確認してから</b>。</p>';
+
+        /* --- 4. 提案の質と単価を両立する型（社内） --- */
+        const tot = '<div class="np-sec">4. 提案の質と単価を両立する型（TOTの型・社内）</div>'
+          + '<div class="np-item"><p>'
+          + '・<b>目的で分けて2階建て</b>（期間の穴＝収入保障×一生涯＝終身）。1本にまとめるより意味が伝わり、結果として設計単価が上がる。<br>'
+          + '・<b>世帯で設計する</b>（配偶者の不足・お子さまの医療・親世代の相続）。1つの面談に提案機会は複数ある。家系図タブが入口。<br>'
+          + '・<b>平準払＋一時払の併用</b>。月々の負担を変えずに、ボーナス・手元資金で総保障と貯蓄性を積み増す。<br>'
+          + '・<b>出口まで見せる</b>（受け取り方・据置・年金移行・満期前の移し替え）。金額が大きい契約ほど、出口の説明が決め手になる。<br>'
+          + '・<b>年1回の定点確認をセットで約束する</b>。継続率と紹介は単価より価値が大きい。増額提案は定点確認の場が最も自然。</p>'
+          + '<p class="np-note">※ これらは提案の質を上げるための観点です。<b>保険料を増やすこと自体を目的にしない</b>こと。必要保障額を超える提案・意向と異なる提案はしない（意向把握義務・保険業法294条の2、体制整備・同100条の2）。</p></div>';
+
+        const foot = '<p class="np-note"><i class="fa-solid fa-lock"></i> このメモは担当者の検討用です。お客様にそのまま見せる・渡すことはしないでください（お客様の画面・PDF・印刷・共有リンクには表示されません）。</p>';
+        return goal + rr + pr + tot + foot;
+      }
+      function planToText(){
+        const box = $('nx-plan');
+        if(!box || !box.innerText.trim()) return '';
+        const who = ($('h-name') && $('h-name').value.trim()) || '';
+        return '【社内用｜お客様に渡さない】提案の検討メモ（' + new Date().toLocaleDateString('ja-JP')
+          + (who ? '・' + who + '様の面談' : '') + '）\n\n'
+          + box.innerText.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+      }
+      if($('nx-plan-build')) $('nx-plan-build').addEventListener('click', ()=>{
+        const box = $('nx-plan'); if(!box) return;
+        box.innerHTML = planBuild();
+        vcSyncDockH();
+      });
+      if($('nx-plan-copy')) $('nx-plan-copy').addEventListener('click', ()=>{
+        const txt = planToText();
+        if(!txt){ alert('先に「検討メモを作る」を押してください。'); return; }
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(function(){ setStatus('検討メモを社内用としてコピーしました'); },
+                                                  function(){ mnCopyFallback(txt, '検討メモ'); });
+        } else mnCopyFallback(txt, '検討メモ');
       });
       if($('mn-undo')) $('mn-undo').addEventListener('click', mnRestorePrev);
       // 議事録の編集欄への貼り付けは書式なしにそろえる（外部サイトのHTMLがそのまま保存・再注入されないように）

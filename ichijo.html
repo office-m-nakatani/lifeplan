@@ -1027,8 +1027,11 @@
     .mn-h{ margin:20px 0 8px; padding-bottom:5px; font-size:1.04rem; font-weight:800;
       color:var(--blue-deep); border-bottom:1.5px solid var(--blue-pale2); }
     .mn-h:first-of-type{ margin-top:4px; }
-    .mn-item{ margin:0 0 11px; }
+    /* 箇条書きは記号ぶんだけぶら下げ字下げにする（2行目が記号の下にもぐらない＝見返しやすい） */
+    .mn-item{ margin:0 0 13px; padding-left:1.2em; text-indent:-1.2em; }
     .mn-item b{ color:var(--ink); }
+    .mn-b{ color:var(--blue); font-weight:800; }
+    .mn-num{ font-weight:800; }   /* 金額・年数だけ太字。色は付けない（青赤は増減の意味を持つため） */
     .mn-empty{ color:var(--ink-soft); }
     .mn-notes{ margin-top:10px; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; }
@@ -6697,6 +6700,7 @@
       const MN_GOAL   = /(?:目標|ゴール|までに|前提|想定|試算|シミュレーション|めやす|目安|上限|下限|確保|余裕)/;
       const MN_SMALL  = /(?:天気|暑いです|寒いです|コーヒー|お茶|渋滞|道が混|テレビ|野球|ご無沙汰|お久しぶり|お忙しい)/;
       const MN_ASK    = /(?:ですか|でしょうか|ますか)。?$/;
+      const MN_TODO_RE = /(?:次回|までに|お送りし|用意し|準備し|確認し|持ってき|宿題|申し込|提出|見積|取り寄せ)/;
       /* ツールが自動生成する本文に出してはいけない表現（断定・推奨）と、会社名・商品名らしき語。
          当たった文は mnScore で -99 になり本文へ入らない（原文は発言メモに残るので改ざんにはならない）。
          「保険を減らして運用に回すと総資産が増えます」型は、生存前提で構造上必ず減額有利に見える
@@ -6713,7 +6717,7 @@
       const MN_BRAND_OK = /(?:生命保険料控除|保険料控除|団体信用生命|団信|団体生命|会社の生命|職場の生命|県民共済|都民共済|府民共済|全労済|こくみん共済|共済に|共済の|共済を)/;
       function mnHasNG(t){ return MN_NG_HARD.test(t) || (MN_NG.test(t) && !MN_NG_OK.test(t)); }
       function mnHasBrand(t){ return MN_BRAND.test(t) && !MN_BRAND_OK.test(t); }
-      const MN_STOPLEAD = /^(?:これ|それ|あれ|ここ|そこ|今日|今回|先ほど|さっき|私|僕|うち|そちら|お客様|皆さん|一応|結論|お子さん|奥さん|旦那|主人|お父さん|お母さん|ご主人)/;
+      const MN_STOPLEAD = /^(?:これ|それ|あれ|ここ|そこ|今日|今回|先ほど|さっき|私|僕|うち|そちら|お客様|皆さん|一応|結論|お子さん|奥さん|旦那|主人|お父さん|お母さん|ご主人|パパ|ママ|夫|妻|息子|娘|嫁|自分|あの|その)/;
 
       const MN_THEMES = [
         { id:'insure', short:'保障',
@@ -6923,7 +6927,8 @@
         return n / Math.max(1, Math.min(ka.length, kb.length));
       }
       function mnPick(list, freq){
-        const maxN = (list.length >= 8) ? 4 : (list.length >= 4 ? 3 : 2);
+        // 上限が低すぎて「学資保険にはまだ入っていない」等の要点が落ちていた（検証役が実測）
+        const maxN = (list.length >= 8) ? 5 : (list.length >= 4 ? 4 : 3);
         const sorted = list.slice().sort(function(a,b){ return b.sc - a.sc; });
         const out = [];
         for(let i=0; i<sorted.length && out.length<maxN; i++){
@@ -6937,7 +6942,8 @@
       function mnGroup(picked){
         const items = []; let cur = null;
         picked.forEach(function(s){
-          if(cur && (s.i - cur.lastI) <= 2 && (cur.body.length + s.t.length) < 160){
+          // 1項目は80字までにとどめる（長い塊は見返すときに読み飛ばされる）
+          if(cur && (s.i - cur.lastI) <= 2 && (cur.body.length + s.t.length) < 80){
             cur.body += s.t + '。'; cur.lastI = s.i;
           } else { cur = { body: s.t + '。', lastI: s.i }; items.push(cur); }
         });
@@ -6973,17 +6979,35 @@
         while(used[L4]){ L4 = theme.short + 'の確認（' + (n++) + '）'; }
         used[L4] = 1; return L4;
       }
-      /* 話し言葉 → 議事録の文体。意味は変えず、口ぐせと冗長な結びだけ落とす
-         （お渡しするワード資料と同じ「整った書き言葉」に近づけるため） */
+      /* 話し言葉 → 議事録の文体。**あとで見返すための短い書き言葉**にする（ユーザー指示 2026-08-18）。
+         意味は変えない。原文は「発言メモ」に全文が残るので、ここは読みやすさを優先してよい。 */
       function mnPolish(t){
         return String(t||'')
-          .replace(/(?:かなと思って(?:います|いて)|という感じ(?:です|でした)|なんですよね|ですかね|みたいな感じ|というふうに)/g, '')
+          // ① 言いよどみ・間投詞（文頭と、句点のうしろ）
+          .replace(/^(?:えっと|えーと|あのー|あの|そのー|まあ|まぁ|やっぱり|やっぱ|なんか)[、\s]*/g, '')
+          .replace(/([、。])(?:えっと|えーと|あのー|そのー|まあ|まぁ|やっぱり|やっぱ|なんか)[、\s]*/g, '$1')
+          // ② 口ぐせ・冗長な結び
+          .replace(/(?:かなと思って(?:います|いて)|かなと思(?:い|っ)|という感じ(?:です|でした)|なんですよね|ですかね|みたいな感じ|というふうに|といいますか|って感じ)/g, '')
+          .replace(/どうしようかな[、]?/g, '')
+          // ③ 相づち・確認の言い回しを事実の文にする（「食費が5万円なんですね」→「食費が5万円です」）
+          .replace(/なんです(?:ね|か|よ)(?=。|$)/g, 'です').replace(/んですよ(?=。|$)/g, 'です')
+          .replace(/([0-9０-９.．]+)\s*パーセント/g, '$1%')
+          .replace(/ですね(?=。|$)/g, 'です').replace(/ますね(?=。|$)/g, 'ます')
+          .replace(/んです(?=。|$)/g, 'です').replace(/んだ(?=。|$)/g, 'です')
+          // ④ 丁寧すぎる結び・冗長な結びを短くする（意味は変えない＝「思っています」を「予定です」にはしない）
+          .replace(/([てで])(?:おります|おるんです)(?=。|$)/g, '$1います')
+          .replace(/でございます(?=。|$)/g, 'です')
+          .replace(/ないとな[ぁあ]?と思って(?:います|いて)/g, 'ないといけないと感じています')
+          .replace(/(?:になりました|になっております)(?=。|$)/g, 'です')
+          // ⑤ 音声認識の言い直し（「融通が利きますが効きます」→「融通が利きます」）
+          .replace(/(.{2,4})(?:が|は)[^、。]{0,2}\1(?=。|$)/g, '$1')
           .replace(/(?:いちばん|一番)/g, '最も')
           // 程度を表す語のうち「かなり・結構」は残す。「かなり不安」を「不安」に丸めると
           // 面談記録として温度が落ちる（検証役の指摘）。話し言葉くささの強い語だけ落とす
           .replace(/(?:すごく|めっちゃ|めちゃくちゃ|めちゃ)/g, '')
           .replace(/、{2,}/g, '、')
           .replace(/^[、。\s]+/, '')
+          .replace(/、(?=。)/g, '')
           .replace(/。{2,}/g, '。');
       }
       function mnMeta(utters){
@@ -7012,10 +7036,13 @@
         if(chars < 40){ model.tooShort = true; return model; }
         const freq = mnFreqIndex(sents);
         const byTheme = {}, order = [], usedSent = {};
+        /* 「次回までに◯◯します」系は本文に混ぜず、末尾の宿題欄だけに出す。
+           以前は本文が先に採ってしまい、**宿題の見出しごと消える**ことがあった（検証役が実測） */
+        sents.forEach(function(s){ s.isTodo = MN_TODO_RE.test(s.t) && !mnHasBrand(s.t); });
         sents.forEach(function(s){
           const r = mnThemeOf(s.t);
           s.theme = r.primary || 'other'; s.hitN = r.n;
-          if(s.theme === 'other') return;
+          if(s.theme === 'other' || s.isTodo) return;
           if(!byTheme[s.theme]){ byTheme[s.theme] = []; order.push(s.theme); }
           byTheme[s.theme].push(s);
         });
@@ -7039,7 +7066,16 @@
           const picked = mnPick(list, freq);
           picked.forEach(function(s){ usedSent[s.i] = 1; });   // 本文に採った文は末尾の宿題欄に重ねて出さない
           const items = mnGroup(picked).map(function(it){
-            return { lead: mnLead(it, theme, used), body: mnPolish(it.body) };
+            const body = mnPolish(it.body);
+            let lead = mnLead(it, theme, used);
+            /* リード語は「見出しや本文の書き出しと同じ」ことが多く、そのときは読む手間が増えるだけ
+               （例：見出し「教育資金の整理」＋リード「教育資金の整理:」／「食費の見通し: 食費が5万円です」）。
+               情報が増えないリード語は出さず、素直な箇条書きにする（ユーザー指示 2026-08-18） */
+            const stem = lead.replace(/(?:の方針|の注意点|の見通し|の整理|の確認(?:（\d+）)?)$/, '');
+            const leadNum = (lead.match(/[0-9]{2,}/g) || []).filter(function(n){ return body.indexOf(n) >= 0; });
+            if(!stem || title.indexOf(stem) >= 0 || body.slice(0, stem.length + 3).indexOf(stem) >= 0
+               || leadNum.length) lead = '';   // 本文に出ている数字をリード語でも繰り返さない
+            return { lead: lead, body: body };
           });
           if(items.length) model.sections.push({ no: model.sections.length+1, title:title, items:items });
         });
@@ -7047,12 +7083,15 @@
         const talkN = model.sections.reduce(function(n, sec){ return n + sec.items.length; }, 0);
         if(talkN < 2){ model.sections = []; model.noTheme = true; }
         model.todo = sents.filter(function(s){
-          return !usedSent[s.i]                 // 本文に載せた文の重複掲載を避ける
-                 && /(?:次回|までに|お送りし|用意し|準備し|確認し|持ってき|宿題|申し込|提出|見積|取り寄せ)/.test(s.t)
-                 && !mnHasBrand(s.t);           // 会社名・商品名は落とす（断定NGは宿題を落としすぎるので見ない）
-        }).slice(0, 8).map(function(s){ return s.t; });
+          return s.isTodo && !usedSent[s.i];    // 本文に載せた文の重複掲載を避ける
+        }).slice(0, 8).map(function(s){ return mnPolish(s.t); });
         if(!model.sections.length) model.noTheme = true;
         return model;
+      }
+      /* 見返すときに数字がすぐ拾えるよう、金額・年数・割合だけ太字にする。
+         色は付けない（このツールの青／赤は「増える・減る」の意味を持つため） */
+      function mnHi(t){
+        return esc(t).replace(/([0-9０-９][0-9０-９,，.．]*\s*(?:億|万|千)?\s*(?:円|年|歳|か月|ヶ月|カ月|%|％|人|件|回|割))/g, '<b class="mn-num">$1</b>');
       }
       function mnRenderHTML(model){
         const m = model.meta;
@@ -7071,12 +7110,12 @@
           model.sections.forEach(function(sec){
             h += '<h4 class="mn-h">' + sec.no + '. ' + esc(sec.title) + '</h4>';
             sec.items.forEach(function(it){
-              h += '<p class="mn-item"><b>' + esc(it.lead) + ':</b> ' + esc(it.body) + '</p>';
+              h += '<p class="mn-item">' + (it.lead ? '<b>' + esc(it.lead) + '：</b>' : '<span class="mn-b">・</span>') + mnHi(it.body) + '</p>';
             });
           });
           if(model.todo.length){
             h += '<h4 class="mn-h">' + (model.sections.length+1) + '. 面談中に出た宿題・確認事項</h4>';
-            model.todo.forEach(function(t){ h += '<p class="mn-item">・' + esc(t) + '</p>'; });
+            model.todo.forEach(function(t){ h += '<p class="mn-item"><span class="mn-b">・</span>' + mnHi(t) + '</p>'; });
           }
         }
         h += '</div>';

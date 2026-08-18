@@ -824,16 +824,19 @@
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-template-columns:repeat(4,1fr); }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card{ display:flex; flex-direction:column; margin-bottom:0; }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card .chart-box{ flex:1 1 auto; height:auto; min-height:260px; }
-      /* AI診断は全幅1パート：左＝総括と項目ボタン、右＝タップした項目の詳しい診断（2画面ぶんの幅で読む） */
+      /* AI診断は全幅1パート：左＝総括と項目ボタン、右＝タップした項目の詳しい診断（2画面ぶんの幅で読む）。
+         align-items:start は既にあった（グリッドの子は伸ばさない）が、hint/catsが2つの別要素の
+         ままだと adv-detail の row-span:2 が行トラック自体を文量ぶん伸ばしてしまい、align-items
+         では防げなかった（行の高さそのものが増える問題のため）。hint+catsを1つの箱（.adv-cats-wrap）
+         に統合し、row-spanを解消＝行3だけの単純な2カラムにして解決（実測：余白115〜247pxを解消）。 */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card{
         display:grid; grid-template-columns:1fr 1.15fr; gap:0 22px; align-items:start;
       }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .card-title,
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > #advice-summary{ grid-column:1/-1; }
-      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-cats-hint,
-      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-cats{ grid-column:1; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-cats-wrap{ grid-column:1; }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="ai"] > .card > .adv-detail{
-        grid-column:2; grid-row:3 / span 2; margin-top:0;
+        grid-column:2; margin-top:0;
       }
       /* 画面切替ナビを追従させる（スクロールしても常に切替できる）。スマホは画面を圧迫するため従来どおり。
          ★プランバー（.plan-wrap sticky top:8 z-60）の「下」に張り付ける：topはJSが実測して
@@ -2299,8 +2302,15 @@
         <div class="card">
           <div class="card-title"><i class="fa-solid fa-robot"></i> AI診断と今後のアドバイス</div>
           <div id="advice-summary"></div>
-          <p class="adv-cats-hint">▼ 項目をタップすると、その分野の<b>詳しい診断（総括・安心点・懸念点）</b>が表示されます</p>
-          <div class="adv-cats" id="advice-cats"></div>
+          <!-- ★2026-08-19 hint＋catsを1つの箱に統合。PC幅で右のadv-detailと縦2行に分けてグリッド化
+               していたため、adv-detailがgrid-row:3/span2で2行にまたがると、行の高さがadv-detailの
+               文量に引っ張られて伸び、hint文の直下（cats手前）に文量差そのままの余白が出ていた
+               （ユーザー指摘・実測：総合診断115px→万が一の備え247pxまで文量に比例して変動）。
+               1つの箱にすればrow-spanが不要になり、この行伸長が起きない。 -->
+          <div class="adv-cats-wrap">
+            <p class="adv-cats-hint">▼ 項目をタップすると、その分野の<b>詳しい診断（総括・安心点・懸念点）</b>が表示されます</p>
+            <div class="adv-cats" id="advice-cats"></div>
+          </div>
           <div class="adv-detail" id="advice-detail"></div>
         </div>
 

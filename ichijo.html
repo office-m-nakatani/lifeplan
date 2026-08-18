@@ -193,6 +193,7 @@
     .kt-extra{ display:grid; grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); gap:6px; align-items:end;
       padding:7px 9px; margin-top:6px; background:#fff; border:1.5px solid var(--line); border-radius:10px; }
     .kt-extra label{ display:block; font-size:.68rem; color:var(--ink-soft); margin-bottom:2px; }
+    .kt-extra > .kt-to{ grid-column:span 2; }
     .kt-extra input, .kt-extra select{ width:100%; min-height:38px; padding:6px 8px; border:1.5px solid var(--line);
       border-radius:8px; font-family:inherit; font-size:.8rem; background:#fff; }
     .kt-sibs{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; font-size:.78rem; color:var(--ink-soft); }
@@ -1187,13 +1188,15 @@
       .nx-due{ margin-left:27px; }
     }
     #end-age{ padding-right:56px; }   /* 単位「歳まで」が3文字ぶん広く、値と重なるため */
-    /* 生年月日（元号・年・月・日） */
+    /* 生年月日（年＝西暦＋和暦併記・月・日のプルダウン） */
     .bd-field{ margin-bottom:12px; }
-    .bd-row{ display:grid; grid-template-columns:84px 1.25fr .85fr .85fr; gap:6px; align-items:center; }
+    .bd-row{ display:grid; grid-template-columns:1.7fr .8fr .8fr; gap:6px; align-items:center; }
     .bd-row select{ padding-left:10px; padding-right:26px; }
-    .bd-row .input-unit input{ padding-left:8px; padding-right:26px; }
-    .bd-row .input-unit .u{ right:7px; font-size:.72rem; }
-    @media(max-width:400px){ .bd-row{ grid-template-columns:1fr 1fr; } }
+    /* 狭い画面では年（和暦併記で長い）を一行使い、月・日を横に並べる */
+    @media(max-width:400px){
+      .bd-row{ grid-template-columns:1fr 1fr; }
+      .bd-row > select:first-child{ grid-column:1 / -1; }
+    }
     .bd-hint{ margin-top:2px; }
     .bd-warn{ color:#bf5656; font-weight:600; }
     .bd-apply{ border:1.5px solid var(--blue); background:#fff; color:var(--blue-deep); border-radius:8px;
@@ -1300,7 +1303,14 @@
     table.cf td.kids{ font-weight:700; }
 
     /* ① お名前のプレースホルダ（夫・妻・お子さま）を薄く */
-    #h-name::placeholder, #w-name::placeholder, .ch-name::placeholder{ color:#c2cad3; opacity:1; }
+    #h-name::placeholder, #w-name::placeholder, .ch-name::placeholder,
+    #h-sei::placeholder, #w-sei::placeholder, .ch-sei::placeholder{ color:#c2cad3; opacity:1; }
+    /* ① お名前は「名字・名前」の2欄。ご家族の話は名字、お一人の話は名前でお呼びする */
+    .nm-field{ grid-column:span 2; }
+    .nm-row{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-items:center; }
+    input.nm-sei{ text-align:center; }
+    /* 名前の欄は半分の幅になるので、「様」の分の余白を詰めて文字が入るようにする */
+    .nm-row .input-unit > input.name-ctr{ padding-right:34px; }
 
     /* お子さまの教育ステージ・タイムライン */
     #edu-timeline{ margin-bottom:18px; }
@@ -1534,7 +1544,7 @@
               <div class="subgroup-title"><span class="tag">夫</span></div>
               <div class="bd-slot" data-birth="h"></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="h-name" class="name-ctr" placeholder="夫"><span class="u">様</span></div></div>
+                <div class="field nm-field"><label>お名前（名字・名前）</label><div class="nm-row"><input type="text" id="h-sei" class="nm-sei" placeholder="名字" autocomplete="off"><div class="input-unit"><input type="text" id="h-name" class="name-ctr" placeholder="名前"><span class="u">様</span></div></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="h-age" value="35" min="18" max="70"><span class="u">歳</span></div></div>
                 <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="h-income" value="550" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="h-net">手取り目安：—</span></div>
                 <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="h-raise" value="1.0" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
@@ -1547,7 +1557,7 @@
               <div class="subgroup-title spouse"><span class="tag">妻</span></div>
               <div class="bd-slot" data-birth="w"></div>
               <div class="grid3">
-                <div class="field"><label>お名前</label><div class="input-unit"><input type="text" id="w-name" class="name-ctr" placeholder="妻"><span class="u">様</span></div></div>
+                <div class="field nm-field"><label>お名前（名字・名前）</label><div class="nm-row"><input type="text" id="w-sei" class="nm-sei" placeholder="名字" autocomplete="off"><div class="input-unit"><input type="text" id="w-name" class="name-ctr" placeholder="名前"><span class="u">様</span></div></div></div>
                 <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" id="w-age" value="33" min="18" max="70"><span class="u">歳</span></div></div>
                 <div class="field w-flat-income"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
                 <div class="field w-flat-income"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
@@ -3026,20 +3036,49 @@
       if(before) a -= 1;
       return a;
     }
-    // その元号の期間から外れていたら注意文を返す（計算は止めない）
-    function eraRangeNote(era, y, m, d){
-      const e = BIRTH_ERAS[era];
-      if(!e || !e.base) return '';
-      const s = `${y}-${('0'+m).slice(-2)}-${('0'+d).slice(-2)}`;
-      const iso = `${eraToSeireki(era,y)}-${('0'+m).slice(-2)}-${('0'+d).slice(-2)}`;
-      if(e.from && iso < e.from) return `${e.label}${y}年${m}月${d}日は${e.label}の始まり（${e.from}）より前です。元号をご確認ください。`;
-      if(e.to   && iso > e.to)   return `${e.label}${y}年${m}月${d}日は${e.label}の終わり（${e.to}）より後です。元号をご確認ください。`;
-      return '';
+    /* 年は「1993年（平成5年）」の形で選ぶプルダウン1本にする（ユーザー指示 2026-08-19）。
+       元号を先に選ばせて数字を手入力させる形だと、和暦が分からない・打ち間違いが起きるため。
+       その西暦にかかる元号はすべて併記する（1989年＝昭和64年・平成元年） */
+    const BIRTH_YEAR_MIN = 1900;
+    const BIRTH_ERA_SPAN = [['reiwa',2019,9999], ['heisei',1989,2019], ['showa',1926,1989],
+                            ['taisho',1912,1926], ['meiji',1868,1912]];
+    function warekiLabel(y){
+      const out = [];
+      BIRTH_ERA_SPAN.forEach(function(sp){
+        if(y < sp[1] || y > sp[2]) return;
+        const n = y - BIRTH_ERAS[sp[0]].base;
+        out.push(BIRTH_ERAS[sp[0]].label + (n === 1 ? '元' : n) + '年');
+      });
+      return out.reverse().join('・');   // 古い元号から並べる（1989年＝昭和64年・平成元年）
     }
-    // 元号セレクトのHTML（西暦を既定にする＝共有データを増やさないため defaultSelected を西暦にする）
-    function birthEraOptions(){
-      return Object.keys(BIRTH_ERAS).map(k=>
-        `<option value="${k}"${k==='seireki'?' selected':''}>${BIRTH_ERAS[k].label}</option>`).join('');
+    function birthYearOptions(){
+      let h = '<option value="">年</option>';
+      for(let y = CURRENT_YEAR; y >= BIRTH_YEAR_MIN; y--){
+        const w = warekiLabel(y);
+        h += '<option value="'+y+'">'+y+'年'+(w ? '（'+w+'）' : '')+'</option>';
+      }
+      return h;
+    }
+    function birthMonthOptions(){
+      let h = '<option value="">月</option>';
+      for(let m=1; m<=12; m++) h += '<option value="'+m+'">'+m+'月</option>';
+      return h;
+    }
+    function birthDayOptions(n){
+      let h = '<option value="">日</option>';
+      for(let d=1; d<=(n||31); d++) h += '<option value="'+d+'">'+d+'日</option>';
+      return h;
+    }
+    /* 選んだ年・月に合わせて「日」の選択肢を作り直す（2月30日などをそもそも選べなくする）。
+       選択肢の数が変わらないときは作り直さない＝選んだ日が飛ばないように */
+    function bdFillDays(els){
+      if(!els || !els.d || !els.m) return;
+      const y = parseInt(els.y && els.y.value, 10), m = parseInt(els.m.value, 10);
+      const n = (m>=1 && m<=12) ? new Date((y>0 ? y : 2000), m, 0).getDate() : 31;
+      if(els.d.options.length === n + 1) return;
+      const cur = els.d.value;
+      els.d.innerHTML = birthDayOptions(n);
+      if(cur && parseInt(cur,10) <= n) els.d.value = cur;
     }
     /* 生年月日の入力欄一式を1画面ぶん組み立てる。
        idPrefix があれば id 付き（夫・妻）、無ければ class 版（お子さまの動的行） */
@@ -3047,35 +3086,35 @@
       const id = n => idPrefix ? ` id="${idPrefix}-b-${n}"` : '';
       const cl = n => idPrefix ? '' : ` ch-b-${n}`;
       return `<div class="field bd-field">
-          <label>生年月日（西暦・和暦どちらでも）</label>
+          <label>生年月日</label>
           <div class="bd-row">
-            <select class="bd-era${cl('era')}"${id('era')}>${birthEraOptions()}</select>
-            <div class="input-unit"><input type="number" class="bd-y${cl('y')}"${id('y')} min="1" max="2200" inputmode="numeric" placeholder="年"><span class="u">年</span></div>
-            <div class="input-unit"><input type="number" class="bd-m${cl('m')}"${id('m')} min="1" max="12" inputmode="numeric" placeholder="月"><span class="u">月</span></div>
-            <div class="input-unit"><input type="number" class="bd-d${cl('d')}"${id('d')} min="1" max="31" inputmode="numeric" placeholder="日"><span class="u">日</span></div>
+            <select class="bd-y${cl('y')}"${id('y')}>${birthYearOptions()}</select>
+            <select class="bd-m${cl('m')}"${id('m')}>${birthMonthOptions()}</select>
+            <select class="bd-d${cl('d')}"${id('d')}>${birthDayOptions(31)}</select>
           </div>
           <span class="hint bd-hint${cl('hint')}"${id('hint')}></span>
         </div>`;
     }
-    const hwBirthEls = (p)=>({ era:$(p+'-b-era'), y:$(p+'-b-y'), m:$(p+'-b-m'), d:$(p+'-b-d'),
+    // 元号の欄は持たない（年が西暦のプルダウンになったため）。旧データは applyState で西暦へ直す
+    const hwBirthEls = (p)=>({ y:$(p+'-b-y'), m:$(p+'-b-m'), d:$(p+'-b-d'),
                                hint:$(p+'-b-hint'), age:$(p+'-age') });
-    const chBirthEls = (row)=>({ era:row.querySelector('.ch-b-era'), y:row.querySelector('.ch-b-y'),
+    const chBirthEls = (row)=>({ y:row.querySelector('.ch-b-y'),
                                  m:row.querySelector('.ch-b-m'), d:row.querySelector('.ch-b-d'),
                                  hint:row.querySelector('.ch-b-hint'), age:row.querySelector('.ch-age') });
     /* 生年月日 → 年齢の同期。
        write=false（復元直後など）は年齢欄を絶対に書き換えず、ヒントだけ出す。 */
     function syncBirth(els, write){
-      if(!els || !els.era || !els.y || !els.m || !els.d || !els.hint) return;
-      const y0 = parseInt(els.y.value,10), m = parseInt(els.m.value,10), d = parseInt(els.d.value,10);
-      if(!(y0>0) || !(m>0) || !(d>0)){ els.hint.innerHTML=''; return; }   // 3つそろうまで何もしない
-      const era = els.era.value || 'seireki';
-      const y = eraToSeireki(era, y0);
+      if(!els || !els.y || !els.m || !els.d || !els.hint) return;
+      bdFillDays(els);
+      const y = parseInt(els.y.value,10), m = parseInt(els.m.value,10), d = parseInt(els.d.value,10);
+      if(!(y>0) || !(m>0) || !(d>0)){ els.hint.innerHTML=''; return; }   // 3つそろうまで何もしない
       if(!validYMD(y, m, d)){ els.hint.innerHTML = '<span class="bd-warn">その日付は存在しないようです。</span>'; return; }
-      const warn = eraRangeNote(era, y0, m, d);
+      const warn = '';   // 元号の取り違え注意はプルダウン化で不要になった
       const age = ageFromYMD(y, m, d);
       const lo = parseFloat(els.age && els.age.min), hi = parseFloat(els.age && els.age.max);
       const outOfRange = !(age>=0) || (!isNaN(lo) && age<lo) || (!isNaN(hi) && age>hi);
-      const seirekiLbl = `西暦${y}年${m}月${d}日`;
+      const wk = warekiLabel(y);
+      const seirekiLbl = `${y}年${m}月${d}日${wk ? `（${wk}）` : ''}`;
       if(outOfRange){
         els.hint.innerHTML = `${seirekiLbl}（満${age}歳）。<span class="bd-warn">年齢の入力欄の範囲外のため、自動入力していません。</span>`
           + (warn ? `<br><span class="bd-warn">${warn}</span>` : '');
@@ -3093,8 +3132,8 @@
         + (warn ? `<br><span class="bd-warn">${warn}</span>` : '');
     }
     function bindBirth(els){
-      if(!els || !els.era) return;
-      [els.era, els.y, els.m, els.d].forEach(el=>{
+      if(!els || !els.y) return;
+      [els.y, els.m, els.d].forEach(el=>{
         if(!el) return;
         el.addEventListener('input',  ()=> syncBirth(els, true));
         el.addEventListener('change', ()=> syncBirth(els, true));
@@ -3102,7 +3141,7 @@
     }
     // 表示だけ引き直す（年齢欄は書き換えない）
     function refreshBirthHints(){
-      ['h','w'].forEach(p=>{ const e=hwBirthEls(p); if(e.era) syncBirth(e, false); });
+      ['h','w'].forEach(p=>{ const e=hwBirthEls(p); if(e.y) syncBirth(e, false); });
       document.querySelectorAll('#children-list > div').forEach(row=> syncBirth(chBirthEls(row), false));
     }
 
@@ -3116,6 +3155,24 @@
     ];
     const childColor = (i)=> CHILD_COLORS[i % CHILD_COLORS.length];
 
+    /* ============================================================
+       お名前の呼び分け（ユーザー指示 2026-08-19）
+       ・ご家族の話は名字（例：山田さんご一家）／お一人の話は名前（例：直矢様）
+       ・#h-name / #w-name / .ch-name は「名前」のまま（保存データを壊さないため）。
+         名字は #h-sei / #w-sei / .ch-sei を新設して持つ（#input-panel 内なので
+         保存・共有には自動で乗る＝共有3表は伸ばさない）
+       ・名字欄が無かった頃のデータは、お名前欄に姓名がまとめて入っている。
+         famName() がお名前欄へ落ちるので、従来どおりの表示のまま動く
+       ============================================================ */
+    function seiV(id){ const el = document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+    function hSei(){ return seiV('h-sei'); }
+    function wSei(){ return seiV('w-sei'); }
+    /* ご一家の名字。名字欄が空なら旧データとみなしてお名前欄を使う */
+    function famName(){ return hSei() || wSei() || seiV('h-name'); }
+    /* ご家族としてお呼びするとき（例：山田さんご一家） */
+    function famLabel(){ const s = famName(); return s ? s+'さんご一家' : 'ご家族'; }
+    /* 記録・書類の見出しなど、どなたの分か取り違えてはいけない所で使う姓名（敬称なし・未入力は空） */
+    function fullName(seiId, nameId){ return seiV(seiId) + seiV(nameId); }
     /* 夫・妻の表示名（未入力なら「夫」「妻」） */
     const hName = ()=> (document.getElementById('h-name')?.value||'').trim() || '夫';
     const wName = ()=> (document.getElementById('w-name')?.value||'').trim() || '妻';
@@ -3124,6 +3181,48 @@
     const wNameH = ()=>{ const n=(document.getElementById('w-name')?.value||'').trim(); return n ? n+'様' : '妻'; };
     // お子さまのお名前：入力があれば敬称（君／ちゃん・行ごとに選択）を自動付与（すでに君・ちゃん・さん等が付いていれば付けない）。未入力は「子1」等
     const cNameH = (nm, i, honorific)=>{ nm=(nm||'').trim(); if(!nm) return '子'+((i||0)+1); return /(君|くん|ちゃん|チャン|さん|サン|様|ちゃま)$/.test(nm) ? nm : nm+(honorific||'君'); };
+
+    /* 名字は「ご主人 → 奥様・お子さま」へ自動で入れる。
+       手で変えた欄は上書きしない（data-sei-auto が 1 のあいだだけ追従する） */
+    function seiTargets(){
+      const a = [];
+      const w = document.getElementById('w-sei'); if(w) a.push(w);
+      document.querySelectorAll('.ch-sei').forEach(function(el){ a.push(el); });
+      return a;
+    }
+    function seiSync(){
+      const v = hSei();
+      seiTargets().forEach(function(el){
+        if(el.value.trim() && el.dataset.seiAuto !== '1') return;   // 手入力ずみの欄は触らない
+        if(el.value === v) return;
+        el.value = v; el.dataset.seiAuto = '1';
+      });
+    }
+    /* 旧データ（お名前欄に姓名をまとめて入れていた分）は、間に空白があるときだけ名字・名前に分ける。
+       空白が無いものは姓名の切れ目が判別できないので触らない（呼び方が変わるだけで試算には影響しない） */
+    function seiSplit(seiEl, nameEl){
+      if(!seiEl || !nameEl || seiEl.value.trim()) return;
+      const m = (nameEl.value||'').trim().match(/^([^\s\u3000]+)[\s\u3000]+([^\s\u3000].*)$/);
+      if(!m) return;
+      seiEl.value = m[1]; nameEl.value = m[2];
+    }
+    function seiSplitAll(){
+      seiSplit(document.getElementById('h-sei'), document.getElementById('h-name'));
+      seiSplit(document.getElementById('w-sei'), document.getElementById('w-name'));
+      document.querySelectorAll('#children-list .child-row').forEach(function(r){
+        seiSplit(r.querySelector('.ch-sei'), r.querySelector('.ch-name'));
+      });
+    }
+    (function(){
+      const hs = document.getElementById('h-sei');
+      if(hs) hs.addEventListener('input', function(){ seiSync(); });
+      const ws = document.getElementById('w-sei');
+      if(ws) ws.addEventListener('input', function(){ ws.dataset.seiAuto = '0'; });
+      const cl = document.getElementById('children-list');
+      if(cl) cl.addEventListener('input', function(e){
+        if(e.target && e.target.classList && e.target.classList.contains('ch-sei')) e.target.dataset.seiAuto = '0';
+      });
+    })();
 
     /* 運用商品の種類ごとの色（項目別テーブルで色分け） */
     const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a', other:'#5b6b7d' };
@@ -3165,8 +3264,8 @@
     const eventsList = $('events-list');
     const incomeEventsList = $('income-events-list');
 
-    // birth は必ず末尾の引数にする（途中に入れると呼び出し側の位置引数がずれて進学先・通学形態が壊れる）
-    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', gender='boy', birth=null){
+    // birth・sei は必ず末尾の引数にする（途中に入れると呼び出し側の位置引数がずれて進学先・通学形態が壊れる）
+    function childRow(age=0, k12='public', highEd='shiritsu_b', lodging='home', name='', gender='boy', birth=null, sei=''){
       const b = birth || {};
       const div = document.createElement('div');
       div.className = 'row-item child-row';
@@ -3182,7 +3281,7 @@
         </div>
         ${birthFieldHTML(null)}
         <div class="cr-grid cr-top">
-          <div class="field"><label>お名前</label><div class="input-unit"><input type="text" class="ch-name name-ctr" placeholder="お子さま" value="${(name||'').replace(/"/g,'&quot;')}"><span class="u ch-suffix">${gender==='girl'?'ちゃん':'君'}</span></div></div>
+          <div class="field nm-field"><label>お名前（名字・名前）</label><div class="nm-row"><input type="text" class="ch-sei nm-sei" placeholder="名字" value="${(sei||'').replace(/"/g,'&quot;')}"><div class="input-unit"><input type="text" class="ch-name name-ctr" placeholder="お子さま" value="${(name||'').replace(/"/g,'&quot;')}"><span class="u ch-suffix">${gender==='girl'?'ちゃん':'君'}</span></div></div></div>
           <div class="field"><label>現在の年齢</label><div class="input-unit"><input type="number" class="ch-age" value="${age}" min="0" max="30"><span class="u">歳</span></div></div>
           <div class="field"><label>小〜高</label>
             <select class="ch-k12">
@@ -3204,8 +3303,10 @@
       // 保存されていた生年月日を戻す（この時点では年齢欄を書き換えない＝復元で年齢がずれないように）
       if(b.y){
         const e = chBirthEls(div);
-        if(e.era) e.era.value = b.era || 'seireki';
-        if(e.y) e.y.value = b.y; if(e.m) e.m.value = b.m || ''; if(e.d) e.d.value = b.d || '';
+        if(e.y) e.y.value = b.y;
+        if(e.m) e.m.value = b.m || '';
+        bdFillDays(e);                       // 月に合わせて日の選択肢を作ってから値を戻す
+        if(e.d) e.d.value = b.d || '';
       }
       // 総当たりリスナーより先に登録する（年齢更新 → recompute の順を保証する）
       bindBirth(chBirthEls(div));
@@ -3218,6 +3319,10 @@
         recompute();
       });
       childrenList.appendChild(div);
+      // 名字は未入力ならご主人の欄から自動で入れる（手で変えたらそこで追従を止める）
+      const seiEl = div.querySelector('.ch-sei');
+      if(seiEl && !seiEl.value.trim()) seiEl.dataset.seiAuto = '1';
+      try{ seiSync(); }catch(e){}
       renumberChildPlaceholders();
       updateChildQuote(div);
       syncBirth(chBirthEls(div), false);   // 表示だけ（年齢欄は触らない）
@@ -4401,14 +4506,18 @@
       el.value = JSON.stringify(list.slice(0, 12));
       el.dispatchEvent(new Event('input', { bubbles:true }));   // 自動保存（ドラフト）を走らせる
     }
-    // 追加した人の1枚（続柄・お名前・性別・年齢・ご健在）。値は入力のたびにJSONへ書き戻す
-    function ktExtraHTML(kind, i, p){
+    /* 追加した人の1枚（続柄・つなぎ先・お名前・性別・年齢・ご健在）。値は入力のたびにJSONへ書き戻す。
+       「つなぎ先」＝この方がどなたの親御さま／お子さまか。選ばれたときだけ線でつなぐ
+       （続柄は自由入力なので、選ばれていないまま線を引くと誤った関係を示してしまう） */
+    function ktExtraHTML(kind, i, p, toOpts){
       const rel = kind === 'up'
         ? ['祖父','祖母','曽祖父','曽祖母','その他']
         : ['お孫さま','ひ孫さま','甥・姪','その他'];
       const opt = function(list, v){ return list.map(function(o){ return '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join(''); };
       return '<div class="kt-extra" data-kt-kind="'+kind+'" data-kt-i="'+i+'">'
         + '<div><label>続柄</label><select data-kt="rel">'+opt(rel, p.rel)+'</select></div>'
+        + '<div class="kt-to"><label>'+(kind === 'up' ? 'どなたの親御さまですか' : 'どなたのお子さまですか')+'</label>'
+        + '<select data-kt="to">'+(toOpts||'')+'</select></div>'
         + '<div><label>お名前・呼び方</label><input type="text" data-kt="name" value="'+esc(p.name||'')+'" placeholder="例：父方の祖母"></div>'
         + '<div><label>性別</label><select data-kt="sex">'+opt(['男性','女性'], p.sex)+'</select></div>'
         + '<div><label>年齢</label><input type="number" data-kt="age" value="'+esc(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
@@ -4491,6 +4600,8 @@
       const ps = kaigoParents();
       const BW = 104, BH = 52, GAP = 14, PITCH = BW + GAP, ROWH = 108, PAD = 10;
       const nodes = [], seg = [];                       // seg=線分 {x1,y1,x2,y2}
+      const parentX = {};                               // 親の箱の左端X（上の世代のつなぎ先に使う）
+      let kidXs = [];                                   // お子さまの箱の左端X（下の世代のつなぎ先に使う）
       const line = function(x1,y1,x2,y2){ seg.push({x1:x1,y1:y1,x2:x2,y2:y2}); };
       const node = function(x, y, name, sub, cls){ nodes.push({x:x, y:y, name:name, sub:sub, cls:cls||''}); };
       // 夫婦の線：2人の下を通してつなぐ（間にごきょうだいが入っても交差しない）。戻り値は中点
@@ -4539,7 +4650,7 @@
         for(let i = 1; i <= wN; i++){ wXs.push(cur); cur += PITCH; }
         wSelfX = wXs[wO - 1];
       }
-      const totalW = cur - GAP + PAD;
+      let totalW = cur - GAP + PAD;
       hXs.forEach(function(x, i){
         if(i === hO - 1) node(x, ySelf, hNameH(), num('h-age',35)+'歳・第'+hO+'子', 'is-self is-male');
         else node(x, ySelf, 'ごきょうだい', '第'+(i+1)+'子', 'is-dim');
@@ -4556,6 +4667,7 @@
         const fx = mid - PITCH/2 - BW/2, mx = mid + PITCH/2 - BW/2;
         two.forEach(function(p2){
           const x = (p2.pk.role === 'f') ? fx : mx;
+          parentX[p2.pk.key] = x;
           const sexCls = (p2.pk.role === 'f') ? ' is-male' : ' is-female';
           if(p2.alive === '他界された'){ node(x, yPar, kgLabel(p2.pk), 'ご逝去', 'is-gone' + sexCls); return; }
           const sub = [(p2.age ? p2.age+'歳' : ''), (p2.pref !== '未選択' ? p2.pref : ''), (p2.alive === '未確認' ? '未確認' : '')].filter(Boolean).join('・');
@@ -4572,30 +4684,90 @@
         const mp = couple(hSelfX, wSelfX, ySelf);
         if(kids.length){
           const kw = kids.length * PITCH - GAP;
-          let kx = Math.round(mp.x - kw/2);
-          kids.forEach(function(k){ node(kx, yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); kx += PITCH; });
-          descend(mp, kids.map(function(_, i){ return Math.round(mp.x - kw/2) + i*PITCH; }), yKid);
+          const kx0 = Math.round(mp.x - kw/2);
+          kidXs = kids.map(function(_, i){ return kx0 + i*PITCH; });
+          kids.forEach(function(k, i){ node(kidXs[i], yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); });
+          descend(mp, kidXs, yKid);
         }
       } else if(kids.length){
         const kw = kids.length * PITCH - GAP;
-        let kx = Math.round(hSelfX + BW/2 - kw/2);
+        const kx0 = Math.round(hSelfX + BW/2 - kw/2);
         const from = { x:hSelfX + BW/2, y:ySelf + BH };
         line(from.x, from.y, from.x, from.y + 13);
-        kids.forEach(function(k){ node(kx, yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); kx += PITCH; });
-        descend({ x:from.x, y:from.y + 13 }, kids.map(function(_, i){ return Math.round(hSelfX + BW/2 - kw/2) + i*PITCH; }), yKid);
+        kidXs = kids.map(function(_, i){ return kx0 + i*PITCH; });
+        kids.forEach(function(k, i){ node(kidXs[i], yKid, k.name, k.sub, k.girl ? 'is-female' : 'is-male'); });
+        descend({ x:from.x, y:from.y + 13 }, kidXs, yKid);
       }
-      // 上の世代・下の世代（自由入力。続柄は各行の指定に任せ、線は引かない）
-      const rowOf = function(list, yy, kindCls){
-        const w = list.length * PITCH - GAP;
-        let x = Math.round((totalW - w) / 2);
-        list.forEach(function(p2){
-          node(x, yy, (p2.name || p2.rel || 'ご親族'), [p2.rel, (p2.age ? p2.age+'歳' : ''), (p2.alive === '他界された' ? 'ご逝去' : '')].filter(Boolean).join('・'),
-               (p2.alive === '他界された' ? 'is-gone ' : '') + (p2.sex === '女性' ? 'is-female' : 'is-male') + ' ' + kindCls);
-          x += PITCH;
+      /* 上の世代・下の世代（自由入力）。「つなぎ先」を選んでいただいた方だけ、その相手の
+         真上／真下へ寄せて置き、線でつなぐ。未選択の方は右側に並べるだけで線は引かない
+         （続柄が自由入力なので、勝手につなぐと誤った関係を示してしまうため） */
+      const placeExtra = function(list, yy, anchorOf){
+        const items = list.map(function(p2){ return { p:p2, a:anchorOf(p2), x:null }; });
+        const keys = [];
+        items.forEach(function(o){ if(o.a != null && keys.indexOf(o.p.to) < 0) keys.push(o.p.to); });
+        keys.sort(function(a, b){
+          const ax = items.filter(function(o){ return o.a != null && o.p.to === a; })[0].a;
+          const bx = items.filter(function(o){ return o.a != null && o.p.to === b; })[0].a;
+          return ax - bx;
         });
+        const out = [], groups = [];
+        keys.forEach(function(k){
+          const g = items.filter(function(o){ return o.a != null && o.p.to === k; });
+          const w = g.length * PITCH - GAP;
+          let x = Math.round(g[0].a + BW/2 - w/2);
+          g.forEach(function(o){ o.x = x; x += PITCH; out.push(o); });
+          groups.push({ key:k, a:g[0].a, list:g });
+        });
+        items.forEach(function(o){ if(o.a == null) out.push(o); });   // 未選択は最後にまとめて並べる
+        /* 重なりだけをほどく。ここで左端を PAD で押さえると、つなぎ先の真上から
+           ずれる（全体の左へのはみ出しは、最後に図ごと右へずらして収める） */
+        let x = null;
+        out.forEach(function(o){
+          if(o.x == null) o.x = (x == null ? PAD : x);
+          else if(x != null && o.x < x) o.x = x;
+          x = o.x + PITCH;
+        });
+        out.forEach(function(o){
+          const p2 = o.p;
+          node(o.x, yy, (p2.name || p2.rel || 'ご親族'),
+               [p2.rel, (p2.age ? p2.age+'歳' : ''), (p2.alive === '他界された' ? 'ご逝去' : '')].filter(Boolean).join('・'),
+               (p2.alive === '他界された' ? 'is-gone ' : '') + (p2.sex === '女性' ? 'is-female' : 'is-male') + ' is-extra');
+        });
+        return groups;
       };
-      if(ups.length) rowOf(ups, yUp, 'is-extra');
-      if(downs.length) rowOf(downs, yDownRow, 'is-extra');
+      if(ups.length){
+        // 上の世代 → その方のお子さま（＝ご両親のどなたか）へ下ろす。2人そろえば夫婦の線でつなぐ
+        const gs = placeExtra(ups, yUp, function(p2){ return (p2.to && parentX[p2.to] != null) ? parentX[p2.to] : null; });
+        gs.forEach(function(g){
+          const xs = g.list.map(function(o){ return o.x; });
+          const from = (xs.length >= 2)
+            ? couple(Math.min.apply(null, xs), Math.max.apply(null, xs), yUp)
+            : { x:xs[0] + BW/2, y:yUp + BH };
+          descend(from, [parentX[g.key]], yPar);
+        });
+      }
+      if(downs.length){
+        // 下の世代 → その方の親御さま（＝お子さまのどなたか）から下ろす
+        const gs = placeExtra(downs, yDownRow, function(p2){
+          const i = /^c\d+$/.test(p2.to || '') ? parseInt(p2.to.slice(1), 10) : -1;
+          return (i >= 0 && kidXs[i] != null) ? kidXs[i] : null;
+        });
+        gs.forEach(function(g){
+          const i = parseInt(g.key.slice(1), 10);
+          descend({ x:kidXs[i] + BW/2, y:yKid + BH }, g.list.map(function(o){ return o.x; }), yDownRow);
+        });
+      }
+      /* 箱と線が左へはみ出すことがある（ごきょうだいが1人だと父母がご本人より外側に来る）。
+         まとめて右へずらし、右端も入れて、切れずに収まるようにする */
+      const minX = Math.min.apply(null, nodes.map(function(n){ return n.x; })
+                                    .concat(seg.map(function(s){ return Math.min(s.x1, s.x2); })));
+      if(minX < PAD){
+        const dx = PAD - minX;
+        nodes.forEach(function(n){ n.x += dx; });
+        seg.forEach(function(s){ s.x1 += dx; s.x2 += dx; });
+        totalW += dx;
+      }
+      totalW = Math.max(totalW, Math.max.apply(null, nodes.map(function(n){ return n.x + BW; })) + PAD);
       const totalH = (yDownRow != null ? yDownRow : (kids.length ? yKid : ySelf)) + BH + PAD;
       // 描画（線は背面のSVG・箱は絶対配置）
       const svg = '<svg class="kt-svg" width="'+totalW+'" height="'+totalH+'" viewBox="0 0 '+totalW+' '+totalH+'">'
@@ -4604,14 +4776,23 @@
         return '<div class="kt-card '+n.cls+'" style="left:'+n.x+'px; top:'+n.y+'px; width:'+BW+'px; min-height:'+BH+'px;">'
           + '<b>'+esc(n.name)+'</b>' + (n.sub ? '<span class="kt-sub">'+esc(n.sub)+'</span>' : '') + '</div>';
       }).join('');
+      /* つなぎ先の選択肢。上の世代＝ご両親のどなたか、下の世代＝お子さまのどなたか。
+         未選択のままなら線を引かない（この選択肢を残すことが「誤った関係を示さない」担保） */
+      const ktToOptions = function(kind, v){
+        const list = (kind === 'up')
+          ? ps.map(function(p2){ return { k:p2.pk.key, l:kgLabel(p2.pk) }; })
+          : kids.map(function(k, i){ return { k:'c'+i, l:k.name }; });
+        return '<option value="">未選択（線を引きません）</option>'
+             + list.map(function(o){ return '<option value="'+esc(o.k)+'"'+(o.k === v ? ' selected' : '')+'>'+esc(o.l)+'</option>'; }).join('');
+      };
       const upBtn = function(kind, label){
         return '<button type="button" class="btn btn-ghost btn-sm" data-kt-add="'+kind+'"><i class="fa-solid fa-plus"></i> '+label+'</button>';
       };
       tree.innerHTML =
         '<div class="kt-scroll"><div class="kt-canvas" style="width:'+totalW+'px; height:'+totalH+'px;">' + svg + boxes + '</div></div>'
         + '<div class="vc-tools" style="margin-top:8px;">' + upBtn('up','上の世代を追加（祖父母など）') + upBtn('down','下の世代を追加（お孫さまなど）') + '</div>'
-        + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2); }).join('') + '</div>' : '')
-        + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2); }).join('') + '</div>' : '');
+        + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2, ktToOptions('up', p2.to)); }).join('') + '</div>' : '')
+        + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2, ktToOptions('down', p2.to)); }).join('') + '</div>' : '');
       // ── リスクの見える化 ──
       const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
       if(!alive.length){
@@ -4640,7 +4821,7 @@
         secEl.addEventListener('input',  function(e){ if(!fromTree(e)) kaigoRender(); });
         secEl.addEventListener('change', function(e){ if(!fromTree(e)) kaigoRender(); });
       }
-      ['h-name','w-name','h-age','w-age','kg-h-sibs','kg-h-order','kg-w-sibs','kg-w-order'].forEach(function(id){
+      ['h-sei','w-sei','h-name','w-name','h-age','w-age','kg-h-sibs','kg-h-order','kg-w-sibs','kg-w-order'].forEach(function(id){
         const el = $(id); if(el) el.addEventListener('input', kaigoRender);
       });
       // お子さまの追加・削除・年齢変更も家系図に反映する
@@ -4670,8 +4851,8 @@
           const add = e.target.closest('[data-kt-add]');
           if(add){
             const kind = add.dataset.ktAdd, list = kgExtra(kind);
-            list.push(kind === 'up' ? { rel:'祖父', name:'', sex:'男性', age:'', alive:'未確認' }
-                                    : { rel:'お孫さま', name:'', sex:'男性', age:'', alive:'ご健在' });
+            list.push(kind === 'up' ? { rel:'祖父', to:'', name:'', sex:'男性', age:'', alive:'未確認' }
+                                    : { rel:'お孫さま', to:'', name:'', sex:'男性', age:'', alive:'ご健在' });
             kgExtraWrite(kind, list); kaigoRender(); return;
           }
           const del = e.target.closest('[data-kt-del]');
@@ -5405,7 +5586,7 @@
       let who = '';
       try{
         const f = d.plans && d.plans.genjo && d.plans.genjo.state && d.plans.genjo.state.fields;
-        const nm = f && (f['h-name']||'').trim();
+        const nm = f && ((f['h-sei']||'').trim() || (f['h-name']||'').trim());   // ご一家の見分けは名字で
         if(nm) who = `${nm}様 / `;
       }catch(e){}
       const wEl = $('draft-when'); if(wEl && (who||label)) wEl.textContent = `（${who}${label}保存）`;
@@ -6006,8 +6187,7 @@
 
     function analysisData(rows, s){
       const p = buildProfile();
-      const famNm = (document.getElementById('h-name')?.value||'').trim();
-      const fam = famNm ? `${esc(famNm)}さんご一家` : 'ご家族';
+      const fam = esc(famLabel());   // ご家族の話は名字でお呼びする（例：山田さんご一家）
       const single = p.single;
       const invs = p.invs;
       const totalMonthly = invs.reduce((a,v)=> a+v.monthly, 0);
@@ -8327,11 +8507,40 @@
       let nxLast = null;
       /* 済チェックは「お名前」で顧客ごとに分ける。
          ルールIDだけで持つと、A様で消化した宿題がB様の画面でも済に見えて宿題を取りこぼす */
-      function nxScope(){
+      /* 名字欄ができて「太郎／花子」のようなお名前が重なりやすくなったため、見分けに名字も混ぜる。
+         名字を後から入れた既存のお客様は、旧キー（名字なし）の記録を新キーへ移して引き継ぐ
+         ＝音声メモ・家系図メモ・済チェックを失わない */
+      function nxScopeOld(){
         const g = function(id){ return ($(id) && $(id).value.trim()) || ''; };
         return g('h-name') + '/' + g('w-name');
       }
-      function nxDone(){ try{ return JSON.parse(localStorage.getItem(NX_DONE_KEY)||'{}'); }catch(e){ return {}; } }
+      function nxScope(){
+        const sei = hSei() || wSei();
+        return (sei ? sei + ' ' : '') + nxScopeOld();
+      }
+      // { 'キー': 中身 } 形の箱（家系図メモ・音声メモ）の引っ越し。動いたら true
+      function nxMigrateMap(m){
+        const ns = nxScope(), os = nxScopeOld();
+        if(ns === os || !m || m[ns] || !m[os]) return false;
+        m[ns] = m[os]; delete m[os]; return true;
+      }
+      function nxDone(){
+        let d; try{ d = JSON.parse(localStorage.getItem(NX_DONE_KEY)||'{}'); }catch(e){ return {}; }
+        if(!d || typeof d !== 'object') return {};
+        // 済チェックは 'キー::項目' の平らな形。名字を入れた既存のお客様の分をここで引っ越す
+        const ns = nxScope() + '::', os = nxScopeOld() + '::';
+        if(ns !== os){
+          let ch = false;
+          Object.keys(d).forEach(function(k){
+            if(k.indexOf(os) !== 0) return;
+            const nk = ns + k.slice(os.length);
+            if(!(nk in d)) d[nk] = d[k];
+            delete d[k]; ch = true;
+          });
+          if(ch){ try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){} }
+        }
+        return d;
+      }
       function nxRestoreDone(box){
         const d = nxDone(), sc = nxScope();
         box.querySelectorAll('.nx-item').forEach(function(el){
@@ -8406,6 +8615,7 @@
           const b = m[k];
           if(!b || !Array.isArray(b.p) || (Date.now() - (b.t||0) > MN_TTL)){ delete m[k]; changed = true; }
         });
+        if(nxMigrateMap(m)) changed = true;   // 名字を後から入れた既存のお客様の分をいまのキーへ移す
         if(changed) famWrite(m);
         return m;
       }
@@ -8543,7 +8753,7 @@
         if(!famPeople.length) return '';
         /* このテキストは事務所の記録・引き継ぎに貼られるため、単独で読んで判断できる状態にする。
            誰の面談の分か（取り違え防止）・ご本人以外の情報である旨・お渡しの可否を必ず残す */
-        const who = ($('h-name') && $('h-name').value.trim()) || '';
+        const who = fullName('h-sei','h-name');   // 記録の取り違え防止に姓名で残す
         return '【家系図メモ】' + (who ? '（' + who + '様の面談）' : '') + '\n'
           + famPeople.map(function(p){
           return '・' + (p.rel||'') + '　' + (p.name||'') + (p.age ? '（'+p.age+'歳）' : '')
@@ -8695,6 +8905,8 @@
         if(ns === mnScope) return;
         if(mnSaveTimer){ clearTimeout(mnSaveTimer); mnSaveTimer = null; mnSave(); }
         mnScope = ns;
+        // 名字を後から入れた既存のお客様は、旧キー（名字なし）の記録をいまのキーへ引き継ぐ
+        try{ const mm = mnBoxAll(); if(nxMigrateMap(mm)) mnBoxWrite(mm); }catch(e){}
         if(adopt) mnAdopt();
         mnRestore();
         if(recWanted || recOn) vcStopRec();   // 録音をまたいで別のお客様に文字起こしが続かないように
@@ -9010,7 +9222,7 @@
       function planToText(){
         const box = $('nx-plan');
         if(!box || !box.innerText.trim()) return '';
-        const who = ($('h-name') && $('h-name').value.trim()) || '';
+        const who = fullName('h-sei','h-name');   // 記録の取り違え防止に姓名で残す
         return '【社内用｜お客様に渡さない】提案の検討メモ（' + new Date().toLocaleDateString('ja-JP')
           + (who ? '・' + who + '様の面談' : '') + '）\n\n'
           + box.innerText.replace(/\n{3,}/g, '\n\n').trim() + '\n';
@@ -9111,7 +9323,7 @@
         mnSwitchScope(false);                     // adoptしない＝名無しの録音を読み込んだお客様に付け替えない
         if($('vc-pane-fam')) famRender();
       });
-      ['h-name','w-name'].forEach(function(id){
+      ['h-sei','w-sei','h-name','w-name'].forEach(function(id){
         if($(id)) $(id).addEventListener('change', function(){
           famAdopt(); if($('vc-pane-fam')) famRender();
           mnSwitchScope(true);                    // 手で名前を打ったときだけ、名無しの録音を引き継ぐ
@@ -9350,7 +9562,7 @@
           pdf.addImage(slice.toDataURL('image/jpeg',0.92), 'JPEG', margin, margin, iw, sliceH*iw/canvas.width);
           pos = cut; page++;
         }
-        const who = (currentSaveName || (document.getElementById('h-name') && document.getElementById('h-name').value) || '').trim();
+        const who = (currentSaveName || fullName('h-sei','h-name') || '').trim();
         pdf.save(who ? `ライフプラン_${who}.pdf` : 'ライフプラン.pdf');
       } catch(e){
         // 「印刷」ボタンは2026-08-18に廃止済み。存在しないボタンへ誘導しない（検証役検出）
@@ -11178,6 +11390,9 @@
         loanRepayType: loanRepayTypeSeg?.querySelector('button.active')?.dataset.repaytype || 'ganri',
         children: [...childrenList.querySelectorAll('.child-row')].map(r=>{
           const o = { name:r.querySelector('.ch-name').value, age:r.querySelector('.ch-age').value, k12:r.querySelector('.ch-k12').value, highEd:r.querySelector('.ch-highed').value, lodging:r.querySelector('.ch-lodging').value, gender:r.querySelector('.cr-gender-seg button.active')?.dataset.gender||'boy' };
+          // 名字は入っているときだけ書き出す（共有3表には足さない＝'!sei' で自動往復する）
+          const cs = r.querySelector('.ch-sei');
+          if(cs && cs.value.trim()) o.sei = cs.value;
           // 生年月日は3つそろったときだけ書き出す（配列行は差分圧縮が効かないため、
           // 使っていない顧客の共有データを無駄に伸ばさない＝LINEでのリンク切れ対策）
           const by=r.querySelector('.ch-b-y'), bm=r.querySelector('.ch-b-m'), bd=r.querySelector('.ch-b-d'), be=r.querySelector('.ch-b-era');
@@ -11207,10 +11422,20 @@
       ['dansin-type-h','dansin-type-w'].forEach(id=>{ const el=$(id); if(el) el.value='general'; });   // 団信タイプも同様にリセット
       // 生年月日も同様。localStorage の保存読込は fields の埋め戻しが無いため、
       // これが無いと前のお客様の生年月日が残り、年齢欄と食い違って「◯歳に更新」が出る
-      ['h-b-era','w-b-era'].forEach(id=>{ const el=$(id); if(el) el.value='seireki'; });
       ['h-b-y','h-b-m','h-b-d','w-b-y','w-b-m','w-b-d'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+      // 名字も同様に消してから復元する（消さないと前のお客様の名字がお子さまの欄へ自動で入る）
+      ['h-sei','w-sei'].forEach(id=>{ const el=$(id); if(el){ el.value=''; el.dataset.seiAuto=''; } });
+      /* 生年月日は「元号＋その元号の年」から西暦のプルダウンへ変わった（2026-08-19）。
+         旧データはここで西暦に直してから流し込む（直さないと選択肢に無い値になり生年月日が消える） */
+      const bf = s.fields || {};
+      ['h','w'].forEach(function(pf){
+        const e = bf[pf+'-b-era'], by = parseInt(bf[pf+'-b-y'], 10);
+        if(e && e !== 'seireki' && by > 0) bf[pf+'-b-y'] = String(eraToSeireki(e, by));
+        delete bf[pf+'-b-era'];
+      });
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy'),
-        (c.bY ? { era:c.bEra, y:c.bY, m:c.bM, d:c.bD } : null)));
+        (c.bY ? { y:((c.bEra && c.bEra !== 'seireki') ? String(eraToSeireki(c.bEra, parseInt(c.bY,10))) : c.bY), m:c.bM, d:c.bD } : null),
+        c.sei || ''));
       (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
@@ -11225,6 +11450,8 @@
       });
       setHokenMode(s.hokenMode||'detail');   // 旧保存データはモード情報なし＝既定に戻す
       Object.entries(s.fields||{}).forEach(([id,val])=>{ if(id==='wife-worklife') return; /* 妻の働き方はプラン共通（現状⇔将来で切り替えない）*/ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!val; else el.value=val; });
+      seiSplitAll();   // 旧データ（お名前欄に姓名をまとめて入れていた分）を名字・名前に分ける
+      seiSync();       // ご主人の名字を、空のままの奥様・お子さまの欄へ入れる
       if(s.house) setHouse(s.house);
       // 【一条フック】住宅の性能タイプ・比較レベルを復元（fieldsのZEH値より後で見た目のみ整える。値はfieldsを尊重）
       if(s.ichijoHorizon && ichijoHorizonSeg){ ichijoHorizon = (s.ichijoHorizon==='end') ? 'end' : '35'; [...ichijoHorizonSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.ichorizon===ichijoHorizon)); const cw=$('ic-horizon-custom-wrap'); if(cw) cw.classList.add('hidden'); }   // 【一条フック】比較期間の復元（旧'30'・customは既定35に寄せる）
@@ -12067,7 +12294,7 @@
         // 同じタブでの再読込み用（30分で失効。タブを閉じても消える）
         try{ sessionStorage.setItem(UNLOCK_KEY, JSON.stringify({ fp:shareFp, pass, code, at:Date.now() })); }catch(e){}
 
-        const nm = ($('h-name')?.value||'').trim();
+        const nm = famName();   // ご一家のページなので名字でお呼びする
         const hello = $('cust-hello');
         if(hello) hello.textContent = nm ? `${nm}様 専用ページ` : 'お客様専用ページ';
         const bar = $('customer-bar'); if(bar) bar.classList.remove('hidden');
@@ -12195,7 +12422,7 @@
         try{
           const c = await encodeSharePlans(collectPlans(), sharePass);
           const url = SHARE_BASE_URL + '#open';
-          const nm = ($('h-name')?.value||'').trim();
+          const nm = famName();   // 名乗りは名字（例：山田です）
           const sbExp = expiryInfo(Date.now() + SHARE_TTL_MS);
           $('sendback-code').value = c;
           $('sendback-msg').value =

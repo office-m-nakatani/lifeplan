@@ -2453,9 +2453,7 @@
             <span>編集中の資料：<strong id="current-save-name"></strong></span>
             <button class="btn btn-primary btn-sm" id="save-overwrite"><i class="fa-solid fa-pen-to-square"></i> 上書き保存</button>
           </div>
-          <div class="save-row" style="margin-top:10px;">
-            <button class="btn btn-primary btn-sm btn-full" id="open-share" type="button"><i class="fa-solid fa-share-nodes"></i> お客様にこの内容を共有する</button>
-          </div>
+          <!-- 【削除 2026-08-18】共有ボタン（ユーザー指示：上の操作バー「お客様に共有」と重複するため1つに） -->
           <p class="at-note">保存したデータは<strong>ログイン中のアカウントごと</strong>に、このパソコン（ブラウザ）へ記録されます（他のアカウントからは見えません）。下の一覧から読み込んで続きを作成できます。<br>
             <b>ブラウザのデータを消すと保存も消えます。</b>「バックアップ」で定期的にJSONファイルへ書き出してください。</p>
           <div class="save-row" style="gap:8px; margin-bottom:10px;">
@@ -2580,7 +2578,7 @@
       </div>
       <div class="modal-body">
         <div id="reserve-form-wrap">
-          <p class="at-note">保険・NISA・iDeCo・相続・住宅など、<b>FP資格を持つ担当者（Office-M・生命保険募集人）が無料</b>でご相談に応じます。ご相談内容によっては具体的な保険商品のご案内を行う場合があります。下記をご記入のうえ送信してください。</p>
+          <p class="at-note">保険・NISA・iDeCo・相続・住宅など、<b>FP資格を持つ担当者（Office-M・生命保険募集人）が無料</b>でご相談に応じます。ご相談内容によっては具体的な保険商品のご案内を行う場合があります。下記をご記入のうえ送信してください。<br><span style="font-size:.86em; opacity:.85;">当事務所は税理士事務所を母体とするFP事務所です。税金・相続のご相談は、連携する税理士へそのままお繋ぎできます。</span></p>
           <div class="field"><label>お名前 <span class="req">*</span></label><input type="text" id="rv-name" placeholder="山田 太郎"></div>
           <div class="field"><label>ご連絡先（メール または 電話）<span class="req">*</span></label><input type="text" id="rv-contact" placeholder="example@mail.com ／ 090-0000-0000"></div>
           <div class="field"><label>ご相談内容 <span class="req">*</span></label>
@@ -2792,7 +2790,7 @@
           <li><b>制度・知識の最終更新：2026年8月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金、一条工務店の公表値・実例を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
-      <p style="margin-bottom:6px;"><b>本サイトは一条工務店株式会社の公式サイト・提携サイトではありません。</b>公表情報をもとに、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した非公式の試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<!-- 【一条フック】非公式・運営主体・利益相反の表示 --></p>
+      <p style="margin-bottom:6px;"><b>本サイトは一条工務店株式会社の公式サイト・提携サイトではありません。</b>公表情報をもとに、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した非公式の試算ツールです。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<!-- 【一条フック】非公式・運営主体・利益相反の表示 --><br><span style="font-size:.86em; opacity:.85;">当事務所は税理士事務所を母体とするFP事務所です。税務の個別のご相談・税務代理は、連携する税理士がお受けします（税理士業務は税理士が行います）。</span></p>
       <p class="no-print hidden" id="cust-advisor-wrap" style="margin-bottom:6px;"><button type="button" id="cust-advisor" class="cust-advisor-link">（担当者の方へ）このリンクを担当者として開く</button></p>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
@@ -5742,6 +5740,26 @@
                     `正確な税額計算や有利な受け取り方は、税理士に相談すると安心です。` ] });
       }
 
+      /* ── 相続・贈与（2026-08-18追加・9枚目）──
+         家系図タブに資産の論点（ご実家・事業・農地等）があるときは注意トーンに。
+         親世代の資産はこのツールの試算に含まれない＝「対象外である」ことを正面から言う */
+      {
+        let famSz = false;
+        try{ if(window.lpFamFlags) famSz = !!window.lpFamFlags().souzoku; }catch(e){}   // famFlagsはドックIIFE内＝橋経由で読む
+        const heirs = (single ? 0 : 1) + p.children.length;
+        const waku = 500 * Math.max(heirs, 1);
+        const sum = famSz
+          ? `ご親族に<b>不動産・事業などの資産の論点</b>が記録されています。親御さま世代の資産は<b>この試算に含まれていません</b>。`
+          : `相続は「まだ先の話」のうちに形を整えるのが最も安く済みます。親御さま世代の資産は<b>この試算に含まれていません</b>。`;
+        cats.push({ key:'souzoku', label:'相続・贈与', icon:'fa-people-roof', color:'#a98abf', tone: famSz ? 'warn' : 'ok', sum,
+          good:[ `生命保険には<b>500万円×法定相続人</b>の非課税枠があります（この世帯構成なら目安 約${fmt(waku)}万円。受取人指定で「誰に渡すか」を契約で決められます）。`,
+                 `相続税の基礎控除は<b>3,000万円＋600万円×法定相続人</b>。まずは超えるかどうかの概算から始められます。`,
+                 `住宅資金の贈与非課税（質の高い住宅1,000万円）・暦年贈与110万円など、<b>生前に動くほど選択肢が多い</b>制度です。` ],
+          concern:[ famSz ? `ご実家の不動産の名義・おおよその評価・相続人の人数を、分かる範囲で次回までにご確認ください。` : `ご実家・親御さまの資産のお話が出たら、家系図タブに記録してご相談ください。`,
+                    `遺言が無い場合、不動産は分けにくく話し合いが難航しがちです。<b>納税資金（現金）</b>の準備も論点になります。`,
+                    `税額の計算・申告は税理士の業務です。当事務所は税理士事務所を母体としており、そのままお繋ぎできます。` ] });
+      }
+
       return cats;
     }
 
@@ -6281,7 +6299,7 @@
       if(!fab || !panel) return;
       const VC_MEMO_KEY = 'lifeplan_ichijo_vmemo_v1';
       const VC_UI_KEY   = 'lifeplan_ichijo_vcui_v1';     // ミニ/展開・選択タブ・自動反映のON/OFF
-      const MN_KEY      = 'lifeplan_ichijo_minutes_v1';  // 文字起こし＋概要（端末内・2週間）
+      const MN_KEY      = 'lifeplan_ichijo_minutes_v2';  // 文字起こし＋概要（端末内・お客様ごと・2週間）
       const NX_DONE_KEY = 'lifeplan_ichijo_next_done_v1';
       const MN_TTL      = 14*24*60*60*1000;
 
@@ -6794,8 +6812,16 @@
         mnUtter = []; mnT0 = 0; capInterim = null; nxLast = null;
         mnBig(false);
         if($('mn-out')) $('mn-out').innerHTML = '';
+        if($('mn-attendees')) $('mn-attendees').value = '';
+        if($('mn-next-date')) $('mn-next-date').value = '';
         if($('next-actions')) $('next-actions').innerHTML = '';
-        try{ localStorage.removeItem(MN_KEY); localStorage.removeItem(MN_KEY+'_prev'); localStorage.removeItem(NX_DONE_KEY); }catch(e){}
+        // 消すのは「このお客様の分」だけ（記録はお名前ごとに分かれている）。済チェックも同様
+        try{
+          mnWriteRec(null);
+          const d = nxDone(), sc = nxScope();
+          Object.keys(d).forEach(function(k){ if(k.indexOf(sc + '::') === 0) delete d[k]; });
+          localStorage.setItem(NX_DONE_KEY, JSON.stringify(d));
+        }catch(e){}
         // 家系図（ご本人以外の個人情報）もここで消す。押した人は「面談の記録を消した」と受け取るため
         famDrop(); famRender();
         vcCapRedraw(); setStatus('文字起こしを消しました'); vcSyncDockH();
@@ -7301,17 +7327,18 @@
         if($('mn-doc')){
           if(!confirm('手直しした内容は消えます。作り直しますか？（文字起こしは残るので、何度でも作り直せます）')) return;
           mnSave();   // 保存は800msのデバウンス。直前の手直しを取りこぼさないよう、退避の前に確定させる
-          try{ localStorage.setItem(MN_KEY+'_prev', localStorage.getItem(MN_KEY)||''); }catch(e){}   // 1世代だけ退避
+          // 1世代だけ退避（お客様ごとの記録の中に持つ＝他のお客様の下書きに戻らない）
+          try{ const cur = mnCurRec(); if(cur){ cur.prev = cur.html || ''; mnWriteRec(cur); } }catch(e){}
         }
         mnBig(false);   // モーダルに本文が出ている状態で作り直すと、置き場所がずれるので必ず戻す
         box.innerHTML = mnRenderHTML(mnBuild(mnUtter));
         mnSave(); vcSyncDockH();
       }
       function mnRestorePrev(){
-        let o = null;
-        try{ o = JSON.parse(localStorage.getItem(MN_KEY+'_prev')||'null'); }catch(e){}
-        if(!o || !o.html){ setStatus('戻せる下書きはありません'); return; }
-        if($('mn-out')) $('mn-out').innerHTML = o.html;
+        let prev = '';
+        try{ const cur = mnCurRec(); prev = (cur && cur.prev) || ''; }catch(e){}
+        if(!prev){ setStatus('戻せる下書きはありません'); return; }
+        if($('mn-out')) $('mn-out').innerHTML = prev;
         mnSave(); vcSyncDockH(); setStatus('1つ前の下書きに戻しました');
       }
 
@@ -7950,6 +7977,23 @@
         return { kaigo: care.length>0, souzoku: asset.length>0, intro: intro.length>0,
                  kaigoNames: care.map(function(p){ return p.name || p.rel; }).slice(0,3).join('・') || 'ご親族' };
       }
+      /* AI診断（相続・贈与カード）とPDFの宿題欄はドックの外にあるため、橋を架ける。
+         窓口はこの2つだけにし、famPeopleの生データは外へ出さない */
+      window.lpFamFlags = function(){ return famFlags(); };
+      window.lpCustTasks = function(){
+        try{
+          const res = rankNext(nextSignals(buildNextContext()), 5);
+          const out = [];
+          const take = function(list){
+            (list||[]).forEach(function(it){
+              it.tasks.forEach(function(t){ if(t.who==='cust') out.push({ text:t.text, due:t.due, title:it.title }); });
+            });
+          };
+          take(res.main); take(res.fam);
+          const nextMeet = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
+          return { tasks: out.slice(0, 6), next: nextMeet };
+        }catch(e){ return null; }
+      };
       function famText(){
         famLoad();
         if(!famPeople.length) return '';
@@ -8009,34 +8053,107 @@
         famDrop(); famRender(); setStatus('家系図を消しました');
       });
 
-      /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ---------- */
+      /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ----------
+         ★2026-08-18（ユーザー指摘）：ひとつのキーに入れっぱなしだと、朝に録音した内容が
+         別のお客様（深津様）のデータを開いても表示された。家系図（famBox）と同じ型で
+         **お客様のお名前ごとに分けて**保存する。
+         ・保存形式 { m: { 'ご本人名/配偶者名': {t,t0,u,html,att,nxt,prev} } }・期限はお客様ごとに2週間
+         ・お名前が空のあいだ（scope '/'）は sessionStorage＝タブを閉じると消える
+         　（localStorageに置くと翌日の別のお客様の画面に出る＝家系図で実証済みの事故）
+         ・お名前を打った瞬間だけ名無し分を引き継ぐ（mnAdopt）。お客様データの読み込み
+         　（lp-state-loaded）では引き継がない＝別のお客様に付け替わるため */
+      const MN_TMP_KEY = 'lifeplan_ichijo_minutes_tmp';
+      let mnScope = '/';          // いま画面に出ている記録の持ち主（mnSaveはこのスコープへ書く）
       let mnSaveTimer = null;
       function mnSaveSoon(){ if(mnSaveTimer) clearTimeout(mnSaveTimer); mnSaveTimer = setTimeout(mnSave, 800); }
+      function mnBoxAll(){
+        var o = null;
+        try{ o = JSON.parse(localStorage.getItem(MN_KEY)||'null'); }catch(e){ o = null; }
+        if(!o || typeof o !== 'object' || !o.m) return {};
+        const m = o.m; let changed = false;
+        Object.keys(m).forEach(function(k){
+          const b = m[k];
+          if(!b || typeof b !== 'object' || (Date.now() - (b.t||0) > MN_TTL)){ delete m[k]; changed = true; }
+        });
+        if(changed) mnBoxWrite(m);
+        return m;
+      }
+      function mnBoxWrite(m){
+        try{
+          if(Object.keys(m).length) localStorage.setItem(MN_KEY, JSON.stringify({ m:m }));
+          else localStorage.removeItem(MN_KEY);
+        }catch(e){}
+      }
+      function mnTmpRead(){
+        try{ return JSON.parse(sessionStorage.getItem(MN_TMP_KEY)||'null'); }catch(e){ return null; }
+      }
+      function mnTmpWrite(rec){
+        try{
+          if(rec) sessionStorage.setItem(MN_TMP_KEY, JSON.stringify(rec));
+          else sessionStorage.removeItem(MN_TMP_KEY);
+        }catch(e){}
+      }
+      function mnCurRec(){
+        return (mnScope === '/') ? mnTmpRead() : (mnBoxAll()[mnScope] || null);
+      }
+      function mnWriteRec(rec){
+        if(mnScope === '/'){ mnTmpWrite(rec); return; }
+        const m = mnBoxAll();
+        if(rec) m[mnScope] = rec; else delete m[mnScope];
+        mnBoxWrite(m);
+      }
       function mnSave(){
         try{
           const doc = $('mn-doc');
           // 「大きく開く」中は本文がモーダル側にいる。#mn-out 固定で読むと空を書き込み議事録が消える
           const holder = doc ? doc.parentElement : $('mn-out');
-          localStorage.setItem(MN_KEY, JSON.stringify({
+          const old = mnCurRec();
+          mnWriteRec({
             t: Date.now(), t0: mnT0,
             u: mnUtter.slice(-1200),
             html: holder ? holder.innerHTML : '',
             att: ($('mn-attendees') && $('mn-attendees').value) || '',
-            nxt: ($('mn-next-date') && $('mn-next-date').value) || ''
-          }));
+            nxt: ($('mn-next-date') && $('mn-next-date').value) || '',
+            prev: (old && old.prev) || ''
+          });
         }catch(e){}   // 容量オーバー時は保存しないだけ（顧客データの保存を巻き添えにしない）
       }
+      // 画面をいまのスコープの記録に入れ替える（無ければ空にする）
       function mnRestore(){
-        let o = null;
-        try{ o = JSON.parse(localStorage.getItem(MN_KEY)||'null'); }catch(e){ o = null; }
-        if(!o){ vcCapRedraw(); return; }
-        if(Date.now() - (o.t||0) > MN_TTL){ try{ localStorage.removeItem(MN_KEY); }catch(e){} vcCapRedraw(); return; }
-        mnUtter = Array.isArray(o.u) ? o.u : [];
-        mnT0 = o.t0 || 0;
-        if(o.html && $('mn-out')) $('mn-out').innerHTML = o.html;
-        if(o.att && $('mn-attendees')) $('mn-attendees').value = o.att;
-        if(o.nxt && $('mn-next-date')) $('mn-next-date').value = o.nxt;
+        const o = mnCurRec();
+        mnUtter = (o && Array.isArray(o.u)) ? o.u : [];
+        mnT0 = (o && o.t0) || 0;
+        capInterim = null; nxLast = null;
+        if($('mn-out')) $('mn-out').innerHTML = (o && o.html) || '';
+        if($('mn-attendees')) $('mn-attendees').value = (o && o.att) || '';
+        if($('mn-next-date')) $('mn-next-date').value = (o && o.nxt) || '';
+        if($('next-actions')) $('next-actions').innerHTML = '';
+        if($('nx-plan')) $('nx-plan').innerHTML = '';
+        if($('vc-applied')){ $('vc-applied').hidden = true; $('vc-applied').innerHTML = ''; }
         vcCapRedraw();
+      }
+      // 名無しのまま録った分は、お名前を打った瞬間だけその方へ引き継ぐ（移動・1回だけ）
+      function mnAdopt(){
+        if(mnScope === '/') return;
+        const tmp = mnTmpRead(); if(!tmp) return;
+        const hasContent = (Array.isArray(tmp.u) && tmp.u.length) || tmp.html;
+        if(!hasContent){ mnTmpWrite(null); return; }
+        const m = mnBoxAll();
+        if(m[mnScope]) return;   // すでにその方の記録があるときは混ぜない
+        tmp.t = Date.now(); m[mnScope] = tmp;
+        mnBoxWrite(m); mnTmpWrite(null);
+      }
+      /* お名前が変わったとき／お客様データを読み込んだときの入れ替え。
+         保留中の保存（デバウンス）を**前のお客様のスコープで**確定させてから切り替える
+         （先にスコープを変えると、前のお客様の記録が次のお客様に書き込まれる） */
+      function mnSwitchScope(adopt){
+        const ns = nxScope();
+        if(ns === mnScope) return;
+        if(mnSaveTimer){ clearTimeout(mnSaveTimer); mnSaveTimer = null; mnSave(); }
+        mnScope = ns;
+        if(adopt) mnAdopt();
+        mnRestore();
+        if(recWanted || recOn) vcStopRec();   // 録音をまたいで別のお客様に文字起こしが続かないように
       }
 
       /* ---------- ドックの表示モード・タブ・高さ ---------- */
@@ -8137,6 +8254,9 @@
           + (point? '<p class="np-point"><span class="np-k">提案の質を上げる一言：</span>' + point + '</p>' : '')
           + '</div>';
       }
+      /* 【旧版・未使用 2026-08-18】商品ごとの一般論だったため、ユーザー指示で
+         「三大資金＋その他の懸念を、この家庭の実数でどうカバーするか」の新版（下）に置き換え。
+         同名の function 宣言は後に書いたものが有効になるため、この旧版は呼ばれない */
       function planBuild(){
         let c = null, fam = { kaigo:false, souzoku:false, intro:false };
         try{ c = buildNextContext(); }catch(e){ return '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; }
@@ -8231,6 +8351,118 @@
         const foot = '<p class="np-note"><i class="fa-solid fa-lock"></i> このメモは担当者の検討用です。お客様にそのまま見せる・渡すことはしないでください（お客様の画面・PDF・印刷・共有リンクには表示されません）。</p>';
         return goal + rr + pr + tot + foot;
       }
+
+      /* ============================================================
+         提案の検討メモ・新版（2026-08-18 ユーザー指示）
+         人生の三大資金（教育・住宅・老後）を「この家庭の実数」でどうカバーするかがメイン。
+         その他の懸念（万一の保障・相続・介護・手元資金）がある場合だけ追記する。
+         商品ごとのメリット・デメリットの一覧にはしない。数字はすべて画面の試算から取る。
+         想定利回りは3%（目安）で統一し、必ず「運用実績・為替で変動」を併記する。 */
+      function planFv(man, years){        // 月man万円をR%で積み立てた将来価値（万円）
+        const r = 0.03/12, n = Math.max(Math.round(years*12), 0);
+        if(!n) return 0; return man * ((Math.pow(1+r, n) - 1) / r);
+      }
+      function planNeedM(target, years){  // 目標target万円に必要な月額（万円・R%想定）
+        const r = 0.03/12, n = Math.max(Math.round(years*12), 1);
+        const f = (Math.pow(1+r, n) - 1) / r;
+        return f > 0 ? Math.round(target / f * 10) / 10 : 0;
+      }
+      function planBuild(){
+        let c = null, fam = { kaigo:false, souzoku:false, intro:false };
+        try{ c = buildNextContext(); }catch(e){ return '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; }
+        try{ fam = famFlags(); }catch(e){}
+        const p = c.p;
+        let no = 0;
+        const sec = function(t){ no++; return '<div class="np-sec">' + no + '. ' + t + '</div>'; };
+        let h = '';
+
+        /* ---- 三大資金① 教育資金 ---- */
+        if(p.children.length && p.eduRemain > 0){
+          let rows = '';
+          p.eduByChild.forEach(function(x){
+            if(x.total <= 0) return;
+            const yrsU = Math.max(18 - x.age, 1);
+            rows += '・<b>' + esc(x.name || 'お子さま') + '</b>（' + x.age + '歳）：これから約<b>' + fmt(x.total) + '万円</b>。大学入学まで約' + yrsU + '年。'
+              + 'NISAなら<b>月' + planNeedM(x.total, yrsU) + '万円</b>（3%想定）で18歳時に届く計算（月1万円なら約' + fmt(Math.round(planFv(1, yrsU))) + '万円）。<br>';
+          });
+          h += sec('教育資金（合計 約' + fmt(p.eduRemain) + '万円）')
+            + '<div class="np-item"><p>' + rows + '</p>'
+            + '<p><span class="np-k">カバーの設計：</span><b>NISA（増やす担当）×変額養老（止まらない担当）の二本立て</b>。'
+            + 'チューリッヒの変額養老は<b>満期を大学入学の年に合わせ</b>、目標の土台部分（例：入学金＋初年度分）を担当させる。'
+            + 'NISAとの本質的な違いは<b>親に万一があっても積立が止まらない</b>こと（払込免除・死亡保障）——ここだけは運用では代替できない。'
+            + '私立か公立か迷っている段階なら、<b>差額分だけ</b>を保険側で固定するのも型。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>変額の満期金・解約返戻金は運用実績で変動し最低保証なし（死亡保険金には最低保証）・保険関係費。NISAは値動きあり・保障なし。<b>進学直前の2〜3年は値動きのない置き場所へ移す出口</b>まで提案書に書く。3%は目安であり保証しない。</p></div>';
+        }
+
+        /* ---- 三大資金② 住宅資金（ローン残債と完済設計） ---- */
+        const sums = (PLANS[PLANS.active] && PLANS[PLANS.active].sum) || PLANS.genjo.sum;
+        const r60 = (typeof sumAt === 'function' && sums) ? sumAt(sums, 60) : null;
+        const r65 = (typeof sumAt === 'function' && sums) ? sumAt(sums, 65) : null;
+        const bal60 = (r60 && r60.ds) ? (r60.ds.h + r60.ds.w) : 0;
+        const bal65 = (r65 && r65.ds) ? (r65.ds.h + r65.ds.w) : 0;
+        if(c.loanBal > 0){
+          h += sec('住宅資金（いまの残債 約' + fmt(c.loanBal) + '万円）')
+            + '<div class="np-item"><p>この試算では、残債は<b>60歳時点 約' + fmt(bal60) + '万円／65歳時点 約' + fmt(bal65) + '万円</b>。</p>'
+            + '<p><span class="np-k">カバーの設計：</span>繰上げ返済で手元の現金を減らすのではなく、<b>マニュライフの一時払い終身に置いて「完済原資を運用で育てる」</b>設計。'
+            + '60代の残債 約' + fmt(bal60) + '万円に対し、同程度の一時払いを置けば<b>死亡保障を持ちながら</b>完済時期を自分で選べる。'
+            + '万一のときは<b>団信で残債が消え、保険金はそのまま遺る</b>＝繰上げ返済に現金を使い切った場合には無い二重の備えになる。外貨建てなら予定利率は高い分、為替で円換算額が変動する。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>一時払いは流動性が下がり、早期解約は解約控除・MVAで元本割れの期間がある。外貨型は為替リスク・為替手数料。金利上昇局面では繰上げ返済の利息軽減が勝つ場合もある＝<b>ローン金利と運用利回りの比較表</b>を必ず添える。</p></div>';
+        }
+
+        /* ---- 三大資金③ 老後資金 ---- */
+        {
+          const yrs65 = Math.max(65 - p.hAge, 1);
+          const idecoFv = Math.round(planFv(6.2, yrs65));
+          const nisaFv  = Math.round(planFv(3, yrs65));
+          h += sec('老後資金' + (p.depletion ? '（' + esc(hNameH()) + ' ' + p.depletion.hAge + '歳ごろに資金不足の試算）' : ''))
+            + '<div class="np-item"><p>65歳まで約<b>' + yrs65 + '年</b>。'
+            + 'iDeCoは<b>月6.2万円の満額</b>（2026年12月拠出分から）なら3%想定で約<b>' + fmt(idecoFv) + '万円</b>＋掛金全額が所得控除。'
+            + 'NISA月3万円なら約<b>' + fmt(nisaFv) + '万円</b>。</p>'
+            + '<p><span class="np-k">カバーの設計：</span>順番は<b>①iDeCo（節税が確実な分から）→②NISA→③保険</b>。'
+            + '保険の出番は「<b>受取額が読める枠</b>」（円建て個人年金）と「<b>退職金・満期金の受け皿</b>」（一時払い終身・外貨建て）。'
+            + 'ねんきん定期便と退職金見込みを宿題にすると、受け皿の話が次回面談で自然に始まる。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>iDeCoは60歳まで引き出せない。3%は目安で保証されない。外貨建て・変額は受取額が為替・運用実績で変動。年金の実額は年金事務所で確認。</p></div>';
+        }
+
+        /* ---- 土台：万一の保障（三大資金を守る） ---- */
+        if(c.n && (c.n.h.need > 0 || (!p.single && c.n.w.need > 0))){
+          const who = [c.n.h.need>0 ? esc(hNameH())+'に万一：不足 約<b>'+fmt(c.n.h.need)+'万円</b>' : '',
+                       (!p.single && c.n.w.need>0) ? esc(wNameH())+'に万一：不足 約<b>'+fmt(c.n.w.need)+'万円</b>' : ''].filter(Boolean).join('／');
+          h += sec('三大資金を守る土台（万一の保障）')
+            + '<div class="np-item"><p>' + who + '。上の教育・住宅・老後の計画はすべて<b>ご夫婦が働き続けられる前提</b>＝この不足を埋めないと三大資金の計画ごと崩れる。</p>'
+            + '<p><span class="np-k">カバーの設計：</span>期間の穴は<b>収入保障</b>（末子独立まで・割安）、一生涯の整理資金は<b>終身</b>の2階建て。'
+            + '死亡保障が決まったら「生きて働けない期間」を<b>チューリッヒの医療・就業不能</b>で埋めて世帯の保障図を完成させる。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>掛け捨ては戻らない。終身は早期解約で元本割れ。高額療養費・傷病手当金との重複。必要保障額を超える提案はしない。</p></div>';
+        }
+
+        /* ---- その他の懸念（あるときだけ） ---- */
+        {
+          let o = '';
+          const heirs = (p.single ? 0 : 1) + p.children.length;
+          if(fam.souzoku || p.hAge >= 55){
+            o += '・<b>相続</b>' + (fam.souzoku ? '（家系図に資産の論点あり）' : '') + '：生命保険の非課税枠は<b>500万円×法定相続人＝この世帯なら約' + fmt(500*Math.max(heirs,1)) + '万円</b>。'
+               + 'マニュライフの一時払い終身なら、受取人指定で「誰に渡すか」を契約で決めながら非課税枠を使える。親世代の資産の話が出たら、ご両親を交えた面談の入口（紹介にもつながる）。<br>';
+          }
+          if(fam.kaigo) o += '・<b>介護</b>：家系図に介護・お体の記録あり。費用の負担者と公的介護保険の範囲を次回までに確認。<br>';
+          if(p.cashNow >= Math.max(c.defense * 2, 1000)){
+            o += '・<b>手元資金の置き場所</b>：預貯金 約' + fmt(p.cashNow) + '万円は生活防衛資金（約' + fmt(c.defense) + '万円）を大きく超える。'
+               + '「守るお金・使うお金・当面使わないお金」に色分けし、当面使わない分だけ一時払い・NISAへ。<br>';
+          }
+          if(o) h += sec('その他の懸念')
+            + '<div class="np-item"><p>' + o + '</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>一時払いは流動性低下・元本割れの期間・（外貨型は）為替。税額の判断は連携する税理士に確認（当事務所の母体）。</p></div>';
+        }
+
+        /* ---- 共通の締め ---- */
+        h += '<p class="np-note">※ 金額はすべて<b>いまの画面の試算</b>から取った概算・3%は目安の利回りです（保証しない・前提が変われば変わる）。'
+          + '商品名のご案内は<b>お客様の意向確認後</b>、最新の募集資料・契約締結前交付書面にもとづいて。'
+          + '乗合代理店として特定商品を勧めるときは<b>比較可能な同種商品の概要提示、または推奨理由・基準の説明までセット</b>（保険業法294条の3）。</p>'
+          + '<div class="np-item"><p><span class="np-k">TOTの型：</span>三大資金は<b>1枚の図で同時に見せる</b>（教育・住宅・老後を別々に売らない）。'
+          + '運用（NISA・iDeCo）で足りる部分は運用に譲り、<b>保険は「運用では代替できない仕事」</b>（積立が止まらない・受取額が読める・受取人を決められる・保障を持ちながら育てる）にだけ使う——この線引きを自分から言えるのが信頼＝結果として世帯全体の設計を任される。'
+          + '増額提案は年1回の定点確認の場で。<b>保険料を増やすこと自体を目的にしない</b>（意向把握義務・保険業法294条の2）。</p></div>'
+          + '<p class="np-note"><i class="fa-solid fa-lock"></i> このメモは担当者の検討用です。お客様にそのまま見せる・渡すことはしないでください（お客様の画面・PDF・印刷・共有リンクには表示されません）。</p>';
+        return h;
+      }
       function planToText(){
         const box = $('nx-plan');
         if(!box || !box.innerText.trim()) return '';
@@ -8311,6 +8543,16 @@
         try{ ui = JSON.parse(localStorage.getItem(VC_UI_KEY)||'null'); }catch(e){}
         if(ui && $('vc-auto')) $('vc-auto').checked = (ui.auto !== 0);
         if($('vc-show-cap')) $('vc-show-cap').checked = !!(ui && ui.cap === 1);   // 既定は非表示
+        /* 旧形式（v1＝お客様で分けていない1つの記録）は、誰の分か分からないので
+           「名無しの箱（このタブ限り）」へ移す。お名前を打てばその方へ引き継げる。
+           localStorageに置き直すと翌日の別のお客様の画面に出るため、ここには残さない */
+        try{
+          const v1 = JSON.parse(localStorage.getItem('lifeplan_ichijo_minutes_v1')||'null');
+          if(v1 && typeof v1 === 'object' && (Date.now() - (v1.t||0) <= MN_TTL) && !mnTmpRead()){ v1.prev = ''; mnTmpWrite(v1); }
+          localStorage.removeItem('lifeplan_ichijo_minutes_v1');
+          localStorage.removeItem('lifeplan_ichijo_minutes_v1_prev');
+        }catch(e){}
+        mnScope = nxScope();
         mnRestore();
         vcSetMode((ui && ui.m==='open') ? 'open' : 'mini');
         vcSetTab((ui && ui.tab) || 'cap');
@@ -8319,11 +8561,17 @@
       nextWatchInputs();
       renderVcMemos();
       famLoad();
-      /* お客様データ・共有リンクを読み込んだら、家系図を「そのお客様の分」に出し直す。
+      /* お客様データ・共有リンクを読み込んだら、家系図・音声メモを「そのお客様の分」に出し直す。
          ドックは別のIIFEで外から関数を呼べないため、applyPlans() からのイベントで受ける */
-      document.addEventListener('lp-state-loaded', function(){ if($('vc-pane-fam')) famRender(); });   // famAdoptは呼ばない
+      document.addEventListener('lp-state-loaded', function(){
+        mnSwitchScope(false);                     // adoptしない＝名無しの録音を読み込んだお客様に付け替えない
+        if($('vc-pane-fam')) famRender();
+      });
       ['h-name','w-name'].forEach(function(id){
-        if($(id)) $(id).addEventListener('change', function(){ famAdopt(); if($('vc-pane-fam')) famRender(); });
+        if($(id)) $(id).addEventListener('change', function(){
+          famAdopt(); if($('vc-pane-fam')) famRender();
+          mnSwitchScope(true);                    // 手で名前を打ったときだけ、名無しの録音を引き継ぐ
+        });
       });
       vcFabUI();
       vcSyncDockH();
@@ -8464,6 +8712,25 @@
     function enterPdfMode(){
       buildPdfExtras();
       buildAllAdviceForPdf();            // AI診断を全カテゴリ展開
+      /* お客様の宿題（次の一手のcustタスク）と次回面談をPDFに同梱する（2026-08-18追加）。
+         持ち帰り資料に「自分が何をするか」が書いてあると、次回面談までの行動が止まらない。
+         文面はNEXT_RULES由来＝NEXT_NG_RE検査済み・担当者用の検討メモ（nx-plan）は入れない */
+      const resEl = $('results');
+      if(resEl && !$('pdf-tasks') && window.lpCustTasks){
+        const data = window.lpCustTasks();
+        if(data && (data.tasks.length || data.next)){
+          const d = document.createElement('div');
+          d.id = 'pdf-tasks'; d.className = 'card';
+          let hh = '<div class="card-title"><i class="fa-solid fa-list-check"></i> 次回までにご用意・ご確認いただきたいこと</div>';
+          if(data.next) hh += '<p style="font-weight:800; margin-bottom:8px;">次回面談：' + esc(data.next) + '</p>';
+          hh += data.tasks.map(function(t){
+            return '<p style="margin:0 0 9px; padding-left:1.2em; text-indent:-1.2em;">□ ' + esc(t.text) + '<span style="color:#5b6b7d; font-size:.82em;">（' + esc(t.title) + '・' + esc(t.due) + '）</span></p>';
+          }).join('');
+          hh += '<p style="font-size:.72rem; color:#5b6b7d;">※ 本日ご入力いただいた条件による試算にもとづく確認事項です。特定の保険商品・金融商品をおすすめするものではありません。</p>';
+          d.innerHTML = hh;
+          resEl.appendChild(d);
+        }
+      }
       // 免責・運営主体をPDF本文にも同梱（打消し表示は強調表示と同じ媒体内に必要。PDFは独り歩きするため）
       const res = $('results');
       if(res && !$('pdf-disclaimer')){
@@ -8483,6 +8750,7 @@
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
       removePdfExtras();
+      const pt = $('pdf-tasks'); if(pt) pt.remove();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
       document.querySelectorAll('details.ic-fold').forEach(d=>{ d.open = d.dataset.wasOpen === '1'; });
       try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(ichijoChart) ichijoChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}

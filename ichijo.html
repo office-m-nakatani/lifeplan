@@ -173,20 +173,21 @@
     .kt-scroll{ overflow-x:auto; padding-bottom:4px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
     .kt-canvas{ position:relative; margin:0 auto; }
     .kt-svg{ position:absolute; left:0; top:0; pointer-events:none; }
-    .kt-svg line{ stroke:#9db3c4; stroke-width:1.6; }
+    .kt-svg line{ stroke:#9db3c4; stroke-width:2; }
     .kt-editors{ margin-top:8px; padding:9px 11px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
     .kt-ed-t{ font-size:.74rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px; }
-    .kt-card{ position:absolute; display:flex; flex-direction:column; justify-content:center; gap:2px; padding:6px 8px; border-radius:10px;
-      background:#fff; border:1.5px solid var(--line); font-size:.78rem; line-height:1.35; text-align:center; box-sizing:border-box; }
+    .kt-hint{ display:block; margin:6px 2px 0; }
+    .kt-card{ position:absolute; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:8px 10px; border-radius:12px;
+      background:#fff; border:1.5px solid var(--line); font-size:.9rem; line-height:1.4; text-align:center; box-sizing:border-box; }
     .kt-card.is-dim{ background:var(--bg-soft); color:var(--ink-soft); border-style:dashed; }
     .kt-card.is-extra{ border-color:var(--blue-pale2); }
-    .kt-card b{ font-size:.85rem; }
-    .kt-card .kt-sub{ color:var(--ink-soft); font-size:.71rem; }
+    .kt-card b{ font-size:1rem; line-height:1.3; }
+    .kt-card .kt-sub{ color:var(--ink-soft); font-size:.78rem; }
     .kt-card.is-self{ border-color:var(--blue-deep); background:var(--blue-pale); }
     .kt-card.is-care{ border-color:var(--warn); background:var(--warn-pale); }
     .kt-card.is-gone{ opacity:.5; }
-    .kt-card.is-male{ border-left:4px solid #6ea8dc; }
-    .kt-card.is-female{ border-left:4px solid #e3899f; }
+    .kt-card.is-male{ border-left:5px solid #6ea8dc; }
+    .kt-card.is-female{ border-left:5px solid #e3899f; }
     .kt-del{ align-self:flex-start; border:none; background:none; cursor:pointer; color:var(--ink-soft); font-size:.72rem; padding:2px 0 0; }
     .kt-del:hover{ color:var(--bad); }
     .kt-empty{ font-size:.76rem; color:var(--ink-soft); }
@@ -4598,7 +4599,8 @@
          箱は絶対配置のHTML、線は背面のSVG。幅が足りないときは横スクロール。 */
       const single = isSingle();
       const ps = kaigoParents();
-      const BW = 104, BH = 52, GAP = 14, PITCH = BW + GAP, ROWH = 108, PAD = 10;
+      // 箱と行の大きさ（お名前が読みやすいように大きめに取る。ユーザー指示 2026-08-19）
+      const BW = 180, BH = 74, GAP = 18, PITCH = BW + GAP, ROWH = 144, PAD = 14;   // BWは「○○様のお父さま」が1行で入る幅
       const nodes = [], seg = [];                       // seg=線分 {x1,y1,x2,y2}
       const parentX = {};                               // 親の箱の左端X（上の世代のつなぎ先に使う）
       let kidXs = [];                                   // お子さまの箱の左端X（下の世代のつなぎ先に使う）
@@ -4645,8 +4647,15 @@
       const hSelfX = hXs[hO - 1];
       let wXs = [], wSelfX = null;
       if(!single){
-        cur += GAP;                                    // ご夫婦の間は少し広く
+        /* ご夫婦の間の空き。父母はそれぞれのごきょうだい全体の中央に左右へ広げて置くため、
+           ごきょうだいが少ないと**夫側の母と妻側の父が重なる**（1人ずつのとき実測で90px重なり、
+           「お母さま」が隠れていた）。父母4人が並ぶのに要る中心間距離から先に逆算して空ける */
         const wN = sibN('w'), wO = sibO('w');
+        const hMid = PAD + (hN - 1) * PITCH / 2 + BW / 2;          // 夫側の父母の中心
+        const need = PITCH + BW + GAP;                             // 父母が重ならない中心間距離
+        // wMid - hMid = hN*PITCH + gapExtra + (wN - hN)*PITCH/2 が need 以上になるように
+        const gapExtra = Math.max(GAP, need - hN * PITCH - (wN - hN) * PITCH / 2);
+        cur += gapExtra;
         for(let i = 1; i <= wN; i++){ wXs.push(cur); cur += PITCH; }
         wSelfX = wXs[wO - 1];
       }
@@ -4790,9 +4799,11 @@
       };
       tree.innerHTML =
         '<div class="kt-scroll"><div class="kt-canvas" style="width:'+totalW+'px; height:'+totalH+'px;">' + svg + boxes + '</div></div>'
+        + '<p class="hint kt-hint hidden">横に<b>スクロール</b>すると、ご家族全員をご覧いただけます。</p>'
         + '<div class="vc-tools" style="margin-top:8px;">' + upBtn('up','上の世代を追加（祖父母など）') + upBtn('down','下の世代を追加（お孫さまなど）') + '</div>'
         + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2, ktToOptions('up', p2.to)); }).join('') + '</div>' : '')
         + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2, ktToOptions('down', p2.to)); }).join('') + '</div>' : '');
+      ktHintSync();
       // ── リスクの見える化 ──
       const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
       if(!alive.length){
@@ -4809,6 +4820,15 @@
           + (x.level !== 'low' && x.fund === '未定' ? '<br>費用は<b>親ご本人の資産・年金から</b>が原則です。まず親御さまの年金月額と預貯金の把握から始めるのが定石です。' : '')
           + '</div>';
       }).join('');
+    }
+    /* 箱を大きくした分、スマホでは横にこぼれる。スクロールで見えることを伝える。
+       セクションが隠れているあいだは幅が 0 で判定できないので、
+       大きさが決まったとき（ResizeObserver）にも出し入れする */
+    function ktHintSync(){
+      const tree = document.getElementById('kaigo-tree'); if(!tree) return;
+      const sc = tree.querySelector('.kt-scroll'), hint = tree.querySelector('.kt-hint');
+      if(!sc || !hint) return;
+      hint.classList.toggle('hidden', !(sc.clientWidth > 0 && sc.scrollWidth > sc.clientWidth + 2));
     }
     // 介護欄の変更で家系図・リスクを描き直す（試算自体には影響しない欄なので専用リスナー）
     (function(){
@@ -4846,6 +4866,7 @@
       });
       // 家系図：上の世代・下の世代の追加／削除／編集（描き直しは値を書き戻してから）
       const treeEl = $('kaigo-tree');
+      if(treeEl && window.ResizeObserver){ new ResizeObserver(function(){ ktHintSync(); }).observe(treeEl); }
       if(treeEl){
         treeEl.addEventListener('click', function(e){
           const add = e.target.closest('[data-kt-add]');

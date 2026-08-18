@@ -885,9 +885,11 @@
          というユーザー指摘で廃止（点滅アニメーションも削除）。白文字とのコントラストは 8.3:1 */
       --vc-rec-on:#1d5c3f;
     }
-    /* 音声メモの入口は上の操作バー（保存・読み込みの右）。録音中はこのボタンが濃い緑になり経過時間を出す */
-    #vc-open-btn.rec-on{ background:var(--vc-rec-on); border-color:var(--vc-rec-on); color:#fff; font-variant-numeric:tabular-nums; }
-    #vc-open-btn.rec-on:hover{ background:#164a32; border-color:#164a32; }
+    /* 音声メモの入口は上の操作バー（保存・読み込みの右）。
+       録音中は「保存・読み込み」と同じ緑にする（濃い緑だと録音中だけ色が浮くため。ユーザー指示 2026-08-18）。
+       経過時間はボタンに出さない＝商談中に数字が目に入らないようにする */
+    #vc-open-btn.rec-on{ background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(63,157,122,.32); }
+    #vc-open-btn.rec-on:hover{ background:var(--blue-deep); border-color:var(--blue-deep); }
     /* 音声メモは全画面。開いている間はチャットFABを隠し、背面のスクロールも止める
        （背面が動くと、ドックの中をスクロールしたいのにページが動いてしまう） */
     body.vc-dock-on .chat-fab{ display:none !important; }
@@ -6515,10 +6517,11 @@
         if(!fab) return;
         const on = recWanted || recOn;
         fab.classList.toggle('rec-on', on);
-        const t = (on && mnT0) ? ' ' + vcTimeLabel(Date.now() - mnT0) : '';
-        fab.innerHTML = on
-          ? '<i class="fa-solid fa-microphone"></i> 録音中' + t
+        // 経過時間は出さない（ユーザー指示 2026-08-18）。毎秒の書き換えも避ける
+        const html = on
+          ? '<i class="fa-solid fa-microphone"></i> 録音中'
           : '<i class="fa-solid fa-microphone"></i> 音声メモ';
+        if(fab.innerHTML !== html) fab.innerHTML = html;
         fab.setAttribute('aria-label', on ? '録音中です。押すと音声メモを開きます' : '音声メモを開く');
       }
       function vcRecUI(on){

@@ -922,6 +922,15 @@
          --planbar-h にセット（バーはflex-wrapで高さが変わるため固定値にしない）。
          これが無いとプランバーがナビ1行目を覆い、家族・住まい等のボタンが押せなくなる（検証役検出） */
       body.tab-mode:not(.pdf-mode) #tool-nav{ position:sticky; top:var(--planbar-h, 84px); z-index:45; background:var(--bg); padding:8px 0 6px; }
+      /* ★2026-08-20（ユーザー指摘「文字がかぶっている」）：プランバーとナビはどちらも追従するが、
+         あいだに約14pxのすき間が開いていて、そこを本文が流れていく＝2本のバーに文字が挟まって
+         かぶって見える。バーの背景を上へ伸ばしてすき間をふさぐ（見た目の余白は変えない）。
+         プランバー自身の上（top:8px）にも同じすき間があるので、そちらもふさぐ */
+      body.tab-mode:not(.pdf-mode) #tool-nav::before,
+      body.tab-mode:not(.pdf-mode) .plan-wrap::before{
+        content:''; position:absolute; left:0; right:0; top:-24px; height:24px;
+        background:var(--bg); pointer-events:none;
+      }
       /* 追従中（nav-stuck）は「今いる側」の行だけ見せる（入力中は入力行のみ・結果中は結果行のみ＝ユーザー指示）。
          判定は #nav-sentinel（ナビ直前の高さ0の番兵）。
          ★2026-08-18：隠した行の空白の帯が残り「ご家族の基本情報・住まい等の見出しが読めない」（ユーザー指摘）。
@@ -1947,6 +1956,7 @@
                 <label>退職後の生活費（夫婦・月額）</label>
                 <div class="input-unit"><input type="number" id="e-retire-living" value="25" min="0" step="1"><span class="u">万円</span></div>
                 <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後／ゆとりある生活費は月35万円前後</span>
+                <span class="hint" id="retire-living-note" style="display:none;"></span>
               </div>
             </div>
           </div>
@@ -2646,7 +2656,7 @@
         <div class="sample-box">
           <div>
             <b>サンプルを表示</b>
-            <span>中谷太郎様ご一家（35歳・共働き・お子さま2人）の入力例です。<br>現状は賃貸のまま、将来は一条工務店の家を購入した場合で入っています。</span>
+            <span>田中太郎様ご一家（35歳・共働き・お子さま2人）の入力例です。<br>現状のままだと<b>72歳で資金がショート</b>、将来（一条工務店の家を購入＋積立の見直し）なら<b>100歳まで資金が続く</b>形にしてあります。</span>
           </div>
           <button class="btn btn-ghost btn-sm" id="sample-show" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> 表示する</button>
         </div>
@@ -3672,7 +3682,23 @@
       return sum;
     }
     // ④の一番上「毎月の生活費 合計」を更新（下の項目を入力すると自動反映。将来プランでは現状比も表示）
+    /* 「いまの生活費」と「退職後の生活費」の大小を見比べて、退職した年に支出が増える設定に
+       なっているときだけ注意を出す（二重計上ではなく“切替”なので、逆転していると
+       「退職したのに生活費が増える」グラフになって誤解を招く。ユーザー指摘 2026-08-20） */
+    function updateRetireLivingNote(){
+      const note = $('retire-living-note'); if(!note) return;
+      const now = readLivingMonthly(), ret = num('e-retire-living', 0);
+      if(ret > now && now > 0){
+        note.style.display = 'block';
+        note.innerHTML = `<b>いまの生活費（月${(Math.round(now*10)/10).toLocaleString('ja-JP')}万円）より高くなっています。</b>`
+          + `退職後は<b>この金額に置き換わる</b>（足し算ではありません）ので、このままだと退職した年から支出が増える試算になります。ご確認ください。`;
+      } else {
+        note.style.display = 'none';
+        note.innerHTML = '';
+      }
+    }
     function updateLivingTotal(){
+      try{ updateRetireLivingNote(); }catch(e){}
       const el = $('living-total'); if(!el) return;
       const t = readLivingMonthly();
       el.textContent = (Math.round(t*10)/10).toLocaleString('ja-JP');
@@ -5359,11 +5385,16 @@
 
         /* ---- 支出 ---- */
         let expense = 0;
-        // 生活費（退職後は老後生活費へ。インフレ反映）
-        const baseLiving = (hAge < hRetire ? livingAnnual : retireLivingAnnual) * inflF;
+        /* 生活費（退職後は老後生活費へ。インフレ反映）
+           ★2026-08-20：切替を「夫の退職」だけで判定していたため、奥様がまだ働いている期間まで
+           老後水準（夫婦2人ぶんの退職後の生活費）に落ちて、支出が過小に出ていた。
+           収入は夫婦それぞれの退職年齢で判定しているのに、支出だけ夫基準という非対称だった。
+           欄の名前も「退職後の生活費（夫婦・月額）」なので、ご夫婦とも退職したあとに切り替える */
+        const bothRetired = (hAge >= hRetire) && (single || wAge >= wRetire);
+        const baseLiving = (bothRetired ? retireLivingAnnual : livingAnnual) * inflF;
         expense += baseLiving;
         // 追加の生活費項目：退職前のみ。「○年後から○年間」の指定に対応（0＝ずっと＝退職まで）
-        if(hAge < hRetire){
+        if(!bothRetired){
           customExpenses.forEach(x=>{
             if(x.amount<=0) return;
             const st = x.start||0;
@@ -6261,15 +6292,18 @@
          「くらべる」画面がその場で成り立つようにしている
        ============================================================ */
     var INITIAL_STATE = null;
-    const SAMPLE_NAME = '中谷太郎様ご一家（サンプル）';
+    const SAMPLE_NAME = '田中太郎様ご一家（サンプル）';
+    /* 共通の入力（現状・将来どちらにも入れる） */
     const SAMPLE_FIELDS = {
-      'h-sei':'中谷', 'h-name':'太郎', 'h-age':'35', 'h-income':'560', 'h-raise':'1.5',
-      'h-retire':'65', 'h-bonus':'1200', 'h-b-y':'1991', 'h-b-m':'5', 'h-b-d':'20',
-      'w-sei':'中谷', 'w-name':'花子', 'w-age':'33', 'w-income':'320', 'w-raise':'0.8',
-      'w-retire':'65', 'w-bonus':'400', 'w-b-y':'1993', 'w-b-m':'8', 'w-b-d':'10',
-      'end-age':'100', 'inflation':'1.0', 'rent':'10.5',
-      'cash-on':true, 'cash':'420', 'pension-age':'65', 'pension-monthly':'22',
+      'h-sei':'田中', 'h-name':'太郎', 'h-age':'35', 'h-income':'520', 'h-raise':'1.5',
+      'h-retire':'65', 'h-bonus':'600', 'h-b-y':'1991', 'h-b-m':'5', 'h-b-d':'20',
+      'w-sei':'田中', 'w-name':'花子', 'w-age':'33', 'w-income':'260', 'w-raise':'0.8',
+      'w-retire':'65', 'w-bonus':'200', 'w-b-y':'1993', 'w-b-m':'8', 'w-b-d':'10',
+      'end-age':'100', 'inflation':'1.0', 'rent':'14',
+      'cash-on':true, 'cash':'1200', 'pension-age':'65', 'pension-monthly':'22',
       'ins-total-h':'2000', 'ins-total-w':'500',
+      'e-retire-living':'25',
+      'kasai-fire':'7', 'kasai-quake':'7',
       // 太郎様＝2人きょうだいの次男／花子様＝3人きょうだいの長女
       'kg-h-sibs':'2', 'kg-h-order':'2', 'kg-w-sibs':'3', 'kg-w-order':'1',
       'kg-extra-sibh':'[{"name":"一郎","age":"38"}]',
@@ -6280,25 +6314,47 @@
       'kg-wf-alive':'ご健在', 'kg-wf-age':'66', 'kg-wf-pref':'岡山県',
       'kg-wm-alive':'ご健在', 'kg-wm-age':'64', 'kg-wm-pref':'岡山県'
     };
+    /* 毎月の生活費。現状＝合計34.5万円、将来＝合計35.1万円
+       （一条の家で光熱費が下がり、保険を見直したぶんを食費・日用品にまわした形） */
+    const SAMPLE_LIVING_GENJO = {
+      'e-food':'7', 'e-eatout':'1.5', 'e-water':'1', 'e-elec':'1.5', 'e-gas':'1',
+      'e-daily':'2', 'e-cloth':'2', 'e-misc':'0', 'e-life':'3', 'e-nonlife':'1',
+      'e-car':'1.5', 'e-fuel':'1.5', 'e-shaken':'0.5', 'e-phone':'1.5', 'e-net':'0.5',
+      'e-pocket':'5', 'e-hobby':'2.5', 'e-other':'1.5'
+    };
+    const SAMPLE_LIVING_MIRAI = Object.assign({}, SAMPLE_LIVING_GENJO, {
+      'e-food':'10', 'e-eatout':'2', 'e-daily':'3',      // 食費まわりは増える
+      'e-water':'0.9', 'e-elec':'0.6', 'e-gas':'0.4',    // 一条の家で光熱費が下がる
+      'e-life':'1.5', 'e-nonlife':'0.2'                  // 保険の見直し
+    });
     const SAMPLE_CHILDREN = [
-      { name:'さくら', sei:'中谷', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'home',
+      { name:'さくら', sei:'田中', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'boarding',
         gender:'girl', bEra:'seireki', bY:'2020', bM:'4', bD:'5' },
-      { name:'そうた', sei:'中谷', age:'3', k12:'public', highEd:'kokuritsu_r', lodging:'home',
+      { name:'そうた', sei:'田中', age:'3', k12:'public', highEd:'kokuritsu_r', lodging:'home',
         gender:'boy',  bEra:'seireki', bY:'2023', bM:'3', bD:'3' }
     ];
+    /* 現状＝このままだと72歳で資金ショート／将来＝100歳まで資金が続く、になるよう金額を調整している
+       （ユーザー指示 2026-08-20。将来の打ち手＝一条の家を購入・68歳まで就労・NISA月6万＋iDeCo月2.3万） */
     function sampleState(kind){
       if(!INITIAL_STATE) return null;
+      const mirai = (kind === 'mirai');
       const s = JSON.parse(JSON.stringify(INITIAL_STATE));
-      Object.assign(s.fields, SAMPLE_FIELDS);
+      Object.assign(s.fields, SAMPLE_FIELDS, mirai ? SAMPLE_LIVING_MIRAI : SAMPLE_LIVING_GENJO);
+      if(mirai){
+        s.fields['h-retire'] = '68'; s.fields['w-retire'] = '68';   // 68歳まで就労
+        s.fields['w-income'] = '380';                               // 花子様がパート→正社員へ（手が離れたら）
+      }
       s.children = JSON.parse(JSON.stringify(SAMPLE_CHILDREN));
-      s.investments = [{ type:'nisa', name:'つみたてNISA', lump:'80',
-                         monthly:(kind === 'mirai' ? '5' : '3'), ret:'5',
-                         start:'35', end:'65', after:'continue', on:true }];
+      s.investments = mirai
+        ? [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'6',   ret:'5', start:'35', end:'68', after:'use', on:true },
+           { type:'ideco', name:'iDeCo',       lump:'0',  monthly:'2.3', ret:'5', start:'36', end:'65', after:'use', on:true }]
+        : [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'2',   ret:'5', start:'35', end:'65', after:'use', on:true }];
       s.hokenMode = 'simple';
       s.household = 'couple';
+      s.kasaiQuakeMode = 'applied';   // お見積りが割引適用済みの金額という前提
       // 現状＝賃貸のまま／将来＝一条工務店の家を購入
-      s.house = (kind === 'mirai') ? 'buy' : 'rent';
-      s.htype = (kind === 'mirai') ? 'ichijo' : 'normal';
+      s.house = mirai ? 'buy' : 'rent';
+      s.htype = mirai ? 'ichijo' : 'normal';
       return s;
     }
     function showSample(){
@@ -11774,7 +11830,7 @@
     function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
     if($('sample-show')) $('sample-show').addEventListener('click', ()=>{
-      if(!confirm('画面の入力内容を、サンプル（中谷太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
+      if(!confirm('画面の入力内容を、サンプル（田中太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
       if(!showSample()) return;
       setCurrentSave(null);            // サンプルは「編集中の資料」にしない（上書き保存で潰さないため）
       saveModal.hidden = true;

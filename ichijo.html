@@ -486,6 +486,8 @@
        tabular-nums：数字を等幅にして、表・KPIの桁が縦に揃うように */
     .kpi .k-value{ font-size:1.5rem; font-weight:900; color:var(--ink); margin-top:6px; font-family:"Montserrat","Noto Sans JP",sans-serif; word-break:keep-all; font-variant-numeric:tabular-nums; }
     .cf td, .cf th, .kpi-diff, .lt-value, .fdiff{ font-variant-numeric:tabular-nums; }
+    /* 死亡保障の内訳（生命保険／団信）。合計は太字のままにして、内訳だけ細く小さく */
+    .hkd-bd{ display:inline-block; margin-top:2px; color:var(--ink-soft); font-weight:500; line-height:1.55; }
     .kpi .k-value small{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
     .kpi .k-sub{ font-size:.74rem; color:var(--ink-soft); margin-top:2px; }
     .kpi.accent-yellow{ background:var(--yellow-pale); border-color:#f3e3a9; }
@@ -2510,7 +2512,7 @@
             <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
             <p class="hint" style="display:block; margin-top:8px;">この金額は、「加入中の保険」で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
-            <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+            <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の<b>「生命保険」の行（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
         </div>
 
@@ -6103,7 +6105,10 @@
       const aEff = ga ? ga.hAge : a;
       const clampNote = (ga && ma && (a!==ga.hAge || a!==ma.hAge))
         ? `<p class="hint" style="margin-top:4px;">※ ご指定の${a}歳は試算範囲外のため、いちばん近い${aEff}歳${(ma.hAge!==aEff)?`（将来プランは${ma.hAge}歳）`:''}時点の値を表示しています。</p>` : '';
-      const cell = (t)=> t==null ? '—' : `${fmt(t.total)}${t.ds>0 ? `<br><small style="color:var(--ink-soft);">うち団信 ${fmt(t.ds)}</small>` : ''}`;
+      /* 内訳は「うち1行」ではなく、生命保険と団信を2行に分けて見せる
+         （ユーザー指示 2026-08-20。必要保障額と突き合わせるのは「生命保険」の行） */
+      const cell = (t)=> t==null ? '—'
+        : `${fmt(t.total)}${t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}</small>` : ''}`;
       // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);

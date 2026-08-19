@@ -1024,6 +1024,7 @@
       background:#fff; font-family:inherit; font-size:.7rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
     .ink-btn:hover{ background:var(--bg-soft); }
     /* 終了は「押し終わり」の操作なので、道具の選択より目立たせない */
+    .ink-btn.is-on{ background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 2px 6px rgba(63,157,122,.35); }
     .ink-btn.ink-done{ border-color:var(--blue-pale2); background:#fff; color:var(--blue-deep); }
     .ink-btn.ink-done:hover{ background:var(--blue-pale); }
     .ink-tip{ flex:1 1 100%; font-size:.62rem; color:var(--ink-soft); line-height:1.45; }
@@ -3015,14 +3016,16 @@
     <div class="ink-seg" id="ink-modes">
       <button type="button" class="ink-mode active" data-ink-mode="pen"><i class="fa-solid fa-pen"></i> ペン</button>
       <button type="button" class="ink-mode" data-ink-mode="fade"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="hl"><i class="fa-solid fa-highlighter"></i> 蛍光ペン</button>
       <button type="button" class="ink-mode" data-ink-mode="erase"><i class="fa-solid fa-eraser"></i> 消しゴム</button>
     </div>
+    <button type="button" class="ink-btn" id="ink-ruler" aria-pressed="false"><i class="fa-solid fa-ruler"></i> 定規</button>
     <div class="ink-colors" id="ink-colors"></div>
     <div class="ink-seg" id="ink-sizes"></div>
     <button type="button" class="ink-btn" id="ink-undo"><i class="fa-solid fa-rotate-left"></i> 1つ戻す</button>
     <button type="button" class="ink-btn" id="ink-clear"><i class="fa-solid fa-trash-can"></i> 全部消す</button>
     <button type="button" class="ink-btn ink-done" id="ink-off"><i class="fa-solid fa-check"></i> 書き込みを終了</button>
-    <span class="ink-tip">消えるペン＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
+    <span class="ink-tip">定規を押すと、ペン・消えるペン・蛍光ペンでまっすぐ引けます。消えるペン＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
   </div>
 
   <script>
@@ -12454,11 +12457,13 @@
       const btn = document.getElementById('ink-toggle');
       if(!cv || !bar || !btn) return;
       const ctx = cv.getContext('2d');
-      const COLORS = [['#e0483f','赤'], ['#0d6efd','青'], ['#2b3a34','黒']];
+      const PEN_COLORS = [['#e0483f','赤'], ['#0d6efd','青'], ['#2b3a34','黒']];
+      const HL_COLORS  = [['#ff4d94','ピンク'], ['#26c6f5','水色']];   // 蛍光ペンはこの2色
       const SIZES  = [['細',3], ['中',6], ['太',12]];
       const FADE_WAIT = 2000, FADE_TIME = 2500;   // 消えるペン：2秒待って、2.5秒かけてうっすら消える
       const ERASE_R = 12;                          // 消しゴムが「触れた」と見なす半径
-      let on = false, mode = 'pen', color = COLORS[0][0], size = 6;
+      let on = false, mode = 'pen', size = 6, rulerOn = false;
+      let color = PEN_COLORS[0][0], hlColor = HL_COLORS[0][0];   // 色は道具ごとに覚えておく
       let cur = null, erasing = false, raf = 0;
       /* 書き込みは**画面ごと**に分けて持つ（入力する／お金／家／万が一…）。
          ひとつにまとめると、別の画面へ移ったときに前の画面の線がそのまま残り、
@@ -12475,11 +12480,17 @@
         if(st.length > 40) st.shift();
       }
 
-      // 道具箱（色・太さ）を組み立てる
-      document.getElementById('ink-colors').innerHTML = COLORS.map(function(c, i){
-        return '<button type="button" class="ink-color'+(i===0?' active':'')+'" data-ink-color="'+c[0]+'" '
-             + 'title="'+c[1]+'" aria-label="'+c[1]+'" style="background:'+c[0]+';"></button>';
-      }).join('');
+      // 道具箱（色・太さ）を組み立てる。色は「いまの道具の色」だけを出す
+      const isHL = function(){ return mode === 'hl'; };
+      const curColor = function(){ return isHL() ? hlColor : color; };
+      function renderColors(){
+        const list = isHL() ? HL_COLORS : PEN_COLORS, now = curColor();
+        document.getElementById('ink-colors').innerHTML = list.map(function(c){
+          return '<button type="button" class="ink-color'+(c[0]===now?' active':'')+'" data-ink-color="'+c[0]+'" '
+               + 'title="'+c[1]+'" aria-label="'+c[1]+'" style="background:'+c[0]+';"></button>';
+        }).join('');
+      }
+      renderColors();
       document.getElementById('ink-sizes').innerHTML = SIZES.map(function(s){
         return '<button type="button" class="ink-size'+(s[1]===size?' active':'')+'" data-ink-size="'+s[1]+'">'+s[0]+'</button>';
       }).join('');
@@ -12503,8 +12514,15 @@
       }
       function penPath(s){
         ctx.strokeStyle = s.color;
-        ctx.lineWidth = s.size;
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        if(s.hl){
+          // 蛍光ペン：太く・薄く・端を平らに（紙の蛍光ペンの見え方に寄せる）
+          ctx.lineWidth = s.size * 3;
+          ctx.globalAlpha = ctx.globalAlpha * 0.35;
+          ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+        } else {
+          ctx.lineWidth = s.size;
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        }
       }
       function drawStroke(s, now){
         if(!s.pts.length) return;
@@ -12596,14 +12614,23 @@
         const b = e.target.closest('[data-ink-mode]'); if(!b) return;
         mode = b.dataset.inkMode;
         [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
+        renderColors();   // 蛍光ペンとふつうのペンで色を持ち替える
+      });
+      /* 定規：押しているあいだ、ペン・消えるペン・蛍光ペンが「始点から今の位置までの直線」になる
+         （表の下線を引く・グラフに補助線を入れるときに手ぶれが出ない。ユーザー指示 2026-08-19） */
+      document.getElementById('ink-ruler').addEventListener('click', function(){
+        rulerOn = !rulerOn;
+        this.classList.toggle('is-on', rulerOn);
+        this.setAttribute('aria-pressed', rulerOn ? 'true' : 'false');
       });
       document.getElementById('ink-colors').addEventListener('click', function(e){
         const b = e.target.closest('[data-ink-color]'); if(!b) return;
-        color = b.dataset.inkColor;
+        if(isHL()) hlColor = b.dataset.inkColor; else color = b.dataset.inkColor;
         [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
         if(mode === 'erase'){          // 消しゴム中に色を選んだら、書くほうへ戻す
           mode = 'pen';
           [...document.getElementById('ink-modes').children].forEach(function(x){ x.classList.toggle('active', x.dataset.inkMode === 'pen'); });
+          renderColors();
         }
       });
       document.getElementById('ink-sizes').addEventListener('click', function(e){
@@ -12618,7 +12645,7 @@
         cv.setPointerCapture(e.pointerId);
         const x = e.clientX + scrollX, y = e.clientY + scrollY;
         if(mode === 'erase'){ pushUndo(); erasing = true; eraseAt(x, y); return; }
-        cur = { color:color, size:size, fade:(mode === 'fade'), t0:0, pts:[{ x:x, y:y }] };
+        cur = { color:curColor(), size:size, fade:(mode === 'fade'), hl:isHL(), t0:0, pts:[{ x:x, y:y }] };
         redraw();
       });
       cv.addEventListener('pointermove', function(e){
@@ -12626,8 +12653,10 @@
         const x = e.clientX + scrollX, y = e.clientY + scrollY;
         if(erasing){ eraseAt(x, y); return; }
         if(!cur) return;
+        if(rulerOn){ cur.pts[1] = { x:x, y:y }; cur.pts.length = 2; redraw(); return; }   // 定規＝始点からの直線
         cur.pts.push({ x:x, y:y });
-        drawTail(cur);
+        // 蛍光ペンは薄いので継ぎ足すと重なりが濃くなる＝毎回まとめて引き直す
+        if(cur.hl) redraw(); else drawTail(cur);
       });
       const endStroke = function(){
         if(erasing){ erasing = false; return; }

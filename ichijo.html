@@ -3015,18 +3015,17 @@
   <div id="ink-bar" class="no-print" hidden>
     <div class="ink-seg" id="ink-modes">
       <button type="button" class="ink-mode active" data-ink-mode="pen"><i class="fa-solid fa-pen"></i> ペン</button>
-      <button type="button" class="ink-mode" data-ink-mode="fade" title="書いた2秒後からうっすら消えます"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるペン</button>
       <button type="button" class="ink-mode" data-ink-mode="hl" title="太く薄いマーカー"><i class="fa-solid fa-highlighter"></i> 蛍光ペン</button>
-      <button type="button" class="ink-mode" data-ink-mode="hlfade" title="マーカーを引いて、2秒後からうっすら消えます"><i class="fa-solid fa-highlighter"></i> 消える蛍光</button>
       <button type="button" class="ink-mode" data-ink-mode="erase"><i class="fa-solid fa-eraser"></i> 消しゴム</button>
     </div>
+    <button type="button" class="ink-btn" id="ink-fade" aria-pressed="false" title="書いた2秒後からうっすら消えます。蛍光ペンと合わせると「消える蛍光ペン」になります"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるモード</button>
     <button type="button" class="ink-btn" id="ink-ruler" aria-pressed="false" title="ペン・蛍光ペンがまっすぐ引けます"><i class="fa-solid fa-ruler"></i> 定規</button>
     <div class="ink-colors" id="ink-colors"></div>
     <div class="ink-seg" id="ink-sizes"></div>
     <button type="button" class="ink-btn" id="ink-undo"><i class="fa-solid fa-rotate-left"></i> 1つ戻す</button>
     <button type="button" class="ink-btn" id="ink-clear"><i class="fa-solid fa-trash-can"></i> 全部消す</button>
     <button type="button" class="ink-btn ink-done" id="ink-off"><i class="fa-solid fa-check"></i> 書き込みを終了</button>
-    <span class="ink-tip">「消える」＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
+    <span class="ink-tip">消えるモード＝2秒後から消えます（蛍光ペンと合わせると消える蛍光ペン）。書き込みは画面ごとに残ります。</span>
   </div>
 
   <script>
@@ -12463,7 +12462,7 @@
       const SIZES  = [['細',3], ['中',6], ['太',12]];
       const FADE_WAIT = 2000, FADE_TIME = 2500;   // 消えるペン：2秒待って、2.5秒かけてうっすら消える
       const ERASE_R = 12;                          // 消しゴムが「触れた」と見なす半径
-      let on = false, mode = 'pen', size = 6, rulerOn = false;
+      let on = false, mode = 'pen', size = 6, rulerOn = false, fadeOn = false;
       let color = PEN_COLORS[0][0], hlColor = HL_COLORS[0][0];   // 色は道具ごとに覚えておく
       let cur = null, erasing = false, raf = 0;
       /* 書き込みは**画面ごと**に分けて持つ（入力する／お金／家／万が一…）。
@@ -12482,7 +12481,7 @@
       }
 
       // 道具箱（色・太さ）を組み立てる。色は「いまの道具の色」だけを出す
-      const isHL = function(){ return mode === 'hl' || mode === 'hlfade'; };
+      const isHL = function(){ return mode === 'hl'; };
       const curColor = function(){ return isHL() ? hlColor : color; };
       function renderColors(){
         const list = isHL() ? HL_COLORS : PEN_COLORS, now = curColor();
@@ -12617,8 +12616,15 @@
         [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
         renderColors();   // 蛍光ペンとふつうのペンで色を持ち替える
       });
-      /* 定規：押しているあいだ、ペン・消えるペン・蛍光ペンが「始点から今の位置までの直線」になる
-         （表の下線を引く・グラフに補助線を入れるときに手ぶれが出ない。ユーザー指示 2026-08-19） */
+      /* 「消える」と「定規」は道具ではなくスイッチ（ユーザー指示 2026-08-19）。
+         どのペンにも重ねられる＝蛍光ペン＋消えるモード＝消える蛍光ペン */
+      document.getElementById('ink-fade').addEventListener('click', function(){
+        fadeOn = !fadeOn;
+        this.classList.toggle('is-on', fadeOn);
+        this.setAttribute('aria-pressed', fadeOn ? 'true' : 'false');
+      });
+      /* 定規：押しているあいだ、ペン・蛍光ペンが「始点から今の位置までの直線」になる
+         （表の下線を引く・グラフに補助線を入れるときに手ぶれが出ない） */
       document.getElementById('ink-ruler').addEventListener('click', function(){
         rulerOn = !rulerOn;
         this.classList.toggle('is-on', rulerOn);
@@ -12646,7 +12652,7 @@
         cv.setPointerCapture(e.pointerId);
         const x = e.clientX + scrollX, y = e.clientY + scrollY;
         if(mode === 'erase'){ pushUndo(); erasing = true; eraseAt(x, y); return; }
-        cur = { color:curColor(), size:size, fade:(mode === 'fade' || mode === 'hlfade'), hl:isHL(), t0:0, pts:[{ x:x, y:y }] };
+        cur = { color:curColor(), size:size, fade:fadeOn, hl:isHL(), t0:0, pts:[{ x:x, y:y }] };
         redraw();
       });
       cv.addEventListener('pointermove', function(e){

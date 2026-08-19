@@ -180,6 +180,11 @@
     .kt-card{ position:absolute; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:8px 10px; border-radius:12px;
       background:#fff; border:1.5px solid var(--line); font-size:.9rem; line-height:1.4; text-align:center; box-sizing:border-box; }
     .kt-card.is-dim{ background:var(--bg-soft); color:var(--ink-soft); border-style:dashed; }
+    /* ごきょうだいはタップでお名前・年齢を入力できる（押せることが分かるようにする） */
+    .kt-card.is-sib{ cursor:pointer; }
+    .kt-card.is-sib:hover{ background:#fff; border-color:var(--blue); }
+    .kt-card.is-sib.is-open{ background:#fff; border-color:var(--blue-deep); border-style:solid; color:var(--ink); }
+    .kt-sib-tip{ display:block; margin:6px 2px 0; }
     .kt-card.is-extra{ border-color:var(--blue-pale2); }
     .kt-card b{ font-size:1rem; line-height:1.3; }
     .kt-card .kt-sub{ color:var(--ink-soft); font-size:.78rem; }
@@ -864,8 +869,10 @@
       }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid,
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1/-1; }
-      /* KPIは全幅を活かして4枚横並び（65歳・実質・100歳・実質が1行で見渡せる） */
-      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-template-columns:repeat(4,1fr); }
+      /* KPIは元の左右二画面（2列）のまま。行ごとに1つの年齢を見る
+         （左＝その年齢の総資産額・右＝その実質価値）。
+         4枚横並びにすると、どの実質価値がどの年齢のものか読み取りにくい
+         （ユーザー指示 2026-08-19） */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card{ display:flex; flex-direction:column; margin-bottom:0; }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card .chart-box{ flex:1 1 auto; height:auto; min-height:260px; }
       /* AI診断は全幅1パート：左＝総括と項目ボタン、右＝タップした項目の詳しい診断（2画面ぶんの幅で読む）。
@@ -1065,7 +1072,6 @@
     /* お客様モードでは担当者の下書きタブを出さない（保険の勧誘に読めないようにするため） */
     body.customer-mode .vc-tab[data-vc-tab="minutes"],
     body.customer-mode .vc-tab[data-vc-tab="next"],
-    body.customer-mode .vc-tab[data-vc-tab="family"],
     body.customer-mode #vc-pane-next, body.customer-mode #nx-plan-wrap,
     body.customer-mode #mn-modal{ display:none !important; }
 
@@ -1143,29 +1149,6 @@
     @media print{ .nx-plan-wrap{ display:none !important; } }
 
     /* ---------- 家系図 ---------- */
-    .fam-tree{ display:flex; flex-direction:column; gap:8px; margin:2px 0 10px; }
-    .fam-gen{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 10px;
-      background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
-    .fam-gen-l{ flex:0 0 auto; min-width:6.6em; font-size:.74rem; font-weight:800; color:var(--ink-soft); }
-    .fam-chip{ display:inline-flex; flex-direction:column; gap:1px; padding:6px 11px; border-radius:10px;
-      background:#fff; border:1.5px solid var(--line); font-size:.82rem; line-height:1.45; }
-    .fam-chip b{ font-size:.85rem; }
-    .fam-sub{ color:var(--ink-soft); font-size:.72rem; }
-    .fam-chip.is-care{ border-color:var(--warn); background:var(--warn-pale); }
-    .fam-chip.is-asset{ border-color:var(--blue-pale2); background:var(--blue-pale); }
-    .fam-chip.is-gone{ opacity:.55; }
-    .fam-empty{ font-size:.78rem; color:var(--ink-soft); }
-    .fam-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(122px,1fr)); gap:8px; align-items:end;
-      padding:9px 10px; margin-bottom:8px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
-    .fam-row label{ display:block; font-size:.72rem; color:var(--ink-soft); margin-bottom:2px; }
-    /* 44px＝指で押せる最小の高さ（検証役の実測で40pxだったため引き上げ） */
-    .fam-row input, .fam-row select{ width:100%; min-height:44px; padding:8px 9px; border:1.5px solid var(--line);
-      border-radius:9px; font-family:inherit; font-size:.85rem; background:#fff; color:var(--ink); }
-    .fam-row input:focus, .fam-row select:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
-    .fam-row .fam-memo{ grid-column:1/-1; }
-    .fam-del{ min-height:44px; border:1.5px solid var(--line); border-radius:9px; background:#fff;
-      color:#c25f5f; font-family:inherit; font-size:.85rem; cursor:pointer; }
-    .fam-del:hover{ background:var(--bad-pale); }
 
     /* ---------- メモ ---------- */
     .vc-memo{ display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:.84rem; line-height:1.55; }
@@ -2182,6 +2165,9 @@
             <!-- 上下の世代は人数が可変なのでJSONで1本に持つ（#input-panel内＝保存・共有に自動で乗る） -->
             <input type="hidden" id="kg-extra-up" value="[]">
             <input type="hidden" id="kg-extra-down" value="[]">
+            <!-- ごきょうだいのお名前・年齢（人数は kg-{h|w}-sibs で決まるので、ここは中身だけ持つ） -->
+            <input type="hidden" id="kg-extra-sibh" value="[]">
+            <input type="hidden" id="kg-extra-sibw" value="[]">
 
             <!-- お住まいは下のご両親の枠と同じ「箱」に入れて、横幅を揃える（ユーザー指示 2026-08-19） -->
             <div class="subgroup" style="margin-top:0; margin-bottom:12px;">
@@ -2857,7 +2843,6 @@
         <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
         <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
         <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
-        <button type="button" id="vc-tab-family"  class="vc-tab" role="tab" data-vc-tab="family"  aria-selected="false" aria-controls="vc-pane-fam"><i class="fa-solid fa-sitemap"></i> 家系図</button>
         <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
       </div>
 
@@ -2918,19 +2903,6 @@
           </div>
           <div id="nx-plan"></div>
         </div>
-      </div>
-
-      <!-- 家系図タブ：ご両親・ご兄弟・ご親戚を記録し、介護・相続・ご紹介の話につなげる -->
-      <div class="vc-pane" id="vc-pane-fam" role="tabpanel" aria-labelledby="vc-tab-family" hidden>
-        <p class="hint" style="display:block; margin:2px 0 8px;">ご本人・配偶者・お子さまは入力内容から自動で並びます。ご両親・ご兄弟・ご親戚・ご友人を足すと、<b>介護・相続・ご紹介</b>の話につながるご家族の状況を、面談の記録として残せます（「コピー」で担当者の記録に貼れます）。</p>
-        <div class="fam-tree" id="fam-tree"></div>
-        <div class="vc-tools">
-          <button type="button" class="btn btn-primary btn-sm" id="fam-add"><i class="fa-solid fa-user-plus"></i> 人を追加</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="fam-copy"><i class="fa-solid fa-copy"></i> コピー</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="fam-clear"><i class="fa-solid fa-trash-can"></i> 家系図を消す</button>
-        </div>
-        <div id="fam-list"></div>
-        <p class="hint" style="display:block; margin-top:8px;">※ ご本人からお聞きした範囲で記録します。ご家族・ご親族の情報は必要最小限にとどめ、<b>この端末のブラウザ内にのみ</b>保存されます（お客様データの保存・共有リンクには含まれません）。<br>※ <b>お体・介護の状況は要配慮個人情報</b>にあたります。ここでの「本人」は<b>その記載対象となるご親族ご自身</b>です（お客様の同意では代わりになりません）。<b>ご親族ご本人の同意が得られた範囲だけ</b>記録し、確認できていない項目は「未確認」のままにしてください。<br>※ 利用目的は<b>この面談の家計試算と、担当者の記録・引き継ぎ</b>に限ります。<br>※ <b>ご紹介は、ご本人とご紹介先の双方の同意をいただいてから</b>行ってください。ご紹介先の連絡先をここに記録しないでください。<br>※ 内容は<b>お客様のお名前ごとに分けて</b>保存され、別のお客様のデータを読み込むと表示は入れ替わります。最後に更新してから<b>2週間で自動削除</b>されます（「家系図を消す」でいつでも削除できます）。</p>
       </div>
 
       <!-- メモタブ -->
@@ -4552,13 +4524,34 @@
       const single = isSingle();
       return KAIGO_PARENTS.filter(function(pk){ return !(single && pk.side === 'w'); }).map(kaigoParentInfo);
     }
+    /* ご家族の状況フラグ（介護・相続）。以前は文字起こしドックの家系図メモから作っていたが、
+       そのメモを廃止したため、入力の「介護」セクション（kg-*）から作る。
+       ・kaigo   ＝ ご健在の親御さまに介護リスク（中〜高）がある
+       ・souzoku ＝ すでにご逝去の親御さまがいる、または80歳以上の親御さまがいる
+       ドックの外（AI診断）からも呼ぶので、この階層に置く */
+    function kaigoFlags(){
+      let ps = [];
+      try{ ps = kaigoParents(); }catch(e){ return { kaigo:false, souzoku:false, kaigoNames:'ご親族' }; }
+      const care = ps.filter(function(x){ return x.alive === 'ご健在' && (x.level === 'high' || x.level === 'mid'); });
+      const gone = ps.filter(function(x){ return x.alive === '他界された'; });
+      const old  = ps.filter(function(x){ return x.alive === 'ご健在' && (parseInt(x.age, 10) || 0) >= 80; });
+      return { kaigo: care.length > 0,
+               souzoku: (gone.length > 0 || old.length > 0),
+               kaigoNames: care.map(function(x){ return kgLabel(x.pk); }).slice(0, 3).join('・') || 'ご親族' };
+    }
+    /* ごきょうだいの1枚（お名前・年齢）。人数は kg-{h|w}-sibs で決まるため、追加・削除は無い */
+    function ktSibHTML(kind, i, o){
+      return '<div class="kt-extra" data-kt-kind="'+kind+'" data-kt-i="'+i+'">'
+        + '<div class="kt-to"><label>お名前</label><input type="text" data-kt="name" value="'+esc(o.name||'')+'" placeholder="例：健一"></div>'
+        + '<div><label>年齢</label><input type="number" data-kt="age" value="'+esc(o.age||'')+'" min="0" max="120" placeholder="歳"></div>'
+        + '<div><button type="button" class="kt-del" data-kt-close="1"><i class="fa-solid fa-xmark"></i> 閉じる</button></div>'
+        + '</div>';
+    }
+    // いま開いているごきょうだいの箱（'sibh:1' の形）。kaigoRender より前に読まれても落ちないよう var
+    var ktSibOpen = null;
     function kaigoRender(){
       const tree = $('kaigo-tree'), risk = $('kaigo-risk');
       if(!tree || !risk) return;
-      const chip = function(name, sub, cls){
-        return '<span class="fam-chip'+(cls ? ' '+cls : '')+'"><b>'+esc(name)+'</b>'
-             + (sub ? '<span class="fam-sub">'+esc(sub)+'</span>' : '') + '</span>';
-      };
       // 見出し・切替ボタンをお名前で呼ぶ（例：「直矢様のお父さま」「千尋様のご両親」）
       KAIGO_PARENTS.forEach(function(pk){
         const t = document.querySelector('[data-kaigo-title="'+pk.key+'"]');
@@ -4605,7 +4598,8 @@
       const parentX = {};                               // 親の箱の左端X（上の世代のつなぎ先に使う）
       let kidXs = [];                                   // お子さまの箱の左端X（下の世代のつなぎ先に使う）
       const line = function(x1,y1,x2,y2){ seg.push({x1:x1,y1:y1,x2:x2,y2:y2}); };
-      const node = function(x, y, name, sub, cls){ nodes.push({x:x, y:y, name:name, sub:sub, cls:cls||''}); };
+      // key＝'sibh:1'・'up:0' などの目印。入力中に文字だけ書き換えるために使う
+      const node = function(x, y, name, sub, cls, key){ nodes.push({x:x, y:y, name:name, sub:sub, cls:cls||'', key:key||''}); };
       // 夫婦の線：2人の下を通してつなぐ（間にごきょうだいが入っても交差しない）。戻り値は中点
       const couple = function(ax, bx, y){
         const yy = y + BH + 13, cx1 = ax + BW/2, cx2 = bx + BW/2;
@@ -4660,13 +4654,22 @@
         wSelfX = wXs[wO - 1];
       }
       let totalW = cur - GAP + PAD;
+      // ごきょうだいの箱：お名前・年齢が入っていれば出す（タップで入力欄が開く）
+      const sibNode = function(x, side, i){
+        const o = kgExtra('sib'+side)[i] || {};
+        const nm = (o.name || '').trim();
+        const key = 'sib' + side + ':' + i;
+        node(x, ySelf, nm ? nm+'様' : 'ごきょうだい',
+             (o.age ? o.age+'歳・' : '') + '第'+(i+1)+'子',
+             'is-dim is-sib' + (ktSibOpen === key ? ' is-open' : ''), key);
+      };
       hXs.forEach(function(x, i){
         if(i === hO - 1) node(x, ySelf, hNameH(), num('h-age',35)+'歳・第'+hO+'子', 'is-self is-male');
-        else node(x, ySelf, 'ごきょうだい', '第'+(i+1)+'子', 'is-dim');
+        else sibNode(x, 'h', i);
       });
       wXs.forEach(function(x, i){
         if(i === sibO('w') - 1) node(x, ySelf, wNameH(), num('w-age',33)+'歳・第'+sibO('w')+'子', 'is-self is-female');
-        else node(x, ySelf, 'ごきょうだい', '第'+(i+1)+'子', 'is-dim');
+        else sibNode(x, 'w', i);
       });
       // 親の世代：それぞれのごきょうだい全体の中央に父・母を置く
       const parentPair = function(side, xs){
@@ -4710,8 +4713,8 @@
       /* 上の世代・下の世代（自由入力）。「つなぎ先」を選んでいただいた方だけ、その相手の
          真上／真下へ寄せて置き、線でつなぐ。未選択の方は右側に並べるだけで線は引かない
          （続柄が自由入力なので、勝手につなぐと誤った関係を示してしまうため） */
-      const placeExtra = function(list, yy, anchorOf){
-        const items = list.map(function(p2){ return { p:p2, a:anchorOf(p2), x:null }; });
+      const placeExtra = function(list, yy, anchorOf, kind){
+        const items = list.map(function(p2, idx){ return { p:p2, i:idx, a:anchorOf(p2), x:null }; });
         const keys = [];
         items.forEach(function(o){ if(o.a != null && keys.indexOf(o.p.to) < 0) keys.push(o.p.to); });
         keys.sort(function(a, b){
@@ -4740,13 +4743,14 @@
           const p2 = o.p;
           node(o.x, yy, (p2.name || p2.rel || 'ご親族'),
                [p2.rel, (p2.age ? p2.age+'歳' : ''), (p2.alive === '他界された' ? 'ご逝去' : '')].filter(Boolean).join('・'),
-               (p2.alive === '他界された' ? 'is-gone ' : '') + (p2.sex === '女性' ? 'is-female' : 'is-male') + ' is-extra');
+               (p2.alive === '他界された' ? 'is-gone ' : '') + (p2.sex === '女性' ? 'is-female' : 'is-male') + ' is-extra',
+               kind + ':' + o.i);
         });
         return groups;
       };
       if(ups.length){
         // 上の世代 → その方のお子さま（＝ご両親のどなたか）へ下ろす。2人そろえば夫婦の線でつなぐ
-        const gs = placeExtra(ups, yUp, function(p2){ return (p2.to && parentX[p2.to] != null) ? parentX[p2.to] : null; });
+        const gs = placeExtra(ups, yUp, function(p2){ return (p2.to && parentX[p2.to] != null) ? parentX[p2.to] : null; }, 'up');
         gs.forEach(function(g){
           const xs = g.list.map(function(o){ return o.x; });
           const from = (xs.length >= 2)
@@ -4760,7 +4764,7 @@
         const gs = placeExtra(downs, yDownRow, function(p2){
           const i = /^c\d+$/.test(p2.to || '') ? parseInt(p2.to.slice(1), 10) : -1;
           return (i >= 0 && kidXs[i] != null) ? kidXs[i] : null;
-        });
+        }, 'down');
         gs.forEach(function(g){
           const i = parseInt(g.key.slice(1), 10);
           descend({ x:kidXs[i] + BW/2, y:yKid + BH }, g.list.map(function(o){ return o.x; }), yDownRow);
@@ -4782,7 +4786,11 @@
       const svg = '<svg class="kt-svg" width="'+totalW+'" height="'+totalH+'" viewBox="0 0 '+totalW+' '+totalH+'">'
         + seg.map(function(s){ return '<line x1="'+s.x1+'" y1="'+s.y1+'" x2="'+s.x2+'" y2="'+s.y2+'"/>'; }).join('') + '</svg>';
       const boxes = nodes.map(function(n){
-        return '<div class="kt-card '+n.cls+'" style="left:'+n.x+'px; top:'+n.y+'px; width:'+BW+'px; min-height:'+BH+'px;">'
+        const isSib = n.key.indexOf('sib') === 0;
+        return '<div class="kt-card '+n.cls+'"'
+          + (n.key ? ' data-kt-card="'+n.key+'"' : '')
+          + (isSib ? ' role="button" tabindex="0" title="タップするとお名前と年齢を入力できます"' : '')
+          + ' style="left:'+n.x+'px; top:'+n.y+'px; width:'+BW+'px; min-height:'+BH+'px;">'
           + '<b>'+esc(n.name)+'</b>' + (n.sub ? '<span class="kt-sub">'+esc(n.sub)+'</span>' : '') + '</div>';
       }).join('');
       /* つなぎ先の選択肢。上の世代＝ご両親のどなたか、下の世代＝お子さまのどなたか。
@@ -4794,12 +4802,28 @@
         return '<option value="">未選択（線を引きません）</option>'
              + list.map(function(o){ return '<option value="'+esc(o.k)+'"'+(o.k === v ? ' selected' : '')+'>'+esc(o.l)+'</option>'; }).join('');
       };
+      /* タップされたごきょうだいの入力欄。人数を減らして範囲外になったら黙って閉じる */
+      let sibEd = '';
+      if(ktSibOpen){
+        const sp = String(ktSibOpen).split(':'), sKind = sp[0], sI = parseInt(sp[1], 10);
+        const sSide = sKind.slice(3);
+        const cnt = (sSide === 'w') ? (single ? 0 : sibN('w')) : sibN('h');
+        const selfI = (sSide === 'w') ? sibO('w') - 1 : hO - 1;
+        if(sI >= 0 && sI < cnt && sI !== selfI){
+          const who = (sSide === 'w') ? wNameH() : hNameH();
+          sibEd = '<div class="kt-editors"><div class="kt-ed-t">' + esc(who + 'のごきょうだい（第' + (sI+1) + '子）') + '</div>'
+                + ktSibHTML(sKind, sI, kgExtra(sKind)[sI] || {}) + '</div>';
+        }else{ ktSibOpen = null; }
+      }
+      const hasSib = (hXs.length > 1) || (wXs.length > 1);
       const upBtn = function(kind, label){
         return '<button type="button" class="btn btn-ghost btn-sm" data-kt-add="'+kind+'"><i class="fa-solid fa-plus"></i> '+label+'</button>';
       };
       tree.innerHTML =
         '<div class="kt-scroll"><div class="kt-canvas" style="width:'+totalW+'px; height:'+totalH+'px;">' + svg + boxes + '</div></div>'
         + '<p class="hint kt-hint hidden">横に<b>スクロール</b>すると、ご家族全員をご覧いただけます。</p>'
+        + (hasSib ? '<p class="hint kt-sib-tip">「ごきょうだい」の箱をタップすると、<b>お名前と年齢</b>を入力できます。</p>' : '')
+        + sibEd
         + '<div class="vc-tools" style="margin-top:8px;">' + upBtn('up','上の世代を追加（祖父母など）') + upBtn('down','下の世代を追加（お孫さまなど）') + '</div>'
         + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2, ktToOptions('up', p2.to)); }).join('') + '</div>' : '')
         + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2, ktToOptions('down', p2.to)); }).join('') + '</div>' : '');
@@ -4869,6 +4893,10 @@
       if(treeEl && window.ResizeObserver){ new ResizeObserver(function(){ ktHintSync(); }).observe(treeEl); }
       if(treeEl){
         treeEl.addEventListener('click', function(e){
+          // ごきょうだいの箱をタップ＝入力欄の開閉（同じ箱をもう一度押すと閉じる）
+          const sib = e.target.closest('[data-kt-card^="sib"]');
+          if(sib){ ktSibOpen = (ktSibOpen === sib.dataset.ktCard) ? null : sib.dataset.ktCard; kaigoRender(); return; }
+          if(e.target.closest('[data-kt-close]')){ ktSibOpen = null; kaigoRender(); return; }
           const add = e.target.closest('[data-kt-add]');
           if(add){
             const kind = add.dataset.ktAdd, list = kgExtra(kind);
@@ -4884,15 +4912,40 @@
             kgExtraWrite(kind, list); kaigoRender();
           }
         });
+        // キーボード操作でもごきょうだいの入力欄を開けるようにする
+        treeEl.addEventListener('keydown', function(e){
+          if(e.key !== 'Enter' && e.key !== ' ') return;
+          const sib = e.target.closest && e.target.closest('[data-kt-card^="sib"]'); if(!sib) return;
+          e.preventDefault();
+          ktSibOpen = (ktSibOpen === sib.dataset.ktCard) ? null : sib.dataset.ktCard; kaigoRender();
+        });
+        /* 入力中は箱を作り直さず、文字だけ書き換える（作り直すとフォーカスも入力値も飛ぶ）。
+           位置が変わるのは「つなぎ先」＝select のときだけなので、そこだけ作り直す */
+        const ktSyncCard = function(box, o){
+          const kind = box.dataset.ktKind, i = parseInt(box.dataset.ktI, 10);
+          const t = document.getElementById('kaigo-tree'); if(!t) return;
+          const card = t.querySelector('[data-kt-card="'+kind+':'+i+'"]'); if(!card) return;
+          const b = card.querySelector('b'), sub = card.querySelector('.kt-sub');
+          if(kind.indexOf('sib') === 0){
+            const nm = (o.name||'').trim();
+            if(b) b.textContent = nm ? nm+'様' : 'ごきょうだい';
+            if(sub) sub.textContent = (o.age ? o.age+'歳・' : '') + '第'+(i+1)+'子';
+          }else{
+            if(b) b.textContent = o.name || o.rel || 'ご親族';
+            if(sub) sub.textContent = [o.rel, (o.age ? o.age+'歳' : ''), (o.alive === '他界された' ? 'ご逝去' : '')].filter(Boolean).join('・');
+          }
+        };
         const onEdit = function(e){
           const f = e.target.closest('[data-kt]'); if(!f) return;
           const box = f.closest('[data-kt-kind]'); if(!box) return;
           const kind = box.dataset.ktKind, i = parseInt(box.dataset.ktI, 10), list = kgExtra(kind);
+          if(kind.indexOf('sib') === 0){ while(list.length <= i) list.push({}); }   // ごきょうだいは人数から作るので空のことがある
           if(!list[i]) return;
           list[i][f.dataset.kt] = f.value;
           kgExtraWrite(kind, list);
           // 入力中に描き直すとフォーカスが飛ぶので、selectの確定時だけ作り直す
           if(f.tagName === 'SELECT') kaigoRender();
+          else ktSyncCard(box, list[i]);
         };
         treeEl.addEventListener('input', onEdit);
         treeEl.addEventListener('change', onEdit);
@@ -6457,15 +6510,15 @@
       }
 
       /* ── 相続・贈与（2026-08-18追加・9枚目）──
-         家系図タブに資産の論点（ご実家・事業・農地等）があるときは注意トーンに。
+         「介護」欄にご逝去または80歳以上の親御さまがいるときは注意トーンに。
          親世代の資産はこのツールの試算に含まれない＝「対象外である」ことを正面から言う */
       {
         let famSz = false;
-        try{ if(window.lpFamFlags) famSz = !!window.lpFamFlags().souzoku; }catch(e){}   // famFlagsはドックIIFE内＝橋経由で読む
+        try{ famSz = !!kaigoFlags().souzoku; }catch(e){}
         const heirs = (single ? 0 : 1) + p.children.length;
         const waku = 500 * Math.max(heirs, 1);
         const sum = famSz
-          ? `ご親族に<b>不動産・事業などの資産の論点</b>が記録されています。親御さま世代の資産は<b>この試算に含まれていません</b>。`
+          ? `「介護」欄のご入力から、<b>相続の話が近い年代</b>に入っていることがうかがえます。親御さま世代の資産は<b>この試算に含まれていません</b>。`
           : `相続は「まだ先の話」のうちに形を整えるのが最も安く済みます。親御さま世代の資産は<b>この試算に含まれていません</b>。`;
         cats.push({ key:'souzoku', label:'相続・贈与', icon:'fa-people-roof', color:'#a98abf', tone: famSz ? 'warn' : 'ok', sum,
           good:[ `生命保険には<b>500万円×法定相続人</b>の非課税枠があります（この世帯構成なら目安 約${fmt(waku)}万円。受取人指定で「誰に渡すか」を契約で決められます）。`,
@@ -7567,8 +7620,6 @@
           Object.keys(d).forEach(function(k){ if(k.indexOf(sc + '::') === 0) delete d[k]; });
           localStorage.setItem(NX_DONE_KEY, JSON.stringify(d));
         }catch(e){}
-        // 家系図（ご本人以外の個人情報）もここで消す。押した人は「面談の記録を消した」と受け取るため
-        famDrop(); famRender();
         vcCapRedraw(); setStatus('文字起こしを消しました'); vcSyncDockH();
       });
 
@@ -8329,31 +8380,22 @@
               caution:'積立を増やすとその分だけ手元の預貯金は減ります。運用の成果は保証されるものではなく、相場により元本を下回ることがあります。急な出費に備える資金を確保したうえでご検討ください。' };
           } },
         { id:'fam.kaigo', cat:'retire', src:'calc', impact:4, urgency:3,
-          when: function(){ return famFlags().kaigo; },
+          when: function(){ return kaigoFlags().kaigo; },
           make: function(){
-            const f = famFlags();
+            const f = kaigoFlags();
             return { title:'ご親族の介護に関する確認',
-              basis:'家系図に'+f.kaigoNames+'の介護・お体のご状況を記録しています。介護は費用と時間の両方が家計に効くため、早めに前提を置いておきます。',
+              basis:'「介護」欄のご入力から、'+f.kaigoNames+'について備えを検討したい状況が見えています。介護は費用と時間の両方が家計に効くため、早めに前提を置いておきます。',
               tasks:[ { who:'cust', text:'介護が必要になった場合に、費用をどなたが負担する見込みか、施設と在宅のどちらを想定されるかをお聞かせください。' },
                       { who:'staff', text:'公的介護保険の自己負担と、在宅・施設それぞれの費用の目安を整理し、ご負担が生じる場合の家計への影響をお出しします。' } ],
               caution:'介護費用は要介護度・地域・施設により大きく異なります。ここでの整理は一般的な目安です。' };
           } },
         { id:'fam.souzoku', cat:'tax', src:'calc', impact:3, urgency:2,
-          when: function(){ return famFlags().souzoku; },
+          when: function(){ return kaigoFlags().souzoku; },
           make: function(){
             return { title:'ご実家・相続に関する論点の整理',
-              basis:'家系図にご実家や事業などの資産の論点を記録しています。これらはこのツールの試算には含まれていません。',
+              basis:'「介護」欄のご入力に、ご逝去または80歳以上の親御さまがいらっしゃいます。親御さま世代のご実家・事業などの資産は、このツールの試算には含まれていません。',
               tasks:[ { who:'cust', text:'ご実家の名義・おおよその評価、相続人になる方の人数など、分かる範囲でお聞かせください。' },
                       { who:'staff', text:'分かった範囲で論点を整理してお持ちします。税額の判断は税理士にご確認いただきます。' } ] };
-          } },
-        { id:'fam.intro', cat:'plan', src:'calc', impact:2, urgency:1,
-          when: function(){ return famFlags().intro; },
-          make: function(){
-            return { title:'ご紹介のお願い（同意をいただいてから）',
-              basis:'家系図に「ご紹介いただけるかもしれない方」を記録しています。',
-              tasks:[ { who:'cust', text:'同じ時期に住宅やお子さまの進学を控えている方がいらっしゃれば、まずはこのツールの話をしてみていただけますか。' },
-                      { who:'staff', text:'ご紹介先にお渡しできる資料をご用意します。ご連絡はご本人とご紹介先の同意をいただいてから行います。' } ],
-              caution:'ご紹介先の連絡先は、ご本人の同意なく取得・保管しません。' };
           } },
         /* 【一条フック】一条の商談への橋2本（Web調査：契約の決定打は宿泊体験の「体感」、
            紹介制度は来場前の手続きが条件＝知らずに来場すると使えない）。
@@ -8506,7 +8548,7 @@
           return rows.length ? ('■ ' + label + '\n' + rows.join('\n') + '\n') : '';
         };
         const famBlock = (res.fam && res.fam.length)
-          ? '■ 家系図から（介護・相続・ご紹介）\n'
+          ? '■ ご家族の状況から（介護・相続）\n'
             + res.fam.map(function(it){ return it.tasks.map(function(t){ return line(it,t); }).join('\n'); }).join('\n') + '\n'
           : '';
         /* テキストにも打消し表示を必ず付ける。
@@ -8539,7 +8581,7 @@
         const sei = hSei() || wSei();
         return (sei ? sei + ' ' : '') + nxScopeOld();
       }
-      // { 'キー': 中身 } 形の箱（家系図メモ・音声メモ）の引っ越し。動いたら true
+      // { 'キー': 中身 } 形の箱（音声メモ）の引っ越し。動いたら true
       function nxMigrateMap(m){
         const ns = nxScope(), os = nxScopeOld();
         if(ns === os || !m || m[ns] || !m[os]) return false;
@@ -8587,174 +8629,7 @@
         try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){}
       });
 
-      /* ============================================================
-         家系図（ユーザー指示 2026-08-18）
-         ・ご本人／配偶者／お子さまは入力内容から自動表示。ご両親・ご兄弟・ご親戚・ご友人を足せる
-         ・介護・相続・ご紹介のきっかけを「次の一手」へ渡す（famFlags）
-         ・第三者の個人情報になるため、この端末のlocalStorageのみ。共有リンク・保存データには含めない
-         ============================================================ */
-      const FAM_KEY     = 'lifeplan_ichijo_family_v1';
-      const FAM_TMP_KEY = 'lifeplan_ichijo_family_tmp';   // お名前が空のあいだの置き場（タブを閉じると消える）
-      const FAM_RELS = ['夫の父','夫の母','妻の父','妻の母','夫の兄弟姉妹','妻の兄弟姉妹','祖父母','親戚','ご友人','その他'];
-      const FAM_LIVE = ['未確認','同居','近居','遠方'];
-      const FAM_HEAL = ['未確認','お元気','通院中','要支援','要介護','施設に入居','ご逝去'];
-      const FAM_ASST = ['未確認','とくになし','ご実家あり','事業あり','農地・山林あり','賃貸物件あり'];
-      const FAM_INTR = ['未確認','なし','検討中','ご紹介いただけそう'];
-      var famPeople = [];
-      /* ★2026-08-18（検証役検出・重大）家系図はお名前ごとに分けて持つ。
-         ひとつのキーに入れっぱなしにすると、A様の面談で入れたご親族（要介護・通院中など
-         要配慮個人情報）がB様の画面に残り、「次の一手」「概要」のコピーにも混ざる
-         （famBlockがご親族のお名前を出力するため）。「済チェック」（NX_DONE_KEY）と同じ考え方。
-         ・保存形式 { t:最終更新, m:{ 'ご本人名/配偶者名': [人…] } }
-         ・読むのは必ず「いまの画面のお名前」の分だけ＝お客様データを読み込むと自動で入れ替わる
-         ・文字起こしと同じく、最終更新から2週間（MN_TTL）で自動削除
-         ・お名前が空のまま登録した分は、同じタブで名前を入れたときだけ引き継ぐ（別のお客様には渡さない） */
-      /* お名前が空のあいだ（＝このツールは名前未入力でも動く）に入れた分は、
-         localStorage に置くと翌日ひらいた別のお客様の画面にそのまま出てしまう（検証役が実測）。
-         そこで **タブを閉じたら消える sessionStorage** に置き、名前を入れたときだけ引き継ぐ。 */
-      function famTmp(){
-        try{ const a = JSON.parse(sessionStorage.getItem(FAM_TMP_KEY)||'[]'); return Array.isArray(a) ? a : []; }
-        catch(e){ return []; }
-      }
-      function famTmpWrite(a){
-        try{
-          if(a && a.length) sessionStorage.setItem(FAM_TMP_KEY, JSON.stringify(a.slice(0,30)));
-          else sessionStorage.removeItem(FAM_TMP_KEY);
-        }catch(e){}
-      }
-      function famBox(){
-        var o = null;
-        try{ o = JSON.parse(localStorage.getItem(FAM_KEY)||'null'); }catch(e){ o = null; }
-        // 旧形式（お名前で分けていない単純な配列）は、誰の分か分からず期限も持てないので読まずに消す
-        if(!o || typeof o !== 'object' || Array.isArray(o) || !o.m){
-          if(o){ try{ localStorage.removeItem(FAM_KEY); }catch(e){} }
-          return {};
-        }
-        const m = o.m; let changed = false;
-        // 期限は**お客様ごと**に持つ。箱でひとつだと、別のお客様を更新するたびに全員が延命する
-        Object.keys(m).forEach(function(k){
-          const b = m[k];
-          if(!b || !Array.isArray(b.p) || (Date.now() - (b.t||0) > MN_TTL)){ delete m[k]; changed = true; }
-        });
-        if(nxMigrateMap(m)) changed = true;   // 名字を後から入れた既存のお客様の分をいまのキーへ移す
-        if(changed) famWrite(m);
-        return m;
-      }
-      function famWrite(m){
-        try{
-          if(Object.keys(m).length) localStorage.setItem(FAM_KEY, JSON.stringify({ m:m }));
-          else localStorage.removeItem(FAM_KEY);
-        }catch(e){}
-      }
-      function famLoad(){
-        const sc = nxScope();
-        if(sc === '/'){ famPeople = famTmp(); return; }   // お名前が空＝このタブの一時分だけ
-        const b = famBox()[sc];
-        famPeople = (b && Array.isArray(b.p)) ? b.p : [];
-      }
-      function famSave(){
-        const sc = nxScope();
-        if(sc === '/'){ famTmpWrite(famPeople); return; }
-        const m = famBox();
-        if(famPeople.length) m[sc] = { t:Date.now(), p:famPeople.slice(0,30) };
-        else delete m[sc];
-        famWrite(m);
-      }
-      /* お名前を入れた瞬間だけ、名前が空のあいだに入れた分をその方へ引き継ぐ。
-         **お客様データの読み込み（lp-state-loaded）からは絶対に呼ばない**
-         ＝読み込んだ別のお客様に、前のお客様のご親族が付け替わるため（検証役が実測） */
-      function famAdopt(){
-        const sc = nxScope(); if(sc === '/') return;
-        const tmp = famTmp(); if(!tmp.length) return;
-        const m = famBox();
-        if(m[sc] && m[sc].p && m[sc].p.length) return;   // すでにその方の分があるときは混ぜない
-        m[sc] = { t:Date.now(), p:tmp };
-        famWrite(m); famTmpWrite([]);
-      }
-      function famDrop(){
-        const sc = nxScope();
-        famPeople = [];
-        if(sc === '/'){ famTmpWrite([]); return; }
-        const m = famBox(); delete m[sc]; famWrite(m);
-      }
-      function famSel(name, opts, val){
-        return '<select data-fam="'+name+'">' + opts.map(function(o){
-          return '<option'+(o===val?' selected':'')+'>'+esc(o)+'</option>';
-        }).join('') + '</select>';
-      }
-      function famRowHTML(p, i){
-        return '<div class="fam-row" data-fam-i="'+i+'">'
-          + '<div><label>続柄</label>'+famSel('rel', FAM_RELS, p.rel)+'</div>'
-          + '<div><label>お名前・呼び方</label><input type="text" data-fam="name" value="'+esc(p.name||'')+'" placeholder="例：お義父さま"></div>'
-          + '<div><label>年齢</label><input type="number" data-fam="age" value="'+esc(p.age||'')+'" min="0" max="120" placeholder="歳"></div>'
-          + '<div><label>お住まい</label>'+famSel('live', FAM_LIVE, p.live)+'</div>'
-          + '<div><label>お体・介護</label>'+famSel('health', FAM_HEAL, p.health)+'</div>'
-          + '<div><label>資産の論点</label>'+famSel('asset', FAM_ASST, p.asset)+'</div>'
-          + '<div><label>ご紹介</label>'+famSel('intro', FAM_INTR, p.intro)+'</div>'
-          + '<div class="fam-memo"><label>メモ（お聞きした範囲で）</label><input type="text" data-fam="memo" value="'+esc(p.memo||'')+'" placeholder="例：来年から施設を検討"></div>'
-          + '<div><button type="button" class="fam-del" data-fam-del="'+i+'"><i class="fa-solid fa-trash-can"></i> 削除</button></div>'
-          + '</div>';
-      }
-      function famChip(name, sub, cls){
-        return '<span class="fam-chip'+(cls?' '+cls:'')+'"><b>'+esc(name)+'</b>'
-             + (sub ? '<span class="fam-sub">'+esc(sub)+'</span>' : '') + '</span>';
-      }
-      function famChipOf(p){
-        let cls = '';
-        if(p.health==='要支援' || p.health==='要介護' || p.health==='施設に入居') cls = 'is-care';
-        else if(p.asset && p.asset!=='未確認' && p.asset!=='とくになし') cls = 'is-asset';
-        if(p.health==='ご逝去') cls = 'is-gone';
-        const sub = [p.rel, (p.age?p.age+'歳':''), (p.live!=='未確認'?p.live:''), (p.health!=='未確認'?p.health:''),
-                     (p.asset && p.asset!=='未確認' && p.asset!=='とくになし' ? p.asset : ''),
-                     (p.intro==='ご紹介いただけそう' ? 'ご紹介の可能性' : '')].filter(Boolean).join('・');
-        return famChip(p.name || p.rel || 'ご家族', sub, cls);
-      }
-      function famRenderTree(){
-        const box = $('fam-tree'); if(!box) return;
-        const has = function(re){ return famPeople.filter(function(p){ return re.test(p.rel||''); }); };
-        const parents = has(/父|母|祖父母/), sibs = has(/兄弟姉妹/), others = has(/親戚|ご友人|その他/);
-        let kids = [];
-        try{ kids = readChildren(); }catch(e){}
-        const me = [];
-        me.push(famChip(hNameH(), 'ご本人（'+num('h-age',35)+'歳）'));
-        try{ if(!isSingle()) me.push(famChip(wNameH(), '配偶者（'+num('w-age',33)+'歳）')); }catch(e){}
-        sibs.forEach(function(p){ me.push(famChipOf(p)); });
-        let h = '';
-        h += '<div class="fam-gen"><span class="fam-gen-l">親の世代</span>'
-           + (parents.length ? parents.map(famChipOf).join('') : '<span class="fam-empty">「人を追加」からご両親を登録できます</span>')
-           + '</div>';
-        h += '<div class="fam-gen"><span class="fam-gen-l">ご本人の世代</span>' + me.join('') + '</div>';
-        h += '<div class="fam-gen"><span class="fam-gen-l">お子さまの世代</span>'
-           + (kids.length ? kids.map(function(c){ return famChip(c.name, c.age+'歳'); }).join('')
-                          : '<span class="fam-empty">お子さまの登録はありません</span>')
-           + '</div>';
-        if(others.length){
-          h += '<div class="fam-gen"><span class="fam-gen-l">親戚・ご友人</span>' + others.map(famChipOf).join('') + '</div>';
-        }
-        box.innerHTML = h;
-      }
-      function famRenderList(){
-        const box = $('fam-list'); if(!box) return;
-        box.innerHTML = famPeople.map(famRowHTML).join('');
-      }
-      /* 描く直前・旗を立てる直前に必ず読み直す。お客様データの読み込みでお名前が変わるため、
-         変数に持ったままだと前のお客様のご親族が画面と出力に残る */
-      function famRender(){ famLoad(); famRenderTree(); famRenderList(); vcSyncDockH(); }
-      // 「次の一手」へ渡す旗（原文は渡さず、状態と名前だけ）
-      function famFlags(){
-        famLoad();
-        const care = famPeople.filter(function(p){
-          return p.health==='要支援' || p.health==='要介護' || p.health==='施設に入居'
-              || (/父|母|祖父母/.test(p.rel||'') && (parseInt(p.age,10)||0) >= 75);
-        });
-        const asset = famPeople.filter(function(p){ return p.asset && p.asset!=='未確認' && p.asset!=='とくになし'; });
-        const intro = famPeople.filter(function(p){ return p.intro==='ご紹介いただけそう'; });
-        return { kaigo: care.length>0, souzoku: asset.length>0, intro: intro.length>0,
-                 kaigoNames: care.map(function(p){ return p.name || p.rel; }).slice(0,3).join('・') || 'ご親族' };
-      }
-      /* AI診断（相続・贈与カード）とPDFの宿題欄はドックの外にあるため、橋を架ける。
-         窓口はこの2つだけにし、famPeopleの生データは外へ出さない */
-      window.lpFamFlags = function(){ return famFlags(); };
+      /* PDFの宿題欄はドックの外にあるため、橋を架ける（生データは外へ出さない） */
       window.lpCustTasks = function(){
         try{
           const res = rankNext(nextSignals(buildNextContext()), 5);
@@ -8769,65 +8644,6 @@
           return { tasks: out.slice(0, 6), next: nextMeet };
         }catch(e){ return null; }
       };
-      function famText(){
-        famLoad();
-        if(!famPeople.length) return '';
-        /* このテキストは事務所の記録・引き継ぎに貼られるため、単独で読んで判断できる状態にする。
-           誰の面談の分か（取り違え防止）・ご本人以外の情報である旨・お渡しの可否を必ず残す */
-        const who = fullName('h-sei','h-name');   // 記録の取り違え防止に姓名で残す
-        return '【家系図メモ】' + (who ? '（' + who + '様の面談）' : '') + '\n'
-          + famPeople.map(function(p){
-          return '・' + (p.rel||'') + '　' + (p.name||'') + (p.age ? '（'+p.age+'歳）' : '')
-            + '　' + [p.live,p.health,p.asset,p.intro].filter(function(x){ return x && x!=='未確認'; }).join('／')
-            + (p.memo ? '　' + p.memo : '');
-        }).join('\n') + '\n'
-          + '―――\n'
-          + '※ お客様からお聞きした範囲の下書きです。健康状態など要配慮個人情報にあたる内容は、記載対象となるご親族ご本人の同意が得られた範囲のみを記録しています（未確認の項目は「未確認」のままです）。\n'
-          + '※ 利用目的は、この面談の家計試算と、担当者の記録・引き継ぎに限ります。\n'
-          + '※ お客様以外の方の個人情報を含みます。事務所内の記録としてお取り扱いいただき、お客様・第三者にそのままお渡しにならないでください。\n'
-          + '※ ご紹介は、お客様とご紹介先の双方の同意をいただいてから行ってください。ご紹介先の連絡先はここに記録しないでください。\n'
-          + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。\n';
-      }
-      if($('fam-add')) $('fam-add').addEventListener('click', ()=>{
-        famLoad();   // 押した時点のお名前の分に足す（お客様データ読み込み直後の取り違えを防ぐ）
-        // 保存できるのは30人まで。画面にだけ増えて保存されない（リロードで黙って消える）のを防ぐ
-        if(famPeople.length >= 30){ setStatus('家系図に登録できるのは30人までです'); return; }
-        famPeople.push({ rel:'夫の父', name:'', age:'', live:'未確認', health:'未確認', asset:'未確認', intro:'未確認', memo:'' });
-        famSave(); famRender();
-      });
-      if($('fam-list')) $('fam-list').addEventListener('input', (e)=>{
-        const row = e.target.closest('[data-fam-i]'); if(!row) return;
-        const p = famPeople[parseInt(row.dataset.famI,10)]; if(!p) return;
-        const k = e.target.dataset.fam; if(!k) return;
-        p[k] = e.target.value; famSave(); famRenderTree();
-      });
-      if($('fam-list')) $('fam-list').addEventListener('change', (e)=>{
-        const row = e.target.closest('[data-fam-i]'); if(!row) return;
-        const p = famPeople[parseInt(row.dataset.famI,10)]; if(!p) return;
-        const k = e.target.dataset.fam; if(!k) return;
-        p[k] = e.target.value; famSave(); famRenderTree();
-      });
-      if($('fam-list')) $('fam-list').addEventListener('click', (e)=>{
-        const del = e.target.closest('[data-fam-del]'); if(!del) return;
-        famPeople.splice(parseInt(del.dataset.famDel,10), 1); famSave(); famRender();
-      });
-      if($('fam-copy')) $('fam-copy').addEventListener('click', ()=>{
-        const t = famText();
-        if(!t){ setStatus('家系図に登録がありません'); return; }
-        if(navigator.clipboard && navigator.clipboard.writeText){
-          navigator.clipboard.writeText(t).then(function(){ setStatus('家系図メモをコピーしました'); },
-                                                function(){ mnCopyFallback(t, '家系図メモ'); });
-        } else mnCopyFallback(t, '家系図メモ');
-      });
-      /* ご親族の情報はご本人以外の個人情報なので、面談が終わったらその場で消せるようにする
-         （文字起こしを消すボタンは文字起こしが無いと押せないため、家系図には専用の削除を置く） */
-      if($('fam-clear')) $('fam-clear').addEventListener('click', ()=>{
-        famLoad();
-        if(!famPeople.length){ setStatus('家系図に登録がありません'); return; }
-        if(!confirm('この端末に残っている家系図（ご親族の情報）を消します。よろしいですか？')) return;
-        famDrop(); famRender(); setStatus('家系図を消しました');
-      });
-
       /* ---------- 端末内の保存（文字起こし＋概要。2週間で自動削除） ----------
          ★2026-08-18（ユーザー指摘）：ひとつのキーに入れっぱなしだと、朝に録音した内容が
          別のお客様（深津様）のデータを開いても表示された。家系図（famBox）と同じ型で
@@ -8967,7 +8783,7 @@
         vcSaveUI(); vcCapFollow(); vcSyncDockH();
       }
       function vcSetTab(t){
-        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', family:'vc-pane-fam', memo:'vc-pane-memo' };
+        const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', memo:'vc-pane-memo' };
         if(!map[t]) t = 'cap';
         document.querySelectorAll('.vc-tab').forEach(function(b){
           const on = (b.dataset.vcTab===t);
@@ -8977,7 +8793,6 @@
         Object.keys(map).forEach(function(k){ const el = $(map[k]); if(el) el.hidden = (k!==t); });
         if(panel.dataset.vcMode !== 'open') vcSetMode('open');
         if(t==='memo') renderVcMemos();
-        if(t==='family') famRender();
         vcSaveUI(); vcSyncDockH();
       }
       const vcTabEls = [].slice.call(document.querySelectorAll('.vc-tab'));
@@ -9037,7 +8852,7 @@
       function planBuild(){
         let c = null, fam = { kaigo:false, souzoku:false, intro:false };
         try{ c = buildNextContext(); }catch(e){ return '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; }
-        try{ fam = famFlags(); }catch(e){}
+        try{ fam = kaigoFlags(); }catch(e){}
 
         /* --- 1. 目的別：この試算で見えている必要資金に、どの仕組みが合うか --- */
         let h = '';
@@ -9134,20 +8949,22 @@
          人生の三大資金（教育・住宅・老後）を「この家庭の実数」でどうカバーするかがメイン。
          その他の懸念（万一の保障・相続・介護・手元資金）がある場合だけ追記する。
          商品ごとのメリット・デメリットの一覧にはしない。数字はすべて画面の試算から取る。
-         想定利回りは3%（目安）で統一し、必ず「運用実績・為替で変動」を併記する。 */
-      function planFv(man, years){        // 月man万円をR%で積み立てた将来価値（万円）
-        const r = 0.03/12, n = Math.max(Math.round(years*12), 0);
+         想定利回りは年5%で統一し（ユーザー指示 2026-08-19。長期の世界株式の平均並み＝
+         ツールが「楽観的」と注意を出すのも5%超から）、必ず「保証されない」を併記する。 */
+      const PLAN_RATE = 0.05;             // 検討メモの想定利回り（年）
+      function planFv(man, years){        // 月man万円をPLAN_RATEで積み立てた将来価値（万円）
+        const r = PLAN_RATE/12, n = Math.max(Math.round(years*12), 0);
         if(!n) return 0; return man * ((Math.pow(1+r, n) - 1) / r);
       }
-      function planNeedM(target, years){  // 目標target万円に必要な月額（万円・R%想定）
-        const r = 0.03/12, n = Math.max(Math.round(years*12), 1);
+      function planNeedM(target, years){  // 目標target万円に必要な月額（万円・PLAN_RATE想定）
+        const r = PLAN_RATE/12, n = Math.max(Math.round(years*12), 1);
         const f = (Math.pow(1+r, n) - 1) / r;
         return f > 0 ? Math.round(target / f * 10) / 10 : 0;
       }
       function planBuild(){
         let c = null, fam = { kaigo:false, souzoku:false, intro:false };
         try{ c = buildNextContext(); }catch(e){ return '<p class="nx-empty">いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。</p>'; }
-        try{ fam = famFlags(); }catch(e){}
+        try{ fam = kaigoFlags(); }catch(e){}
         const p = c.p;
         let no = 0;
         const sec = function(t){ no++; return '<div class="np-sec">' + no + '. ' + t + '</div>'; };
@@ -9160,7 +8977,7 @@
             if(x.total <= 0) return;
             const yrsU = Math.max(18 - x.age, 1);
             rows += '・<b>' + esc(x.name || 'お子さま') + '</b>（' + x.age + '歳）：これから約<b>' + fmt(x.total) + '万円</b>。大学入学まで約' + yrsU + '年。'
-              + 'NISAなら<b>月' + planNeedM(x.total, yrsU) + '万円</b>（3%想定）で18歳時に届く計算（月1万円なら約' + fmt(Math.round(planFv(1, yrsU))) + '万円）。<br>';
+              + 'NISAなら<b>月' + planNeedM(x.total, yrsU) + '万円</b>（年5%想定）で18歳時に届く計算（月1万円なら約' + fmt(Math.round(planFv(1, yrsU))) + '万円）。<br>';
           });
           h += sec('教育資金（合計 約' + fmt(p.eduRemain) + '万円）')
             + '<div class="np-item"><p>' + rows + '</p>'
@@ -9168,7 +8985,13 @@
             + 'チューリッヒの変額養老は<b>満期を大学入学の年に合わせ</b>、目標の土台部分（例：入学金＋初年度分）を担当させる。'
             + 'NISAとの本質的な違いは<b>親に万一があっても積立が止まらない</b>こと（払込免除・死亡保障）——ここだけは運用では代替できない。'
             + '私立か公立か迷っている段階なら、<b>差額分だけ</b>を保険側で固定するのも型。</p>'
-            + '<p class="np-risk"><span class="np-k">必ず説明：</span>変額の満期金・解約返戻金は運用実績で変動し最低保証なし（死亡保険金には最低保証）・保険関係費。NISAは値動きあり・保障なし。<b>進学直前の2〜3年は値動きのない置き場所へ移す出口</b>まで提案書に書く。3%は目安であり保証しない。</p></div>';
+            + '<p><span class="np-k">戻り方のイメージ：</span>変額保険は<b>おおむね15年で解約返戻率100%に届くイメージ</b>で説明する'
+            + '（保険関係費を差し引いたあとの目安。運用実績で前後し、最低保証はない）。'
+            + '裏返すと<b>15年より前の解約は元本割れが前提</b>——だから<b>使う時期から逆算して入る</b>のが原則で、'
+            + 'お子さまが3歳なら大学入学まで15年＝ちょうど噛み合う、10歳なら8年しかない＝保険で持つ部分は小さくしてNISA側を厚くする、と提案を変える。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>変額の満期金・解約返戻金は運用実績で変動し最低保証なし（死亡保険金には最低保証）・保険関係費。'
+            + '「15年で100%」は<b>約束ではなく目安</b>で、下回ることも上回ることもある。NISAは値動きあり・保障なし。'
+            + '<b>進学直前の2〜3年は値動きのない置き場所へ移す出口</b>まで提案書に書く。年5%は目安であり保証しない。</p></div>';
         }
 
         /* ---- 三大資金② 住宅資金（ローン残債と完済設計） ---- */
@@ -9193,12 +9016,12 @@
           const nisaFv  = Math.round(planFv(3, yrs65));
           h += sec('老後資金' + (p.depletion ? '（' + esc(hNameH()) + ' ' + p.depletion.hAge + '歳ごろに資金不足の試算）' : ''))
             + '<div class="np-item"><p>65歳まで約<b>' + yrs65 + '年</b>。'
-            + 'iDeCoは<b>月6.2万円の満額</b>（2026年12月拠出分から）なら3%想定で約<b>' + fmt(idecoFv) + '万円</b>＋掛金全額が所得控除。'
+            + 'iDeCoは<b>月6.2万円の満額</b>（2026年12月拠出分から）なら年5%想定で約<b>' + fmt(idecoFv) + '万円</b>＋掛金全額が所得控除。'
             + 'NISA月3万円なら約<b>' + fmt(nisaFv) + '万円</b>。</p>'
             + '<p><span class="np-k">カバーの設計：</span>順番は<b>①iDeCo（節税が確実な分から）→②NISA→③保険</b>。'
             + '保険の出番は「<b>受取額が読める枠</b>」（円建て個人年金）と「<b>退職金・満期金の受け皿</b>」（一時払い終身・外貨建て）。'
             + 'ねんきん定期便と退職金見込みを宿題にすると、受け皿の話が次回面談で自然に始まる。</p>'
-            + '<p class="np-risk"><span class="np-k">必ず説明：</span>iDeCoは60歳まで引き出せない。3%は目安で保証されない。外貨建て・変額は受取額が為替・運用実績で変動。年金の実額は年金事務所で確認。</p></div>';
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>iDeCoは60歳まで引き出せない。年5%は長期の世界株式の平均並みの<b>目安であって保証ではない</b>（相場次第で下回る）。外貨建て・変額は受取額が為替・運用実績で変動。年金の実額は年金事務所で確認。</p></div>';
         }
 
         /* ---- 土台：万一の保障（三大資金を守る） ---- */
@@ -9212,15 +9035,54 @@
             + '<p class="np-risk"><span class="np-k">必ず説明：</span>掛け捨ては戻らない。終身は早期解約で元本割れ。高額療養費・傷病手当金との重複。必要保障額を超える提案はしない。</p></div>';
         }
 
+        /* ---- 三大疾病（ユーザー指示 2026-08-19）----
+           死亡保障の次に必ず通る話。商品ごとの支払条件の差がそのまま受取額の差になるため、
+           「どこで差が出るか」を担当者が自分の言葉で言えるようにする */
+        {
+          const dsn = [];
+          if(c.loanBal > 0){
+            ['h','w'].forEach(function(k){
+              if(p.single && k === 'w') return;
+              const t = (typeof dansinTypeOf === 'function') ? dansinTypeOf(k) : 'general';
+              if(t === 'gan' || t === 'sandai') dsn.push((k === 'h' ? hNameH() : wNameH()) + '＝' + (t === 'gan' ? 'がん団信' : '三大疾病団信'));
+            });
+          }
+          h += sec('三大疾病（がん・脳血管疾患・心疾患）への備え')
+            + '<div class="np-item">'
+            + '<p>家計に効くのは治療費そのものより<b>「働けない期間の収入減」と「治療が長引くこと」</b>。'
+            + '公的にあるのは<b>高額療養費</b>（自己負担に上限）・<b>傷病手当金</b>（最長1年6か月・標準報酬の約2/3。<b>会社員のみで自営業には無い</b>）・障害年金。'
+            + 'まずここを確認してから、埋まらない分だけを保険で埋める。</p>'
+            + '<p><span class="np-k">カバーの設計（3層）：</span>'
+            + '①<b>一時金</b>（診断で受け取る）＝使い道が自由で、治療費にも生活費にも回せる。'
+            + '②<b>医療（入院・手術・通院）</b>＝実費の下支え。がんは<b>通院治療が中心</b>なので通院・自由診療の扱いを見る。'
+            + '③<b>就業不能・収入保障</b>＝①②で埋まらない「毎月の収入」を月々で埋める。'
+            + 'チューリッヒの医療・就業不能はこの②③を担当させる位置づけ。</p>'
+            + '<p><span class="np-k">商品の分かれ目（ここで受取額が変わる）：</span>'
+            + '・<b>上皮内新生物（上皮内がん）</b>：満額か／一部（10%など）か／対象外か。件数が多いのはこちら側なので、<b>満額支払かどうかは実際の受取率に直結</b>する。<br>'
+            + '・<b>脳血管疾患・心疾患</b>：「<b>急性心筋梗塞・脳卒中</b>」に限定か、「<b>心疾患・脳血管疾患</b>」全体まで広いか。'
+            + 'さらに支払事由が<b>「所定の状態が60日継続」型</b>か<b>「入院・手術をしたら」型</b>かで、実際に受け取れる確率が大きく変わる。<br>'
+            + '・<b>支払回数</b>：1回限りか、<b>再発にも複数回</b>払うか。<br>'
+            + '・<b>保険料払込免除</b>：三大疾病に該当すると以後の保険料が不要になる特約。<b>教育・老後の積立を止めない</b>ために効く（変額・年金系に付けると効果が大きい）。</p>'
+            + '<p><span class="np-k">住宅ローンとの重なり：</span>'
+            + (dsn.length ? '<b>' + dsn.join('・') + '</b>を設定済み。' : 'いまの設定は一般団信（死亡・高度障害）。')
+            + '団信は<b>残債が消える＝住居費の穴埋め</b>、保険は<b>収入と治療費の穴埋め</b>で役割が違う。'
+            + '重なる部分は整理し、<b>足りない側（多くは収入）</b>へ寄せる。'
+            + (c.loanBal > 0 ? 'この世帯の残債は 約<b>' + fmt(c.loanBal) + '万円</b>。' : '')
+            + '</p>'
+            + '<p class="np-risk"><span class="np-k">必ず説明：</span>支払事由・免責期間（がんは通常90日）・上皮内新生物の扱い・複数回払の条件は<b>商品ごとに違う</b>＝約款と契約締結前交付書面で確認する。'
+            + '高額療養費・傷病手当金と重複する部分は、必要以上に厚くしない。健康状態により引受けできない場合がある。'
+            + '「必ず受け取れる」といった<b>断定は使わない</b>。</p></div>';
+        }
+
         /* ---- その他の懸念（あるときだけ） ---- */
         {
           let o = '';
           const heirs = (p.single ? 0 : 1) + p.children.length;
           if(fam.souzoku || p.hAge >= 55){
-            o += '・<b>相続</b>' + (fam.souzoku ? '（家系図に資産の論点あり）' : '') + '：生命保険の非課税枠は<b>500万円×法定相続人＝この世帯なら約' + fmt(500*Math.max(heirs,1)) + '万円</b>。'
+            o += '・<b>相続</b>' + (fam.souzoku ? '（「介護」欄にご逝去または80歳以上の親御さま）' : '') + '：生命保険の非課税枠は<b>500万円×法定相続人＝この世帯なら約' + fmt(500*Math.max(heirs,1)) + '万円</b>。'
                + 'マニュライフの一時払い終身なら、受取人指定で「誰に渡すか」を契約で決めながら非課税枠を使える。親世代の資産の話が出たら、ご両親を交えた面談の入口（紹介にもつながる）。<br>';
           }
-          if(fam.kaigo) o += '・<b>介護</b>：家系図に介護・お体の記録あり。費用の負担者と公的介護保険の範囲を次回までに確認。<br>';
+          if(fam.kaigo) o += '・<b>介護</b>：「介護」欄に備えを検討したい親御さまがいます。費用の負担者と公的介護保険の範囲を次回までに確認。<br>';
           if(p.cashNow >= Math.max(c.defense * 2, 1000)){
             o += '・<b>手元資金の置き場所</b>：預貯金 約' + fmt(p.cashNow) + '万円は生活防衛資金（約' + fmt(c.defense) + '万円）を大きく超える。'
                + '「守るお金・使うお金・当面使わないお金」に色分けし、当面使わない分だけ一時払い・NISAへ。<br>';
@@ -9231,7 +9093,7 @@
         }
 
         /* ---- 共通の締め ---- */
-        h += '<p class="np-note">※ 金額はすべて<b>いまの画面の試算</b>から取った概算・3%は目安の利回りです（保証しない・前提が変われば変わる）。'
+        h += '<p class="np-note">※ 金額はすべて<b>いまの画面の試算</b>から取った概算・年5%は目安の利回りです（保証しない・前提が変われば変わる）。'
           + '商品名のご案内は<b>お客様の意向確認後</b>、最新の募集資料・契約締結前交付書面にもとづいて。'
           + '乗合代理店として特定商品を勧めるときは<b>比較可能な同種商品の概要提示、または推奨理由・基準の説明までセット</b>（保険業法294条の3）。</p>'
           + '<div class="np-item"><p><span class="np-k">TOTの型：</span>三大資金は<b>1枚の図で同時に見せる</b>（教育・住宅・老後を別々に売らない）。'
@@ -9337,16 +9199,17 @@
       })();
       nextWatchInputs();
       renderVcMemos();
-      famLoad();
-      /* お客様データ・共有リンクを読み込んだら、家系図・音声メモを「そのお客様の分」に出し直す。
+      /* 廃止した家系図メモ（ご親族のお体・介護＝要配慮個人情報）は、画面から消す手段が無くなるため
+         端末に残さず捨てる。介護のご入力は「介護」セクション（保存・共有に乗る）へ引き継いだ */
+      try{ localStorage.removeItem('lifeplan_ichijo_family_v1'); }catch(e){}
+      try{ sessionStorage.removeItem('lifeplan_ichijo_family_tmp'); }catch(e){}
+      /* お客様データ・共有リンクを読み込んだら、音声メモを「そのお客様の分」に出し直す。
          ドックは別のIIFEで外から関数を呼べないため、applyPlans() からのイベントで受ける */
       document.addEventListener('lp-state-loaded', function(){
         mnSwitchScope(false);                     // adoptしない＝名無しの録音を読み込んだお客様に付け替えない
-        if($('vc-pane-fam')) famRender();
       });
       ['h-sei','w-sei','h-name','w-name'].forEach(function(id){
         if($(id)) $(id).addEventListener('change', function(){
-          famAdopt(); if($('vc-pane-fam')) famRender();
           mnSwitchScope(true);                    // 手で名前を打ったときだけ、名無しの録音を引き継ぐ
         });
       });

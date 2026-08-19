@@ -998,6 +998,41 @@
     /* 全画面なので「小さくする」は無い（閉じるは × のみ） */
     #vc-expand{ display:none !important; }
 
+    /* ---------- 画面への書き込み（ペン・消しゴム）2026-08-19 ---------- */
+    #ink-canvas{ position:fixed; inset:0; z-index:95; pointer-events:none; }
+    body.ink-on #ink-canvas{ pointer-events:auto; touch-action:none; cursor:crosshair; }
+    #ink-toggle.is-on{ background:var(--blue); border-color:var(--blue); color:#fff; }
+    #ink-bar{ position:fixed; left:50%; transform:translateX(-50%); bottom:14px; z-index:96;
+      display:flex; align-items:center; flex-wrap:wrap; gap:8px; max-width:min(96vw, 860px);
+      padding:10px 12px; border-radius:14px; background:#fff; border:1.5px solid var(--line);
+      box-shadow:0 12px 32px rgba(0,0,0,.18); }
+    .ink-seg{ display:flex; gap:4px; padding:3px; background:var(--bg-soft); border-radius:10px; }
+    .ink-seg button{ min-height:38px; padding:6px 12px; border:none; background:none; border-radius:8px;
+      font-family:inherit; font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .ink-seg button.active{ background:#fff; color:var(--blue-deep); box-shadow:0 1px 4px rgba(0,0,0,.1); }
+    .ink-colors{ display:flex; gap:6px; }
+    .ink-color{ width:32px; height:32px; border-radius:50%; border:2px solid #fff;
+      box-shadow:0 0 0 1.5px var(--line); cursor:pointer; padding:0; }
+    .ink-color.active{ box-shadow:0 0 0 3px var(--blue-deep); }
+    .ink-btn{ min-height:38px; padding:6px 12px; border:1.5px solid var(--line); border-radius:9px;
+      background:#fff; font-family:inherit; font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .ink-btn:hover{ background:var(--bg-soft); }
+    .ink-btn.ink-done{ border-color:var(--blue); background:var(--blue); color:#fff; }
+    .ink-tip{ flex:1 1 100%; font-size:.72rem; color:var(--ink-soft); line-height:1.5; }
+    @media(max-width:560px){
+      #ink-bar{ left:8px; right:8px; transform:none; max-width:none; gap:6px; padding:8px 10px; }
+      .ink-seg button, .ink-btn{ padding:6px 9px; font-size:.78rem; }
+      .ink-tip{ display:none; }
+    }
+    /* PDF・印刷・お客様モードのどれでも、書き込みが邪魔しないように */
+    body.pdf-mode #ink-canvas, body.pdf-mode #ink-bar{ display:none !important; }
+    /* 書き込み中でも画面の切替えだけは押せるようにする
+       （これが無いと、別の画面を見せるたびに書き込みを終了することになる） */
+    /* ナビは sticky のまま前へ出す（position は上書きしない。
+       z-index は別の規則が 45 を当てているので !important で上回る） */
+    body.ink-on .tool-nav{ z-index:97 !important; }
+    body.ink-on .hero-actions-top{ position:relative; z-index:97; }
+
     /* ---------- 操作バー（ミニ・展開 共通） ---------- */
     .vc-bar{ display:flex; align-items:center; gap:8px; padding:8px 10px; }
     .vc-bar .vc-grow{ flex:1 1 auto; min-width:0; }
@@ -1430,6 +1465,8 @@
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
         <!-- 共有は面談の締めの主動線なのに、入口が保存モーダルの奥にしか無かった（検証役検出）。
              ここから直接開けるようにする（ログインは不要＝共有はサーバーを使わない） -->
+        <!-- 面談中に画面へ直接書き込む（丸をつける・数字を書き足す）。ユーザー指示 2026-08-19 -->
+        <button class="btn btn-ghost btn-sm" id="ink-toggle"><i class="fa-solid fa-pen"></i> 画面に書き込む</button>
         <button class="btn btn-ghost btn-sm" id="btn-share-top"><i class="fa-solid fa-share-nodes"></i> お客様に共有</button>
         <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-pdf"></i> PDF作成</button>
       </div><!-- 【一条フック】「一条の家で試す」はヒーローから削除（賃貸時の比較カード位置のプレースホルダー btn-try-ichijo2 から起動） -->
@@ -2963,6 +3000,21 @@
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
   </footer>
+
+  <!-- 画面への書き込み：線はページの座標で持つので、スクロールしても内容にくっついて動く -->
+  <canvas id="ink-canvas" class="no-print"></canvas>
+  <div id="ink-bar" class="no-print" hidden>
+    <div class="ink-seg" id="ink-modes">
+      <button type="button" class="ink-mode active" data-ink-mode="pen"><i class="fa-solid fa-pen"></i> ペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="erase"><i class="fa-solid fa-eraser"></i> 消しゴム</button>
+    </div>
+    <div class="ink-colors" id="ink-colors"></div>
+    <div class="ink-seg" id="ink-sizes"></div>
+    <button type="button" class="ink-btn" id="ink-undo"><i class="fa-solid fa-rotate-left"></i> 1つ戻す</button>
+    <button type="button" class="ink-btn" id="ink-clear"><i class="fa-solid fa-trash-can"></i> 全部消す</button>
+    <button type="button" class="ink-btn ink-done" id="ink-off"><i class="fa-solid fa-check"></i> 書き込みを終了</button>
+    <span class="ink-tip">書き込み中は画面をタップすると線が引かれます。上下に動かすときはマウスのホイール、または「書き込みを終了」を押してください。</span>
+  </div>
 
   <script>
   /* ============================================================
@@ -12373,6 +12425,139 @@
       } else {
         modal.hidden = false;
       }
+    })();
+
+    /* ============================================================
+       画面への書き込み（2026-08-19 ユーザー指示。動画の MCライフプランと同じ操作感）
+       面談中に「この数字」へ丸をつける・その場でメモを書き足すためのペン。
+       ・線は **ページの座標** で持ち、スクロールしても内容にくっついて動く
+         （画面に固定したガラスに書くと、スクロールした瞬間に別の数字を指してしまう）
+       ・線は「点の配列」（ベクター）で持ち、描き直しはいつでも引き直す。
+         画面の大きさが変わっても、再計算でページの高さが変わっても消えない
+       ・端末にもお客様データにも保存しない（その場かぎり）。
+         お客様データ・共有リンクを読み込んだら消す＝前のお客様への書き込みが残らない
+       ============================================================ */
+    (function(){
+      const cv = document.getElementById('ink-canvas');
+      const bar = document.getElementById('ink-bar');
+      const btn = document.getElementById('ink-toggle');
+      if(!cv || !bar || !btn) return;
+      const ctx = cv.getContext('2d');
+      const COLORS = [['#e0483f','赤'], ['#2f8a6e','緑'], ['#3a6ea8','青'], ['#e0a23b','黄'], ['#2b3a34','黒']];
+      const SIZES  = [['細',3], ['中',6], ['太',12]];
+      let on = false, mode = 'pen', color = COLORS[0][0], size = 6;
+      let strokes = [], cur = null;
+
+      // 道具箱（色・太さ）を組み立てる
+      document.getElementById('ink-colors').innerHTML = COLORS.map(function(c, i){
+        return '<button type="button" class="ink-color'+(i===0?' active':'')+'" data-ink-color="'+c[0]+'" '
+             + 'title="'+c[1]+'" aria-label="'+c[1]+'" style="background:'+c[0]+';"></button>';
+      }).join('');
+      document.getElementById('ink-sizes').innerHTML = SIZES.map(function(s){
+        return '<button type="button" class="ink-size'+(s[1]===size?' active':'')+'" data-ink-size="'+s[1]+'">'+s[0]+'</button>';
+      }).join('');
+
+      // キャンバスは画面ぶんだけ持ち、スクロール量だけずらして描く（ページ全面のキャンバスは重すぎる）
+      function fit(){
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        cv.width  = Math.round(innerWidth  * dpr);
+        cv.height = Math.round(innerHeight * dpr);
+        cv.style.width = innerWidth + 'px';
+        cv.style.height = innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        redraw();
+      }
+      function drawStroke(s){
+        if(!s.pts.length) return;
+        ctx.save();
+        ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = s.erase ? 'rgba(0,0,0,1)' : s.color;
+        ctx.lineWidth = s.erase ? s.size * 4 : s.size;   // 消しゴムは太めにして狙いやすくする
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s.pts[0].x - scrollX, s.pts[0].y - scrollY);
+        if(s.pts.length === 1) ctx.lineTo(s.pts[0].x - scrollX + 0.01, s.pts[0].y - scrollY);
+        else for(let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x - scrollX, s.pts[i].y - scrollY);
+        ctx.stroke();
+        ctx.restore();
+      }
+      function redraw(){
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+        strokes.forEach(drawStroke);
+        if(cur) drawStroke(cur);
+      }
+      // 描いている線だけを継ぎ足す（毎回全部引き直すと長い線でカクつく）
+      function drawTail(s){
+        const n = s.pts.length;
+        if(n < 2) return;
+        ctx.save();
+        ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = s.erase ? 'rgba(0,0,0,1)' : s.color;
+        ctx.lineWidth = s.erase ? s.size * 4 : s.size;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s.pts[n-2].x - scrollX, s.pts[n-2].y - scrollY);
+        ctx.lineTo(s.pts[n-1].x - scrollX, s.pts[n-1].y - scrollY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function setOn(v){
+        on = !!v;
+        document.body.classList.toggle('ink-on', on);
+        btn.classList.toggle('is-on', on);
+        btn.innerHTML = on ? '<i class="fa-solid fa-pen"></i> 書き込み中'
+                           : '<i class="fa-solid fa-pen"></i> 画面に書き込む';
+        bar.hidden = !on;
+      }
+      function clearAll(){ strokes = []; cur = null; redraw(); }
+
+      btn.addEventListener('click', function(){ setOn(!on); });
+      document.getElementById('ink-off').addEventListener('click', function(){ setOn(false); });
+      document.getElementById('ink-undo').addEventListener('click', function(){ strokes.pop(); redraw(); });
+      document.getElementById('ink-clear').addEventListener('click', function(){
+        if(strokes.length && !confirm('画面への書き込みをすべて消します。よろしいですか？')) return;
+        clearAll();
+      });
+      document.getElementById('ink-modes').addEventListener('click', function(e){
+        const b = e.target.closest('[data-ink-mode]'); if(!b) return;
+        mode = b.dataset.inkMode;
+        [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
+      });
+      document.getElementById('ink-colors').addEventListener('click', function(e){
+        const b = e.target.closest('[data-ink-color]'); if(!b) return;
+        color = b.dataset.inkColor; mode = 'pen';
+        [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
+        [...document.getElementById('ink-modes').children].forEach(function(x){ x.classList.toggle('active', x.dataset.inkMode === 'pen'); });
+      });
+      document.getElementById('ink-sizes').addEventListener('click', function(e){
+        const b = e.target.closest('[data-ink-size]'); if(!b) return;
+        size = parseInt(b.dataset.inkSize, 10) || 6;
+        [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
+      });
+
+      // 描く（マウス・指・ペンのどれでも同じ扱い）
+      cv.addEventListener('pointerdown', function(e){
+        if(!on) return;
+        cv.setPointerCapture(e.pointerId);
+        cur = { color:color, size:size, erase:(mode === 'erase'), pts:[{ x:e.clientX + scrollX, y:e.clientY + scrollY }] };
+        redraw();
+      });
+      cv.addEventListener('pointermove', function(e){
+        if(!on || !cur) return;
+        cur.pts.push({ x:e.clientX + scrollX, y:e.clientY + scrollY });
+        drawTail(cur);
+      });
+      const endStroke = function(){ if(!cur) return; strokes.push(cur); cur = null; redraw(); };
+      cv.addEventListener('pointerup', endStroke);
+      cv.addEventListener('pointercancel', endStroke);
+      cv.addEventListener('pointerleave', endStroke);
+
+      addEventListener('scroll', redraw, { passive:true });
+      addEventListener('resize', fit);
+      // お客様データ・共有リンクを読み込んだら消す（前のお客様への書き込みを残さない）
+      document.addEventListener('lp-state-loaded', function(){ clearAll(); setOn(false); });
+      fit();
     })();
 
   })();

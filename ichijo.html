@@ -177,6 +177,20 @@
     .kt-editors{ margin-top:8px; padding:9px 11px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:12px; }
     .kt-ed-t{ font-size:.74rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px; }
     .kt-hint{ display:block; margin:6px 2px 0; }
+    /* ごきょうだいのお名前・年齢を入れる小さな別画面 */
+    .kt-modal{ position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
+      padding:16px; background:rgba(26,44,37,.45); }
+    .kt-modal-box{ width:100%; max-width:360px; background:#fff; border-radius:16px; padding:18px 18px 16px;
+      box-shadow:0 18px 48px rgba(0,0,0,.24); }
+    .kt-modal-t{ font-size:1rem; font-weight:800; color:var(--ink); margin-bottom:14px; }
+    .kt-modal-fields .field{ margin-bottom:12px; }
+    .kt-modal-fields label{ display:block; font-size:.82rem; color:var(--ink-soft); font-weight:700; margin-bottom:4px; }
+    .kt-modal-fields input{ width:100%; min-height:46px; padding:9px 11px; border:1.5px solid var(--line);
+      border-radius:10px; font-family:inherit; font-size:1rem; background:#fff; }
+    .kt-modal-fields input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,157,122,.18); }
+    .kt-modal-btns{ display:flex; justify-content:flex-end; margin-top:4px; }
+    .kt-modal-btns .btn{ min-height:44px; }
+    body.kt-modal-on{ overflow:hidden; }
     .kt-card{ position:absolute; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:8px 10px; border-radius:12px;
       background:#fff; border:1.5px solid var(--line); font-size:.9rem; line-height:1.4; text-align:center; box-sizing:border-box; }
     .kt-card.is-dim{ background:var(--bg-soft); color:var(--ink-soft); border-style:dashed; }
@@ -232,6 +246,8 @@
     /* グリッド内の入力欄の縦位置を揃える：ラベルを2行分確保し、下揃えで入力欄に密着させる（1行ラベルは上側に余白が入るだけで、行内の入力欄の高さ・上端が揃う） */
     .grid2 > .field > label, .grid3 > .field > label{ min-height:2.75rem; display:flex; align-items:flex-end; }
     .ir-grid > .field > label{ min-height:1.2em; }   /* ⑤運用・⑦保険の行はラベルが短く折り返さないため、余白を予約しない */
+    /* ラベルの中身を包む箱（唯一のflexアイテム＝中は普通の文章として折り返す） */
+    .lbl-wrap{ display:block; width:100%; }
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
     /* 折り返しの見た目調整：最終行が数文字だけになる折り返しをブラウザに自動回避させる（非対応ブラウザでは無視され従来どおり） */
     .field label, .hint, .note span, .ipn-note, .cr-quote, .ic-lead, .acc-title span, .ict-sub, .diag-note, .seg button{ text-wrap:pretty; }
@@ -875,6 +891,13 @@
          （ユーザー指示 2026-08-19） */
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card{ display:flex; flex-direction:column; margin-bottom:0; }
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .card .chart-box{ flex:1 1 auto; height:auto; min-height:260px; }
+      /* 「現状 と 将来 をくらべる」も左右2画面（左＝総資産のくらべ・右＝資産運用のくらべ）。
+         縦積みだと2つ目のカードが画面外に落ちて、並べて見比べられない（ユーザー指示 2026-08-19） */
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="compare"]{
+        display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:stretch;
+      }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="compare"] > .card{ display:flex; flex-direction:column; margin-bottom:0; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="compare"] > .card .chart-box{ flex:1 1 auto; height:auto; min-height:260px; }
       /* AI診断は全幅1パート：左＝総括と項目ボタン、右＝タップした項目の詳しい診断（2画面ぶんの幅で読む）。
          align-items:start は既にあった（グリッドの子は伸ばさない）が、hint/catsが2つの別要素の
          ままだと adv-detail の row-span:2 が行トラック自体を文量ぶん伸ばしてしまい、align-items
@@ -4445,6 +4468,22 @@
     const loanTypeSeg = $('loan-type-seg');
     const loanType = ()=> loanTypeSeg?.querySelector('button.active')?.dataset.loantype || 'solo-h';
     // who='h'|'w' の借入（団信）割合を 0〜1 で返す
+    /* .grid2 / .grid3 のラベルは display:flex（入力欄の位置をそろえるため下端そろえ）。
+       ラベルの中に <span>（お名前の差し込み・補足のhint）があると、
+       **テキストとspanが別々のflexアイテムになり、それぞれの幅で1文字ずつ折り返す**
+       （実測：「その／とき　直矢様ご／自身　が働き方を変える可／能性」）。
+       中身をひとつの箱に包んで「アイテム1つ」に戻す。包んでも見た目の並びは変わらない */
+    (function(){
+      document.querySelectorAll('.grid2 > .field > label, .grid3 > .field > label').forEach(function(el){
+        if(!el.firstElementChild || el.dataset.lblWrapped) return;
+        const w = document.createElement('span');
+        w.className = 'lbl-wrap';
+        while(el.firstChild) w.appendChild(el.firstChild);
+        el.appendChild(w);
+        el.dataset.lblWrapped = '1';
+      });
+    })();
+
     /* ============================================================
        ご両親の介護（2026-08-19 ユーザー指示で新設）
        ・kg-{hf|hm|wf|wm}-{alive|age|pref|carer|self|fund|work|home} の4人×8項目＋世帯の都道府県
@@ -4539,13 +4578,19 @@
                souzoku: (gone.length > 0 || old.length > 0),
                kaigoNames: care.map(function(x){ return kgLabel(x.pk); }).slice(0, 3).join('・') || 'ご親族' };
     }
-    /* ごきょうだいの1枚（お名前・年齢）。人数は kg-{h|w}-sibs で決まるため、追加・削除は無い */
-    function ktSibHTML(kind, i, o){
-      return '<div class="kt-extra" data-kt-kind="'+kind+'" data-kt-i="'+i+'">'
-        + '<div class="kt-to"><label>お名前</label><input type="text" data-kt="name" value="'+esc(o.name||'')+'" placeholder="例：健一"></div>'
-        + '<div><label>年齢</label><input type="number" data-kt="age" value="'+esc(o.age||'')+'" min="0" max="120" placeholder="歳"></div>'
-        + '<div><button type="button" class="kt-del" data-kt-close="1"><i class="fa-solid fa-xmark"></i> 閉じる</button></div>'
-        + '</div>';
+    /* ごきょうだいの入力は「小さな別画面」で出す（ユーザー指示 2026-08-19）。
+       人数は kg-{h|w}-sibs で決まるため、ここに追加・削除は無い。
+       入力した内容は打つそばから家系図の箱に反映する（ktSyncCard） */
+    function ktSibHTML(kind, i, o, title){
+      return '<div class="kt-modal" data-kt-modal="1">'
+        + '<div class="kt-modal-box" role="dialog" aria-modal="true" aria-label="'+esc(title)+'">'
+        + '<div class="kt-modal-t">'+esc(title)+'</div>'
+        + '<div class="kt-modal-fields" data-kt-kind="'+kind+'" data-kt-i="'+i+'">'
+        + '<div class="field"><label>お名前</label><input type="text" data-kt="name" value="'+esc(o.name||'')+'" placeholder="例：健一"></div>'
+        + '<div class="field"><label>年齢</label><div class="input-unit"><input type="number" data-kt="age" value="'+esc(o.age||'')+'" min="0" max="120" placeholder="例：38"><span class="u">歳</span></div></div>'
+        + '</div>'
+        + '<div class="kt-modal-btns"><button type="button" class="btn btn-primary btn-sm" data-kt-close="1">入力を反映して閉じる</button></div>'
+        + '</div></div>';
     }
     // いま開いているごきょうだいの箱（'sibh:1' の形）。kaigoRender より前に読まれても落ちないよう var
     var ktSibOpen = null;
@@ -4568,8 +4613,8 @@
       document.querySelectorAll('[data-kg-me]').forEach(function(el){
         const nm = (el.dataset.kgMe.charAt(0) === 'h' ? hNameH() : wNameH());
         el.textContent = (el.tagName === 'OPTION')
-          ? (el.value === 'ご自身（この世帯）' ? nm + 'ご自身（この世帯）' : nm + 'が援助する可能性')
-          : nm + 'ご自身';
+          ? (el.value === 'ご自身（この世帯）' ? nm + '（この世帯）' : nm + 'が援助する可能性')
+          : nm;   // ラベルは「直矢様が…」。「様ご自身」は重ねない（読みにくいため）
       });
       document.querySelectorAll('[data-kg-sib]').forEach(function(el){
         const nm = (el.dataset.kgSib.charAt(0) === 'h' ? hNameH() : wNameH());
@@ -4811,8 +4856,7 @@
         const selfI = (sSide === 'w') ? sibO('w') - 1 : hO - 1;
         if(sI >= 0 && sI < cnt && sI !== selfI){
           const who = (sSide === 'w') ? wNameH() : hNameH();
-          sibEd = '<div class="kt-editors"><div class="kt-ed-t">' + esc(who + 'のごきょうだい（第' + (sI+1) + '子）') + '</div>'
-                + ktSibHTML(sKind, sI, kgExtra(sKind)[sI] || {}) + '</div>';
+          sibEd = ktSibHTML(sKind, sI, kgExtra(sKind)[sI] || {}, who + 'のごきょうだい（第' + (sI+1) + '子）');
         }else{ ktSibOpen = null; }
       }
       const hasSib = (hXs.length > 1) || (wXs.length > 1);
@@ -4828,6 +4872,11 @@
         + (ups.length ? '<div class="kt-editors"><div class="kt-ed-t">上の世代</div>' + ups.map(function(p2,i){ return ktExtraHTML('up', i, p2, ktToOptions('up', p2.to)); }).join('') + '</div>' : '')
         + (downs.length ? '<div class="kt-editors"><div class="kt-ed-t">下の世代</div>' + downs.map(function(p2,i){ return ktExtraHTML('down', i, p2, ktToOptions('down', p2.to)); }).join('') + '</div>' : '');
       ktHintSync();
+      document.body.classList.toggle('kt-modal-on', !!ktSibOpen);
+      if(ktSibOpen){
+        const fi = tree.querySelector('.kt-modal input[data-kt="name"]');
+        if(fi && !tree.contains(document.activeElement)) fi.focus();
+      }
       // ── リスクの見える化 ──
       const alive = ps.filter(function(x){ return x.alive === 'ご健在'; });
       if(!alive.length){
@@ -4897,6 +4946,9 @@
           const sib = e.target.closest('[data-kt-card^="sib"]');
           if(sib){ ktSibOpen = (ktSibOpen === sib.dataset.ktCard) ? null : sib.dataset.ktCard; kaigoRender(); return; }
           if(e.target.closest('[data-kt-close]')){ ktSibOpen = null; kaigoRender(); return; }
+          // 背景（暗い部分）をタップしても閉じる
+          const ov = e.target.closest('[data-kt-modal]');
+          if(ov && e.target === ov){ ktSibOpen = null; kaigoRender(); return; }
           const add = e.target.closest('[data-kt-add]');
           if(add){
             const kind = add.dataset.ktAdd, list = kgExtra(kind);
@@ -4914,6 +4966,8 @@
         });
         // キーボード操作でもごきょうだいの入力欄を開けるようにする
         treeEl.addEventListener('keydown', function(e){
+          if(e.key === 'Escape' && ktSibOpen){ ktSibOpen = null; kaigoRender(); return; }
+          if(e.key === 'Enter' && e.target.closest && e.target.closest('.kt-modal-fields')){ e.preventDefault(); ktSibOpen = null; kaigoRender(); return; }
           if(e.key !== 'Enter' && e.key !== ' ') return;
           const sib = e.target.closest && e.target.closest('[data-kt-card^="sib"]'); if(!sib) return;
           e.preventDefault();

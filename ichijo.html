@@ -1005,7 +1005,7 @@
     #ink-toggle.is-on{ background:var(--blue); border-color:var(--blue); color:#fff; }
     /* 道具箱は小さく、画面の右下に寄せる（試算の数字にかぶせない。2026-08-19 ユーザー指示） */
     #ink-bar{ position:fixed; right:12px; bottom:12px; z-index:96;
-      display:none; align-items:center; flex-wrap:wrap; gap:5px; max-width:min(94vw, 440px);
+      display:none; align-items:center; flex-wrap:wrap; gap:5px; max-width:min(94vw, 470px);
       padding:6px 8px; border-radius:11px; background:#fff; border:1.5px solid var(--line);
       box-shadow:0 8px 22px rgba(0,0,0,.16); }
     /* 道具箱は「書き込み中」だけ出す（hidden 属性は display:flex に負けるので、表示は class で決める） */
@@ -3015,17 +3015,18 @@
   <div id="ink-bar" class="no-print" hidden>
     <div class="ink-seg" id="ink-modes">
       <button type="button" class="ink-mode active" data-ink-mode="pen"><i class="fa-solid fa-pen"></i> ペン</button>
-      <button type="button" class="ink-mode" data-ink-mode="fade"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるペン</button>
-      <button type="button" class="ink-mode" data-ink-mode="hl"><i class="fa-solid fa-highlighter"></i> 蛍光ペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="fade" title="書いた2秒後からうっすら消えます"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="hl" title="太く薄いマーカー"><i class="fa-solid fa-highlighter"></i> 蛍光ペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="hlfade" title="マーカーを引いて、2秒後からうっすら消えます"><i class="fa-solid fa-highlighter"></i> 消える蛍光</button>
       <button type="button" class="ink-mode" data-ink-mode="erase"><i class="fa-solid fa-eraser"></i> 消しゴム</button>
     </div>
-    <button type="button" class="ink-btn" id="ink-ruler" aria-pressed="false"><i class="fa-solid fa-ruler"></i> 定規</button>
+    <button type="button" class="ink-btn" id="ink-ruler" aria-pressed="false" title="ペン・蛍光ペンがまっすぐ引けます"><i class="fa-solid fa-ruler"></i> 定規</button>
     <div class="ink-colors" id="ink-colors"></div>
     <div class="ink-seg" id="ink-sizes"></div>
     <button type="button" class="ink-btn" id="ink-undo"><i class="fa-solid fa-rotate-left"></i> 1つ戻す</button>
     <button type="button" class="ink-btn" id="ink-clear"><i class="fa-solid fa-trash-can"></i> 全部消す</button>
     <button type="button" class="ink-btn ink-done" id="ink-off"><i class="fa-solid fa-check"></i> 書き込みを終了</button>
-    <span class="ink-tip">定規を押すと、ペン・消えるペン・蛍光ペンでまっすぐ引けます。消えるペン＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
+    <span class="ink-tip">「消える」＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
   </div>
 
   <script>
@@ -12481,7 +12482,7 @@
       }
 
       // 道具箱（色・太さ）を組み立てる。色は「いまの道具の色」だけを出す
-      const isHL = function(){ return mode === 'hl'; };
+      const isHL = function(){ return mode === 'hl' || mode === 'hlfade'; };
       const curColor = function(){ return isHL() ? hlColor : color; };
       function renderColors(){
         const list = isHL() ? HL_COLORS : PEN_COLORS, now = curColor();
@@ -12645,7 +12646,7 @@
         cv.setPointerCapture(e.pointerId);
         const x = e.clientX + scrollX, y = e.clientY + scrollY;
         if(mode === 'erase'){ pushUndo(); erasing = true; eraseAt(x, y); return; }
-        cur = { color:curColor(), size:size, fade:(mode === 'fade'), hl:isHL(), t0:0, pts:[{ x:x, y:y }] };
+        cur = { color:curColor(), size:size, fade:(mode === 'fade' || mode === 'hlfade'), hl:isHL(), t0:0, pts:[{ x:x, y:y }] };
         redraw();
       });
       cv.addEventListener('pointermove', function(e){

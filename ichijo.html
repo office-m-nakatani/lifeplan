@@ -885,8 +885,11 @@
       body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"]{
         display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:stretch;
       }
-      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid,
-      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1/-1; }
+      /* 総合判定（要対策）とKPIは左右に並べる。判定は文が短く、全幅だと
+         右半分があいて読みにくい（ユーザー指示 2026-08-20）。
+         .verdict は align-items:center なので、KPIの高さに伸びても中身は上下中央にそろう */
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .verdict{ grid-column:1; }
+      body.tab-mode:not(.pdf-mode) .view-wrap[data-view="assets"] > .kpi-grid{ grid-column:2; }
       /* KPIは元の左右二画面（2列）のまま。行ごとに1つの年齢を見る
          （左＝その年齢の総資産額・右＝その実質価値）。
          4枚横並びにすると、どの実質価値がどの年齢のものか読み取りにくい

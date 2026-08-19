@@ -1550,6 +1550,7 @@
            ai＝AI診断（全幅1パート）／cf＝キャッシュフロー表／chat＝相談 -->
       <div class="tool-nav-scroll" id="nav-result">
         <button type="button" data-nav-result="assets"><i class="fa-solid fa-coins"></i> お金（資産と収支）</button>
+        <button type="button" data-nav-result="compare"><i class="fa-solid fa-scale-unbalanced-flip"></i> 資産の比較</button>
         <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-house-chimney-window"></i> 家（一条比較）</button>
         <button type="button" data-nav-result="hoken"><i class="fa-solid fa-file-shield"></i> 万が一（保障）</button>
         <button type="button" data-nav-result="ai"><i class="fa-solid fa-robot"></i> AI診断</button>
@@ -2171,7 +2172,7 @@
               <summary><i class="fa-solid fa-circle-info"></i> 使い方・前提を見る</summary>
               <div class="note" style="margin-bottom:8px;">
                 <i class="fa-solid fa-scale-balanced"></i>
-                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「万が一（保障）」でご覧いただけます。保険料が変わった分を「貯蓄運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「お金（資産と収支）」の「現状 と 将来 をくらべる」で確認できます。</span>
+                <span><b>今の保障（現状プラン）と、見直し後の保障（将来プラン）を比べられます。</b>上の「将来プラン」タブで保障額を変えると、ここに<b>現状比の増減</b>が表示されます。この合計に<b>団信（住宅ローン）は含みません</b>。団信込みの推移は、上の「結果を見る」の「万が一（保障）」でご覧いただけます。保険料が変わった分を「貯蓄運用・年金」等にまわした場合の総資産の変化は、上の「結果を見る」の「資産の比較」で確認できます。</span>
               </div>
               <div class="note" style="margin-bottom:0;">
                 <i class="fa-solid fa-file-lines"></i>
@@ -6985,7 +6986,9 @@
     const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／家＝一条比較／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
-    const RESULT_GROUPS = { assets:['assets','compare'], ichijo:['ichijo'], hoken:['hoken'], ai:['ai'], cf:['cf'], chat:['chat'] };
+    /* 「資産の比較」は独立した画面にする（ユーザー指示 2026-08-20）。
+       お金（資産と収支）の下にぶら下げていたため、縦に長くなって見比べにくかった */
+    const RESULT_GROUPS = { assets:['assets'], compare:['compare'], ichijo:['ichijo'], hoken:['hoken'], ai:['ai'], cf:['cf'], chat:['chat'] };
     function groupOfInput(key){
       if(INPUT_GROUPS[key]) return key;
       for(const g of INPUT_GROUP_ORDER){ if(INPUT_GROUPS[g].includes(key)) return g; }

@@ -1003,6 +1003,14 @@
     /* 全画面なので「小さくする」は無い（閉じるは × のみ） */
     #vc-expand{ display:none !important; }
 
+    /* ---------- 保存・読込モーダルのサンプル ---------- */
+    .sample-box{ display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:12px 14px;
+      background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:12px; }
+    .sample-box b{ display:block; font-size:.92rem; color:var(--blue-deep); }
+    .sample-box span{ display:block; font-size:.76rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; }
+    .sample-box .btn{ flex:0 0 auto; }
+    @media(max-width:480px){ .sample-box{ flex-direction:column; align-items:stretch; } }
+
     /* ---------- 画面への書き込み（ペン・消しゴム）2026-08-19 ---------- */
     /* 「書き込みを終了」で線ごと画面から消し、「画面に書き込む」でまた出す（消えるのは表示だけ） */
     #ink-canvas{ position:fixed; inset:0; z-index:95; pointer-events:none; display:none; }
@@ -2634,6 +2642,15 @@
         <button class="modal-close" id="save-modal-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- サンプルはログインしていなくても出せる（操作の練習・初回のご説明に使うため） -->
+        <div class="sample-box">
+          <div>
+            <b>サンプルを表示</b>
+            <span>中谷太郎様ご一家（35歳・共働き・お子さま2人）の入力例です。<br>現状は賃貸のまま、将来は一条工務店の家を購入した場合で入っています。</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="sample-show" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> 表示する</button>
+        </div>
+
         <!-- ログイン -->
         <div id="save-login">
           <p class="lock-msg">保存・読込にはログインが必要です。営業担当者ごとにアカウントを作成できます。</p>
@@ -6236,6 +6253,61 @@
     });
 
     // 保存・読込用：両プランをまとめて集める／復元する
+    /* ============================================================
+       サンプル（中谷太郎様ご一家）2026-08-20 ユーザー指示
+       ・操作の練習や、初めてのお客様への説明用。保存データには一切さわらない
+       ・起動直後の既定値に、この差分だけを重ねて作る（既定値の変更に自動で追従する）
+       ・現状＝賃貸のまま／将来＝一条工務店の家を購入＋積立を増やす、の2プランを入れて
+         「くらべる」画面がその場で成り立つようにしている
+       ============================================================ */
+    var INITIAL_STATE = null;
+    const SAMPLE_NAME = '中谷太郎様ご一家（サンプル）';
+    const SAMPLE_FIELDS = {
+      'h-sei':'中谷', 'h-name':'太郎', 'h-age':'35', 'h-income':'560', 'h-raise':'1.5',
+      'h-retire':'65', 'h-bonus':'1200', 'h-b-y':'1991', 'h-b-m':'5', 'h-b-d':'20',
+      'w-sei':'中谷', 'w-name':'花子', 'w-age':'33', 'w-income':'320', 'w-raise':'0.8',
+      'w-retire':'65', 'w-bonus':'400', 'w-b-y':'1993', 'w-b-m':'8', 'w-b-d':'10',
+      'end-age':'100', 'inflation':'1.0', 'rent':'10.5',
+      'cash-on':true, 'cash':'420', 'pension-age':'65', 'pension-monthly':'22',
+      'ins-total-h':'2000', 'ins-total-w':'500',
+      // 太郎様＝2人きょうだいの次男／花子様＝3人きょうだいの長女
+      'kg-h-sibs':'2', 'kg-h-order':'2', 'kg-w-sibs':'3', 'kg-w-order':'1',
+      'kg-extra-sibh':'[{"name":"一郎","age":"38"}]',
+      'kg-extra-sibw':'[{},{"name":"ゆい","age":"30"},{"name":"みお","age":"27"}]',
+      'kaigo-home-pref':'香川県',
+      'kg-hf-alive':'ご健在', 'kg-hf-age':'70', 'kg-hf-pref':'香川県',
+      'kg-hm-alive':'ご健在', 'kg-hm-age':'68', 'kg-hm-pref':'香川県',
+      'kg-wf-alive':'ご健在', 'kg-wf-age':'66', 'kg-wf-pref':'岡山県',
+      'kg-wm-alive':'ご健在', 'kg-wm-age':'64', 'kg-wm-pref':'岡山県'
+    };
+    const SAMPLE_CHILDREN = [
+      { name:'さくら', sei:'中谷', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'home',
+        gender:'girl', bEra:'seireki', bY:'2020', bM:'4', bD:'5' },
+      { name:'そうた', sei:'中谷', age:'3', k12:'public', highEd:'kokuritsu_r', lodging:'home',
+        gender:'boy',  bEra:'seireki', bY:'2023', bM:'3', bD:'3' }
+    ];
+    function sampleState(kind){
+      if(!INITIAL_STATE) return null;
+      const s = JSON.parse(JSON.stringify(INITIAL_STATE));
+      Object.assign(s.fields, SAMPLE_FIELDS);
+      s.children = JSON.parse(JSON.stringify(SAMPLE_CHILDREN));
+      s.investments = [{ type:'nisa', name:'つみたてNISA', lump:'80',
+                         monthly:(kind === 'mirai' ? '5' : '3'), ret:'5',
+                         start:'35', end:'65', after:'continue', on:true }];
+      s.hokenMode = 'simple';
+      s.household = 'couple';
+      // 現状＝賃貸のまま／将来＝一条工務店の家を購入
+      s.house = (kind === 'mirai') ? 'buy' : 'rent';
+      s.htype = (kind === 'mirai') ? 'ichijo' : 'normal';
+      return s;
+    }
+    function showSample(){
+      const g = sampleState('genjo'), m = sampleState('mirai');
+      if(!g || !m){ alert('サンプルを用意できませんでした。ページを開き直してお試しください。'); return false; }
+      applyPlans({ plans:{ active:'genjo', genjo:{ state:g, sum:null }, mirai:{ state:m, sum:null } } });
+      return true;
+    }
+
     function collectPlans(){
       PLANS[PLANS.active].state = collectState();
       return { active: PLANS.active,
@@ -11701,6 +11773,13 @@
     }
     function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
+    if($('sample-show')) $('sample-show').addEventListener('click', ()=>{
+      if(!confirm('画面の入力内容を、サンプル（中谷太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
+      if(!showSample()) return;
+      setCurrentSave(null);            // サンプルは「編集中の資料」にしない（上書き保存で潰さないため）
+      saveModal.hidden = true;
+      if(typeof switchView === 'function') switchView('input', 'family');
+    });
     $('save-modal-close').addEventListener('click', ()=> saveModal.hidden=true);
     saveModal.addEventListener('click', (e)=>{ if(e.target===saveModal) saveModal.hidden=true; });
 
@@ -12171,6 +12250,10 @@
     eventRow(50,'家族旅行（記念）',80);
     applyHousePanels();
     try{ kaigoRender(); }catch(e){}   // 介護の家系図・リスクの初期表示
+    /* 起動直後（＝どのお客様も読み込んでいない状態）の入力内容を控えておく。
+       サンプルはこれに差分を重ねて作るので、既定値を変えてもサンプルが古いままにならない。
+       ドラフトの復元はバナーを押したときだけ走るので、この時点は必ず既定値 */
+    try{ INITIAL_STATE = collectState(); }catch(e){}
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
     try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }

@@ -1145,13 +1145,6 @@
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
     .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
 
-    /* ---------- 結果画面の相談CTAカード ---------- */
-    .nx-cta-card{ text-align:center; padding:18px 16px; }
-    .nx-cta-lead{ font-size:.95rem; margin-bottom:8px; }
-    .nx-cta-opts{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-    .nx-cta-chip{ display:inline-block; padding:6px 12px; border:1.5px solid var(--blue-pale2);
-      border-radius:999px; background:var(--blue-pale); font-size:.8rem; font-weight:700; color:var(--blue-deep); }
-
     /* ---------- 提案の検討メモ（担当者専用）----------
        商品名と営業観点を含む社内メモ。誤ってお客様に見える事故を防ぐため、
        「社内用」と分かる濃い枠＋鍵アイコンで囲い、customer-mode/PDF/印刷では丸ごと消す */
@@ -2472,13 +2465,6 @@
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の「うち団信」を除いた<b>保険部分の金額（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
           </details>
-        </div>
-
-        <!-- 保障の不足を見た直後に相談の出口を置く（不安のまま画面を閉じさせない） -->
-        <div class="card no-print nx-cta-card">
-          <p class="nx-cta-lead">不足が出ても、備え方は<b>1つではありません</b>。</p>
-          <p class="nx-cta-opts"><span class="nx-cta-chip">公的な給付を確認する</span><span class="nx-cta-chip">働き方・支出を見直す</span><span class="nx-cta-chip">保険・貯蓄で備える</span></p>
-          <button type="button" class="btn btn-primary" data-reserve-cta><i class="fa-solid fa-calendar-check"></i> わが家に合う備え方を相談する（無料）</button>
         </div>
 
         </div><!-- /view-wrap hoken -->
@@ -11227,7 +11213,6 @@
     // 同意チェックは開くたびに外す（前回の同意を引き継がない＝取得のたびに利用目的へ同意いただく）
     function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; if($('rv-agree')) $('rv-agree').checked=false; reserveModal.hidden=false; }
     // 結果画面（お金・万が一）の相談CTAカード。チャット内の[data-reserve]とは別に全画面で拾う
-    document.addEventListener('click', (e)=>{ if(e.target.closest('[data-reserve-cta]')) openReserve(); });
     $('open-reserve').addEventListener('click', openReserve);
     $('reserve-close').addEventListener('click', ()=> reserveModal.hidden=true);
     reserveModal.addEventListener('click', (e)=>{ if(e.target===reserveModal) reserveModal.hidden=true; });

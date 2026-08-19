@@ -999,29 +999,30 @@
     #vc-expand{ display:none !important; }
 
     /* ---------- 画面への書き込み（ペン・消しゴム）2026-08-19 ---------- */
-    #ink-canvas{ position:fixed; inset:0; z-index:95; pointer-events:none; }
-    body.ink-on #ink-canvas{ pointer-events:auto; touch-action:none; cursor:crosshair; }
+    /* 「書き込みを終了」で線ごと画面から消し、「画面に書き込む」でまた出す（消えるのは表示だけ） */
+    #ink-canvas{ position:fixed; inset:0; z-index:95; pointer-events:none; display:none; }
+    body.ink-on #ink-canvas{ display:block; pointer-events:auto; touch-action:none; cursor:crosshair; }
     #ink-toggle.is-on{ background:var(--blue); border-color:var(--blue); color:#fff; }
-    #ink-bar{ position:fixed; left:50%; transform:translateX(-50%); bottom:14px; z-index:96;
-      display:flex; align-items:center; flex-wrap:wrap; gap:8px; max-width:min(96vw, 860px);
-      padding:10px 12px; border-radius:14px; background:#fff; border:1.5px solid var(--line);
-      box-shadow:0 12px 32px rgba(0,0,0,.18); }
-    .ink-seg{ display:flex; gap:4px; padding:3px; background:var(--bg-soft); border-radius:10px; }
-    .ink-seg button{ min-height:38px; padding:6px 12px; border:none; background:none; border-radius:8px;
-      font-family:inherit; font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
-    .ink-seg button.active{ background:#fff; color:var(--blue-deep); box-shadow:0 1px 4px rgba(0,0,0,.1); }
-    .ink-colors{ display:flex; gap:6px; }
-    .ink-color{ width:32px; height:32px; border-radius:50%; border:2px solid #fff;
+    /* 道具箱は小さく、画面の右下に寄せる（試算の数字にかぶせない。2026-08-19 ユーザー指示） */
+    #ink-bar{ position:fixed; right:12px; bottom:12px; z-index:96;
+      display:flex; align-items:center; flex-wrap:wrap; gap:5px; max-width:min(94vw, 440px);
+      padding:6px 8px; border-radius:11px; background:#fff; border:1.5px solid var(--line);
+      box-shadow:0 8px 22px rgba(0,0,0,.16); }
+    .ink-seg{ display:flex; gap:2px; padding:2px; background:var(--bg-soft); border-radius:8px; }
+    .ink-seg button{ min-height:28px; padding:3px 7px; border:none; background:none; border-radius:6px;
+      font-family:inherit; font-size:.7rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .ink-seg button.active{ background:#fff; color:var(--blue-deep); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+    .ink-colors{ display:flex; gap:4px; }
+    .ink-color{ width:20px; height:20px; border-radius:50%; border:2px solid #fff;
       box-shadow:0 0 0 1.5px var(--line); cursor:pointer; padding:0; }
-    .ink-color.active{ box-shadow:0 0 0 3px var(--blue-deep); }
-    .ink-btn{ min-height:38px; padding:6px 12px; border:1.5px solid var(--line); border-radius:9px;
-      background:#fff; font-family:inherit; font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .ink-color.active{ box-shadow:0 0 0 2.5px var(--blue-deep); }
+    .ink-btn{ min-height:28px; padding:3px 7px; border:1.5px solid var(--line); border-radius:7px;
+      background:#fff; font-family:inherit; font-size:.7rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
     .ink-btn:hover{ background:var(--bg-soft); }
     .ink-btn.ink-done{ border-color:var(--blue); background:var(--blue); color:#fff; }
-    .ink-tip{ flex:1 1 100%; font-size:.72rem; color:var(--ink-soft); line-height:1.5; }
+    .ink-tip{ flex:1 1 100%; font-size:.62rem; color:var(--ink-soft); line-height:1.45; }
     @media(max-width:560px){
-      #ink-bar{ left:8px; right:8px; transform:none; max-width:none; gap:6px; padding:8px 10px; }
-      .ink-seg button, .ink-btn{ padding:6px 9px; font-size:.78rem; }
+      #ink-bar{ left:8px; right:8px; max-width:none; }
       .ink-tip{ display:none; }
     }
     /* PDF・印刷・お客様モードのどれでも、書き込みが邪魔しないように */
@@ -1031,6 +1032,7 @@
     /* ナビは sticky のまま前へ出す（position は上書きしない。
        z-index は別の規則が 45 を当てているので !important で上回る） */
     body.ink-on .tool-nav{ z-index:97 !important; }
+    body.ink-on .plan-wrap{ z-index:97 !important; }   /* 現状プラン⇔将来プランも切り替えられるように */
     body.ink-on .hero-actions-top{ position:relative; z-index:97; }
 
     /* ---------- 操作バー（ミニ・展開 共通） ---------- */
@@ -3006,6 +3008,7 @@
   <div id="ink-bar" class="no-print" hidden>
     <div class="ink-seg" id="ink-modes">
       <button type="button" class="ink-mode active" data-ink-mode="pen"><i class="fa-solid fa-pen"></i> ペン</button>
+      <button type="button" class="ink-mode" data-ink-mode="fade"><i class="fa-solid fa-wand-magic-sparkles"></i> 消えるペン</button>
       <button type="button" class="ink-mode" data-ink-mode="erase"><i class="fa-solid fa-eraser"></i> 消しゴム</button>
     </div>
     <div class="ink-colors" id="ink-colors"></div>
@@ -3013,7 +3016,7 @@
     <button type="button" class="ink-btn" id="ink-undo"><i class="fa-solid fa-rotate-left"></i> 1つ戻す</button>
     <button type="button" class="ink-btn" id="ink-clear"><i class="fa-solid fa-trash-can"></i> 全部消す</button>
     <button type="button" class="ink-btn ink-done" id="ink-off"><i class="fa-solid fa-check"></i> 書き込みを終了</button>
-    <span class="ink-tip">書き込み中は画面をタップすると線が引かれます。上下に動かすときはマウスのホイール、または「書き込みを終了」を押してください。</span>
+    <span class="ink-tip">消えるペン＝2秒後から消えます。書き込みは画面ごとに残ります。</span>
   </div>
 
   <script>
@@ -7119,6 +7122,8 @@
           catch(e){ window.scrollTo(0, Math.max(0, y)); }
         }
       }
+      // 画面への書き込みは「その画面の分」だけ出す（2026-08-19 ユーザー指示）
+      document.dispatchEvent(new Event('lp-view-changed'));
     }
     if($('nav-input')) $('nav-input').addEventListener('click', (e)=>{
       const b = e.target.closest('button[data-nav-input]'); if(!b) return;
@@ -12443,10 +12448,26 @@
       const btn = document.getElementById('ink-toggle');
       if(!cv || !bar || !btn) return;
       const ctx = cv.getContext('2d');
-      const COLORS = [['#e0483f','赤'], ['#2f8a6e','緑'], ['#3a6ea8','青'], ['#e0a23b','黄'], ['#2b3a34','黒']];
+      const COLORS = [['#e0483f','赤'], ['#3a6ea8','青'], ['#2b3a34','黒']];
       const SIZES  = [['細',3], ['中',6], ['太',12]];
+      const FADE_WAIT = 2000, FADE_TIME = 2500;   // 消えるペン：2秒待って、2.5秒かけてうっすら消える
+      const ERASE_R = 12;                          // 消しゴムが「触れた」と見なす半径
       let on = false, mode = 'pen', color = COLORS[0][0], size = 6;
-      let strokes = [], cur = null;
+      let cur = null, erasing = false, raf = 0;
+      /* 書き込みは**画面ごと**に分けて持つ（入力する／お金／家／万が一…）。
+         ひとつにまとめると、別の画面へ移ったときに前の画面の線がそのまま残り、
+         関係のない数字を指してしまう（ユーザー指摘 2026-08-19） */
+      const pages = {}, undos = {};
+      function pageKey(){
+        try{ return currentView ? (currentView.type + ':' + currentView.key) : 'input'; }
+        catch(e){ return 'input'; }
+      }
+      function ink(){ const k = pageKey(); if(!pages[k]) pages[k] = []; return pages[k]; }
+      function pushUndo(){
+        const k = pageKey(), st = (undos[k] = undos[k] || []);
+        st.push(ink().slice());
+        if(st.length > 40) st.shift();
+      }
 
       // 道具箱（色・太さ）を組み立てる
       document.getElementById('ink-colors').innerHTML = COLORS.map(function(c, i){
@@ -12467,13 +12488,25 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         redraw();
       }
-      function drawStroke(s){
-        if(!s.pts.length) return;
-        ctx.save();
-        ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
-        ctx.strokeStyle = s.erase ? 'rgba(0,0,0,1)' : s.color;
-        ctx.lineWidth = s.erase ? s.size * 4 : s.size;   // 消しゴムは太めにして狙いやすくする
+      // 消えるペンの濃さ（書き終わってから数え始める）
+      function alphaOf(s, now){
+        if(!s.fade || !s.t0) return 1;
+        const age = now - s.t0;
+        if(age <= FADE_WAIT) return 1;
+        return Math.max(0, 1 - (age - FADE_WAIT) / FADE_TIME);
+      }
+      function penPath(s){
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = s.size;
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      }
+      function drawStroke(s, now){
+        if(!s.pts.length) return;
+        const a = alphaOf(s, now);
+        if(a <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = a;
+        penPath(s);
         ctx.beginPath();
         ctx.moveTo(s.pts[0].x - scrollX, s.pts[0].y - scrollY);
         if(s.pts.length === 1) ctx.lineTo(s.pts[0].x - scrollX + 0.01, s.pts[0].y - scrollY);
@@ -12483,23 +12516,54 @@
       }
       function redraw(){
         ctx.clearRect(0, 0, innerWidth, innerHeight);
-        strokes.forEach(drawStroke);
-        if(cur) drawStroke(cur);
+        const now = Date.now(), list = ink();
+        for(let i = list.length - 1; i >= 0; i--) if(alphaOf(list[i], now) <= 0) list.splice(i, 1);   // 消えきった線は捨てる
+        list.forEach(function(s){ drawStroke(s, now); });
+        if(cur) drawStroke(cur, now);
+        // 消えかけの線があるあいだだけ動かし続ける（無いときは止める＝電池とCPUを使わない）
+        if(!raf && list.some(function(s){ return s.fade && s.t0; })){
+          raf = requestAnimationFrame(function(){ raf = 0; redraw(); });
+        }
       }
       // 描いている線だけを継ぎ足す（毎回全部引き直すと長い線でカクつく）
       function drawTail(s){
         const n = s.pts.length;
         if(n < 2) return;
         ctx.save();
-        ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
-        ctx.strokeStyle = s.erase ? 'rgba(0,0,0,1)' : s.color;
-        ctx.lineWidth = s.erase ? s.size * 4 : s.size;
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        penPath(s);
         ctx.beginPath();
         ctx.moveTo(s.pts[n-2].x - scrollX, s.pts[n-2].y - scrollY);
         ctx.lineTo(s.pts[n-1].x - scrollX, s.pts[n-1].y - scrollY);
         ctx.stroke();
         ctx.restore();
+      }
+      // 点と線分の距離（速く動かすと点がまばらになるため、点だけの判定では消し残る）
+      function distSeg(px, py, a, b){
+        const dx = b.x - a.x, dy = b.y - a.y, L = dx*dx + dy*dy;
+        let t = L ? ((px - a.x)*dx + (py - a.y)*dy) / L : 0;
+        t = Math.max(0, Math.min(1, t));
+        const cx = a.x + t*dx, cy = a.y + t*dy;
+        return Math.sqrt((px-cx)*(px-cx) + (py-cy)*(py-cy));
+      }
+      /* 消しゴムは「触れた線をまるごと」消す（ユーザー指示 2026-08-19）。
+         部分的に削ると一筆書きの丸が切れ端だけ残って、かえって読みにくい */
+      function eraseAt(px, py){
+        const list = ink();
+        let hit = false;
+        for(let i = list.length - 1; i >= 0; i--){
+          const s = list[i], lim = ERASE_R + s.size / 2;
+          let touched = false;
+          if(s.pts.length === 1){
+            const d = Math.sqrt(Math.pow(s.pts[0].x-px,2) + Math.pow(s.pts[0].y-py,2));
+            touched = d <= lim;
+          } else {
+            for(let j = 1; j < s.pts.length; j++){
+              if(distSeg(px, py, s.pts[j-1], s.pts[j]) <= lim){ touched = true; break; }
+            }
+          }
+          if(touched){ list.splice(i, 1); hit = true; }
+        }
+        if(hit) redraw();
       }
 
       function setOn(v){
@@ -12509,15 +12573,18 @@
         btn.innerHTML = on ? '<i class="fa-solid fa-pen"></i> 書き込み中'
                            : '<i class="fa-solid fa-pen"></i> 画面に書き込む';
         bar.hidden = !on;
+        if(on) redraw();
       }
-      function clearAll(){ strokes = []; cur = null; redraw(); }
 
       btn.addEventListener('click', function(){ setOn(!on); });
       document.getElementById('ink-off').addEventListener('click', function(){ setOn(false); });
-      document.getElementById('ink-undo').addEventListener('click', function(){ strokes.pop(); redraw(); });
+      document.getElementById('ink-undo').addEventListener('click', function(){
+        const st = undos[pageKey()];
+        if(st && st.length){ pages[pageKey()] = st.pop(); redraw(); }
+      });
       document.getElementById('ink-clear').addEventListener('click', function(){
-        if(strokes.length && !confirm('画面への書き込みをすべて消します。よろしいですか？')) return;
-        clearAll();
+        if(ink().length && !confirm('この画面への書き込みをすべて消します。よろしいですか？')) return;
+        pushUndo(); pages[pageKey()] = []; cur = null; redraw();
       });
       document.getElementById('ink-modes').addEventListener('click', function(e){
         const b = e.target.closest('[data-ink-mode]'); if(!b) return;
@@ -12526,9 +12593,12 @@
       });
       document.getElementById('ink-colors').addEventListener('click', function(e){
         const b = e.target.closest('[data-ink-color]'); if(!b) return;
-        color = b.dataset.inkColor; mode = 'pen';
+        color = b.dataset.inkColor;
         [...this.children].forEach(function(x){ x.classList.toggle('active', x === b); });
-        [...document.getElementById('ink-modes').children].forEach(function(x){ x.classList.toggle('active', x.dataset.inkMode === 'pen'); });
+        if(mode === 'erase'){          // 消しゴム中に色を選んだら、書くほうへ戻す
+          mode = 'pen';
+          [...document.getElementById('ink-modes').children].forEach(function(x){ x.classList.toggle('active', x.dataset.inkMode === 'pen'); });
+        }
       });
       document.getElementById('ink-sizes').addEventListener('click', function(e){
         const b = e.target.closest('[data-ink-size]'); if(!b) return;
@@ -12540,23 +12610,38 @@
       cv.addEventListener('pointerdown', function(e){
         if(!on) return;
         cv.setPointerCapture(e.pointerId);
-        cur = { color:color, size:size, erase:(mode === 'erase'), pts:[{ x:e.clientX + scrollX, y:e.clientY + scrollY }] };
+        const x = e.clientX + scrollX, y = e.clientY + scrollY;
+        if(mode === 'erase'){ pushUndo(); erasing = true; eraseAt(x, y); return; }
+        cur = { color:color, size:size, fade:(mode === 'fade'), t0:0, pts:[{ x:x, y:y }] };
         redraw();
       });
       cv.addEventListener('pointermove', function(e){
-        if(!on || !cur) return;
-        cur.pts.push({ x:e.clientX + scrollX, y:e.clientY + scrollY });
+        if(!on) return;
+        const x = e.clientX + scrollX, y = e.clientY + scrollY;
+        if(erasing){ eraseAt(x, y); return; }
+        if(!cur) return;
+        cur.pts.push({ x:x, y:y });
         drawTail(cur);
       });
-      const endStroke = function(){ if(!cur) return; strokes.push(cur); cur = null; redraw(); };
+      const endStroke = function(){
+        if(erasing){ erasing = false; return; }
+        if(!cur) return;
+        if(cur.fade) cur.t0 = Date.now();   // 消えるペンは「書き終わってから」数え始める
+        pushUndo(); ink().push(cur); cur = null; redraw();
+      };
       cv.addEventListener('pointerup', endStroke);
       cv.addEventListener('pointercancel', endStroke);
       cv.addEventListener('pointerleave', endStroke);
 
       addEventListener('scroll', redraw, { passive:true });
       addEventListener('resize', fit);
-      // お客様データ・共有リンクを読み込んだら消す（前のお客様への書き込みを残さない）
-      document.addEventListener('lp-state-loaded', function(){ clearAll(); setOn(false); });
+      document.addEventListener('lp-view-changed', function(){ cur = null; erasing = false; redraw(); });
+      // お客様データ・共有リンクを読み込んだら全部消す（前のお客様への書き込みを残さない）
+      document.addEventListener('lp-state-loaded', function(){
+        Object.keys(pages).forEach(function(k){ delete pages[k]; });
+        Object.keys(undos).forEach(function(k){ delete undos[k]; });
+        cur = null; setOn(false); redraw();
+      });
       fit();
     })();
 

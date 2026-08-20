@@ -6813,16 +6813,21 @@
       const cats = [];
 
       /* ── 総合（トップの総括にも使用）── */
-      const overTone = p.depletion ? 'bad' : (p.minRow.net < reserve6m ? 'warn' : 'ok');
+      /* 判定は結果画面（simulate直後）と同じ三段：総資産のショート → 預貯金の不足 → 余裕の少なさ。
+         ★2026-08-20：預貯金がマイナスでも p.depletion だけを見ていたため「資金ショートは起きない」と
+         言い切っていた。画面は「注意」を出しているのに診断だけ「安心」になり、説明が食い違う。 */
+      const overTone = p.depletion ? 'bad' : ((p.cashShort || p.minRow.net < reserve6m) ? 'warn' : 'ok');
       const overTitle = overTone==='bad' ? '要対策：資金計画の見直しをおすすめします'
                       : overTone==='warn' ? 'おおむね良好：一部に備えの余地があります'
                       : '安心：バランスの取れた家計プランです';
       const overSum = `${fam}の現在の計画では、`
         + (p.depletion ? `<b>${hNameH()}${p.depletion.hAge}歳（${p.depletion.year}年）ごろに資金が不足</b>する見込みです。`
+         : p.cashShort ? `運用資産を含めた総額では${p.endAge}歳まで保てますが、<b>運用を取り崩さない前提だと${hNameH()}${p.cashShort.hAge}歳ごろに預貯金が足りなくなります</b>（預貯金がいちばん少なくなるのは${p.minCashRow.hAge}歳ごろで、約${fmt(Math.abs(p.minCashRow.cash))}万円のマイナス）。`
                        : `<b>${p.endAge}歳まで資金ショートは起きない</b>見込みです（最少残高 約${fmt(p.minRow.net)}万円）。`)
         + `退職時（${p.hRetire}歳）の金融資産は約<b>${fmt(p.retireRow.net)}万円</b>、最終${p.endAge}歳で約<b>${fmt(p.endRow.net)}万円</b>の試算です。`;
       const overGood = [], overCon = [];
-      if(!p.depletion) overGood.push(`${p.endAge}歳の老後まで、資金ショートを起こさない安定したプランです。`);
+      if(!p.depletion && !p.cashShort) overGood.push(`${p.endAge}歳の老後まで、資金ショートを起こさない安定したプランです。`);
+      if(!p.depletion && p.cashShort) overCon.push(`運用を取り崩さない前提だと、<b>${p.cashShort.hAge}歳ごろに預貯金が不足</b>します。その時期だけ運用の一部を取り崩すか、積立額の調整をご検討ください。`);
       if(surplus0>=0) overGood.push(`毎年の家計は約 ${fmt(surplus0)}万円 の黒字で、着実に資産を積み上げられます。`);
       if(p.cashNow>=defense) overGood.push(`生活防衛資金（約${fmt(defense)}万円）を預貯金で確保できています。`);
       if(totalMonthly>0) overGood.push(`月 ${fmt(totalMonthly)}万円 の積立で、運用の効果（退職時 約${ben}万円）が生まれています。`);
@@ -6835,11 +6840,12 @@
 
       /* ── 老後資金 ── */
       {
-        const tone = p.depletion ? 'bad' : (p.minRow.net < reserve6m ? 'warn' : 'ok');
+        const tone = p.depletion ? 'bad' : ((p.cashShort || p.minRow.net < reserve6m) ? 'warn' : 'ok');
         const sum = `退職予定は ${p.hRetire}歳、公的年金は ${pensionAge}歳から 月<b>${fmt(pensionM)}万円</b>の見込み。`
           + `老後の生活費 月${fmt(retLivingM)}万円 との差 ${gap>0?`月<b>${fmt(gap)}万円</b>`:'なし'} を資産で補います。退職時の金融資産は約<b>${fmt(p.retireRow.net)}万円</b>の試算です。`;
         const good=[], con=[];
-        if(!p.depletion) good.push(`${p.endAge}歳まで資産が持続する試算で、老後の土台はできています。`);
+        if(!p.depletion && !p.cashShort) good.push(`${p.endAge}歳まで資産が持続する試算で、老後の土台はできています。`);
+        else if(!p.depletion) good.push(`運用資産を含めた総額では${p.endAge}歳まで資産が持続する試算です（ただし預貯金は${p.cashShort.hAge}歳ごろに不足します）。`);
         if(pensionM>0) good.push(`公的年金 月${fmt(pensionM)}万円 が、生涯にわたる収入の柱になります。`);
         /* 受給開始年齢の入力に応じて文を変える。すでに75歳まで繰下げている方に「繰下げましょう」と
            勧めると案内が事実と食い違う（増減率を計算に入れた 2026-08-20 以降は特に） */
@@ -8758,8 +8764,7 @@
       function buildNextContext(){
         const p = buildProfile();
         let n = null; try{ n = insuranceNeed(); }catch(e){ n = null; }
-        let cashShort = null;
-        p.rows.forEach(function(r){ if(cashShort===null && r.cash < 0) cashShort = r; });
+        const cashShort = p.cashShort;   // 判定は buildProfile に一本化（別々に数えると診断どうしで食い違う）
         const gs = (typeof sumStats==='function' && PLANS.genjo.sum) ? sumStats(PLANS.genjo.sum) : null;
         const ms = (typeof sumStats==='function' && PLANS.mirai.sum) ? sumStats(PLANS.mirai.sum) : null;
         const yg = p.eduByChild.length
@@ -10092,8 +10097,17 @@
       const children = readChildren();
       const sim = simulate();
       const rows = sim.rows;
-      let minRow = rows[0], depletion = null;
-      rows.forEach(r=>{ if(r.net < minRow.net) minRow = r; if(!depletion && r.net < 0) depletion = r; });
+      /* ★2026-08-20：ここで見ていたのは net（運用資産こみの総資産）だけだったため、
+         預貯金がマイナスでもAI診断・チャット診断・提案書が「資金ショートしない見込み」と言い切っていた。
+         結果画面の判定（simulate直後）はすでに cashShort を別に見て「注意」を出しているので、
+         同じものをここでも出して、画面と診断で判定が食い違わないようにする。 */
+      let minRow = rows[0], depletion = null, cashShort = null, minCashRow = rows[0];
+      rows.forEach(r=>{
+        if(r.net < minRow.net) minRow = r;
+        if(!depletion && r.net < 0) depletion = r;
+        if(r.cash < minCashRow.cash) minCashRow = r;
+        if(!cashShort && r.cash < 0) cashShort = r;   // 運用は取り崩さない前提での預貯金の不足
+      });
       const retireRow = rows.find(r=> r.hAge===sim.hRetire) || rows[rows.length-1];
       const endRow = rows[rows.length-1];
       const invs = readInvestments();
@@ -10111,7 +10125,7 @@
       });
       const eduRemain = eduByChild.reduce((a,x)=> a+x.total, 0);
       const yearsToLastIndep = children.length ? Math.max(...eduByChild.map(x=> Math.max(x.indep - x.age, 0))) : 0;
-      return { single, hAge, wAge, children, rows, minRow, depletion, retireRow, endRow,
+      return { single, hAge, wAge, children, rows, minRow, depletion, cashShort, minCashRow, retireRow, endRow,
                hRetire:sim.hRetire, endAge:sim.endAge, invs, living, cashNow, investNow,
                assetsNow: cashNow+investNow, hNet, wNet, eduByChild, eduRemain, yearsToLastIndep };
     }
@@ -10363,6 +10377,13 @@
           return diagBox(facts, 'bad',
             `診断：このままだと<b>${p.depletion.hAge}歳ごろに資金が不足</b>する見込みです（想定${p.endAge}歳より${Math.max(p.endAge-p.depletion.hAge,0)}年早い計算）。`,
             `年金だけでは生活費の${coverage}%しかカバーできず、月${fmt(Math.max(gapM,0))}万円を資産の取り崩しで補う想定のため、資金が長持ちしません。対策の候補：①毎月の積立を増やす ②退職年齢を延ばす ③生活費を月1〜2万円見直す${penDeferAdvice ? ` ④${penDeferAdvice}` : ''}。`);
+        }
+        /* ★2026-08-20：総資産（運用こみ）だけを見て「資金ショートしない」と言い切っていたため、
+           預貯金がマイナスになる年があっても「安心」と出ていた。結果画面の判定と同じ三段にそろえる。 */
+        if(p.cashShort){
+          return diagBox(facts, 'warn',
+            `診断：総額では${p.endAge}歳まで保てますが、<b>運用を取り崩さない前提だと${p.cashShort.hAge}歳ごろに預貯金が足りなくなります</b>（預貯金がいちばん少なくなるのは${p.minCashRow.hAge}歳ごろで、約${fmt(Math.abs(p.minCashRow.cash))}万円のマイナス）。`,
+            `年金は生活費の約${coverage}%をカバーし、運用資産を含めた総額は${p.endAge}歳まで持ちますが、その時期の生活費は預貯金だけではまかなえません。対策の候補：①その期間だけ運用の一部を取り崩す ②積立額を一時的に下げて手元の現金を厚くする ③${penDeferAdvice || '退職年齢を延ばす'}。`);
         }
         return diagBox(facts, 'ok',
           `診断：<b>${p.endAge}歳まで資金ショートしない見込みです。</b>（最少残高 ${fmt(p.minRow.net)}万円・${p.minRow.hAge}歳時点）`,

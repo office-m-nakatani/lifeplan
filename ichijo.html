@@ -343,7 +343,7 @@
     }
     /* ライフイベントは2段組みにする（2026-08-20 ユーザー指示）。
        1段に5項目を詰めていたため「太郎さんの車の買い替え」のような内容が途中で隠れていた。
-       1段目＝開始年齢・内容・金額・削除／2段目＝繰り返し・くり返す期間 */
+       1段目＝開始年齢・内容・金額・削除／2段目＝繰り返し・繰り返す期間 */
     .row-item.event-row{
       grid-template-columns:0.85fr 1.7fr 1.05fr auto;
       grid-template-areas:"evage evlabel evamount evdel" "evevery evuntil . .";
@@ -620,10 +620,15 @@
     /* 縦書きのまま高さを抑える箱。溢れた分は…で示し、全文は title で読める */
     table.cfh td.evtv .evtv-in{ writing-mode:inherit; overflow:hidden; text-overflow:ellipsis; }
     table.cfh td.evtv .ev-k{ font-weight:700; }
-    /* お子さまの在学期間の帯（2026-08-20 ユーザー指示）。入学の年は濃く、在学中の年は薄く出して
-       どの年を見ても「いま小学校／中学」が分かるようにする。帯の下線は td 側の box-shadow で引く */
-    table.cfh td.evtv .edu-enter{ font-weight:800; }
-    table.cfh td.evtv .edu-cont{ font-weight:600; opacity:.6; }
+    /* お子さまの在学期間の帯（2026-08-20 ユーザー指示）。
+       同じ学校が続く年を colspan でひとつのセルにまとめ、学校名は「横書きで中央に1回だけ」出す。
+       年ごとに縦書きを繰り返すより、どこからどこまでが小学校なのかが一目で分かる。 */
+    table.cfh td.evtv.edu-seg{
+      writing-mode:horizontal-tb; text-orientation:initial;   /* 親（イベント行）が縦書きなので戻す */
+      text-align:center; vertical-align:middle; white-space:nowrap;
+      font-weight:800; font-size:.82rem; letter-spacing:.06em;
+      border-radius:8px; padding:0 6px;
+    }
     table.cfh td.evtv:not(.dd):not(:empty){ background:#fbfdfc; }
     /* イベント行の項目名は、金額行と区別できるよう控えめに */
     table.cfh tr:has(td.evtv) .rowhead{ font-size:.72rem; font-weight:700; }
@@ -3482,7 +3487,7 @@
           <div class="input-unit"><input type="number" class="ev-every" value="${every}" min="0" max="50"><span class="u">年ごと</span></div>
           <span class="hint">0＝1回のみ</span>
         </div>
-        <div class="field ev-until-field"${rep?'':' hidden'}><label>くり返す期間</label>
+        <div class="field ev-until-field"${rep?'':' hidden'}><label>繰り返す期間</label>
           <div class="input-unit"><input type="number" class="ev-until" value="${parseInt(until)||0}" min="0" max="110"><span class="u">歳まで</span></div>
           <span class="hint">0＝想定年齢まで</span>
         </div>
@@ -5699,7 +5704,7 @@
 
         // ライフイベント（名目）
         events.forEach(ev=>{
-          // 繰り返しは「開始年齢〜くり返す期間（until）」の間だけ。until が0なら従来どおり想定年齢まで
+          // 繰り返しは「開始年齢〜繰り返す期間（until）」の間だけ。until が0なら従来どおり想定年齢まで
           const hit = ev.every>0
             ? (hAge>=ev.age && (!ev.until || hAge<=ev.until) && (hAge-ev.age)%ev.every===0)
             : (hAge===ev.age);
@@ -6556,7 +6561,7 @@
     /* ライフイベント（現状・将来どちらにも入れる）。every:0＝1回のみ／until＝繰り返しをやめる年齢
        車は10年ごとに買い替え、運転をやめる想定の75歳で終わり（2026-08-20 ユーザー指示） */
     const SAMPLE_EVENTS = [
-      { age:'45', label:'太郎さんの車の買い替え', amount:'300', every:'10', until:'75' },
+      { age:'43', label:'太郎さんの車の買い替え', amount:'300', every:'10', until:'75' },
       { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
       { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
@@ -7193,18 +7198,14 @@
         kidsMeta.forEach((k, ki)=>{
           const c = childColor(ki);
           /* 在学期間を帯で見せる（2026-08-20 ユーザー指示）。以前は入学した年だけに文字を出していたため、
-             途中の年を見ても「いま何年生か」が分からなかった。在学中の年すべてに薄い背景と下線を敷き、
-             入学の年は濃い文字、在学中の年は薄い文字で学校名を出す */
-          evtRows.push({ label:`${esc(k.name)}の進学`, headStyle:`color:${c.text}`, cell:(r)=>{
+             途中の年を見ても「いま何年生か」が分からなかった。
+             merge:true を付けると、同じ学校が続く年を colspan でまとめ、学校名を横書きで中央に1回だけ出す。
+             key が同じ間はひとつの帯として扱われる */
+          evtRows.push({ label:`${esc(k.name)}の進学`, headStyle:`color:${c.text}`, merge:true, cell:(r)=>{
             const m = eduMarker(r.childAges[ki], kidsMeta[ki]);
             if(!m) return null;
-            const rL = m.first ? '7px' : '0', rR = m.last ? '7px' : '0';
-            return {
-              text: m.label,
-              title: `${k.name}：${m.first ? m.full : m.label+'（在学中）'}`,
-              tdStyle: `background:${c.bg};box-shadow:inset 0 -3px 0 ${c.border};border-radius:${rL} ${rR} ${rR} ${rL}`,
-              html: `<span class="ev-k ${m.first?'edu-enter':'edu-cont'}" style="color:${c.text}">${esc(m.label)}</span>`
-            };
+            return { key:`${ki}:${m.label}`, text:m.label, title:`${k.name}：${m.full}`,
+                     bg:c.bg, border:c.border, color:c.text, html:esc(m.label) };
           }});
         });
         evtRows.push({ label:'ライフイベント', cell:(r)=>{
@@ -7222,6 +7223,19 @@
         evtRows.forEach(er=>{
           const cells = rows.map(r=> er.cell(r));
           if(!cells.some(Boolean)) return;                        // 予定が1つも無い行は出さない
+          if(er.merge){
+            // 同じ key が続く年をひとつのセルにまとめる（在学期間の帯）。空きの年もまとめて詰める
+            const segs = [];
+            cells.forEach(c=>{
+              const k = c ? c.key : null, last = segs[segs.length-1];
+              if(last && last.key===k) last.n++; else segs.push({ key:k, n:1, c });
+            });
+            rowsHtml.push(`<tr style="height:34px"><th class="rowhead"${er.headStyle?` style="${er.headStyle}"`:''}>${er.label}</th>` +
+              segs.map(s=> s.c
+                ? `<td class="evtv edu-seg" colspan="${s.n}" style="background:${s.c.bg};box-shadow:inset 0 -3px 0 ${s.c.border};color:${s.c.color}" title="${esc(s.c.title)}">${s.c.html}</td>`
+                : `<td class="evtv" colspan="${s.n}"></td>`).join('') + '</tr>');
+            return;
+          }
           const maxLen = cells.reduce((a,c)=> Math.max(a, c ? c.text.length : 0), 0);
           const h = Math.min(Math.max(maxLen, 3) * 11 + 18, 132); // 縦書き1文字≒11px
           rowsHtml.push(`<tr style="height:${h}px"><th class="rowhead"${er.headStyle?` style="${er.headStyle}"`:''}>${er.label}</th>` +

@@ -1738,11 +1738,15 @@
               </div>
             </div>
 
-            <!-- 賃貸 -->
-            <div class="conditional" data-house-panel="rent">
+            <!-- 賃貸／これから購入（購入までは家賃を払い続けるため、購入プランでもこの欄を出す） -->
+            <div class="conditional" data-house-panel="rent buy">
               <div class="field" style="max-width:260px;">
                 <label>家賃（管理費込み・月額）</label>
                 <div class="input-unit"><input type="number" id="rent" value="11" min="0" step="0.5"><span class="u">万円</span></div>
+              </div>
+              <!-- 「これから購入」のとき、家賃をいつまで払い、いつからローンになるかを明示する -->
+              <div class="note" id="house-timeline" style="display:none; margin-top:10px;">
+                <i class="fa-solid fa-timeline"></i><span id="house-timeline-text"></span>
               </div>
             </div>
 
@@ -5628,6 +5632,10 @@
         if(houseType==='rent'){
           expense += rent*12*inflF;
         } else {
+          /* ★2026-08-20：「これから購入」を選ぶと、購入する年より前の住居費が0円になっていた
+             （家賃を計上せず、ローンもまだ始まらないため）。購入が10年先なら10年ぶん住まいがタダの
+             試算になり、購入プランが実態より有利に出ていた。購入までは今の家賃を払う前提で計上する。 */
+          if(houseType==='buy' && hAge<buyAge) expense += rent*12*inflF;
           if(houseType==='buy' && hAge===buyAge){
             downThisYear = down;   // 購入年に用意する頭金（現金支出。諸費用は住宅ローン総額に含める前提）
             eventList.push({label:'マイホーム購入', type:'family'});
@@ -5785,6 +5793,23 @@
        ============================================================ */
     let assetChart, flowChart;
 
+    /* 「これから購入」のときの住まいの費用の流れ（2026-08-20 ユーザー指示）。
+       購入までは今の家賃、購入した年からは住宅ローン。どちらがいつからいつまでかを1行で出す。
+       以前は購入前の年の住居費が0円だったうえ、家賃欄も隠れていて前提が見えなかった */
+    function updateHouseTimeline(){
+      const box = $('house-timeline'), el = $('house-timeline-text'); if(!box || !el) return;
+      if(houseType !== 'buy'){ box.style.display = 'none'; return; }
+      const hAge0 = num('h-age',35), buyAge = num('buy-age',hAge0);
+      const rentM = num('rent',0), term = num('loan-term',35);
+      const years = Math.max(buyAge - hAge0, 0);
+      const lastRentAge = buyAge - 1, payEnd = buyAge + Math.max(term,1) - 1;
+      box.style.display = '';
+      el.innerHTML = (years > 0
+          ? `いまの家賃 <b>月${fmt1(rentM)}万円</b> は <b>${hAge0}歳〜${lastRentAge}歳（${years}年間）</b> 計上します。`
+          : `${buyAge}歳で購入するため、家賃の計上はありません。`)
+        + `続いて <b>${buyAge}歳から住宅ローン</b>（${term}年・<b>${payEnd}歳まで返済</b>）に切り替わり、固定資産税・修繕費もここから加わります。`;
+    }
+
     /* ○歳時点のローン残債（自動計算）をヒントに表示 */
     function updateLoanBalanceHint(){
       const el = $('loan-balance-auto'); if(!el) return;
@@ -5869,6 +5894,7 @@
       updateEventWifeAges();
       refreshBirthHints();      // 生年月日の表示だけ更新（年齢欄は書き換えない）
       updateLoanBalanceHint();
+      updateHouseTimeline();      // 購入までの家賃・購入後のローンの切り替わりを明示
       updateMonthlyPayDisplay();
       updateLivingTotal();
       if(typeof updateInsTotal==='function') updateInsTotal();   // 【一条フック】死亡保障の合計＋現状比
@@ -7084,6 +7110,20 @@
 
     /* ---------- キャッシュフロー表 ---------- */
     // 教育ステージの判定：入園・入学の年は名称、在学中は↓
+    /* 在学期間の帯の色は「学校」で決める（2026-08-20 ユーザー指示）。
+       お子さまごとの色だと、どの行も同じ配色になって「いま何の学校か」が色で読めないため。
+       行の見出し（お名前）の色は従来どおりお子さまごとの色を使う */
+    const EDU_STAGE_COLORS = {
+      '幼稚園':{ bg:'#fce8ef', border:'#e07fa4', text:'#b4517a' },   // ピンク
+      '小学校':{ bg:'#e4f4ec', border:'#5cb98d', text:'#2f8a63' },   // 薄い緑
+      '中学'  :{ bg:'#fdeedd', border:'#e39a4d', text:'#a2661a' },   // オレンジ
+      '高校'  :{ bg:'#e5f0fb', border:'#6aa6dd', text:'#2f6ea8' },   // 薄い青
+      '大学'  :{ bg:'#f0e9f8', border:'#a98ad0', text:'#714d9c' },   // 薄い紫
+      '短大'  :{ bg:'#f0e9f8', border:'#a98ad0', text:'#714d9c' },
+      '専門'  :{ bg:'#f0e9f8', border:'#a98ad0', text:'#714d9c' }
+    };
+    const eduStageColor = (label)=> EDU_STAGE_COLORS[label] || { bg:'#eef2f6', border:'#9aa8b5', text:'#5b6b7d' };
+
     function eduMarker(age, child){
       const stages = [
         {s:4,e:6,label:'幼稚園',full:'幼稚園入園'},
@@ -7204,8 +7244,9 @@
           evtRows.push({ label:`${esc(k.name)}の進学`, headStyle:`color:${c.text}`, merge:true, cell:(r)=>{
             const m = eduMarker(r.childAges[ki], kidsMeta[ki]);
             if(!m) return null;
+            const sc = eduStageColor(m.label);   // 帯の色は学校ごと（幼＝ピンク／小＝緑／中＝橙／高＝青／大＝紫）
             return { key:`${ki}:${m.label}`, text:m.label, title:`${k.name}：${m.full}`,
-                     bg:c.bg, border:c.border, color:c.text, html:esc(m.label) };
+                     bg:sc.bg, border:sc.border, color:sc.text, html:esc(m.label) };
           }});
         });
         evtRows.push({ label:'ライフイベント', cell:(r)=>{

@@ -2004,8 +2004,13 @@
             <div class="subgroup">
               <div class="subgroup-title"><i class="fa-solid fa-landmark"></i> 公的年金（夫婦合計）</div>
               <div class="field" style="max-width:260px;">
-                <label>受給開始（夫の年齢）</label>
+                <label>受給開始年齢（おふたりとも）</label>
                 <div class="input-unit"><input type="number" id="pension-age" value="65" min="60" max="75"><span class="u">歳</span></div>
+              </div>
+              <!-- 夫婦合計の月額を、おふたりの年収・働く期間から按分した内訳（受給開始は各自の年齢）
+                   .field は display:flex なので hidden 属性では消えない → 表示は style.display で切り替える -->
+              <div class="field" id="pen-split-field" style="display:none; margin-top:8px;">
+                <span class="hint" id="pen-split-hint"></span>
               </div>
               <div class="field">
                 <label>入力方法</label>
@@ -2656,7 +2661,7 @@
         <div class="sample-box">
           <div>
             <b>サンプルを表示</b>
-            <span>田中太郎様ご一家（35歳・共働き・お子さま2人）の入力例です。<br>現状のままだと<b>72歳で資金がショート</b>、将来（一条工務店の家を購入＋積立の見直し）なら<b>100歳まで資金が続く</b>形にしてあります。</span>
+            <span>田中太郎様ご一家（35歳・共働き・お子さま2人）の入力例です。<br>現状のままだと<b>71歳で資金がショート</b>、将来（一条工務店の家を購入＋積立の見直し）なら<b>100歳まで資金が続く</b>形にしてあります。</span>
           </div>
           <button class="btn btn-ghost btn-sm" id="sample-show" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> 表示する</button>
         </div>
@@ -3021,7 +3026,7 @@
         <summary>計算の前提と限界を見る</summary>
         <ul>
           <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>年収106万円未満は社会保険の本人負担なし（扶養内）</b>として計算します（2026年10月に予定される106万円要件の撤廃など、成立済み・予定の制度改正は未反映です）。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
-          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から計上します。物価スライドには<b>マクロ経済スライドによる調整（物価上昇率−0.6%ポイント・下限0）</b>を簡易反映し、年金にかかる<b>税・社会保険料（国保・介護保険料等）を年金額に応じて約3〜12%概算控除</b>した手取り相当額を使います。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
+          <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から計上します。ご夫婦の場合、ご入力の月額（夫婦合計）を<b>おふたりの年収・働く期間からの概算で按分</b>し、<b>それぞれがご自身の年齢で受給開始</b>したときに計上します（年齢差のぶん、受け取り始める年がずれます。合計額そのものは変わりません）。「ねんきん定期便から計算」を選ぶと、内訳にはそちらで入力したお一人ずつの見込み額を使います。なおこの按分の概算は<b>基礎年金の満額納付・厚生年金加入（会社員）を前提</b>としているため、自営業のご世帯や納付に空白がある場合、また「働き方を変える予定」で期間表に入れていないお勤めがある場合は、内訳の比率が実態とずれることがあります（<b>合計額そのものは変わりません</b>）。お一人ずつの実額は「ねんきん定期便から計算」でご入力ください。物価スライドには<b>マクロ経済スライドによる調整（物価上昇率−0.6%ポイント・下限0）</b>を簡易反映し、年金にかかる<b>税・社会保険料（国保・介護保険料等）をお一人ずつの年金額に応じて約3〜12%概算控除</b>した手取り相当額を使います。<b>繰下げ・繰上げによる増減率、加給年金・振替加算は未反映</b>です。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
           <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
           <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
@@ -5253,6 +5258,88 @@
       if(wEl) wEl.textContent = '手取り 約' + perMonth(wn) + '万円/月';
     }
 
+    /* ---------- 公的年金：夫婦合計の月額を「おふたりの内訳」に分ける ----------
+       ★2026-08-20：受給開始を夫の年齢だけで判定し、夫婦合計を満額で計上していた。
+       奥様が年下だと奥様の分まで数年早く入り、その年数ぶん資産が過大に出ていた（実質の二重計上）。
+       入力欄は「夫婦合計の月額」ひとつなので、おふたりの働き方から目安を出して按分し、
+       それぞれがご自身の年齢で受給開始したときに計上する（合計額そのものは変えない）。
+       目安の式は「ねんきん定期便から計算」と同じ水準（2025年度）：
+         老齢基礎＝満額 年83.2万円（20〜60歳の第1〜3号。ご夫婦とも満額に近い前提）
+         老齢厚生＝年収 × 0.5481% × 厚生年金の加入年数（22歳就職と仮定した生涯平均のざっくり値）
+       ※ あくまで「分ける比率」を出すための概算。実額は「ねんきん定期便から計算」でお一人ずつ入力できる */
+    function pensionOwnEstimates(){
+      const KISO_FULL = 83.2;                         // 老齢基礎年金の満額（年・万円）※関数内に置く：この位置のconstはTDZ事故の元（過去2回）
+      const single = isSingle();
+      // 定期便モード：お一人ずつの見込み額を入力済みなので、そのまま内訳に使う
+      if(typeof penMode==='function' && penMode()==='teikibin'){
+        const h = teikibinEst('h'), w = single ? 0 : teikibinEst('w');
+        if(h+w > 0) return { h, w };
+      }
+      const kosei = (income, until)=> Math.max(income,0) * 0.005481 * Math.max(until - 22, 0);
+      const h = KISO_FULL + kosei(num('h-income',0), num('h-retire',65));
+      if(single) return { h, w:0 };
+      let wKosei = 0;
+      if(wifeWorklifeOn()){
+        // 働き方を変える予定：期間表の「年収×その期間の年数」を積み上げる
+        const ws = readWifeWork().slice().sort((a,b)=> a.from - b.from);
+        ws.forEach(r=>{ wKosei += Math.max(r.amount,0) * 0.005481 * Math.max(r.to - r.from + 1, 0); });
+        /* 期間表より前（22歳〜表の最初の年齢）も、夫と同じく「22歳から働いてきた」前提で補う。
+           ここを補わないと、同じ働き方でも「働き方を変える予定」のON/OFFだけで按分比が数ポイント動く。
+           金額は表の中で最初に0より大きい年収を使う（先頭行が0＝いま育休中などのため） */
+        const past = ws.find(r=> r.amount > 0);
+        if(ws.length && past) wKosei += past.amount * 0.005481 * Math.max(ws[0].from - 22, 0);
+      } else {
+        wKosei = kosei(num('w-income',0), num('w-retire',65));
+      }
+      return { h, w: KISO_FULL + wKosei };
+    }
+    function pensionSplit(){
+      if(isSingle()) return { h:1, w:0 };
+      const e = pensionOwnEstimates();
+      const sum = e.h + e.w;
+      return sum > 0 ? { h: e.h/sum, w: e.w/sum } : { h:0.5, w:0.5 };
+    }
+    /* 受給が始まる順番と時期（すべて「夫の年齢」に換算）。
+       ★ 表示3か所（入力欄のヒント・AI診断・チャット診断）で必ずこの判定を使うこと。
+       奥様が年上のときは奥様の分が先に始まるため、「夫が先」と決め打ちすると説明が事実と逆になる。 */
+    function pensionStartInfo(){
+      const pAge = num('pension-age',65);
+      const hAge0 = num('h-age',35);
+      const gap = num('w-age',33) - hAge0;      // ＋＝奥様が年上／−＝奥様が年下
+      const sp = pensionSplit();
+      const h = { who:'h', name: hNameH(), share: sp.h, atH: pAge };        // 夫が受給開始する年（＝夫の年齢）
+      const w = { who:'w', name: wNameH(), share: sp.w, atH: pAge - gap };  // 妻が受給開始する年を夫の年齢に換算
+      const wFirst = w.atH < h.atH;
+      return { pAge, gap, hAge0, same: gap===0,
+               first: wFirst ? w : h, later: wFirst ? h : w,
+               endAge: Math.max(num('end-age',95), hAge0+1) };
+    }
+    /* 「いつから計上するか」の一文。入力欄のヒント・AI診断・チャット診断で同じ文言を使う。
+       年齢差が大きいと「もう過ぎた年齢」や「想定年齢より先の年齢」を未来のことのように書いてしまうため、
+       その2ケースは文ごと差し替える（お客様に渡る資料なので、起きない前提を約束しない） */
+    function pensionTimingText(){
+      const st = pensionStartInfo();
+      if(st.same)                     return `おふたりとも<b>${st.pAge}歳</b>から同時に計上します。`;
+      if(st.later.atH <= st.hAge0)    return `おふたりとも受給開始の年齢に達しているため、<b>初年度から合計額</b>を計上します。`;
+      if(st.later.atH >  st.endAge)   return `${esc(st.later.name)}の分は、想定年齢（${st.endAge}歳）までに${st.pAge}歳にならないため<b>本試算では計上されません</b>（${esc(st.first.name)}の分のみ）。`;
+      // 年は「夫の年齢」で言う。あとから加わるのが奥様のときだけ、奥様ご自身の年齢も添える（夫のときは同語反復になる）
+      const own = st.later.who==='w' ? `（${esc(st.later.name)}が${st.pAge}歳）` : '';
+      return `先に始まるのは${esc(st.first.name)}の分で、合計額になるのは<b>${esc(hNameH())}が${st.later.atH}歳のとき</b>${own}からです。`;
+    }
+    /* 内訳の目安を入力欄の下に出す（按分の前提をお客様・担当者の目に見えるようにする） */
+    function updatePensionSplitHint(){
+      const box = $('pen-split-field'), el = $('pen-split-hint'); if(!box || !el) return;
+      const monthly = num('pension-monthly',0);
+      if(isSingle() || monthly<=0){ box.style.display = 'none'; return; }
+      const sp = pensionSplit();
+      const fromTeikibin = (typeof penMode==='function') && penMode()==='teikibin';
+      box.style.display = '';
+      // 画面に出す文は短く保つ（この案件は見やすさ最優先）。詳しい前提は「計算の前提と限界を見る」に書いてある
+      el.innerHTML = `内訳の目安：<b>${esc(hNameH())} 約${fmt1(monthly*sp.h)}万円/月</b> ＋ <b>${esc(wNameH())} 約${fmt1(monthly*sp.w)}万円/月</b>。`
+        + pensionTimingText()
+        + (fromTeikibin ? `内訳は「ねんきん定期便」でご入力の見込み額です。` : `内訳はおふたりの年収・働く期間からの概算です（会社員＝厚生年金加入を前提）。`);
+    }
+
     /* ============================================================
        メイン計算
        ============================================================ */
@@ -5339,6 +5426,7 @@
       const principalByItem = invs.map(v=> (v.start<=hAge0 ? v.lump : 0));   // 投じた元本（累計・運用益は含めない）
       const pensionAge = num('pension-age',65);
       const pensionAnnual = num('pension-monthly',0)*12;
+      const penShare = pensionSplit();   // 夫婦合計をおふたりの内訳に按分（受給開始はそれぞれご自身の年齢で判定する）
 
       const rows = [];
       let prevNet = cash + balances.reduce((a,b)=> a+b, 0);   // 前年の金融資産合計（初期＝預貯金＋初期残高）
@@ -5359,15 +5447,19 @@
         } else if(wAge < wRetire){
           income += grossToNet(stressGross(wIncome0 * Math.pow(1+wRaise, t)));
         }
-        if(hAge >= pensionAge){
-          // 公的年金：物価スライドにマクロ経済スライド調整（物価−0.6%pt・下限0）を反映し、
-          // 税・社会保険料（国保/介護/所得税/住民税）を年金額に応じた概算率で控除した「手取り」を計上
+        /* 公的年金：物価スライドにマクロ経済スライド調整（物価−0.6%pt・下限0）を反映し、
+           税・社会保険料（国保/介護/所得税/住民税）を年金額に応じた概算率で控除した「手取り」を計上。
+           ★2026-08-20：以前は「夫が受給開始年齢に達した年から夫婦合計を満額」計上していたため、
+           奥様が年下だと奥様の分が数年早く入り、その年数ぶん資産が過大に出ていた（実質の二重計上）。
+           合計額を pensionSplit() でおふたりに按分し、それぞれご自身の年齢で受給開始したときに計上する。
+           税・社保の概算率も「割った額」ではなく、お一人ずつの実際の年金額で判定する。 */
+        {
           const pIndexF = Math.pow(1 + Math.max(infl - 0.006, 0), t);
-          const pGross = pensionAnnual * pIndexF;
-          // 税社保の概算率は「一人当たり」の年金額水準で判定（158万以下＝公的年金等控除内でほぼ非課税・国保介護のみ）
-          const perHead = pGross / (single ? 1 : 2);
-          const pTaxRate = perHead <= 158 ? 0.03 : (perHead <= 330 ? 0.08 : 0.12);
-          income += pGross * (1 - pTaxRate);
+          // 158万以下＝公的年金等控除内でほぼ非課税・国保介護のみ／それ以上は所得税・住民税も乗る想定の概算率
+          const penNet = (gross)=> gross<=0 ? 0
+            : gross * (1 - (gross <= 158 ? 0.03 : (gross <= 330 ? 0.08 : 0.12)));
+          if(hAge >= pensionAge)             income += penNet(pensionAnnual * penShare.h * pIndexF);
+          if(!single && wAge >= pensionAge)  income += penNet(pensionAnnual * penShare.w * pIndexF);
         }
         // 児童手当（2024年10月拡充・所得制限なし）：3歳未満1.5万/月・3歳〜高校生年代1万/月・第3子以降3万/月
         // 第3子カウントは22歳までの子を年長順（同年齢＝双子等は入力順）に並べて3番目以降（簡易判定）
@@ -5393,15 +5485,27 @@
         const bothRetired = (hAge >= hRetire) && (single || wAge >= wRetire);
         const baseLiving = (bothRetired ? retireLivingAnnual : livingAnnual) * inflF;
         expense += baseLiving;
-        // 追加の生活費項目：退職前のみ。「○年後から○年間」の指定に対応（0＝ずっと＝退職まで）
-        if(!bothRetired){
-          customExpenses.forEach(x=>{
-            if(x.amount<=0) return;
-            const st = x.start||0;
-            if(x.years>0 && (t < st || t >= st + x.years)) return;   // 開始前・期間終了後は計上しない
-            expense += x.amount*12*inflF;
-          });
-        }
+        /* 追加の生活費項目（「生活費の項目を追加」）
+           ★2026-08-20：全体を「退職前だけ」で囲っていたため、「30年後から5年間」のように
+           退職後にかかる費目（親の介護・趣味・住み替えの家賃など）を指定しても1円も計上されなかった。
+           分かれ目は「画面の“毎月の生活費 合計”に入っているかどうか」で、readLivingMonthly と
+           そろえること（そこがずれると、同じ入力なのに表示と計算が食い違う）：
+           ・「ずっと」／「0年後から○年間」＝いまの暮らしの生活費の一部として合計に入っている
+             → 退職後は「退職後の生活費（夫婦・月額）」に置き換わる（画面の注記も“足し算ではありません”）
+               ので、おふたりの退職で止める＝二重計上を防ぐ
+           ・「○年後（1年以上）から○年間」＝まだ始まっていない将来の費目。合計には入っていない
+             → 指定どおりの年に計上する（退職後もそのまま） */
+        customExpenses.forEach(x=>{
+          if(x.amount<=0) return;
+          const st = x.start||0;
+          if(x.years>0){
+            if(t < st || t >= st + x.years) return;   // 開始前・期間終了後は計上しない
+            if(st===0 && bothRetired) return;         // いまの生活費の一部＝退職後の生活費に置き換わる
+          } else if(bothRetired){
+            return;
+          }
+          expense += x.amount*12*inflF;
+        });
 
         // 住居費
         let loanDeduction = 0;
@@ -5643,6 +5747,7 @@
       // （applyTeikibin はこの後方で定義。初期化中の呼び出しはTDZになるため握りつぶす）
       try{ applyTeikibin(); }catch(e){}
       updateNetDisplay();
+      updatePensionSplitHint();   // 公的年金の「おふたりの内訳」（按分の前提を画面に出す）
       updateEventWifeAges();
       refreshBirthHints();      // 生年月日の表示だけ更新（年齢欄は書き換えない）
       updateLoanBalanceHint();
@@ -6285,7 +6390,7 @@
 
     // 保存・読込用：両プランをまとめて集める／復元する
     /* ============================================================
-       サンプル（中谷太郎様ご一家）2026-08-20 ユーザー指示
+       サンプル（田中太郎様ご一家）2026-08-20 ユーザー指示
        ・操作の練習や、初めてのお客様への説明用。保存データには一切さわらない
        ・起動直後の既定値に、この差分だけを重ねて作る（既定値の変更に自動で追従する）
        ・現状＝賃貸のまま／将来＝一条工務店の家を購入＋積立を増やす、の2プランを入れて
@@ -6333,8 +6438,11 @@
       { name:'そうた', sei:'田中', age:'3', k12:'public', highEd:'kokuritsu_r', lodging:'home',
         gender:'boy',  bEra:'seireki', bY:'2023', bM:'3', bD:'3' }
     ];
-    /* 現状＝このままだと72歳で資金ショート／将来＝100歳まで資金が続く、になるよう金額を調整している
-       （ユーザー指示 2026-08-20。将来の打ち手＝一条の家を購入・68歳まで就労・NISA月6万＋iDeCo月2.3万） */
+    /* 現状＝このままだと71歳で資金ショート／将来＝100歳まで資金が続く、になるよう金額を調整している
+       （ユーザー指示 2026-08-20。将来の打ち手＝一条の家を購入・68歳まで就労・NISA月6万＋iDeCo月2.3万）
+       ※ 金額そのものは調整時のまま。公的年金を「おふたりに按分してそれぞれの年齢で受給開始」に直した
+         ぶん現状プランの資金が約247万円減り、ショートが72歳→71歳へ1年早まったので実測値に文言を合わせた。
+         既定値・計算式を変えたら、ここと「サンプルを表示」の説明文の年齢を必ず実測し直すこと */
     function sampleState(kind){
       if(!INITIAL_STATE) return null;
       const mirai = (kind === 'mirai');
@@ -6541,6 +6649,13 @@
         if(gap>0) con.push(`年金だけでは 月 約${fmt(gap)}万円 不足。${p.hRetire}歳以降は資産の取り崩しが必要です。`);
         if(p.depletion) con.push(`<b>${p.depletion.hAge}歳ごろに資金が枯渇</b>する見込み。積立増・就労延長・支出見直しで対策を。`);
         if(p.hRetire < pensionAge) con.push(`退職(${p.hRetire}歳)〜年金開始(${pensionAge}歳)の ${pensionAge-p.hRetire}年間 は収入が細り、家計の谷になりやすい時期です。この期間を<b>5年・10年の確定年金（個人年金保険）</b>や退職金の一部で埋める設計が定番です（個人年金保険は途中解約では払込額を下回るのが一般的です）。`);
+        /* 2026-08-20：年金をおふたりに按分してそれぞれの年齢で計上するようにしたため、
+           年齢差のある世帯では「合計額に届くまでの数年」がもうひとつの谷になる。試算の前提と合わせて明示する。
+           先に始まるのが夫とは限らない（奥様が年上なら奥様が先）ので、判定は pensionStartInfo() に任せる */
+        if(!p.single){
+          const st = pensionStartInfo();
+          if(!st.same) con.push(`公的年金 月${fmt1(pensionM)}万円は<b>ご夫婦合計</b>です。${pensionTimingText()}合計額に届くまでは、ここも収入が細る時期になります（本試算もこの前提で計算しています）。`);
+        }
         if(!con.length) con.push(`大きな懸念はありません。物価上昇に備え、運用は退職後もゆるやかに続けると安心です。`);
         cats.push({ key:'retire', label:'老後資金', icon:'fa-umbrella-beach', color:'#3f9d7a', tone, sum, good, concern:con });
       }
@@ -9960,16 +10075,35 @@
         const p = buildProfile();
         const pensionGrossM = num('pension-monthly',0), retLiving = num('e-retire-living',24);
         const pensionAge = num('pension-age',65);
-        // 資産推移グラフと同じ「手取り相当」でカバー率を計算（一人当たり水準で税社保3〜12%を概算控除）
-        const perHeadY = pensionGrossM*12 / (p.single ? 1 : 2);
-        const pTaxRate = perHeadY <= 158 ? 0.03 : (perHeadY <= 330 ? 0.08 : 0.12);
-        const pensionM = Math.round(pensionGrossM * (1 - pTaxRate) * 10) / 10;
+        /* 資産推移グラフと同じ「手取り相当」でカバー率を計算。
+           ★2026-08-20：グラフ側を「おふたりに按分してお一人ずつの年金額で税社保を概算控除」に直したので、
+           ここも同じ按分・同じ率にそろえる（ここだけ「合計÷2」のままだと診断とグラフで数字がずれる） */
+        const penSp = pensionSplit();
+        const penNetY = (g)=> g<=0 ? 0 : g * (1 - (g <= 158 ? 0.03 : (g <= 330 ? 0.08 : 0.12)));
+        const pensionGrossY = pensionGrossM*12;
+        const pensionM = Math.round((penNetY(pensionGrossY*penSp.h) + penNetY(pensionGrossY*penSp.w))/12 * 10) / 10;
         const gapM = retLiving - pensionM;
         const coverage = retLiving>0 ? Math.round(Math.min(pensionM/retLiving,1)*100) : 100;
         const yearsAfterPension = Math.max(p.endAge - pensionAge, 0);
-        const shortfallTotal = Math.round(Math.max(gapM,0)*12*yearsAfterPension);
+        /* ご夫婦に年齢差があると、合計額に届くのは年下の方が受給開始年齢になってから。
+           ★2026-08-20：注記だけ足して不足総額を「全期間フル年金」のままにすると、
+           同じ枠の中で説明と金額が食い違う。片方だけの期間はその分で不足額を出して合算する。
+           先に始まるのが夫とは限らない（奥様が年上なら奥様が先）ので判定は pensionStartInfo() に任せる */
+        const st = p.single ? null : pensionStartInfo();
+        // 夫の受給開始年齢〜想定年齢の窓の中で「片方だけ」の年数（奥様が年下のときだけ生じる）
+        const soloYears = (st && !st.same) ? Math.min(Math.max(st.later.atH - pensionAge, 0), yearsAfterPension) : 0;
+        const soloNetM = (st && soloYears>0) ? (penNetY(pensionGrossY*st.first.share)/12) : pensionM;
+        const shortfallTotal = Math.round(
+          Math.max(retLiving - soloNetM, 0)*12*soloYears
+          + Math.max(gapM,0)*12*(yearsAfterPension - soloYears));
+        /* 冒頭の合計額は fmt1（小数1桁）で出す：定期便モードの年金月額は小数1桁になるため、
+           整数の fmt で書くと直後の内訳（fmt1）と足し算が合わなくなる */
+        const penGapNote = (!st || st.same) ? ''
+          : `<br><span style="font-size:.82em;color:var(--ink-soft)">この月${fmt1(pensionGrossM)}万円は<b>ご夫婦合計</b>で、内訳の目安は`
+            + `${esc(st.first.name)} 約${fmt1(pensionGrossM*st.first.share)}万円/月 ＋ ${esc(st.later.name)} 約${fmt1(pensionGrossM*st.later.share)}万円/月。`
+            + `おふたりとも${pensionAge}歳から受け取る前提で、${pensionTimingText()}</span>`;
         const facts = [ famFact(p),
-          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt(pensionGrossM)}万円</b>（${pensionAge}歳〜・手取り 約${fmt(pensionM)}万円で計算）`,
+          `退職予定：${p.hRetire}歳／公的年金 月<b>${fmt1(pensionGrossM)}万円</b>（${pensionAge}歳〜・手取り 約${fmt(pensionM)}万円で計算）` + penGapNote,
           `老後の生活費：月<b>${fmt(retLiving)}万円</b> → 年金（手取り）は生活費の<b>約${coverage}%をカバー</b>（不足 月${fmt(Math.max(gapM,0))}万円）`,
           gapM>0 ? `不足分の目安総額：<b>約${fmt(shortfallTotal)}万円</b>（${pensionAge}〜${p.endAge}歳の${yearsAfterPension}年間・単純計算）` : `年金だけで生活費をまかなえる見込みです`,
           `退職時（${p.hRetire}歳）の金融資産見込み：<b>${fmt(p.retireRow.net)}万円</b>` ];

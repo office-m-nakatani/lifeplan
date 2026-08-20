@@ -1887,7 +1887,7 @@
                 <div class="conditional" id="zeh-fields">
                   <div class="grid2">
                     <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">初年度の売電収入。一条選択時は太陽光の設定から自動計算</span></div>
-                    <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額</span></div>
+                    <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額。生活費の電気・ガスを<b>実額のまま</b>置いた場合の削減額です（生活費側を0にしたときは、この欄も0に）</span></div>
                   </div>
                   <div class="note" style="background:var(--good-pale);color:#2a6b52;">
                     <i class="fa-solid fa-solar-panel" style="color:var(--good);"></i>
@@ -6549,6 +6549,10 @@
       'w-sei':'田中', 'w-name':'花子', 'w-age':'33', 'w-income':'260', 'w-raise':'0.8',
       'w-retire':'65', 'w-bonus':'200', 'w-b-y':'1993', 'w-b-m':'8', 'w-b-d':'10',
       'end-age':'100', 'inflation':'1.0', 'rent':'10',
+      // ZEHの「光熱費の削減」は現状・将来とも0。将来は生活費で電気0・ガス0にしてあり、
+      // 自家消費と高断熱の効果はそこで反映済み。この欄にも入れると二重に引くことになる
+      // （現状の光熱費24万円/年を超える節約になってしまう）。現状は賃貸なのでそもそも対象外
+      'zeh-save':'0',
       'cash-on':true, 'cash':'200', 'pension-age':'65', 'pension-monthly':'22',
       'ins-total-h':'2000', 'ins-total-w':'500',
       'e-retire-living':'25',

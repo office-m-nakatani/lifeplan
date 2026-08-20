@@ -513,6 +513,19 @@
     .cf td, .cf th, .kpi-diff, .lt-value, .fdiff{ font-variant-numeric:tabular-nums; }
     /* 死亡保障の内訳（生命保険／団信）。合計は太字のままにして、内訳だけ細く小さく */
     .hkd-bd{ display:inline-block; margin-top:2px; color:var(--ink-soft); font-weight:500; line-height:1.55; }
+    /* 死亡保障の表：いくら保障されているかがひと目で分かるよう、合計額だけ大きく出す
+       （2026-08-20 ユーザー指示）。内訳（生命保険・団信）と差額は従来の大きさのまま。
+       桁が伸びても折り返さない（td は white-space:nowrap／親の .table-scroll が横スクロールする） */
+    table.cmp-table.hkd-table td .hkd-total{ display:inline-block; font-size:1.5rem; font-weight:800; line-height:1.15; letter-spacing:-.01em; }
+    table.cmp-table.hkd-table td .hkd-total .hkd-unit{ font-size:.7rem; font-weight:700; color:var(--ink-soft); margin-left:2px; }
+    table.cmp-table.hkd-table td, table.cmp-table.hkd-table th{ padding:10px 8px; vertical-align:top; }
+    table.cmp-table.hkd-table td:last-child{ font-size:1rem; }
+    @media(max-width:420px){
+      table.cmp-table.hkd-table td .hkd-total{ font-size:1.2rem; }
+      /* 375pxで横スクロールに入らない余白量。ここを広げると表がはみ出す（実測して決めた値） */
+      table.cmp-table.hkd-table td, table.cmp-table.hkd-table th{ padding:8px 3px; }
+      table.cmp-table.hkd-table td:last-child{ font-size:.92rem; }
+    }
     .kpi .k-value small{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
     .kpi .k-sub{ font-size:.74rem; color:var(--ink-soft); margin-top:2px; }
     .kpi.accent-yellow{ background:var(--yellow-pale); border-color:#f3e3a9; }
@@ -6468,17 +6481,19 @@
       /* 内訳は「うち1行」ではなく、生命保険と団信を2行に分けて見せる
          （ユーザー指示 2026-08-20。必要保障額と突き合わせるのは「生命保険」の行） */
       const cell = (t)=> t==null ? '—'
-        : `${fmt(t.total)}${t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}</small>` : ''}`;
+        : `<span class="hkd-total">${fmt(t.total)}<span class="hkd-unit">万円</span></span>`
+          + (t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}</small>` : '');
       // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
         const personAge = aEff + hkdAgeOffset(mm.key);
+        // 差の欄に「万円」を付けると375pxで表が横スクロールに入る（隣の大きな数字に単位が出ているので省く）
         const d = (gt&&mt) ? diffHTML(mt.total-gt.total,'') : '';
         return `<tr><td>${esc(mm.label)}（${personAge}歳）</td><td>${cell(gt)}</td><td><b>${cell(mt)}</b></td><td>${d||'±0'}</td></tr>`;
       }).join('');
       const simpleNote = (hokenMode()==='simple' || PLANS.genjo.state?.hokenMode==='simple' || PLANS.mirai.state?.hokenMode==='simple')
         ? `<p class="hint" style="margin-top:4px;">※「まとめて入力」のプランは満了時期がわからないため、年齢による保障の変化（満了・逓減）は反映されません（保険ごとに入力すると正確になります）。</p>` : '';
-      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>${aEff}歳時点の死亡保障（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${untouchedNote()}${clampNote}${simpleNote}`;
+      tbl.innerHTML = `<div class="table-scroll"><table class="cmp-table hkd-table"><thead><tr><th>${aEff}歳時点の死亡保障</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>${trs}</tbody></table></div>${untouchedNote()}${clampNote}${simpleNote}`;
       // 被保険者の切替セグメント（下のグラフ用）
       if(!members.some(mm=> mm.key===hkdMemberKey)) hkdMemberKey = 'h';
       segEl.innerHTML = members.map(mm=> `<button type="button" data-hkdm="${mm.key}"${mm.key===hkdMemberKey?' class="active"':''}>${esc(mm.label)}</button>`).join('');

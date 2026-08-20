@@ -341,8 +341,22 @@
       background:var(--bg-soft); border:1px solid var(--line); border-radius:var(--radius-sm);
       padding:12px 12px; margin-top:10px;
     }
-    /* 金額の列は他より広く（リフォーム等で5桁＝1億円超の入力があっても桁が隠れないように） */
-    .row-item.event-row{ grid-template-columns:0.8fr 1.2fr 1.15fr 0.95fr auto; }
+    /* ライフイベントは2段組みにする（2026-08-20 ユーザー指示）。
+       1段に5項目を詰めていたため「太郎さんの車の買い替え」のような内容が途中で隠れていた。
+       1段目＝開始年齢・内容・金額・削除／2段目＝繰り返し・くり返す期間 */
+    .row-item.event-row{
+      grid-template-columns:0.85fr 1.7fr 1.05fr auto;
+      grid-template-areas:"evage evlabel evamount evdel" "evevery evuntil . .";
+      row-gap:16px;
+    }
+    .row-item.event-row .ev-age-field{ grid-area:evage; }
+    .row-item.event-row .ev-label-field{ grid-area:evlabel; }
+    .row-item.event-row .ev-amount-field{ grid-area:evamount; }
+    .row-item.event-row > .btn-del{ grid-area:evdel; }
+    .row-item.event-row .ev-every-field{ grid-area:evevery; }
+    .row-item.event-row .ev-until-field{ grid-area:evuntil; }
+    /* 「年ごと」「歳まで」は3文字あり、既定の padding-right:42px だと入力した数字に単位が重なる */
+    .ev-every-field .input-unit input, .ev-until-field .input-unit input{ padding-right:58px; }
     /* 生活費の追加項目：1段目＝費目名・金額・削除、2段目＝いつまで（全幅） */
     .row-item.expense-row{
       grid-template-columns:1.3fr 1fr auto;
@@ -362,6 +376,8 @@
     .ex-mode-btn:hover:not(.active){ background:var(--blue-pale); border-color:var(--blue-pale2); }
     .ex-years-wrap{ display:inline-flex; align-items:center; gap:6px; font-size:.88rem; color:var(--ink); white-space:nowrap; }
     .ex-years-wrap[hidden]{ display:none !important; }
+    /* .field は display:flex を持つので hidden 属性だけでは消えない（ライフイベントの「〜歳まで」欄） */
+    .ev-until-field[hidden]{ display:none !important; }
     .ex-years-wrap input{ width:60px; text-align:center; padding:8px 6px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; font-size:.92rem; }
     /* 妻の働き方：期間ごとの年収（1段目＝働く期間・全幅、2段目＝年収＋削除） */
     .row-item.wife-work-row{
@@ -378,7 +394,14 @@
     .ww-age-range .ww-u{ font-size:.85rem; color:var(--ink-soft); font-weight:500; }
     .ww-age-range .ww-tilde{ color:var(--ink-soft); padding:0 2px; }
     @media(max-width:560px){
-      .row-item, .row-item.event-row, .row-item.income-row{ grid-template-columns:1fr 1fr; }
+      .row-item, .row-item.income-row{ grid-template-columns:1fr 1fr; }
+      /* ライフイベントはスマホでも段組みを保つ（areas を消さないと2列指定と食い違って崩れる）。
+         削除ボタンの列は auto にしない：金額欄を同じ列に入れると auto が幅を全部取り、
+         1fr 側が0pxに潰れて入力欄が消える（実測で判明）。38px 固定にして取り合いをなくす */
+      .row-item.event-row{
+        grid-template-columns:1fr 1fr 38px;
+        grid-template-areas:"evlabel evlabel evdel" "evage evamount evamount" "evevery evuntil evuntil";
+      }
       .row-item.expense-row{ grid-template-columns:1fr auto; grid-template-areas:"exname exname" "examount exdel" "experiod experiod"; }
     }
     .btn-del{
@@ -411,11 +434,13 @@
     .row-item.event-row{ padding-bottom:26px; }
     .event-row > .field.ev-age-field{ position:relative; }
     .ev-wife{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; color:#c2729a; }
-    .event-row > .field.ev-every-field{ position:relative; }
-    .event-row > .field.ev-every-field > .hint{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; }
+    .event-row > .field.ev-every-field, .event-row > .field.ev-until-field{ position:relative; }
+    .event-row > .field.ev-every-field > .hint,
+    .event-row > .field.ev-until-field > .hint{ position:absolute; top:100%; left:1px; margin-top:3px; white-space:nowrap; }
     /* モバイルでは行が2列に組み替わり吊り下げヒントが下のラベルに重なるため、通常フローに戻す */
     @media(max-width:560px){
-      .ev-wife, .event-row > .field.ev-every-field > .hint{ position:static; margin-top:2px; white-space:normal; }
+      .ev-wife, .event-row > .field.ev-every-field > .hint,
+      .event-row > .field.ev-until-field > .hint{ position:static; margin-top:2px; white-space:normal; }
       .row-item.event-row, .row-item.income-row{ padding-bottom:12px; }
     }
     .row-item.income-row{ grid-template-columns:0.8fr 1.2fr 1.15fr auto; padding-bottom:26px; }
@@ -595,6 +620,10 @@
     /* 縦書きのまま高さを抑える箱。溢れた分は…で示し、全文は title で読める */
     table.cfh td.evtv .evtv-in{ writing-mode:inherit; overflow:hidden; text-overflow:ellipsis; }
     table.cfh td.evtv .ev-k{ font-weight:700; }
+    /* お子さまの在学期間の帯（2026-08-20 ユーザー指示）。入学の年は濃く、在学中の年は薄く出して
+       どの年を見ても「いま小学校／中学」が分かるようにする。帯の下線は td 側の box-shadow で引く */
+    table.cfh td.evtv .edu-enter{ font-weight:800; }
+    table.cfh td.evtv .edu-cont{ font-weight:600; opacity:.6; }
     table.cfh td.evtv:not(.dd):not(:empty){ background:#fbfdfc; }
     /* イベント行の項目名は、金額行と区別できるよう控えめに */
     table.cfh tr:has(td.evtv) .rowhead{ font-size:.72rem; font-weight:700; }
@@ -3432,26 +3461,40 @@
       }
     }
 
-    function eventRow(age=45, label='車の買い替え', amount=200, every=0){
+    /* until＝繰り返しをやめる年齢（2026-08-20 ユーザー指示）。
+       「○年ごと」だけだと想定年齢まで永久に繰り返してしまい、車の買い替えのように
+       運転をやめたら終わる費目が最後まで乗り続けていた。繰り返しのときだけ「〜歳まで」を出す。
+       0（未入力）＝従来どおり想定年齢まで。※ until は共有データの3表には足さない（'!'付きで自動往復する） */
+    function eventRow(age=45, label='車の買い替え', amount=200, every=0, until=0){
       const div = document.createElement('div');
       div.className = 'row-item event-row';
+      const rep = (parseInt(every)||0) > 0;
       div.innerHTML = `
         <div class="field ev-age-field"><label>開始年齢（夫）</label>
           <div class="input-unit"><input type="number" class="ev-age" value="${age}" min="20" max="110"><span class="u">歳</span></div>
           <span class="hint ev-wife"></span>
         </div>
-        <div class="field"><label>内容</label><input type="text" class="ev-label" value="${(label||'').replace(/"/g,'&quot;')}"></div>
-        <div class="field"><label>金額</label>
+        <div class="field ev-label-field"><label>内容</label><input type="text" class="ev-label" value="${(label||'').replace(/"/g,'&quot;')}"></div>
+        <div class="field ev-amount-field"><label>金額</label>
           <div class="input-unit"><input type="number" class="ev-amount" value="${amount}" min="0" step="10"><span class="u">万円</span></div>
         </div>
         <div class="field ev-every-field"><label>繰り返し</label>
           <div class="input-unit"><input type="number" class="ev-every" value="${every}" min="0" max="50"><span class="u">年ごと</span></div>
           <span class="hint">0＝1回のみ</span>
         </div>
+        <div class="field ev-until-field"${rep?'':' hidden'}><label>くり返す期間</label>
+          <div class="input-unit"><input type="number" class="ev-until" value="${parseInt(until)||0}" min="0" max="110"><span class="u">歳まで</span></div>
+          <span class="hint">0＝想定年齢まで</span>
+        </div>
         <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
+      // 「○年ごと」を0/空にしたら「〜歳まで」を隠す（1回きりの費目に終了年齢は要らない）
+      const evEvery = div.querySelector('.ev-every'), untilField = div.querySelector('.ev-until-field');
+      const syncUntil = ()=>{ untilField.hidden = !((parseInt(evEvery.value)||0) > 0); };
+      evEvery.addEventListener('input', syncUntil);
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
       eventsList.appendChild(div);
+      syncUntil();
       updateEventWifeAges();
     }
     // ライフイベント：夫の年齢に対応する妻の年齢を小さく表示
@@ -3483,7 +3526,8 @@
         age: parseInt(r.querySelector('.ev-age').value)||0,
         label: r.querySelector('.ev-label').value || 'イベント',
         amount: parseFloat(r.querySelector('.ev-amount').value)||0,
-        every: parseInt(r.querySelector('.ev-every').value)||0
+        every: parseInt(r.querySelector('.ev-every').value)||0,
+        until: parseInt(r.querySelector('.ev-until')?.value)||0   // 0＝想定年齢まで繰り返す
       }));
     }
     /* ---------- 臨時収入（指定年齢に一度入る収入） ---------- */
@@ -5655,7 +5699,10 @@
 
         // ライフイベント（名目）
         events.forEach(ev=>{
-          const hit = ev.every>0 ? (hAge>=ev.age && (hAge-ev.age)%ev.every===0) : (hAge===ev.age);
+          // 繰り返しは「開始年齢〜くり返す期間（until）」の間だけ。until が0なら従来どおり想定年齢まで
+          const hit = ev.every>0
+            ? (hAge>=ev.age && (!ev.until || hAge<=ev.until) && (hAge-ev.age)%ev.every===0)
+            : (hAge===ev.age);
           if(hit){ expense += ev.amount; eventList.push({label:ev.label, type:'family'}); }
         });
         // 臨時収入（名目・指定年齢に加算）
@@ -6506,10 +6553,12 @@
       { name:'そうた', sei:'田中', age:'3', k12:'public', highEd:'shiritsu_b', lodging:'boarding',
         gender:'boy',  bEra:'seireki', bY:'2023', bM:'3', bD:'3' }
     ];
-    /* ライフイベント（現状・将来どちらにも入れる）。every:0＝1回のみ */
+    /* ライフイベント（現状・将来どちらにも入れる）。every:0＝1回のみ／until＝繰り返しをやめる年齢
+       車は10年ごとに買い替え、運転をやめる想定の75歳で終わり（2026-08-20 ユーザー指示） */
     const SAMPLE_EVENTS = [
-      { age:'45', label:'車の買い替え', amount:'200', every:'0' },
-      { age:'50', label:'海外旅行',     amount:'80',  every:'0' }
+      { age:'45', label:'太郎さんの車の買い替え', amount:'300', every:'10', until:'75' },
+      { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
+      { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
     /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）をそのまま写している。
        将来の打ち手＝一条の家を購入・太郎様は68歳まで就労・花子様は正社員へ・iDeCoを追加。
@@ -7044,8 +7093,12 @@
         stages.push({s:19,e:19+yrs-1,label:l,full:f});
       }
       for(const st of stages){
-        if(age===st.s) return {kind:'enter', label:st.label, full:st.full};
-        if(age>st.s && age<=st.e) return {kind:'during', full:st.full};
+        // 在学中の年にも label／期間の端（first・last）を返す。横型のキャッシュフロー表で
+        // 在学期間を帯として描くために使う（縦型の表は従来どおり kind だけを見ている）
+        if(age>=st.s && age<=st.e){
+          return { kind: age===st.s ? 'enter' : 'during', label:st.label, full:st.full,
+                   first: age===st.s, last: age===st.e };
+        }
       }
       return null;
     }
@@ -7139,10 +7192,19 @@
         const evtRows = [];
         kidsMeta.forEach((k, ki)=>{
           const c = childColor(ki);
+          /* 在学期間を帯で見せる（2026-08-20 ユーザー指示）。以前は入学した年だけに文字を出していたため、
+             途中の年を見ても「いま何年生か」が分からなかった。在学中の年すべてに薄い背景と下線を敷き、
+             入学の年は濃い文字、在学中の年は薄い文字で学校名を出す */
           evtRows.push({ label:`${esc(k.name)}の進学`, headStyle:`color:${c.text}`, cell:(r)=>{
             const m = eduMarker(r.childAges[ki], kidsMeta[ki]);
-            if(!(m && m.kind==='enter')) return null;
-            return { text:m.label, title:`${k.name}：${m.full}`, html:`<span class="ev-k" style="color:${c.text}">${esc(m.label)}</span>` };
+            if(!m) return null;
+            const rL = m.first ? '7px' : '0', rR = m.last ? '7px' : '0';
+            return {
+              text: m.label,
+              title: `${k.name}：${m.first ? m.full : m.label+'（在学中）'}`,
+              tdStyle: `background:${c.bg};box-shadow:inset 0 -3px 0 ${c.border};border-radius:${rL} ${rR} ${rR} ${rL}`,
+              html: `<span class="ev-k ${m.first?'edu-enter':'edu-cont'}" style="color:${c.text}">${esc(m.label)}</span>`
+            };
           }});
         });
         evtRows.push({ label:'ライフイベント', cell:(r)=>{
@@ -7167,7 +7229,8 @@
               const c = cells[i];
               // 表の行の height は「最小値」扱いのため、長い項目名を入れると行が青天井に伸びる。
               // セル内容を高さ上限つきの箱で包んで抑える（全文は title のツールチップで読める）
-              return `<td class="evtv${cls(r)}"${c?` title="${esc(c.title)}"`:''}>${c ? `<div class="evtv-in" style="max-height:${h-12}px">${c.html}</div>` : ''}</td>`;
+              // tdStyle は在学期間の帯（背景・下線）を隣のセルと途切れず並べるために td 側へ当てる
+              return `<td class="evtv${cls(r)}"${c&&c.tdStyle?` style="${c.tdStyle}"`:''}${c?` title="${esc(c.title)}"`:''}>${c ? `<div class="evtv-in" style="max-height:${h-12}px">${c.html}</div>` : ''}</td>`;
             }).join('') + '</tr>');
         });
         addRow('収入', r=> `<td class="${cls(r)}">${fmt(r.income)}</td>`);
@@ -11731,7 +11794,7 @@
           if(by && by.value && bm && bm.value && bd && bd.value){ o.bEra = (be&&be.value)||'seireki'; o.bY = by.value; o.bM = bm.value; o.bD = bd.value; }
           return o;
         }),
-        events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value })),
+        events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value, until:r.querySelector('.ev-until')?.value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
         investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked })),
@@ -11768,7 +11831,7 @@
       (s.children||[]).forEach(c=> childRow(parseInt(c.age)||0, c.k12, c.highEd, c.lodging, c.name||'', c.gender || (c.honorific==='ちゃん' ? 'girl' : 'boy'),
         (c.bY ? { y:((c.bEra && c.bEra !== 'seireki') ? String(eraToSeireki(c.bEra, parseInt(c.bY,10))) : c.bY), m:c.bM, d:c.bD } : null),
         c.sei || ''));
-      (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0));
+      (s.events||[]).forEach(e=> eventRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0, parseInt(e.every)||0, parseInt(e.until)||0));
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
       (s.investments||[]).forEach(it=>{

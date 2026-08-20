@@ -1652,7 +1652,7 @@
                 <div class="field"><label>年収（額面）</label><div class="input-unit"><input type="number" id="h-income" value="550" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="h-net">手取り目安：—</span></div>
                 <div class="field"><label>昇給率</label><div class="input-unit"><input type="number" id="h-raise" value="1.0" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
                 <div class="field"><label>退職予定</label><div class="input-unit"><input type="number" id="h-retire" value="65" min="50" max="80"><span class="u">歳</span></div></div>
-                <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="h-bonus" value="1000" min="0" step="50"><span class="u">万円</span></div></div>
+                <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="h-bonus" value="1000" min="0" step="50"><span class="u">万円</span></div><span class="hint">受け取る時点の金額で計上</span></div>
               </div>
             </div>
 
@@ -1665,7 +1665,7 @@
                 <div class="field w-flat-income"><label>年収（額面）</label><div class="input-unit"><input type="number" id="w-income" value="300" min="0" step="10"><span class="u">万円</span></div><span class="hint net-hint" id="w-net">手取り目安：—</span></div>
                 <div class="field w-flat-income"><label>昇給率</label><div class="input-unit"><input type="number" id="w-raise" value="0.5" min="-5" max="10" step="0.1"><span class="u">％</span></div></div>
                 <div class="field"><label>退職予定</label><div class="input-unit"><input type="number" id="w-retire" value="65" min="50" max="80"><span class="u">歳</span></div></div>
-                <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="w-bonus" value="300" min="0" step="50"><span class="u">万円</span></div></div>
+                <div class="field"><label>退職金（見込）</label><div class="input-unit"><input type="number" id="w-bonus" value="300" min="0" step="50"><span class="u">万円</span></div><span class="hint">受け取る時点の金額で計上</span></div>
               </div>
               <label class="wife-worklife-toggle" style="display:flex; align-items:center; gap:9px; margin-top:10px; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; cursor:pointer; font-weight:600; font-size:.9rem;">
                 <input type="checkbox" id="wife-worklife" style="width:18px; height:18px; flex:0 0 auto;">
@@ -1716,7 +1716,7 @@
               <div class="subgroup-title"><span class="tag" style="background:#e3f3ea;color:#2c7a52;">臨</span> 臨時収入（任意）</div>
               <div id="income-events-list"></div>
               <button class="btn-add" id="add-income" type="button"><i class="fa-solid fa-plus"></i> 臨時収入を追加</button>
-              <span class="hint">相続・贈与・満期金など、指定した年齢に一度入る収入を加算します。</span>
+              <span class="hint">相続・贈与・満期金など、指定した年齢に一度入る収入を加算します。<b>受け取る時点の金額</b>をそのまま計上します（物価では伸ばしません）。</span>
             </div>
           </div>
         </div>
@@ -2125,6 +2125,7 @@
           <div class="acc-body">
             <div id="events-list"></div>
             <button class="btn-add" id="add-event" type="button"><i class="fa-solid fa-plus"></i> ライフイベントを追加</button>
+            <span class="hint">金額は<b>今の相場</b>でご入力ください。生活費・教育費と同じように、物価上昇に合わせて先の年ほど大きく計上します（20年後の200万円の車は、物価2%なら約297万円として計算します）。</span>
           </div>
         </div>
 
@@ -3079,7 +3080,7 @@
           <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
           <li><b>総資産の範囲</b>：グラフ・表の「総資産」は<b>預貯金＋運用資産</b>の合計で、<b>ご自宅の資産価値（土地・建物）・退職金見込み・保険の解約返戻金は含めていません</b>。持ち家プランはローン返済で住まいという資産を積み上げているため、賃貸プランとの総資産比較では実際より不利に見えます。売却・住み替えまで考える場合は面談で個別に補正します。</li>
-          <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
+          <li><b>物価上昇（インフレ）</b>：ご入力の率を、<b>生活費・家賃・教育費・ライフイベントの支出・住宅の維持費（固定資産税＋修繕）・火災地震保険・ZEHの光熱費削減</b>に適用します（いずれも<b>今日を起点</b>。これらの欄は「今の相場」でご入力ください）。資産の「実質価値」の表示にも使用します。<br>一方、<b>退職金・臨時収入・住宅ローンの返済額は物価では伸ばしません</b>。退職金と臨時収入は<b>受け取る時点の金額</b>としてそのまま計上します（大卒定年退職者の退職金は1997年の約2,871万円から実際に減少してきており、物価どおりに増える前提を置かないほうが安全側のためです）。ローン返済は契約で金額が決まっているため名目のままが正しい計算です。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。<b>団信の上乗せ金利</b>（がん団信等）を入力した場合は全期間の金利に加算します。「もしもの検証（ストレステスト）」は<b>表示のみの一時的な前提</b>で、保存されません（<b>実際の金利・収入の変動がその範囲に収まることを示すものではありません</b>）。</li>
           <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、耐震等級3（一条工務店の家を選択時）＝50%割引、一般住宅＝新築の建築年割引10%で計算します（等級割引の適用には確認資料が必要）。</li>
@@ -5713,7 +5714,12 @@
                 loanDeduction = loanDeductionAt(bal, t, hAge, wAge);   // 性能×子育て上限＋名義人の納税額キャップ（ペアは2人分）
               }
             }
-            expense += (propTax + maint)*Math.pow(1+infl, Math.max(hAge-buyAge,0)); // 維持費はインフレ
+            /* 維持費（固定資産税＋修繕）はインフレ。
+               ★2026-08-20：起点が「購入してからの年数」だったため、入力は“今の相場”なのに
+               購入までの物価上昇が抜けていた（10年後に買うなら初年度から今より高いはず）。
+               すでにお住まいの場合は逆に過去のぶんまで上乗せしていた。生活費・家賃・教育費と
+               同じ inflF（今日を起点）にそろえる。 */
+            expense += (propTax + maint) * inflF;
 
             // 火災・地震保険：入力サイクル（5年/10年）ごとに総額を一括計上（物価に連動）
             const kFire = num('kasai-fire',0), kQuake = num('kasai-quake',0);
@@ -5723,7 +5729,7 @@
                 // 割引適用済みの金額を入力した場合は二重割引を避けてそのまま計上
                 const qRate = (kasaiQuakeMode()==='applied') ? 1
                   : ((typeof ichijoQuakeDiscount==='function') ? ichijoQuakeDiscount() : 1);   // 【一条フック】等級3=50%・一般=建築年割引10%
-                expense += (kFire + kQuake*qRate) * Math.pow(1+infl, kyo);
+                expense += (kFire + kQuake*qRate) * inflF;   // 起点は今日（入力は今のお見積り額）
               }
             }
 
@@ -5737,7 +5743,7 @@
               else if(yo < 30) sell = zehSell * 0.4;    // 卒FIT：約4割
               // 30年目以降は設備寿命とみなし売電なし
               income += sell;                                       // 売電収入
-              expense -= zehSave * Math.pow(1+infl, yo);            // 光熱費削減（物価に連動）
+              expense -= zehSave * inflF;                            // 光熱費削減（物価に連動・起点は今日）
               if(houseType==='buy' && hAge===buyAge) eventList.push({label:'ZEH（太陽光）', type:'family'});
             }
           }
@@ -5761,13 +5767,16 @@
         edu *= inflF;
         expense += edu;
 
-        // ライフイベント（名目）
+        /* ライフイベントの支出。
+           ★2026-08-20：名目のまま（物価で伸ばさず）計上していたため、40年後の車の買い替えも
+           今と同じ300万円で済む計算になっていた。生活費・教育費と同じ inflF で伸ばす。
+           繰り返すイベント（車の買い替え等）ほど効くので、将来プランが実際より楽に見えていた。 */
         events.forEach(ev=>{
           // 繰り返しは「開始年齢〜繰り返す期間（until）」の間だけ。until が0なら従来どおり想定年齢まで
           const hit = ev.every>0
             ? (hAge>=ev.age && (!ev.until || hAge<=ev.until) && (hAge-ev.age)%ev.every===0)
             : (hAge===ev.age);
-          if(hit){ expense += ev.amount; eventList.push({label:ev.label, type:'family'}); }
+          if(hit){ expense += ev.amount * inflF; eventList.push({label:ev.label, type:'family'}); }
         });
         // 臨時収入（名目・指定年齢に加算）
         incomeEvents.forEach(iv=>{

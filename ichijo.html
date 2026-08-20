@@ -6471,7 +6471,7 @@
       'w-sei':'田中', 'w-name':'花子', 'w-age':'33', 'w-income':'260', 'w-raise':'0.8',
       'w-retire':'65', 'w-bonus':'200', 'w-b-y':'1993', 'w-b-m':'8', 'w-b-d':'10',
       'end-age':'100', 'inflation':'1.0', 'rent':'10',
-      'cash-on':true, 'cash':'1200', 'pension-age':'65', 'pension-monthly':'22',
+      'cash-on':true, 'cash':'200', 'pension-age':'65', 'pension-monthly':'22',
       'ins-total-h':'2000', 'ins-total-w':'500',
       'e-retire-living':'25',
       'kasai-fire':'7', 'kasai-quake':'7',
@@ -6523,7 +6523,7 @@
       if(mirai){
         s.fields['h-retire'] = '68'; s.fields['w-retire'] = '65';   // 太郎様は68歳まで就労／花子様は65歳
         s.fields['w-income'] = '380';                               // 花子様がパート→正社員へ（手が離れたら）
-        s.fields['cash'] = '200';                                   // 預貯金は頭金・諸費用に回して手元は200万
+        // 預貯金は現状・将来とも200万（SAMPLE_FIELDS で設定済み。ここで上書きしない）
         s.fields['inflation'] = '2.0';                              // 将来プランは物価2%で厳しめに見る
         s.fields['ins-total-h'] = '6000';                           // 住宅取得に合わせて死亡保障を積み増す
         s.fields['ins-total-w'] = '5000';

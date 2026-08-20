@@ -6608,6 +6608,7 @@
         s.fields['ins-total-h'] = '6000';                           // 住宅取得に合わせて死亡保障を積み増す
         s.fields['ins-total-w'] = '5000';
         s.fields['maint'] = '6';                                    // 修繕・管理（年額）。タイル外壁で再塗装が要らない前提
+        s.fields['down'] = '0';                                     // 頭金なし（預貯金200万では別途500万を用意できないため。諸費用込みでローンを組む形）
       }
       s.children = JSON.parse(JSON.stringify(SAMPLE_CHILDREN));
       s.events = JSON.parse(JSON.stringify(SAMPLE_EVENTS));

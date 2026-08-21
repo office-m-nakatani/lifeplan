@@ -1978,13 +1978,13 @@
             <div class="field">
               <label>入力方法</label>
               <div class="seg" id="exp-seg">
-                <button type="button" data-exp="detail" class="active">項目ごとに入力</button>
-                <button type="button" data-exp="simple">まとめて入力</button>
+                <button type="button" data-exp="simple" class="active">まとめて入力</button>
+                <button type="button" data-exp="detail">項目ごとに入力</button>
               </div>
             </div>
 
-            <!-- まとめて入力 -->
-            <div class="conditional hidden" data-exp-panel="simple">
+            <!-- まとめて入力（既定） -->
+            <div class="conditional" data-exp-panel="simple">
               <div class="field" style="max-width:300px;">
                 <label>毎月の生活費（合計）</label>
                 <div class="input-unit"><input type="number" id="e-bulk" value="23" min="0" step="1"><span class="u">万円</span></div>
@@ -1993,7 +1993,7 @@
             </div>
 
             <!-- 項目ごとに入力 -->
-            <div class="conditional" data-exp-panel="detail">
+            <div class="conditional hidden" data-exp-panel="detail">
               <!-- 15項目をベタ並びにせず、探せる単位（4カテゴリ）に分ける。
                    .field の中身・id・value は1文字も変えていない（位置を移しただけ） -->
               <div class="subgroup-title"><span class="tag" style="background:#fdecef;color:#a8497e;">食</span> 食費・日用品</div>
@@ -7148,6 +7148,10 @@
       const mirai = (kind === 'mirai');
       const s = JSON.parse(JSON.stringify(INITIAL_STATE));
       Object.assign(s.fields, SAMPLE_FIELDS, mirai ? SAMPLE_LIVING_MIRAI : SAMPLE_LIVING_GENJO);
+      /* サンプルの生活費は SAMPLE_LIVING_* で項目ごとに持っているため、入力方法を明示する。
+         既定が「まとめて入力」になったあとも、サンプルだけは従来どおりの内訳・金額で動く
+         （明示しないと e-bulk の23万円が使われ、サンプルの生活費が別物になる） */
+      s.expMode = 'detail';
       if(mirai){
         s.fields['h-retire'] = '68'; s.fields['w-retire'] = '65';   // 太郎様は68歳まで就労／花子様は65歳
         s.fields['w-income'] = '380';                               // 花子様がパート→正社員へ（手が離れたら）
@@ -12585,7 +12589,7 @@
         viewHorizon: (viewHorizon==='custom') ? ('c'+viewHorizonYears()) : viewHorizon,   // 「金融資産の推移」の表示期間（比較期間とは別。年数指定は 'c20' の形で保存）
         penMode: penMode(),   // 公的年金の入力方法（direct/teikibin。定期便の各欄はfieldsで自動保存。SHARE_TOP_KEYSには足さない＝'!'付きで自動往復）
         household: householdSeg.querySelector('button.active')?.dataset.household || 'couple',
-        expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'detail',
+        expMode: document.querySelector('#exp-seg button.active')?.dataset.exp || 'simple',
         kasaiCycle: kasaiCycle(),
         kasaiQuakeMode: kasaiQuakeMode(),
         payoff: loanPayoffSeg?.querySelector('button.active')?.dataset.payoff || 'continue',
@@ -12672,7 +12676,7 @@
       // 金利はカスタム値（既定の0.95でも3.1でもない値）のときだけ保護。既定値なら金利タイプ切替との連動を生かす
       userEditedRate = (()=>{ const v = parseFloat($('loan-rate')?.value); return isFinite(v) && v!==0.95 && v!==3.1; })();
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
-      if(s.expMode) setExpMode(s.expMode);
+      setExpMode(s.expMode || 'simple');   // 既定は「まとめて入力」。保存データに入力方法があればそれを優先
       if(s.kasaiCycle) setKasaiCycle(s.kasaiCycle);
       if(s.kasaiQuakeMode) setKasaiQuakeMode(s.kasaiQuakeMode);
       if(s.payoff && loanPayoffSeg){ [...loanPayoffSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.payoff===s.payoff)); }

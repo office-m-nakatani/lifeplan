@@ -1430,6 +1430,11 @@
     .rr-quote i{ color:var(--blue); margin-right:4px; }
     .rr-quote b{ color:#1c5f8c; }
     .rr-quote .rr-q-neg{ color:#b34f4f; }
+    /* 【湘建】出口の設定を日本語1行で確認できる帯（入力カード内） */
+    .rr-exit-say{ margin:8px 0 2px; padding:8px 12px; border-radius:9px; background:var(--blue-pale);
+      border:1px solid var(--blue-pale2); font-size:.78rem; color:var(--blue-deep); line-height:1.7; }
+    .rr-exit-say i{ color:var(--blue); margin-right:5px; }
+    .rr-exit-say .rr-q-neg{ color:#b34f4f; }
     /* 【湘建】売却シミュレーションの結果ボックス（rr-quote の金色版・空なら消える） */
     .rr-sellsim:not(:empty){ margin-top:12px; background:var(--warn-pale); border:1px solid var(--yellow-soft); border-radius:10px; padding:10px 13px; font-size:.79rem; color:var(--ink); line-height:1.75; }
     .rr-sellsim i{ color:var(--yellow); margin-right:4px; }
@@ -1460,6 +1465,31 @@
     .ic-vs .icv-diff .icv-v{ font-size:1.35rem; color:var(--blue-deep); }
     .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
     .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
+    /* 【湘建】結果画面から出口（途中売却）を切り替える操作列 */
+    .ic-exit:not(:empty){ margin:4px 0 14px; padding:11px 13px 12px; border:1.5px solid var(--yellow-soft);
+      border-radius:12px; background:var(--warn-pale); }
+    .ic-exit .icx-head{ margin-bottom:9px; }
+    .ic-exit .icx-head b{ display:block; font-size:.87rem; color:var(--ink); }
+    .ic-exit .icx-head b i{ color:var(--yellow); margin-right:5px; }
+    .ic-exit .icx-head span{ display:block; font-size:.74rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; }
+    .ic-exit .icx-row{ display:grid; grid-template-columns:auto auto auto 1fr; align-items:center; gap:8px 10px;
+      padding:8px 0; border-top:1px dashed var(--yellow-soft); }
+    .ic-exit .icx-name{ font-size:.82rem; font-weight:700; color:var(--ink); white-space:nowrap;
+      max-width:170px; overflow:hidden; text-overflow:ellipsis; }
+    .ic-exit .icx-seg{ background:#fff; border:1px solid var(--yellow-soft); }
+    .ic-exit .icx-seg button{ font-size:.76rem; padding:6px 11px; white-space:nowrap; color:var(--ink-soft); font-weight:700; }
+    .ic-exit .icx-seg button.active{ background:var(--blue-deep); color:#fff; box-shadow:none; }
+    .ic-exit .icx-age{ display:inline-flex; align-items:center; gap:4px; font-size:.78rem; color:var(--ink); white-space:nowrap; }
+    .ic-exit .icx-age input{ width:62px; text-align:right; padding:6px 7px; border:1.5px solid var(--line);
+      border-radius:8px; font-family:inherit; font-size:.82rem; background:#fff; }
+    .ic-exit .icx-say{ font-size:.76rem; color:var(--ink-soft); line-height:1.6; min-width:0; }
+    .ic-exit .icx-say .rr-q-neg{ color:#b34f4f; }
+    @media(max-width:820px){
+      .ic-exit .icx-row{ grid-template-columns:1fr auto; }
+      .ic-exit .icx-name{ grid-column:1 / -1; max-width:none; }
+      .ic-exit .icx-seg{ grid-column:1 / -1; display:flex; flex-wrap:wrap; }
+      .ic-exit .icx-say{ grid-column:1 / -1; }
+    }
     /* 差の内訳は最大9行になるため、既定の260pxでは行がつぶれる */
     #oneroom-compare-card .chart-box{ height:370px; }
     /* 内訳の各項目が何を指すかの説明（もとは正の項目だけの棒グラフだったが、
@@ -2637,6 +2667,9 @@
               <input type="number" id="ic-horizon-custom" value="20" min="1" max="70" style="width:60px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">年間
             </span>
           </div>
+          <!-- 【湘建】結果を見ながら出口（途中売却）を切り替えられる操作列。
+               入力画面へ戻らずに「10年後に売る／持ち続ける／◯歳で売る」を試せる（2026-08-21 ユーザー指示） -->
+          <div class="ic-exit no-print" id="ic-exit"></div>
           <div class="res-grid" id="res-grid"></div>
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
@@ -4427,20 +4460,28 @@
           <div class="field"><label>物件価格の下落率（年）</label><div class="input-unit"><input type="number" class="re-pricedown" value="${v.priceDown}" min="0" max="8" step="0.1"><span class="u">％</span></div><span class="hint">資産価値・売却価格の想定に使用（土地の価値は下限として残す計算）</span></div>
         </div>
 
-        <div class="rr-sub"><i class="fa-solid fa-door-open"></i> 出口（売却）と金利上昇シナリオ</div>
+        <!-- 【湘建】出口（途中売却）は「いつ売るか」をまず選び、必要な欄だけを出す。
+             以前は保有方針に関わらず「売却時の年齢」が常に出ていて、持ち続ける設定でも
+             年齢を入れる欄があり、逆に10年後売却では「この欄は使いません」と書いてあった
+             （＝入力の仕方が分かりにくい／2026-08-21 ユーザー指摘） -->
+        <div class="rr-sub"><i class="fa-solid fa-door-open"></i> 出口（いつ売るか）</div>
         <div class="rr-grid">
-          <div class="field"><label>保有方針</label>
+          <div class="field"><label>この物件をどうするか</label>
             <select class="re-exit">
-              <option value="hold"${sel(v.exit,'hold')}>持ち続ける</option>
-              <option value="sell10"${sel(v.exit,'sell10')}>購入10年後に売却する</option>
-              <option value="sell"${sel(v.exit,'sell')}>指定の年齢で売却する</option>
+              <option value="hold"${sel(v.exit,'hold')}>売らずに持ち続ける</option>
+              <option value="sell10"${sel(v.exit,'sell10')}>購入から10年後に売却する</option>
+              <option value="sell"${sel(v.exit,'sell')}>売却する年齢を指定する</option>
             </select>
-            <span class="hint">「持ち続ける」＝完済後の家賃が私的年金に。「10年後に売却」は所有5年超のため譲渡税率が約20.315%（長期）で計算します（売却年齢の欄は使いません）</span>
           </div>
-          <div class="field"><label>売却時の夫の年齢</label><div class="input-unit"><input type="number" class="re-sellage" value="${v.sellAge}" min="20" max="100"><span class="u">歳</span></div></div>
-          <div class="field"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
+          <div class="field rr-f-sellage"><label>売却する年齢</label><div class="input-unit"><input type="number" class="re-sellage" value="${v.sellAge}" min="20" max="100"><span class="u">歳</span></div><span class="hint">ご主人（左の「ご家族の基本情報」の年齢）が何歳のときに売るか</span></div>
+          <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
+        </div>
+        <div class="rr-exit-say"></div>
+
+        <div class="rr-sub"><i class="fa-solid fa-arrow-trend-up"></i> 金利上昇シナリオ（変動金利のストレステスト）</div>
+        <div class="rr-grid">
           <div class="field"><label>金利が上がるのは</label><div class="input-unit"><input type="number" class="re-rateupafter" value="${v.rateUpAfter}" min="0" max="40"><span class="u">年後</span></div><span class="hint">0なら金利上昇なし（固定金利）</span></div>
-          <div class="field"><label>上昇後の金利</label><div class="input-unit"><input type="number" class="re-rateupto" value="${v.rateUpTo}" min="0" max="10" step="0.05"><span class="u">％</span></div><span class="hint">変動金利のストレステスト用</span></div>
+          <div class="field"><label>上昇後の金利</label><div class="input-unit"><input type="number" class="re-rateupto" value="${v.rateUpTo}" min="0" max="10" step="0.05"><span class="u">％</span></div><span class="hint">この年数を過ぎたら、この金利で返済し直した場合を試算します</span></div>
         </div>
 
         <div class="rr-sub"><i class="fa-solid fa-magnifying-glass-chart"></i> 売却シミュレーション（周辺相場から試算）</div>
@@ -4454,7 +4495,8 @@
         <div class="rr-quote"></div>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
-      div.querySelector('.re-exit').addEventListener('change', recompute);
+      div.querySelector('.re-exit').addEventListener('change', ()=>{ applyExitUI(div); recompute(); });
+      applyExitUI(div);
       div.querySelector('.re-owner').addEventListener('change', recompute);
       div.querySelector('.re-danshin').addEventListener('change', recompute);
       /* 【湘建】売却シミュレーションの「この想定を売却条件に反映」。
@@ -4513,6 +4555,31 @@
     function allPropertyRows(){ return REP ? [...REP.querySelectorAll('.re-row')] : []; }
     /* 売却する年齢（夫基準）。持ち続ける物件は null。'sell10'＝購入10年後（【湘建】よくある出口） */
     function sellAgeOf(pr){ return pr.exit==='sell' ? pr.sellAge : (pr.exit==='sell10' ? pr.buyAge+10 : null); }
+
+    /* 【湘建】出口の設定を1行の日本語にする。入力カードと結果画面の両方で同じ文言を使う
+       （2か所に別々に書くと、片方だけ直して食い違う） */
+    function exitSay(pr){
+      const sa = sellAgeOf(pr);
+      if(sa == null) return `売らずに<b>持ち続ける</b>設定です。完済後は家賃がそのまま収入（私的年金）になります。`;
+      const held = sa - pr.buyAge;
+      const longTerm = held > 5;
+      return `${esc(hNameH())}が<b>${sa}歳</b>のとき＝<b>購入から${held}年後</b>に売却する設定です`
+        + `（所有${held}年＝${longTerm ? '5年超なので長期譲渡・税率 約20.315%' : '<span class="rr-q-neg">5年以下なので短期譲渡・税率 約39.63%</span>'}）。`
+        + (sa < num('h-age',35) ? `<span class="rr-q-neg">※ 売却年齢が現在の年齢より前のため、この物件は試算に乗りません。</span>` : '');
+    }
+    /* 出口の選び方に応じて、使う欄だけを出す（持ち続けるのに売却年齢を出さない） */
+    function applyExitUI(div){
+      const ex = div.querySelector('.re-exit')?.value; if(!ex) return;
+      div.querySelector('.rr-f-sellage')?.classList.toggle('hidden', ex !== 'sell');
+      div.querySelector('.rr-f-sellprice')?.classList.toggle('hidden', ex === 'hold');
+      const say = div.querySelector('.rr-exit-say');
+      if(say){
+        const i = allPropertyRows().indexOf(div);
+        say.innerHTML = `<i class="fa-solid fa-circle-info"></i> ` + exitSay(readPropertyRow(div, Math.max(i,0)));
+      }
+    }
+    /* 計算に入っている物件の行（readProperties と同じ順番・同じ絞り込み） */
+    function enabledPropRows(){ return allPropertyRows().filter(r=> r.querySelector('.re-on').checked); }
 
     /* その年の元利均等返済を1年分すすめる（残高と残月数から毎年計算＝金利変更にも対応） */
     function amortizeYear(bal, annualRatePct, remMonths){
@@ -4780,6 +4847,51 @@
         + `<br><span class="hint">※ あくまでシミュレーションです。実際の売却価格・家賃は市場動向・階数・室内の状態・空室の有無などで変わり、査定や将来の金額をお約束するものではありません。保有中の毎月の収支・節税額はここには含みません（プラン全体の試算に反映されています）。</span>`;
     }
 
+    /* 【湘建】結果画面から出口（途中売却）を切り替えるパネル。
+       入力画面の物件カードと同じ値を書き換えて recompute するだけなので、
+       どちらから操作しても状態は1つ（保存・共有・PDFにもそのまま乗る）。
+       年齢の入力中に作り直すとフォーカスが飛ぶため、選び方が変わったときだけ組み直す */
+    let exitPanelSig = '';
+    function renderExitPanel(){
+      const box = $('ic-exit'); if(!box) return;
+      const rows = (reMode === 'on') ? enabledPropRows() : [];   // 「購入しない」でも行はDOMに残るので reMode で判定
+      if(!rows.length){ box.innerHTML=''; exitPanelSig=''; return; }
+      const prs = rows.map((r,i)=> readPropertyRow(r,i));
+      const sig = prs.map(p=> p.name+'|'+p.exit).join('/');
+      if(sig === exitPanelSig && box.querySelector('.icx-row')){
+        prs.forEach((pr,i)=>{                      // 組み直さず文言だけ更新（入力中のフォーカスを守る）
+          const el = box.querySelector(`.icx-row[data-idx="${i}"] .icx-say`);
+          if(el) el.innerHTML = exitSay(pr);
+        });
+        return;
+      }
+      exitPanelSig = sig;
+      const seg = (pr,val,label)=> `<button type="button" data-ex="${val}"${pr.exit===val?' class="active"':''}>${label}</button>`;
+      box.innerHTML = `<div class="icx-head"><b><i class="fa-solid fa-door-open"></i> 出口（いつ売るか）をここで試せます</b>`
+          + `<span>押すとこの画面の数字がその場で変わります。入力画面の「ワンルームマンション投資」と同じ設定です。</span></div>`
+        + prs.map((pr,i)=> `<div class="icx-row" data-idx="${i}">`
+            + `<span class="icx-name">${esc(pr.name)}</span>`
+            + `<span class="seg icx-seg">${seg(pr,'hold','持ち続ける')}${seg(pr,'sell10','購入10年後に売却')}${seg(pr,'sell','年齢を指定')}</span>`
+            + `<span class="icx-age${pr.exit==='sell'?'':' hidden'}"><input type="number" class="icx-age-input" value="${pr.sellAge}" min="20" max="100" aria-label="売却する年齢">歳</span>`
+            + `<span class="icx-say">${exitSay(pr)}</span></div>`).join('');
+    }
+    if($('ic-exit')){
+      $('ic-exit').addEventListener('click', (e)=>{
+        const b = e.target.closest('button[data-ex]'); if(!b) return;
+        const row = enabledPropRows()[parseInt(b.closest('.icx-row').dataset.idx,10)]; if(!row) return;
+        row.querySelector('.re-exit').value = b.dataset.ex;
+        applyExitUI(row);
+        recompute();
+      });
+      $('ic-exit').addEventListener('input', (e)=>{
+        const inp = e.target.closest('.icx-age-input'); if(!inp) return;
+        const row = enabledPropRows()[parseInt(inp.closest('.icx-row').dataset.idx,10)]; if(!row) return;
+        row.querySelector('.re-sellage').value = inp.value;
+        applyExitUI(row);
+        recompute();
+      });
+    }
+
     /* ---------- 比較期間（35年 ／ 終了年齢まで ／ 年数を指定）---------- */
     let oneroomHorizon = 'retire';
     function oneroomHorizonYears(){
@@ -4812,6 +4924,7 @@
       card.style.display = show ? '' : 'none';
       const ph = $('oneroom-cta-placeholder'); if(ph) ph.style.display = show ? 'none' : '';
       updateOneroomHorizonLabel();
+      renderExitPanel();   // 【湘建】結果画面からの出口切替
       if(!show || !lastRows) return;
 
       const rows = lastRows, noProp = lastNoPropRows;

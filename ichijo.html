@@ -9120,6 +9120,45 @@
                       { who:'cust', text:'保障の余裕をどこまで持たれたいかのお考えをお聞かせください。' } ],
               caution:'上回っている分がそのまま不要という意味ではありません。減額・解約には、健康状態により再加入や増額ができない／保障に空白が生じる／貯蓄型は解約時に払込保険料を下回ることがある、という点があります。必要額は前提により変わります。' };
           } },
+        /* 団信の重複点検（2026-08-22追加）。団信は「残債と同じ額の死亡保障」と同じ働きをするため、
+           ローンを組む前に住居費を見込んで入れた死亡保障が残っていると保障が重なる。
+           ★「重なっている＝減らせる」とは書かない。必要保障額の対象外（医療・就業不能・介護・
+             その後の配偶者の生活費・相続資金）があり、確認して選ぶのはお客様（保険業法300条1項）。
+           ★calc.insOver は必要保障額との比較、こちらは重なりの出どころ（団信）の確認で役割が違う。 */
+        { id:'calc.dansinDup', cat:'hoken', src:'calc', impact:4,
+          urgency: function(c){ return c.buying ? 4 : 3; },
+          when: function(c){
+            if(houseType==='rent' || !c.loanBal) return false;
+            if(typeof insCoverAtAge !== 'function' || typeof loanShareOf !== 'function') return false;
+            const dup = function(who, age){
+              return (c.loanBal * loanShareOf(who)) >= 300 && insCoverAtAge(c.ins, who, age) >= 300;
+            };
+            return dup('h', c.p.hAge) || (!c.p.single && dup('w', c.p.wAge));
+          },
+          make: function(c){
+            const single = c.p.single;
+            const eH = c.loanBal * loanShareOf('h'), eW = single ? 0 : c.loanBal * loanShareOf('w');
+            const iH = insCoverAtAge(c.ins, 'h', c.p.hAge), iW = single ? 0 : insCoverAtAge(c.ins, 'w', c.p.wAge);
+            // 0円の人は並べない（単独ローンで「妻 約0万円」と出ると、金額があるように読めてしまう）
+            const list = function(vH, vW){
+              const a = [];
+              if(vH > 0) a.push(hNameH()+' 約'+fmt(vH)+'万円');
+              if(!single && vW > 0) a.push(wNameH()+' 約'+fmt(vW)+'万円');
+              return a.join('／');
+            };
+            return { title:'団信と加入中の死亡保障の重なりの確認',
+              /* basis は esc() を通してから描画され、コピー用テキストにもそのまま入る＝HTMLタグ禁止 */
+              basis:'住宅ローンの残債は 約'+fmt(c.loanBal)+'万円です。万一のときに団信で消えるのは '
+                    + list(eH, eW)
+                    + 'で、これは同じ額の死亡保障と同じ働きをします。これとは別に、加入中の死亡保障が '
+                    + list(iH, iW)
+                    + 'あります。ローンを組む前に住居費を見込んで加入された保障がそのまま残っていると、'
+                    + 'その分が重なっている可能性があります。'
+                    + 'なお、この試算の必要保障額は、団信で消える分を差し引いたうえで計算しています。',
+              tasks:[ { who:'cust', text:'加入中の保険について、加入された時期と、加入のきっかけ（住宅ローンを組む前か後か）、そのときの保障の目的をお聞かせください。ローン契約の際に金融機関ですすめられて加入された保険がある場合は、その内容が分かるものもご用意ください。' },
+                      { who:'staff', text:'団信で消える残債と加入中の保障を年ごとに重ねた図を作り、重なっている期間と金額、逆に重なっていない期間をお出しします。' } ],
+              caution:'重なっている分がそのまま不要という意味ではありません。この試算の必要保障額は、末子独立まで（お子さまがいない場合は15年）の生活費・教育費・住居費・葬儀費用だけを対象にしており、医療・就業不能・介護、その後の配偶者の生活費、相続や納税の資金は含んでいません。団信の保障範囲は死亡・高度障害が中心で、商品により異なります。減額・解約には、健康状態により再加入や増額ができない／保障に空白が生じる／貯蓄型は解約時に払込保険料を下回ることがある、という点があります。' };
+          } },
         { id:'calc.soloLoan', cat:'housing', src:'calc', impact:4,
           urgency: function(c){ return c.buying ? 5 : 3; },
           when: function(c){ return !c.p.single && houseType!=='rent' && c.loanBal>0
@@ -9129,6 +9168,36 @@
               basis: hNameH()+'の単独ローンのため、'+wNameH()+'に万一のときは残債 約'+fmt(c.loanBal)+'万円がそのまま残る計算です。',
               tasks:[ { who:'cust', text:'ペアローン・連帯債務など名義の選択肢について、金融機関のご説明をご確認ください。' },
                       { who:'staff', text:'名義のパターンごとに、万一のときの残債と必要保障額がどう変わるかを比較してお持ちします。' } ] };
+          } },
+        /* ペアローンの穴（2026-08-22追加）。団信で消えるのは自分の借入分だけ＝相手の分は残る。
+           calc.soloLoan（単独ローン）と対になる項目で、残る残債と毎月返済を実額で示す。 */
+        { id:'calc.pairLoan', cat:'housing', src:'calc', impact:5,
+          urgency: function(c){ return c.buying ? 5 : 4; },
+          when: function(c){ return !c.p.single && houseType!=='rent' && c.loanBal>0
+                                    && (typeof loanType==='function') && loanType()==='pair'; },
+          make: function(c){
+            const shH = Math.min(Math.max(num('loan-share-h',50),0),100), shW = 100 - shH;
+            const balH = c.loanBal * shH/100, balW = c.loanBal * shW/100;
+            // 毎月の返済額は直近1年の返済額を12で割って出す（ボーナス払いも12か月にならす）
+            let payM = 0;
+            try{
+              const hAge0 = num('h-age',35);
+              const bAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
+              payM = loanPaymentForYear(buildLoanSchedule(), Math.max(hAge0 - bAge, 0)) / 12;
+            }catch(e){ payM = 0; }
+            const r1 = function(v){ return Math.round(v*10)/10; };
+            const pH = r1(payM * shH/100), pW = r1(payM * shW/100);
+            return { title:'ペアローンで残る借入額の確認',
+              basis:'ペアローン（'+hNameH()+' '+shH+'％／'+wNameH()+' '+shW+'％）で試算しています。'
+                    + '残債 約'+fmt(c.loanBal)+'万円のうち、'+hNameH()+'に万一のときに団信で消えるのは '
+                    + hNameH()+'の分 約'+fmt(balH)+'万円だけで、'+wNameH()+'の分 約'+fmt(balW)+'万円はそのまま残ります'
+                    + (pW>0 ? '（毎月 約'+pW+'万円の返済が続きます）' : '') + '。'
+                    + wNameH()+'に万一のときは逆に、'+hNameH()+'の分 約'+fmt(balH)+'万円'
+                    + (pH>0 ? 'と毎月 約'+pH+'万円の返済' : '') + 'が残ります。'
+                    + 'この試算の必要保障額には、この残る分を織り込んでいます。',
+              tasks:[ { who:'staff', text:'それぞれに万一があった場合に残る借入額・毎月の返済額・住宅ローン控除がどう変わるかを、遺されたほうの収入だけになった家計とあわせて同じ表にしてお持ちします。' },
+                      { who:'cust', text:'育児・介護・転職などで、どちらかの収入が下がる可能性についてのお考えをお聞かせください。ローン契約時の諸費用と、それぞれの団信の保障範囲が分かる書類もご確認ください。' } ],
+              caution:'ペアローンは契約が2本のため、事務手数料・登記費用などの諸費用も2本分かかります。団信で消えるのはご自身の借入分だけです。住宅ローン控除はそれぞれの借入額と所得税額をもとに計算するため、収入が下がると枠を使いきれないことがあります。返済中に持分や名義を変えるには金融機関の承諾が必要で、贈与税の対象になる場合があります。連帯債務・収入合算では団信の扱いが異なります。' };
           } },
         { id:'calc.dansin', cat:'housing', src:'calc', impact:3,
           urgency: function(c){ return c.buying ? 4 : 2; },
@@ -9150,6 +9219,70 @@
             return { title:'金利が上がった場合の返済額の確認',
               basis:'変動金利（当初 '+num('loan-rate',0)+'%）で試算しています。金利は見直しのたびに変わります。',
               tasks:[ { who:'staff', text:'金利が +1% / +2% になった場合の毎月返済額と、65歳時点の残高を試算してお持ちします。' } ] };
+          } },
+        /* 繰上返済と運用の比較（2026-08-22追加）。すでに借りている方向け（購入前は calc.atamakin が出る）。
+           そのお客様の残債・金利・返済予定表をそのまま使い、期間短縮型で今いくら繰上返済すると
+           利息がいくら減るかを実額で出し、同じ金額を運用に回した場合と並べる。
+           ★どちらが得かは断定しない。控除・金利・運用成果の前提で入れ替わる（保険業法300条1項）。
+           ★繰上返済で残債が減ると団信で消える借入額も同じだけ減る＝実質の保障も減る点を必ず添える。 */
+        { id:'calc.kuriage', cat:'housing', src:'calc', impact:4, urgency:3,
+          when: function(c){
+            if(houseType==='rent' || !c.loanBal) return false;
+            if(c.buying && c.p.hAge < num('buy-age',36)) return false;   // 購入前は「頭金の置き場所」の担当
+            return (c.p.cashNow - c.defense) >= 100;
+          },
+          make: function(c){
+            const hAge0 = num('h-age',35);
+            const bAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
+            const yearsOwned = Math.max(hAge0 - bAge, 0);
+            const rows = buildLoanSchedule().rows;
+            const start = Math.min(Math.round(yearsOwned*12), rows.length);
+            const lump = (typeof loanPayoffMode==='function') && loanPayoffMode()==='lumpsum';
+            const payAge = num('loan-payoff-age',65);
+            const hMonths = lump ? Math.max(Math.round((payAge - hAge0)*12), 0) : rows.length;
+            const X = Math.min(Math.floor((c.p.cashNow - c.defense)/10)*10, Math.round(c.loanBal));
+            /* 期間短縮型＝毎月の返済額は変えずに残高が早く減る。
+               各月の金利と返済額は今の返済予定表をそのまま使う（変動金利・ボーナス払いもそのまま乗る） */
+            const tail = function(bal){
+              let interest = 0, b = bal; const yearEnd = [];
+              for(let i=start, n=0; i<rows.length && n<hMonths && b>0; i++, n++){
+                const rate = (rows[i].annualRatePct||0)/100/12;
+                const int = b*rate;
+                let pr = rows[i].payment - int;
+                if(pr < 0) pr = 0;
+                if(pr > b) pr = b;
+                interest += int; b -= pr;
+                if((n+1)%12===0) yearEnd.push(b);
+              }
+              return { interest:interest, yearEnd:yearEnd };
+            };
+            const A = tail(c.loanBal), B = tail(Math.max(c.loanBal - X, 0));
+            const intSaved = Math.max(A.interest - B.interest, 0);
+            // 住宅ローン控除は年末残高が基準＝繰上返済すると控除も減る。控除上限は atamakin と共通の1か所
+            const lim = loanDedLimitPerPerson();
+            const dedLeft = Math.max(13 - yearsOwned, 0);
+            const dedOf = function(t){ let s=0;
+              for(let k=0; k<dedLeft && k<t.yearEnd.length; k++) s += Math.min(t.yearEnd[k]*0.007, lim);
+              return s; };
+            const dedLoss = Math.max(dedOf(A) - dedOf(B), 0);
+            const net = intSaved - dedLoss;
+            const yrs = Math.max(Math.round(Math.min(hMonths, rows.length - start)/12), 1);
+            const grow = function(r){ return X * Math.pow(1+r, yrs) - X; };
+            return { title:'手元の余裕資金 約'+fmt(X)+'万円の使いみちの検討',
+              basis:'すぐ使える預貯金 約'+fmt(c.p.cashNow)+'万円のうち、毎月の生活費6か月分（約'+fmt(c.defense)+'万円）を残した余裕は 約'+fmt(X)+'万円です。'
+                    + 'これを繰上返済（毎月の返済額は変えずに返済期間を短くする方法）に充てると、'
+                    + (lump ? payAge+'歳での完済までに' : 'これから完済までに')
+                    + '払う利息が 約'+fmt(intSaved)+'万円 減る計算です。'
+                    + (dedLeft>0
+                        ? '一方、住宅ローン控除の期間が残り'+dedLeft+'年あり、年末残高が減るぶん控除は 約'+fmt(dedLoss)+'万円 少なくなります。'
+                          + (net>=0
+                              ? '差引すると 約'+fmt(net)+'万円 ぶん負担が軽くなる計算です。'
+                              : '差引すると、控除の減る分が利息の減る分を 約'+fmt(-net)+'万円 上回る計算です。')
+                        : '住宅ローン控除の期間はすでに終わっているため、控除が減る影響はありません。')
+                    + '同じ 約'+fmt(X)+'万円を運用に回した場合は、'+yrs+'年で年3%なら 約'+fmt(grow(0.03))+'万円、年5%なら 約'+fmt(grow(0.05))+'万円 増えるという試算です（複利・非課税前提）。',
+              tasks:[ { who:'staff', text:'繰上返済に充てた場合・運用に回した場合・手元に置いたままの場合の3つで、'+yrs+'年後の資産と借入残高、毎月の返済額、万一のときに残る借入額を同じ表に並べてお持ちします。' },
+                      { who:'cust', text:'手元にいくら現金を残しておくと安心か、金額の感覚をお聞かせください。10年以内に使う予定のあるお金（教育費・車の買い替え・住まいの修繕など）も教えてください。' } ],
+              caution:'繰上返済に充てたお金は、原則として手元に戻せません。金利が上がれば繰上返済で減る利息はこの金額より大きくなり、金利が下がれば小さくなります。住宅ローン控除は年末残高をもとに計算するため、控除期間中の繰上返済は控除額を減らします。運用の成果は保証されるものではなく、元本を下回ることがあります。変動金利の場合、実際には金利の見直しのたびに返済額が組み直されるため、軽減される利息はこの金額と前後します。繰上返済で残債が減ると、万一のときに団信で消える借入額も同じだけ減ります。金融機関により繰上返済の手数料や最低金額の条件があります。どの置き方が有利かは前提によって入れ替わります。' };
           } },
         { id:'blank.childPlan', cat:'edu', src:'blank', impact:4, urgency:2, blocker:true,
           when: function(c){ return c.p.children.some(function(x){ return x.age<=15 && x.highEd==='none'; }); },

@@ -1082,21 +1082,34 @@
     #vc-expand{ display:none !important; }
 
     /* ---------- 保存・読込モーダルのサンプル ---------- */
-    .sample-box{ display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:12px 14px;
+    /* ★横並び（flex）にすると、見出しの説明文が自分の文字数ぶん幅を取り、
+       ボタン側（flex:1）が数十pxまで潰れて1文字ずつ改行される（実機で発生）。
+       見出しは上・ボタンは下、の縦積みにして幅の取り合いを起こさない（2026-08-21 ユーザー指示） */
+    .sample-box{ margin-bottom:16px; padding:13px 14px 14px;
       background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:12px; }
-    .sample-box b{ display:block; font-size:.92rem; color:var(--blue-deep); }
-    .sample-box span{ display:block; font-size:.76rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; }
-    .sample-box .btn{ flex:0 0 auto; }
-    /* サンプル4種の選択ボタン（2026-08-21 ユーザー指示で3パターン追加） */
-    .sample-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1; min-width:0; }
-    .sample-grid .btn{ white-space:normal; text-align:left; line-height:1.5; justify-content:flex-start; border-radius:12px; font-size:.78rem; font-weight:600; padding:9px 12px; }
+    .sample-head b{ display:block; font-size:.92rem; color:var(--blue-deep); }
+    .sample-head span{ display:block; font-size:.76rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; }
+    /* サンプル5種の選択カード。1枚ずつ「お名前／ご家族・年齢／年収／投資プラン」の4行で読ませる */
+    .sample-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:11px; }
+    .sample-grid .btn-sample:last-child:nth-child(odd){ grid-column:1 / -1; }   /* 奇数個のときは最後の1枚を横いっぱいに */
+    .btn-sample{ display:block; width:100%; text-align:left; background:#fff; cursor:pointer;
+      border:1.5px solid var(--blue-pale2); border-radius:12px; padding:10px 12px; font-family:inherit;
+      transition:border-color .15s, box-shadow .15s, transform .15s; }
+    .btn-sample:hover{ border-color:var(--blue); box-shadow:0 4px 12px rgba(46,82,136,.14); }
+    .btn-sample:active{ transform:translateY(1px); }
+    .btn-sample .bs-name{ display:block; font-size:.9rem; font-weight:800; color:var(--blue-deep); }
+    .btn-sample .bs-sub{ display:block; font-size:.75rem; color:var(--ink-soft); line-height:1.6; margin-top:1px; }
+    .btn-sample .bs-tag{ display:inline-block; margin-top:7px; padding:2px 9px; border-radius:999px;
+      background:var(--warn-pale); color:#7a5c0f; font-size:.68rem; font-weight:700; line-height:1.6; }
     /* 【湘建】雑費の入力欄。チェックボックスは .field input の width:100% を打ち消す */
     #re-misc-wrap label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
     #re-misc-wrap #re-misc-on{ width:18px; height:18px; flex:0 0 auto; margin:0; accent-color:var(--blue); }
     #re-misc-wrap .re-misc-amt{ max-width:190px; margin-top:8px; }
     #re-misc-wrap .re-misc-amt input{ padding-right:70px; }   /* 単位「万円/年」（4文字）が数字に重ならない幅 */
-    @media(max-width:640px){ .sample-grid{ grid-template-columns:1fr; } }
-    @media(max-width:480px){ .sample-box{ flex-direction:column; align-items:stretch; } }
+    @media(max-width:470px){
+      .sample-grid{ grid-template-columns:1fr; }
+      .sample-grid .btn-sample:last-child:nth-child(odd){ grid-column:auto; }
+    }
 
     /* ---------- 画面への書き込み（ペン・消しゴム）2026-08-19 ---------- */
     /* 「書き込みを終了」で線ごと画面から消し、「画面に書き込む」でまた出す（消えるのは表示だけ） */
@@ -1436,6 +1449,31 @@
     .ic-total{ text-align:center; padding:14px; border-radius:12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2); margin-bottom:12px; }
     .ic-total .ict-num{ font-size:1.9rem; font-weight:800; color:var(--blue-deep); line-height:1.2; }
     .ic-total .ict-sub{ font-size:.82rem; color:var(--ink-soft); }
+    /* 【湘建】買わなかった場合 ⇔ 買った場合 ⇔ 差（グラフでは長さが並んで見えないため数字で対比する） */
+    .ic-vs{ display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:8px;
+      margin:6px 0 2px; padding:10px 12px; border:1.5px solid var(--blue-pale2); border-radius:12px; background:#fff; }
+    .ic-vs .icv-cell{ text-align:center; min-width:0; }
+    .ic-vs .icv-l{ display:block; font-size:.74rem; color:var(--ink-soft); line-height:1.5; }
+    .ic-vs .icv-v{ display:block; font-size:1.12rem; font-weight:800; color:var(--ink); white-space:nowrap; }
+    .ic-vs .icv-arrow{ color:var(--ink-soft); font-weight:800; }
+    .ic-vs .icv-diff .icv-l{ color:#7a5c0f; font-weight:700; }
+    .ic-vs .icv-diff .icv-v{ font-size:1.35rem; color:var(--blue-deep); }
+    .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
+    .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
+    /* 差の内訳は最大9行になるため、既定の260pxでは行がつぶれる */
+    #oneroom-compare-card .chart-box{ height:370px; }
+    /* 内訳の各項目が何を指すかの説明（もとは正の項目だけの棒グラフだったが、
+       同じ数字がグラフと二重になるうえ「増える側」しか出ず、費用が見えなかった） */
+    .ic-legend{ display:grid; gap:6px; margin:12px 0 4px; font-size:.78rem; line-height:1.6; }
+    .ic-legend div{ display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:start; }
+    .ic-legend b{ color:var(--ink); white-space:nowrap; }
+    .ic-legend span{ color:var(--ink-soft); }
+    @media(max-width:560px){ .ic-legend div{ grid-template-columns:1fr; gap:0; } }
+    @media(max-width:620px){
+      .ic-vs{ grid-template-columns:1fr 1fr; gap:6px 10px; }
+      .ic-vs .icv-arrow{ display:none; }
+      .ic-vs .icv-diff{ grid-column:1 / -1; border-top:1px dashed var(--blue-pale2); padding-top:8px; }
+    }
     .ic-note{ font-size:.8rem; color:var(--ink-soft); line-height:1.7; }
     .ic-fold{ margin-top:10px; }
     .ic-fold summary{ cursor:pointer; font-size:.8rem; font-weight:700; color:var(--blue-deep); text-align:center; padding:8px 10px; border:1.5px dashed var(--blue-pale2); border-radius:10px; list-style:none; }
@@ -2604,8 +2642,12 @@
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この数字を、わが家の条件で確かめる（無料相談）</button>
           </div>
-          <div style="font-size:.85rem; color:var(--ink); margin:2px 0 4px; text-align:center;">※ 下のグラフは<b>比較期間の終わりの時点で手元に残る総資産（金融資産＋不動産の純資産）</b>の比較です</div>
-          <div class="chart-box"><canvas id="oneroomChart"></canvas></div>
+          <!-- 【湘建】買った場合と買わなかった場合の総資産は、家計全体（数千万円）に対して差が小さく、
+               2本の棒を並べても長さがほとんど同じで「差が分からない」（2026-08-21 ユーザー指摘）。
+               総資産どうしは数字で並べ、グラフは「差が何でできているか」の内訳に差し替える -->
+          <div class="ic-vs" id="ic-vs"></div>
+          <div class="ic-vs-note" id="ic-vs-note"></div>
+          <div class="chart-box tall"><canvas id="oneroomChart"></canvas></div>
           <div class="ic-bars" id="ic-bars" style="margin-top:12px;"></div>
           <div class="no-print" style="text-align:center; margin-top:14px;">
             <button class="btn btn-ghost btn-sm" id="open-re-modal" type="button"><i class="fa-solid fa-table-list"></i> 物件ごとの収支・節税の内訳を見る</button>
@@ -2821,15 +2863,41 @@
           <!-- 結果の数字（資金ショートの年齢など）は書かない方針（2026-08-20 ユーザー指示）。
                ボタンには家族構成と年収だけを書く＝前提や既定値を変えても陳腐化しない情報だけ。
                2026-08-21 ユーザー指示で3パターン追加（中身は EXTRA_SAMPLES を参照） -->
-          <div>
+          <div class="sample-head">
             <b>サンプルを表示</b>
             <span>よくあるご家族の例からお選びください（画面の入力内容が置き換わります）</span>
           </div>
           <div class="sample-grid">
-            <button class="btn btn-ghost btn-sm" data-sample="tanaka" type="button">田中家：夫35歳・妻33歳・お子さま2人（750万＋260万円）</button>
-            <button class="btn btn-ghost btn-sm" data-sample="dual" type="button">佐藤家：35歳ご夫婦 共働き・お子さま2人（600万＋400万円）</button>
-            <button class="btn btn-ghost btn-sm" data-sample="single" type="button">鈴木様：35歳 独身（年収800万円）</button>
-            <button class="btn btn-ghost btn-sm" data-sample="rich" type="button">伊藤家：夫40歳・お子さま1人（年収1,500万円・2戸プラン）</button>
+            <button class="btn-sample" data-sample="tanaka" type="button">
+              <span class="bs-name">田中家</span>
+              <span class="bs-sub">夫35歳・妻33歳／お子さま2人</span>
+              <span class="bs-sub">年収 750万＋260万円</span>
+              <span class="bs-tag">1戸・65歳で売却</span>
+            </button>
+            <button class="btn-sample" data-sample="dual" type="button">
+              <span class="bs-name">佐藤家</span>
+              <span class="bs-sub">35歳ご夫婦 共働き／お子さま2人</span>
+              <span class="bs-sub">年収 600万＋400万円</span>
+              <span class="bs-tag">1戸・65歳で売却</span>
+            </button>
+            <button class="btn-sample" data-sample="single" type="button">
+              <span class="bs-name">鈴木様</span>
+              <span class="bs-sub">35歳・独身</span>
+              <span class="bs-sub">年収 800万円</span>
+              <span class="bs-tag">1戸・10年後に売却</span>
+            </button>
+            <button class="btn-sample" data-sample="rich" type="button">
+              <span class="bs-name">伊藤家</span>
+              <span class="bs-sub">夫40歳・妻38歳／お子さま1人</span>
+              <span class="bs-sub">年収 1,500万円</span>
+              <span class="bs-tag">2戸・団信なし融資あり</span>
+            </button>
+            <button class="btn-sample" data-sample="solo40" type="button">
+              <span class="bs-name">山本様</span>
+              <span class="bs-sub">40歳・独身</span>
+              <span class="bs-sub">年収 1,500万円</span>
+              <span class="bs-tag">3戸・買い増しプラン</span>
+            </button>
           </div>
         </div>
 
@@ -4763,6 +4831,10 @@
       const rentSum    = upto.reduce((a,r)=> a+r.reRent, 0);
       const cfSum      = upto.reduce((a,r)=> a+r.reCf, 0);
       const sellSum    = upto.reduce((a,r)=> a+r.reSell, 0);
+      // 【湘建】差の内訳（ウォーターフォール）用の累計
+      const opexSum    = upto.reduce((a,r)=> a+r.reOpex, 0);   // 管理費・修繕積立金・固定資産税・賃貸管理手数料
+      const loanSum    = upto.reduce((a,r)=> a+r.reLoan, 0);   // ローン返済（元金＋利息）
+      const buySum     = upto.reduce((a,r)=> a+r.reBuy, 0);    // 頭金＋購入時の諸費用
       const diff       = Math.round(row.netAll - rowNo.netAll);
       const crossRow   = rows.find(r=> r.reRent>0 && r.reIncome>0);
       const paidRow    = rows.find(r=> r.reRent>0 && r.reDebt<0.5 && r.reLoan<0.5);
@@ -4800,23 +4872,53 @@
         + (($('re-misc-on') && $('re-misc-on').checked && num('re-misc',0)>0) ? `雑費 年${fmt(num('re-misc',0))}万円の経費計上（損益通算）を含めた試算です。` : '')
         + `</div>`;
 
-      // 内訳バー
-      const bars = [
-        { label:'税金の還付', amt:taxSum,  sub:`損益通算による所得税・住民税の戻り（${horizonLbl}までの累計）` },
-        { label:'家賃収入',   amt:rentSum, sub:`空室・滞納を差し引いた実効家賃の累計` },
-        (row.reValue>0 || row.reDebt>0)
-          ? { label:'不動産の純資産', amt:Math.max(row.reNet,0), sub:`${atAge}歳時点の評価額 − ローン残債` }
-          : { label:'売却の手取り',   amt:Math.max(sellSum,0),   sub:soldRow ? `${soldRow.hAge}歳で売却（売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税）。手取りは現金として金融資産に加えています` : `保有していないため0` },
-      ];
-      const max = Math.max(...bars.map(b=> b.amt), 1);
-      $('ic-bars').innerHTML = bars.map(b=>
-        `<div class="ic-row"><span class="ic-rlabel">${b.label}</span>`
-        + `<span class="ic-track"><span class="ic-fill" style="width:${Math.round(b.amt/max*100)}%"></span></span>`
-        + `<span class="ic-amt">${fmt(b.amt)}万円</span></div>`
-        + `<div style="grid-column:1 / -1; font-size:.72rem; color:var(--ink-soft); margin-top:-4px;">${b.sub}</div>`
+      /* 【湘建】総資産は数字で対比し、グラフは「差の内訳」にする（棒2本では差が見えないため） */
+      const noBuyTotal = Math.round(rowNo.netAll), buyTotal = Math.round(row.netAll);
+      $('ic-vs').innerHTML =
+          `<div class="icv-cell"><span class="icv-l">買わなかった場合</span><span class="icv-v">${fmt(noBuyTotal)}<small> 万円</small></span></div>`
+        + `<div class="icv-arrow">→</div>`
+        + `<div class="icv-cell"><span class="icv-l">ワンルームを買った場合</span><span class="icv-v">${fmt(buyTotal)}<small> 万円</small></span></div>`
+        + `<div class="icv-arrow">＝</div>`
+        + `<div class="icv-cell icv-diff${diff<0?' neg':''}"><span class="icv-l">差</span><span class="icv-v">${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}<small> 万円</small></span></div>`;
+      /* 差の内訳。家賃・節税などの「増える側」と、返済・経費などの「出ていく側」を並べて、
+         合計がちょうど差になるように組む。明示できない残り（現金が減るぶん積立・運用に
+         回せなかった差など）は「運用に回るお金の差」として最後に置き、必ず合計を一致させる */
+      /* 売却した物件と持ち続ける物件が混ざる場合（1戸目は保有・2戸目は10年後に売却など）は
+         両方を並べる。片方だけにすると、もう片方が下の「残り」に紛れて内訳が読めなくなる */
+      const wfItems = [
+        { label:'家賃収入',            v: rentSum },
+        { label:'税金の還付（節税）',  v: taxSum },
+        { label:'黒字化後の納税',      v: taxCost },
+        { label:'売却の手取り',        v: sellSum },
+        { label:`不動産の純資産（${atAge}歳時点）`, v: row.reNet },
+        { label:'ローン返済',          v: -loanSum },
+        { label:'管理費・固定資産税等', v: -opexSum },
+        { label:'頭金・購入時の諸費用', v: -buySum },
+      ].filter(x=> Math.abs(x.v) >= 0.5);
+      const wfExplained = wfItems.reduce((a,x)=> a+x.v, 0);
+      const wfRest = diff - wfExplained;
+      // 残り＝積立に回せる金額の増減と、現金が足りない年の運用資産の取り崩しの差
+      if(Math.abs(wfRest) >= 0.5) wfItems.push({ label:'運用資産の差（積立・取崩し）', v: wfRest, rest:true });
+      $('ic-vs-note').innerHTML = `下のグラフは、この差 <b>${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}万円</b> が<b>何でできているか</b>の内訳です（青＝増える側／赤＝出ていく側。合計がいちばん下の「差」になります）`;
+      drawOneroomChart(wfItems, diff, horizonLbl);
+      /* グラフの各項目が何を指すか。金額はグラフ側に出ているので、ここでは中身の説明だけ */
+      const WF_DESC = {
+        '家賃収入': `空室・滞納を差し引いた実効家賃の累計（${horizonLbl}まで）`,
+        '税金の還付（節税）': '損益通算による所得税・住民税の戻りの累計',
+        '黒字化後の納税': '不動産所得が黒字に転じたあとの税金（還付ではなく納税になります）',
+        '売却の手取り': soldRow ? `${soldRow.hAge}歳で売却：売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税。手取りは現金として金融資産に加えています` : '売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税',
+        [`不動産の純資産（${atAge}歳時点）`]: 'まだ保有している物件の 評価額 − ローン残債',
+        'ローン返済': '元金＋利息の累計。<b>元金の分は「不動産の純資産」や「売却の手取り」として戻ってきます</b>（丸ごと出ていくお金ではありません）',
+        '管理費・固定資産税等': '管理費・修繕積立金・固定資産税・都市計画税・賃貸管理手数料の累計',
+        '頭金・購入時の諸費用': '登記・不動産取得税・融資事務手数料など、購入時に用意する自己資金',
+        '運用資産の差（積立・取崩し）': '手元の現金が増減するぶん、積立に回せる額や、現金が足りない年に取り崩す額が変わります'
+      };
+      $('ic-bars').className = 'ic-legend';
+      $('ic-bars').innerHTML = wfItems.concat([{label:'差（合計）'}]).map(x=>
+        x.label==='差（合計）'
+          ? `<div><b>差（合計）</b><span>上の項目をすべて足したものが、買った場合と買わなかった場合の差になります</span></div>`
+          : `<div><b>${esc(x.label)}</b><span>${WF_DESC[x.label]||''}</span></div>`
       ).join('');
-
-      drawOneroomChart(Math.round(rowNo.netAll), Math.round(row.netAll), atAge);
 
       $('ic-note').innerHTML = `※ いずれも<b>入力した前提</b>による概算です。家賃・空室・金利・価格の想定を変えると結果は大きく動きます。<br>`
         + `・<b>節税（損益通算）</b>：家賃収入−（管理費等＋固定資産税＋ローン利息＋減価償却費＋購入初年度の諸費用）で不動産所得を計算し、赤字を給与と通算した場合の税額差を還付として計上しています。`
@@ -4833,29 +4935,51 @@
         + `・<b>比較の考え方</b>：同じ自己資金・毎月の持ち出しを新NISA等の運用に回した場合とも見比べてください（「貯蓄・資産運用」で積立額を増やすと、この画面の点線が動きます）。<br>`
         + `<span style="color:var(--ink-soft);">Office-M（税理士事務所を母体とするFP事務所）試算</span>`;
     }
-    function drawOneroomChart(noBuy, buy, atAge){
+    /* 【湘建】差の内訳グラフ（2026-08-21 ユーザー指摘）
+       買った場合と買わなかった場合の総資産を棒2本で並べても、家計全体に対して差が小さく
+       長さがほとんど同じに見える＝「差が分からない」。総資産は #ic-vs に数字で出し、
+       グラフは「その差が何でできているか」を＋と−で見せる形にした。
+       いちばん下に合計＝差を置き、各項目を足すとそこに一致する。 */
+    function drawOneroomChart(items, diff, horizonLbl){
       const cv = $('oneroomChart'); if(!cv || typeof Chart==='undefined') return;
       if(oneroomChart) oneroomChart.destroy();
+      const rows = items.concat([{ label:'差（合計）', v: diff, total:true }]);
+      const POS = '#2e5288', NEG = '#c9736f', REST = '#8fabd6', TOTAL = diff>=0 ? '#cfa14e' : '#b34f4f';
       oneroomChart = new Chart(cv.getContext('2d'), {
         type:'bar',
-        data:{ labels:['買わなかった場合','ワンルームを買った場合'], datasets:[{
-          label:`${atAge}歳時点の総資産（金融資産＋不動産の純資産）`,
-          data:[noBuy, buy],
-          backgroundColor:['#b9c4cf','#2e5288'], borderRadius:8, barPercentage:0.6
+        data:{ labels: rows.map(r=> r.label), datasets:[{
+          label:`${horizonLbl}までの差の内訳`,
+          data: rows.map(r=> Math.round(r.v)),
+          backgroundColor: rows.map(r=> r.total ? TOTAL : (r.rest ? REST : (r.v>=0 ? POS : NEG))),
+          borderRadius:6, barPercentage:0.72
         }]},
         options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-          layout:{ padding:{ right:96 } },
-          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> ' 約'+fmt(c.parsed.x)+'万円' } } },
-          scales:{ x:{ ticks:{ callback:(v)=> v+'万' } }, y:{ grid:{ display:false } } } },
+          layout:{ padding:{ right:92, left:6 } },   // 右端に出るプラスの金額の文字ぶん
+          plugins:{ legend:{ display:false },
+            tooltip:{ callbacks:{ label:(c)=> (c.parsed.x>=0?' ＋':' −')+fmt(Math.abs(c.parsed.x))+'万円' } } },
+          scales:{
+            x:{ ticks:{ callback:(v)=> fmt(v)+'万' }, grid:{ color:(c)=> c.tick.value===0 ? '#9aa8b8' : '#eef3f8' } },
+            y:{ grid:{ display:false }, ticks:{ font:{ size:11 }, autoSkip:false } }
+          } },
         plugins:[{ id:'orBarLabels', afterDatasetsDraw(chart){
-          const ctx = chart.ctx;
+          const ctx = chart.ctx, area = chart.chartArea;
+          const zero = chart.scales.x.getPixelForValue(0);
           chart.getDatasetMeta(0).data.forEach((bar,i)=>{
             const v = chart.data.datasets[0].data[i];
+            const pos = v >= 0;
+            const txt = (pos?'＋':'−')+fmt(Math.abs(v))+'万円';
             ctx.save();
-            ctx.font = '700 12px "Noto Sans JP",sans-serif';
-            ctx.fillStyle = '#1f3047';
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillText('約'+fmt(v)+'万円', bar.x+8, bar.y);
+            ctx.font = (rows[i].total ? '800 13px' : '700 12px') + ' "Noto Sans JP",sans-serif';
+            /* いちばん長い棒はグラフの端まで伸びるため、外側に書くと目盛りの項目名に
+               重なる（実測：ローン返済 −5,981万円 が「ローン返済」の上に重なった）。
+               はみ出すときは棒の内側に白抜きで置く */
+            const w = ctx.measureText(txt).width;
+            const end = pos ? Math.max(bar.x, zero) : Math.min(bar.x, zero);
+            const outside = pos ? (end + 8 + w <= area.right + 88) : (end - 8 - w >= area.left);
+            ctx.textAlign = (pos === outside) ? 'left' : 'right';
+            ctx.fillStyle = outside ? (rows[i].total ? '#1f3047' : (pos ? '#1f3047' : '#8c4b4b')) : '#fff';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(txt, end + (outside ? (pos ? 8 : -8) : (pos ? -8 : 8)), bar.y);
             ctx.restore();
           });
         } }]
@@ -7438,6 +7562,30 @@
           properties:[
             { owner:'h', buyAge:40, exit:'hold', danshin:true },
             { owner:'h', buyAge:42, exit:'sell10', danshin:false }
+          ],
+          miraiFields:{ 're-misc-on':true, 're-misc':'40' }
+        }); }
+      },
+      solo40: {
+        label:'山本様（40歳・独身・年収1,500万円）',
+        build(kind){ return extraSample(kind, {
+          household:'single',
+          fields:{
+            'h-sei':'山本','h-name':'拓也','h-age':'40','h-income':'1500','h-raise':'1.0','h-retire':'65','h-bonus':'2500',
+            'end-age':'100','inflation':'2.0','rent':'15',
+            'cash-on':true,'cash':'2000','pension-age':'65','pension-monthly':'19',
+            'e-bulk':'26','e-retire-living':'22',
+            'ins-total-h':'0','ins-total-w':'0'
+          },
+          investments:[ { type:'nisa', name:'つみたてNISA', lump:'300', monthly:'10', ret:'5', start:'40', end:'65', after:'use', on:true } ],
+          /* 独身・高年収は税率が高く扶養もないため、損益通算の効きがいちばん大きい層。
+             団信は遺されるご家族がいないぶん価値が薄れるので、話の軸は
+             「節税 → 完済後の家賃＝私的年金 → 出口」。2、3戸に広げる相談が出やすいので
+             1戸目＝持ち続ける／2戸目＝10年後に売却／3戸目＝団信なし融資で買い増し、の3戸で組んである */
+          properties:[
+            { owner:'h', buyAge:40, exit:'hold',   danshin:true  },
+            { owner:'h', buyAge:42, exit:'sell10', danshin:true  },
+            { owner:'h', buyAge:44, exit:'hold',   danshin:false }
           ],
           miraiFields:{ 're-misc-on':true, 're-misc':'40' }
         }); }

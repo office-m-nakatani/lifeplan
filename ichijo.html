@@ -249,6 +249,20 @@
     /* ラベルの中身を包む箱（唯一のflexアイテム＝中は普通の文章として折り返す） */
     .lbl-wrap{ display:block; width:100%; }
     .field .hint{ font-size:.72rem; color:var(--ink-soft); }
+    /* 老後の生活費が将来いくらとして計上されるか（2026-08-21 ユーザー指示）。
+       .hint（.72rem）では小さくて商談で読めないため、専用の枠にして年齢ごとの実額を大きく出す。
+       金額は桁が短い（例：90.6万円）ので大きくしても折り返さない＝可変の長文は入れないこと */
+    .rl-real{ margin-top:8px; padding:11px 12px; border:1px solid var(--blue-pale2);
+              border-radius:12px; background:var(--good-pale); }
+    .rl-real .rl-lead{ font-size:.86rem; line-height:1.65; color:var(--ink); }
+    .rl-real .rl-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:9px; }
+    .rl-real .rl-cell{ text-align:center; background:var(--card); border-radius:9px; padding:8px 3px; }
+    .rl-real .rl-age{ display:block; font-size:.75rem; color:var(--ink-soft); margin-bottom:1px; }
+    .rl-real .rl-amt{ display:block; font-size:1.15rem; font-weight:800; color:var(--blue-deep);
+                      line-height:1.25; font-variant-numeric:tabular-nums; }
+    .rl-real .rl-amt small{ font-size:.6em; font-weight:700; }
+    .rl-real .rl-basis{ display:block; font-size:.67rem; color:var(--ink-soft); margin-top:2px; }
+    .rl-real .rl-note{ font-size:.78rem; color:var(--ink-soft); line-height:1.65; margin-top:8px; }
     /* 折り返しの見た目調整：最終行が数文字だけになる折り返しをブラウザに自動回避させる（非対応ブラウザでは無視され従来どおり） */
     .field label, .hint, .note span, .ipn-note, .cr-quote, .ic-lead, .acc-title span, .ict-sub, .diag-note, .seg button{ text-wrap:pretty; }
     .input-unit{ position:relative; display:flex; align-items:center; }
@@ -2018,7 +2032,7 @@
                 <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後／ゆとりある生活費は月35万円前後</span>
                 <!-- 今の物価で入力した額が、将来いくらとして計上されるかを実額で出す（2026-08-21 ユーザー指示）。
                      .field は display:flex なので hidden 属性では消えない → style.display で切り替える -->
-                <span class="hint" id="retire-living-real" style="display:none;"></span>
+                <div class="rl-real" id="retire-living-real" style="display:none;"></div>
                 <span class="hint" id="retire-living-note" style="display:none;"></span>
               </div>
             </div>
@@ -3798,7 +3812,7 @@
       if(ret <= 0){ el.style.display = 'none'; return; }
       el.style.display = 'block';
       if(infl <= 0){
-        el.innerHTML = `物価上昇を見込まない設定のため、<b>このままの金額</b>で計上します。`;
+        el.innerHTML = `<div class="rl-lead">物価上昇を見込まない設定のため、<b>このままの金額</b>で計上します。</div>`;
         return;
       }
       // おふたりとも退職したあとに切り替わる（夫の年齢に換算）
@@ -3806,9 +3820,25 @@
         : Math.max(num('h-retire',65), hAge0 + num('w-retire',65) - num('w-age',33));
       const at = (age)=> ret * Math.pow(1+infl, Math.max(age - hAge0, 0));
       const f1 = (v)=> (Math.round(v*10)/10).toLocaleString('ja-JP');
-      el.innerHTML = `この欄は<b>今の物価</b>での金額です。物価${(infl*100).toFixed(1)}%で計算すると、`
-        + `老後の生活費に切り替わる<b>${esc(hNameH())}${switchAge}歳</b>のとき月<b>${f1(at(switchAge))}万円</b>、`
-        + `<b>80歳</b>では月<b>${f1(at(80))}万円</b>として計上します。`;
+      /* 60・80・100歳の3点（夫の年齢）。すでに過ぎている年齢は出さない。
+         ★切替年齢より前は「いまの生活費」で計上しているので、そこに老後の生活費を出すと
+           画面の数字と実際の計上額が食い違う。年齢ごとに、実際に使うほうの金額を出す。 */
+      const nowLiving = readLivingMonthly();
+      const AGES = [60, 80, 100].filter(a=> a >= hAge0);
+      const cells = AGES.map(a=>{
+        const retired = (a >= switchAge);
+        const v = (retired ? ret : nowLiving) * Math.pow(1+infl, Math.max(a - hAge0, 0));
+        return `<span class="rl-cell"><span class="rl-age">${esc(hNameH())}${a}歳</span>`
+          + `<span class="rl-amt">${f1(v)}<small> 万円</small></span>`
+          + `<span class="rl-basis">${retired ? '老後の生活費' : 'いまの生活費'}</span></span>`;
+      }).join('');
+      el.innerHTML =
+        `<div class="rl-lead">生活費は<b>今の物価</b>でご入力いただき、計算では物価${(infl*100).toFixed(1)}%で毎年ふくらませます。`
+        + `実際に<b>毎月いくらとして計上するか</b>は次のとおりです。</div>`
+        + (cells ? `<div class="rl-grid">${cells}</div>` : '')
+        + `<div class="rl-note">この欄（月${f1(ret)}万円）を使うのは<b>${esc(hNameH())}${switchAge}歳</b>から`
+        + `（おふたりとも退職したあと）で、それより前は「毎月の生活費」（月${f1(nowLiving)}万円）で計上します。`
+        + `<b>足し算ではなく置き換え</b>です。</div>`;
     }
     function updateLivingTotal(){
       try{ updateRetireLivingNote(); }catch(e){}

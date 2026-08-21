@@ -1087,6 +1087,15 @@
     .sample-box b{ display:block; font-size:.92rem; color:var(--blue-deep); }
     .sample-box span{ display:block; font-size:.76rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; }
     .sample-box .btn{ flex:0 0 auto; }
+    /* サンプル4種の選択ボタン（2026-08-21 ユーザー指示で3パターン追加） */
+    .sample-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1; min-width:0; }
+    .sample-grid .btn{ white-space:normal; text-align:left; line-height:1.5; justify-content:flex-start; border-radius:12px; font-size:.78rem; font-weight:600; padding:9px 12px; }
+    /* 【湘建】雑費の入力欄。チェックボックスは .field input の width:100% を打ち消す */
+    #re-misc-wrap label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
+    #re-misc-wrap #re-misc-on{ width:18px; height:18px; flex:0 0 auto; margin:0; accent-color:var(--blue); }
+    #re-misc-wrap .re-misc-amt{ max-width:190px; margin-top:8px; }
+    #re-misc-wrap .re-misc-amt input{ padding-right:70px; }   /* 単位「万円/年」（4文字）が数字に重ならない幅 */
+    @media(max-width:640px){ .sample-grid{ grid-template-columns:1fr; } }
     @media(max-width:480px){ .sample-box{ flex-direction:column; align-items:stretch; } }
 
     /* ---------- 画面への書き込み（ペン・消しゴム）2026-08-19 ---------- */
@@ -1408,6 +1417,10 @@
     .rr-quote i{ color:var(--blue); margin-right:4px; }
     .rr-quote b{ color:#1c5f8c; }
     .rr-quote .rr-q-neg{ color:#b34f4f; }
+    /* 【湘建】売却シミュレーションの結果ボックス（rr-quote の金色版・空なら消える） */
+    .rr-sellsim:not(:empty){ margin-top:12px; background:var(--warn-pale); border:1px solid var(--yellow-soft); border-radius:10px; padding:10px 13px; font-size:.79rem; color:var(--ink); line-height:1.75; }
+    .rr-sellsim i{ color:var(--yellow); margin-right:4px; }
+    .rr-sellsim .rr-q-neg{ color:#b34f4f; }
 
     /* 投資効果カード（結果） */
     #oneroom-compare-card{ border:2px solid var(--blue-pale2); }
@@ -1957,9 +1970,16 @@
               <div id="property-list"></div>
               <button class="btn-add" id="add-property" type="button"><i class="fa-solid fa-plus"></i> 物件を追加（2戸目・3戸目）</button>
 
+              <!-- 【湘建】雑費の経費計上（2026-08-21 ユーザー指示：チェックで反映・金額調整可・既定40万円） -->
+              <div class="field" id="re-misc-wrap" style="margin-top:14px;">
+                <label><input type="checkbox" id="re-misc-on"> <b>雑費を経費に計上する（確定申告）</b></label>
+                <div class="input-unit re-misc-amt hidden"><input type="number" id="re-misc" value="40" min="0" step="5"><span class="u">万円/年</span></div>
+                <span class="hint">物件の見回りや管理会社との打合せの交通費、通信費、書籍・セミナー代などのうち<b>不動産投資に関わる部分</b>を経費として計上する想定です。損益通算（節税額）の計算にだけ反映します。すでに毎月の生活費に入っている支出の按分という前提のため、<b>支出としては二重に数えません</b>。実際に経費にできる金額は支出の実態と記録（領収書など）によります。<b>金額を大きくするほど試算は有利に出ます</b>ので、実態に合う金額でお使いください。</span>
+              </div>
+
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>家賃・空室・管理費・固定資産税・ローン利息・減価償却からその年の<strong>不動産所得</strong>を計算し、赤字なら給与と<strong>損益通算</strong>して所得税・住民税の還付額を自動で試算します。税率はお客様の年収（「ご家族の基本情報」で入力）から算出するので、<strong>年収が高い方ほど還付が大きく</strong>出ます。<br>※ 実際の還付は確定申告後（所得税は翌年3月ごろ、住民税は翌年度の天引き減）ですが、本ツールは分かりやすさを優先して<strong>同じ年に反映</strong>しています。退職後は損益通算する給与がなくなるため赤字による還付は見込まず、黒字には概算20％を課税しています。<br><b>2戸目・3戸目の買い増し</b>は「物件を追加」で前の物件の条件をコピーして試算できます（還付・団信は名義ごとに自動で合算）。</span>
+                <span>家賃・空室・管理費・固定資産税・ローン利息・減価償却（チェックすれば雑費も）からその年の<strong>不動産所得</strong>を計算し、赤字なら給与と<strong>損益通算</strong>して所得税・住民税の還付額を自動で試算します。税率はお客様の年収（「ご家族の基本情報」で入力）から算出するので、<strong>年収が高い方ほど還付が大きく</strong>出ます。<br>※ 実際の還付は確定申告後（所得税は翌年3月ごろ、住民税は翌年度の天引き減）ですが、本ツールは分かりやすさを優先して<strong>同じ年に反映</strong>しています。退職後は損益通算する給与がなくなるため赤字による還付は見込まず、黒字には概算20％を課税しています。<br><b>2戸目・3戸目の買い増し</b>は「物件を追加」で前の物件の条件をコピーして試算できます（還付・団信は名義ごとに自動で合算）。</span>
               </div>
               <div class="note" style="background:var(--bad-pale);color:#8c4b4b;">
                 <i class="fa-solid fa-triangle-exclamation" style="color:var(--bad);"></i>
@@ -2798,13 +2818,19 @@
       <div class="modal-body">
         <!-- サンプルはログインしていなくても出せる（操作の練習・初回のご説明に使うため） -->
         <div class="sample-box">
-          <!-- 説明文は置かない（2026-08-20 ユーザー指示）。
-               太字の折り返しで読みにくくなるうえ、資金ショートの年齢を書くと
-               前提や既定値を変えるたびに実測し直しが必要になり、必ず陳腐化する -->
+          <!-- 結果の数字（資金ショートの年齢など）は書かない方針（2026-08-20 ユーザー指示）。
+               ボタンには家族構成と年収だけを書く＝前提や既定値を変えても陳腐化しない情報だけ。
+               2026-08-21 ユーザー指示で3パターン追加（中身は EXTRA_SAMPLES を参照） -->
           <div>
             <b>サンプルを表示</b>
+            <span>よくあるご家族の例からお選びください（画面の入力内容が置き換わります）</span>
           </div>
-          <button class="btn btn-ghost btn-sm" id="sample-show" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> 表示する</button>
+          <div class="sample-grid">
+            <button class="btn btn-ghost btn-sm" data-sample="tanaka" type="button">田中家：夫35歳・妻33歳・お子さま2人（750万＋260万円）</button>
+            <button class="btn btn-ghost btn-sm" data-sample="dual" type="button">佐藤家：35歳ご夫婦 共働き・お子さま2人（600万＋400万円）</button>
+            <button class="btn btn-ghost btn-sm" data-sample="single" type="button">鈴木様：35歳 独身（年収800万円）</button>
+            <button class="btn btn-ghost btn-sm" data-sample="rich" type="button">伊藤家：夫40歳・お子さま1人（年収1,500万円・2戸プラン）</button>
+          </div>
         </div>
 
         <!-- ログイン -->
@@ -4279,7 +4305,10 @@
         sellAge:    o.sellAge!=null ? o.sellAge : 65,
         sellPrice:  o.sellPrice!=null ? o.sellPrice : 0,
         rateUpAfter:o.rateUpAfter!=null ? o.rateUpAfter : 0,
-        rateUpTo:   o.rateUpTo!=null ? o.rateUpTo : 0
+        rateUpTo:   o.rateUpTo!=null ? o.rateUpTo : 0,
+        mktPrice:   o.mktPrice!=null ? o.mktPrice : '',   /* 【湘建】売却シミュレーション（周辺相場） */
+        mktRent:    o.mktRent!=null ? o.mktRent : '',
+        simAge:     o.simAge!=null ? o.simAge : ''
       };
       const n = REP.querySelectorAll('.re-row').length + 1;
       const div = document.createElement('div');
@@ -4346,12 +4375,29 @@
           <div class="field"><label>上昇後の金利</label><div class="input-unit"><input type="number" class="re-rateupto" value="${v.rateUpTo}" min="0" max="10" step="0.05"><span class="u">％</span></div><span class="hint">変動金利のストレステスト用</span></div>
         </div>
 
+        <div class="rr-sub"><i class="fa-solid fa-magnifying-glass-chart"></i> 売却シミュレーション（周辺相場から試算）</div>
+        <div class="rr-grid">
+          <div class="field"><label>周辺の売出相場</label><div class="input-unit"><input type="number" class="re-mkt-price" value="${v.mktPrice}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">同じエリア・近い築年の売出事例など。空欄なら下落率からの自動計算値で試算</span></div>
+          <div class="field"><label>周辺の家賃相場（月）</label><div class="input-unit"><input type="number" class="re-mkt-rent" value="${v.mktRent}" placeholder="未入力可" min="0" step="0.1"><span class="u">万円</span></div><span class="hint">同エリアの募集事例。入力すると相場価格に対する表面利回りを添えます</span></div>
+          <div class="field"><label>試算する売却時期（夫の年齢）</label><div class="input-unit"><input type="number" class="re-simage" value="${v.simAge}" placeholder="自動" min="20" max="100"><span class="u">歳</span></div><span class="hint">空欄なら購入10年後（すでにその年齢を過ぎていれば現在の年齢）で試算</span></div>
+        </div>
+        <div class="rr-sellsim"></div>
+
         <div class="rr-quote"></div>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
       div.querySelector('.re-exit').addEventListener('change', recompute);
       div.querySelector('.re-owner').addEventListener('change', recompute);
       div.querySelector('.re-danshin').addEventListener('change', recompute);
+      /* 【湘建】売却シミュレーションの「この想定を売却条件に反映」。
+         結果ボックスは recompute のたびに描き直されるため、行への委譲で拾う */
+      div.addEventListener('click', (e)=>{
+        const b = e.target.closest('.rr-apply-sim'); if(!b) return;
+        div.querySelector('.re-exit').value = 'sell';
+        div.querySelector('.re-sellage').value = b.dataset.age;
+        div.querySelector('.re-sellprice').value = b.dataset.price;
+        recompute();
+      });
       REP.appendChild(div);
       if(typeof applyHousehold==='function') applyHousehold();   // 単身のときは名義の「妻」を隠す
       return div;
@@ -4383,7 +4429,10 @@
         sellAge:  Math.round(rfv(r,'.re-sellage',65)),
         sellPrice:rfv(r,'.re-sellprice',0),
         rateUpAfter: Math.round(rfv(r,'.re-rateupafter',0)),
-        rateUpTo: rfv(r,'.re-rateupto',0)
+        rateUpTo: rfv(r,'.re-rateupto',0),
+        mktPrice: rfv(r,'.re-mkt-price',0),   /* 【湘建】売却シミュレーション（周辺相場・未入力=0） */
+        mktRent:  rfv(r,'.re-mkt-rent',0),
+        simAge:   Math.round(rfv(r,'.re-simage',0))
       };
     }
     /* 計算に反映する物件だけを返す（「購入しない」を選ぶと空になる） */
@@ -4580,6 +4629,9 @@
     /* ---------- 物件カードの下に出る「その物件のいまの数字」 ---------- */
     function updatePropertyQuotes(){
       const infl = num('inflation',2)/100;
+      /* 【湘建】雑費：チェックしたときだけ金額欄を出す（zeh-fields と同じ流儀） */
+      const miscAmt = document.querySelector('#re-misc-wrap .re-misc-amt');
+      if(miscAmt) miscAmt.classList.toggle('hidden', !($('re-misc-on') && $('re-misc-on').checked));
       document.querySelectorAll('.re-owner').forEach(sel=>{     // 名義の選択肢にお名前を反映
         const oh = sel.querySelector('option[value="h"]'), ow = sel.querySelector('option[value="w"]');
         if(oh) oh.textContent = hNameH()+'の名義';
@@ -4588,7 +4640,7 @@
       allPropertyRows().forEach((row,i)=>{
         const box = row.querySelector('.rr-quote'); if(!box) return;
         const pr = readPropertyRow(row, i);
-        if(pr.price<=0){ box.innerHTML = '<i class="fa-solid fa-circle-info"></i> 物件価格を入力すると、この物件の利回り・毎月の収支・節税額の目安を表示します。'; return; }
+        if(pr.price<=0){ box.innerHTML = '<i class="fa-solid fa-circle-info"></i> 物件価格を入力すると、この物件の利回り・毎月の収支・節税額の目安を表示します。'; const ss = row.querySelector('.rr-sellsim'); if(ss) ss.innerHTML = ''; return; }
         const st = { bal:0, remM:0, depAccum:0, done:false };
         const y  = propYear(pr, st, pr.buyAge, infl);                  // 1年目
         const grossY = pr.price>0 ? (pr.rent*12/pr.price*100) : 0;     // 表面利回り
@@ -4610,7 +4662,54 @@
           + (!pr.danshin ? `<br><span class="rr-q-neg">※ この物件のローンは<b>団信なし</b>の設定です。${isSingle() ? '万一のとき残債は相続財産の債務として残ります（単身のため必要保障額の計算には出ません）' : '万一のとき残債が残る前提で「万が一（保障）」の診断に反映します'}。</span>` : '')
           + (pr.exit==='sell10' ? `<br>出口：<b>購入10年後（${esc(hNameH())}${pr.buyAge+10}歳）に売却</b>する設定です（長期譲渡・税率約20.315%）。` : '')
           + ((sellAgeOf(pr)!=null && sellAgeOf(pr) < num('h-age',35)) ? `<br><span class="rr-q-neg">※ <b>売却年齢（${sellAgeOf(pr)}歳）が現在の年齢より前</b>のため、この物件は売却済み＝試算に乗りません。購入時の年齢か保有方針をご確認ください。</span>` : '');
+        renderSellSim(row, pr, infl);   // 【湘建】売却シミュレーション（周辺相場から）
       });
+    }
+
+    /* 【湘建】売却シミュレーション（2026-08-21 ユーザー指示）
+       営業の現場で「周辺ではこのくらいの価格・家賃で出ています」という相場観を見せながら、
+       その価格で売れたと仮定した場合の手取りを試算する。計算式は本体の売却（propYear）と同じ：
+       残債＝元利均等を毎年進めた年末残高／取得費＝土地＋建物の未償却残高／
+       譲渡税＝所有5年超20.315%・5年以下39.63%／諸費用＝売却価格の4%目安。
+       あくまで想定であり査定ではない旨を必ず添える（保証・断定の表現は使わない） */
+    function renderSellSim(row, pr, infl){
+      const box = row.querySelector('.rr-sellsim'); if(!box) return;
+      if(pr.price<=0){ box.innerHTML=''; return; }
+      const hAge0 = num('h-age',35);
+      const simAge = pr.simAge>0 ? pr.simAge : Math.max(pr.buyAge+10, hAge0);
+      if(simAge < pr.buyAge){
+        box.innerHTML = `<i class="fa-solid fa-magnifying-glass-chart"></i> <b>売却シミュレーション</b><br><span class="rr-q-neg">試算する売却時期（${simAge}歳）が購入時の年齢（${pr.buyAge}歳）より前のため試算できません。</span>`;
+        return;
+      }
+      const prHold = Object.assign({}, pr, { exit:'hold' });   // 出口設定に関わらず「その年まで持っていたら」で回す
+      const st = { bal:0, remM:0, depAccum:0, done:false };
+      let y = null;
+      for(let a=pr.buyAge; a<=simAge; a++) y = propYear(prHold, st, a, infl);
+      const auto  = y.value;                                   // 下落率からの自動計算値（土地の価値を下限に）
+      const gross = pr.mktPrice>0 ? pr.mktPrice : auto;
+      const feeSell = gross*0.04;
+      const bldg  = pr.price*pr.bldgPct/100;
+      const book  = pr.price*(1 - pr.bldgPct/100) + Math.max(bldg - st.depAccum, 0);
+      const gain  = gross - book - feeSell;
+      const hold  = simAge - pr.buyAge;
+      const longTerm = hold > 5;
+      const tax   = gain>0 ? gain*(longTerm ? 0.20315 : 0.3963) : 0;
+      const net   = gross - feeSell - y.bal - tax;
+      const own0  = pr.down + pr.cost;
+      box.innerHTML = `<i class="fa-solid fa-magnifying-glass-chart"></i> <b>${simAge}歳（購入${hold}年後）に売却した場合の試算</b>`
+        + `<br>想定売却価格 <b>${fmt(gross)}万円</b>`
+        + (pr.mktPrice>0
+            ? `（周辺の売出相場の入力値。下落率からの自動計算では ${fmt(auto)}万円）`
+            : `（下落率からの自動計算。周辺の売出相場を入れると、その価格で試算し直します）`)
+        + `<br>売却価格 ${fmt(gross)}万 − 諸費用（4%目安） ${fmt(feeSell)}万 − ローン残債 ${fmt(y.bal)}万 − 譲渡税 ${fmt(tax)}万`
+        + `<br>→ 手取りの想定 <b class="${net<0?'rr-q-neg':''}">約${net<0?'−':''}${fmt(Math.abs(net))}万円</b>（購入時の自己資金 ${fmt(own0)}万円）`
+        + (gain<=0 ? `<br><span class="hint">※ 取得費・諸費用を下回るため譲渡税は0円で計算しています（売却損）。</span>` : '')
+        + (!longTerm ? `<br><span class="rr-q-neg">※ 所有5年以下のため<b>短期譲渡（税率約39.63%）</b>で計算しています。長期譲渡（約20.315%）になるかは<b>譲渡した年の1月1日時点</b>の所有期間で判定されます（本ツールは購入からの経過年数で概算しています）。</span>` : '')
+        + (pr.mktRent>0 ? `<br>周辺の家賃相場 月${fmt2(pr.mktRent)}万円 → 想定売却価格に対する表面利回り <b>${Math.round(pr.mktRent*12/gross*10000)/100}%</b>（この物件の設定家賃は 月${fmt2(pr.rent)}万円）` : '')
+        + (simAge < hAge0 ? `<br><span class="rr-q-neg">※ 試算した売却時期が現在の年齢（${hAge0}歳）より前です。プランに反映する場合は現在の年齢以降の時期にしてください。</span>`
+           : (simAge > num('end-age',100) ? `<br><span class="rr-q-neg">※ 試算した売却時期がプランの想定年齢（${num('end-age',100)}歳まで）を超えています。反映しても売却がプランに乗らないため、想定年齢までの時期でご指定ください。</span>`
+                          : `<br><button type="button" class="btn btn-ghost btn-sm rr-apply-sim" style="margin-top:6px;" data-age="${simAge}" data-price="${Math.round(gross)}">この想定をこの物件の売却条件に反映</button>`))
+        + `<br><span class="hint">※ あくまでシミュレーションです。実際の売却価格・家賃は市場動向・階数・室内の状態・空室の有無などで変わり、査定や将来の金額をお約束するものではありません。保有中の毎月の収支・節税額はここには含みません（プラン全体の試算に反映されています）。</span>`;
     }
 
     /* ---------- 比較期間（35年 ／ 終了年齢まで ／ 年数を指定）---------- */
@@ -4698,6 +4797,7 @@
         + (danshin>0 ? `借入 ${fmt(danshin)}万円には<b>団信</b>が付くため、万一のときは無借金の物件と家賃がご家族に残ります。` : '')
         + (noDanshinDebt>0 ? `<b>団信なしの借入 ${fmt(noDanshinDebt)}万円</b>は万一のときも残るため、生命保険での備えとセットでご検討ください${isSingle() ? '（単身の場合、この残債は相続財産の債務として相続人に関わります）' : '（「万が一（保障）」の画面に反映済み）'}。` : '')
         + (paidRow ? `ローン完済は<b>${paidRow.hAge}歳</b>、以後の家賃 年 約${fmt(paidRow.reRent - paidRow.reOpex)}万円がそのまま収入になります。` : '')
+        + (($('re-misc-on') && $('re-misc-on').checked && num('re-misc',0)>0) ? `雑費 年${fmt(num('re-misc',0))}万円の経費計上（損益通算）を含めた試算です。` : '')
         + `</div>`;
 
       // 内訳バー
@@ -6243,6 +6343,19 @@
           if(y.bought) eventList.push({label:pr.name+'を購入', type:'family'});
           if(y.sold)   eventList.push({label:'＋'+pr.name+'を売却', type:'income'});
         }
+        /* 【湘建】雑費の経費計上（2026-08-21 ユーザー指示）。物件を保有している名義の不動産所得に
+           計上して損益通算に反映する（夫・妻の両名義が保有中なら等分）。土地利息と違い全額が通算の対象。
+           「生活費にすでに入っている支出（交通費・通信費など）の按分」という前提なので、
+           現金の支出には二重計上しない（入力欄の説明文と対）。1戸も保有していない年は計上しない */
+        let reMisc = 0;
+        if(props.length && $('re-misc-on') && $('re-misc-on').checked){
+          const amt = Math.max(num('re-misc',0), 0);   // 空欄＝計上なし（比較カードの注記と同じ判定にそろえる）
+          const owners = ['h','w'].filter(o=> props.some((pr,pi)=> reDetail[pi] && reDetail[pi].own && ((pr.owner==='w'&&!single)?'w':'h')===o));
+          if(amt>0 && owners.length){
+            reMisc = amt;
+            owners.forEach(o=>{ reIncOwner[o] -= amt/owners.length; });
+          }
+        }
         // 損益通算による所得税・住民税の増減（＝節税額）。名義ごとに、その年の給与で計算する
         const reTaxSave = props.length ? reTaxEffect(reIncOwner, reLandOwner, {
           h: { working: hAge < hRetire, gross: hIncome0*Math.pow(1+hRaise, t) },
@@ -6341,7 +6454,7 @@
           principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
           investGainCum,   // 運用益の生涯累計（その年までの合計）
           // 【ワンルームフック】ワンルーム投資
-          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest,
+          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest, reMisc,
           reIncome: reIncOwner.h + reIncOwner.w,
           reDetail,
           netAll: net + reNet,              // 不動産を含む総資産
@@ -6702,13 +6815,18 @@
             ins[mm.key] = (simple || cAge==null) ? 0 : insCoverAtAge(insList, mm.key, cAge);
           }
         });
-        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
+        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), netAll:Math.round(r.netAll!=null ? r.netAll : r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
       });
       // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
       // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
       out.gainTotal = rows.length ? Math.round(rows[rows.length-1].investGainCum||0) : 0;
       return out;
     }
+    /* 【湘建】不動産を含む総資産。KPIカードの本体（netAll表示）と比較の数字をそろえる。
+       物件を65歳以降も持ち続けるプランで、KPIは純資産込み・比較表は金融資産のみ、という
+       食い違いが出ていた（保有中の物件の評価額−残債のぶん比較が小さく出る）。
+       古い保存データの sum には netAll が無いため net に落とす */
+    const sumNetAll = (x)=> (x==null) ? 0 : (x.netAll!=null ? x.netAll : x.net);
     function sumAt(sum, age){
       if(!sum || !sum.length) return null;
       return sum.find(x=> x.hAge===age) || sum[sum.length-1];
@@ -6756,10 +6874,11 @@
       // 「奥様の働き方を変える予定」がONのときは、現状比のマイナス（減った額）を表示しない（プラスは表示）。単身世帯では無効
       const hideNegDiff = !isSingle() && $('wife-worklife') && $('wife-worklife').checked;
       const put = (id, d)=>{ const el=$(id); if(!el) return; if(hideNegDiff && d < 0){ el.innerHTML=''; return; } el.innerHTML = diffHTML(d) ? '現状比 '+diffHTML(d) : ''; };
-      put('kpi-diff-1',  cur1.net - b1.net);
-      put('kpi-diff-r1', cur1.net/cur1.inflF - b1.net/b1.inflF);
-      put('kpi-diff-2',  cur2.net - b2.net);
-      put('kpi-diff-r2', cur2.net/cur2.inflF - b2.net/b2.inflF);
+      // KPI本体は netAll（不動産を含む）を表示しているので、差も同じ物差しで出す
+      put('kpi-diff-1',  cur1.netAll - sumNetAll(b1));
+      put('kpi-diff-r1', cur1.netAll/cur1.inflF - sumNetAll(b1)/b1.inflF);
+      put('kpi-diff-2',  cur2.netAll - sumNetAll(b2));
+      put('kpi-diff-r2', cur2.netAll/cur2.inflF - sumNetAll(b2)/b2.inflF);
     }
 
     // 入力欄：将来プランで現状から変えた数字の横に、差分を小さく表示
@@ -6820,7 +6939,7 @@
         return;
       }
       const gs = sumStats(g), ms = sumStats(m);
-      const g65 = sumAt(g,65).net, m65 = sumAt(m,65).net;
+      const g65 = sumNetAll(sumAt(g,65)), m65 = sumNetAll(sumAt(m,65));
       const dep = (s)=> s.dep ? `<span class="diff-minus">${s.dep.hAge}歳で不足</span>` : `<span class="diff-plus">なし</span>`;
       const depDiff = gs.dep && !ms.dep ? '<span class="diff-plus">解消！</span>'
                     : (!gs.dep && ms.dep ? '<span class="diff-minus">発生</span>' : '—');
@@ -6830,9 +6949,11 @@
       const dcell = (d)=> (hideNeg && Math.round(d)<0) ? '±0' : diffHTML(d,'');
       el.innerHTML = `<div class="table-scroll"><table class="cmp-table"><thead><tr><th>（万円）</th><th>現状</th><th>将来</th><th>差</th></tr></thead><tbody>
         ${row('65歳時点の総資産', fmt(g65), fmt(m65), dcell(m65-g65))}
-        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(gs.end.net), fmt(ms.end.net), dcell(ms.end.net-gs.end.net))}
+        ${row(`最終（${ms.end.hAge}歳）の総資産`, fmt(sumNetAll(gs.end)), fmt(sumNetAll(ms.end)), dcell(sumNetAll(ms.end)-sumNetAll(gs.end)))}
         ${row('資金ショート', dep(gs), dep(ms), depDiff)}
-      </tbody></table></div>`;
+      </tbody></table></div>`
+        + ((sumNetAll(sumAt(g,65))!==sumAt(g,65).net || sumNetAll(sumAt(m,65))!==sumAt(m,65).net || sumNetAll(gs.end)!==gs.end.net || sumNetAll(ms.end)!==ms.end.net)
+            ? `<span class="hint">※ 総資産には保有中の不動産の純資産（評価額 − ローン残債）を含みます。資金ショートは現預金＋運用資産で判定しています。</span>` : '');
     }
 
     let compareChart2 = null;
@@ -6845,7 +6966,7 @@
       const ages = [];
       for(let a = Math.ceil(first/5)*5; a <= last; a += 5) ages.push(a);
       if(!ages.length || ages[0] !== first) ages.unshift(first);
-      const pick = (sum)=> ages.map(a=>{ const v = sum && sum.find(x=> x.hAge===a); return v ? v.net : null; });
+      const pick = (sum)=> ages.map(a=>{ const v = sum && sum.find(x=> x.hAge===a); return v ? sumNetAll(v) : null; });   // 総資産＝不動産の純資産を含む（KPI・比較表と同じ物差し）
       const datasets = [{ label:'現状プラン', data:pick(g), backgroundColor:'#b9c9d8', borderRadius:6, maxBarThickness:26 }];
       if(m) datasets.push({ label:'将来プラン', data:pick(m), backgroundColor:'#3f9d7a', borderRadius:6, maxBarThickness:26 });
       const data = { labels: ages.map(a=> a+'歳'), datasets };
@@ -7232,8 +7353,101 @@
       s.reMode = mirai ? 'on' : 'off';
       return s;
     }
-    function showSample(){
-      const g = sampleState('genjo'), m = sampleState('mirai');
+    /* ============================================================
+       追加サンプル（2026-08-21 ユーザー指示）：営業でよく会う3つの家族構成
+       ・35歳ご夫婦 共働き（600万＋400万）・お子さま6歳/3歳
+       ・35歳 独身（800万）……10年後売却の出口を最初から選んだ形
+       ・40歳（1,500万）……2戸購入・2戸目は団信なし融資・10年後売却・雑費の計上例を兼ねる
+       方針は田中家と同じ：現状＝買わない／将来＝買う。それ以外の入力は現状・将来で
+       まったく同じにして、「買うか買わないか」だけの比較が最初から成り立つようにする。
+       生活費は新しい既定の「まとめて入力」。金額は年収帯からの想定で、商談でその場で直す前提。
+       結果の数字（資金ショートの年齢など）はここに書かない（前提を変えると必ず陳腐化する）
+       ============================================================ */
+    function extraSample(kind, cfg){
+      if(!INITIAL_STATE) return null;
+      const mirai = (kind === 'mirai');
+      const s = JSON.parse(JSON.stringify(INITIAL_STATE));
+      Object.assign(s.fields, cfg.fields);
+      if(mirai && cfg.miraiFields) Object.assign(s.fields, cfg.miraiFields);
+      s.expMode = 'simple';        // 生活費は「まとめて入力」（e-bulk）
+      s.hokenMode = 'simple';
+      s.household = cfg.household || 'couple';
+      s.house = 'rent';
+      s.children = JSON.parse(JSON.stringify(cfg.children || []));
+      s.events = []; s.incomeEvents = []; s.expenses = [];
+      s.investments = JSON.parse(JSON.stringify(cfg.investments || []));
+      s.properties = JSON.parse(JSON.stringify(cfg.properties || []));   // 足りない項目は propertyRow の既定値が入る
+      s.reMode = mirai ? 'on' : 'off';
+      return s;
+    }
+    const EXTRA_SAMPLES = {
+      dual: {
+        label:'佐藤様ご一家（35歳ご夫婦 共働き・お子さま2人）',
+        build(kind){ return extraSample(kind, {
+          household:'couple',
+          fields:{
+            'h-sei':'佐藤','h-name':'健太','h-age':'35','h-income':'600','h-raise':'1.5','h-retire':'65','h-bonus':'1200',
+            'w-sei':'佐藤','w-name':'美咲','w-age':'35','w-income':'400','w-raise':'1.0','w-retire':'65','w-bonus':'800',
+            'end-age':'100','inflation':'2.0','rent':'13',
+            'cash-on':true,'cash':'700','pension-age':'65','pension-monthly':'26',
+            'e-bulk':'29','e-retire-living':'24',
+            'ins-total-h':'3000','ins-total-w':'1000'
+          },
+          children:[
+            { name:'はると', sei:'佐藤', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'home', gender:'boy' },
+            { name:'めい',   sei:'佐藤', age:'3', k12:'public', highEd:'shiritsu_b', lodging:'home', gender:'girl' }
+          ],
+          investments:[ { type:'nisa', name:'つみたてNISA', lump:'100', monthly:'3', ret:'5', start:'35', end:'65', after:'use', on:true } ],
+          /* 1戸・団信あり・65歳で売却。共働きで一人あたりの税率が高くないぶん、
+             還付の大きさより団信・私的年金づくりの話が軸になる構成 */
+          properties:[ { owner:'h', buyAge:35, exit:'sell', sellAge:65 } ]
+        }); }
+      },
+      single: {
+        label:'鈴木様（35歳・独身・年収800万円）',
+        build(kind){ return extraSample(kind, {
+          household:'single',
+          fields:{
+            'h-sei':'鈴木','h-name':'翔太','h-age':'35','h-income':'800','h-raise':'1.5','h-retire':'65','h-bonus':'1500',
+            'end-age':'100','inflation':'2.0','rent':'10',
+            'cash-on':true,'cash':'800','pension-age':'65','pension-monthly':'18',
+            'e-bulk':'21','e-retire-living':'18',
+            'ins-total-h':'0','ins-total-w':'0'
+          },
+          investments:[ { type:'nisa', name:'つみたてNISA', lump:'200', monthly:'5', ret:'5', start:'35', end:'65', after:'use', on:true } ],
+          /* 10年後に売却する出口（湘建でよくある形）を最初から選んだ1戸 */
+          properties:[ { owner:'h', buyAge:35, exit:'sell10' } ]
+        }); }
+      },
+      rich: {
+        label:'伊藤様ご一家（40歳・年収1,500万円・2戸プラン）',
+        build(kind){ return extraSample(kind, {
+          household:'couple',
+          fields:{
+            'h-sei':'伊藤','h-name':'大輔','h-age':'40','h-income':'1500','h-raise':'1.0','h-retire':'65','h-bonus':'3000',
+            'w-sei':'伊藤','w-name':'由美','w-age':'38','w-income':'0','w-raise':'0','w-retire':'65','w-bonus':'0',
+            'end-age':'100','inflation':'2.0','rent':'18',
+            'cash-on':true,'cash':'2500','pension-age':'65','pension-monthly':'27',
+            'e-bulk':'38','e-retire-living':'28',
+            'ins-total-h':'5000','ins-total-w':'0'
+          },
+          children:[ { name:'颯', sei:'伊藤', age:'10', k12:'public', highEd:'shiritsu_b', lodging:'home', gender:'boy' } ],
+          investments:[ { type:'nisa', name:'つみたてNISA', lump:'500', monthly:'10', ret:'5', start:'40', end:'65', after:'use', on:true } ],
+          /* 1戸目＝持ち続けて完済後の家賃を私的年金に／2戸目＝2年後に団信なし融資で買い増し・10年後に売却。
+             高年収で税率が高いぶん損益通算の効果が出やすい層。雑費の経費計上（将来プランでON）の例も兼ねる */
+          properties:[
+            { owner:'h', buyAge:40, exit:'hold', danshin:true },
+            { owner:'h', buyAge:42, exit:'sell10', danshin:false }
+          ],
+          miraiFields:{ 're-misc-on':true, 're-misc':'40' }
+        }); }
+      }
+    };
+    function sampleStateFor(key, kind){
+      return (key && key!=='tanaka' && EXTRA_SAMPLES[key]) ? EXTRA_SAMPLES[key].build(kind) : sampleState(kind);
+    }
+    function showSample(key){
+      const g = sampleStateFor(key,'genjo'), m = sampleStateFor(key,'mirai');
       if(!g || !m){ alert('サンプルを用意できませんでした。ページを開き直してお試しください。'); return false; }
       applyPlans({ plans:{ active:'genjo', genjo:{ state:g, sum:null }, mirai:{ state:m, sum:null } } });
       return true;
@@ -12685,6 +12899,10 @@
           const q = readPropertyRow(r, i);
           q.name = r.querySelector('.re-name').value;   // 空欄はそのまま保存（プレースホルダを維持）
           q.on = r.querySelector('.re-on').checked;
+          // 売却シミュレーションの欄は使ったときだけ保存する（共有リンクを無駄に伸ばさない）
+          if(!q.mktPrice) delete q.mktPrice;
+          if(!q.mktRent)  delete q.mktRent;
+          if(!q.simAge)   delete q.simAge;
           return q;
         }),
         viewHorizon: (viewHorizon==='custom') ? ('c'+viewHorizonYears()) : viewHorizon,   // 「金融資産の推移」の表示期間（比較期間とは別。年数指定は 'c20' の形で保存）
@@ -12729,6 +12947,10 @@
       if($('ins-total-w')) $('ins-total-w').value = 0;
       if($('dansin-extra')) $('dansin-extra').value = 0;   // 団信上乗せ金利も同様（この欄がない旧保存で前のお客様の値が残らないように）
       ['dansin-type-h','dansin-type-w'].forEach(id=>{ const el=$(id); if(el) el.value='general'; });   // 団信タイプも同様にリセット
+      // 【湘建】雑費（経費計上）も同様にリセット。この欄が無い旧保存データを読み込んだとき、
+      // 直前のお客様・プランのチェックが残って年40万円の損益通算が黙って適用されるのを防ぐ
+      if($('re-misc-on')) $('re-misc-on').checked = false;
+      if($('re-misc')) $('re-misc').value = 40;
       // 生年月日も同様。localStorage の保存読込は fields の埋め戻しが無いため、
       // これが無いと前のお客様の生年月日が残り、年齢欄と食い違って「◯歳に更新」が出る
       ['h-b-y','h-b-m','h-b-d','w-b-y','w-b-m','w-b-d'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
@@ -13023,13 +13245,15 @@
     }
     function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
-    if($('sample-show')) $('sample-show').addEventListener('click', ()=>{
-      if(!confirm('画面の入力内容を、サンプル（田中太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
-      if(!showSample()) return;
+    document.querySelectorAll('.sample-box [data-sample]').forEach(btn=> btn.addEventListener('click', ()=>{
+      const key = btn.dataset.sample;
+      const label = ((key==='tanaka' || !EXTRA_SAMPLES[key]) ? SAMPLE_NAME : EXTRA_SAMPLES[key].label).replace('（サンプル）','');   // 文中の「サンプル（…）」と入れ子にしない
+      if(!confirm(`画面の入力内容を、サンプル（${label}）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。`)) return;
+      if(!showSample(key)) return;
       setCurrentSave(null);            // サンプルは「編集中の資料」にしない（上書き保存で潰さないため）
       saveModal.hidden = true;
       if(typeof switchView === 'function') switchView('input', 'family');
-    });
+    }));
     $('save-modal-close').addEventListener('click', ()=> saveModal.hidden=true);
     saveModal.addEventListener('click', (e)=>{ if(e.target===saveModal) saveModal.hidden=true; });
 

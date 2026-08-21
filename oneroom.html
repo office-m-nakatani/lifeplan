@@ -2,6 +2,10 @@
 <!--
   ============================================================================
   ワンルームマンション投資版 ライフプランシミュレーター
+  ・2026-08-21 株式会社湘建（横浜・投資用マンション販売/賃貸管理）向けの提案デモに再ブランド。
+    湘建固有の箇所は「【湘建】」でタグ付け（ヒーロー・配色・次の一手・予約フォーム・免責）。
+    ※ 会社の詳細情報（入居率・保証内容等の公表値）はネットワーク制限で未確認のため、
+      断定を要する数値は書かず「確認する段取り」の形にしてある。採用時に公式情報へ差し替えること。
   ・ベース＝一条工務店版（ichijo.html）。一条工務店に固有の部分だけを差し替え、
     それ以外（現状⇔将来の比較・団信・生命保険・介護・AI診断・チャット・共有・PDF）は
     すべてそのまま使っている。ichijo.html 側の改修はこちらにも手で反映する。
@@ -20,15 +24,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ワンルームマンション投資 ライフプラン試算｜節税額と将来資産を数字で見える化</title>
-  <meta name="description" content="ワンルームマンション投資を、お客様のライフプランにそのまま組み込んで試算。所得税・住民税の還付（損益通算）、家賃収入、団体信用生命保険、出口（売却）まで反映し、買った場合と買わなかった場合の将来資産を比較できます。" />
+  <title>SHOKEN マンション投資ライフプラン｜節税額と将来資産を数字で見える化</title>
+  <meta name="description" content="株式会社湘建様向け提案デモ。マンション投資をお客様のライフプランにそのまま組み込み、所得税・住民税の還付（損益通算）、家賃収入、団信、10年後売却・複数戸の買い増しまで反映して、買った場合と買わなかった場合の将来資産を比較できます。" />
 
   <!-- HPとしての体裁：ファビコン（ブラウザのタブに出るアイコン）・テーマ色・将来のアプリ追加にも対応 -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232f7cb5'/><rect x='19' y='14' width='26' height='38' rx='3' fill='%23ffd166'/><g fill='%232f7cb5'><rect x='23' y='19' width='6' height='6' rx='1'/><rect x='35' y='19' width='6' height='6' rx='1'/><rect x='23' y='30' width='6' height='6' rx='1'/><rect x='35' y='30' width='6' height='6' rx='1'/><rect x='28' y='41' width='8' height='11' rx='1'/></g></svg>" />
-  <meta name="theme-color" content="#2f7cb5" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231f3c68'/><rect x='19' y='14' width='26' height='38' rx='3' fill='%23d9b45b'/><g fill='%231f3c68'><rect x='23' y='19' width='6' height='6' rx='1'/><rect x='35' y='19' width='6' height='6' rx='1'/><rect x='23' y='30' width='6' height='6' rx='1'/><rect x='35' y='30' width='6' height='6' rx='1'/><rect x='28' y='41' width='8' height='11' rx='1'/></g></svg>" />
+  <meta name="theme-color" content="#1f3c68" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="ワンルーム投資" />
+  <meta name="apple-mobile-web-app-title" content="湘建ライフプラン" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Montserrat:wght@600;700&display=swap" rel="stylesheet" />
@@ -42,24 +46,25 @@
        カラーパレット（薄い青・薄い黄色を基調にした、見やすい配色）
        ============================================================ */
     :root{
-      /* ベース（薄い青・薄い黄色。一条版のグリーンから、②と同じ青基調に戻している） */
-      --bg:           #eef5fb;   /* 画面全体の背景（ごく薄い青） */
-      --bg-soft:      #f7fbfe;   /* やわらかい背景 */
+      /* 【湘建】ネイビー×ゴールド（変数名はベースと共通のまま値のみブランド寄せ＝可逆）
+         ※ 正式なブランドカラーはネットワーク制限で未確認。採用時にコーポレートガイドラインへ合わせて調整 */
+      --bg:           #eef2f8;   /* 画面全体の背景（ごく薄い青灰） */
+      --bg-soft:      #f6f8fc;   /* やわらかい背景 */
       --card:         #ffffff;   /* カード */
-      --ink:          #1f3047;   /* 基本テキスト（濃い紺＝読みやすさ重視） */
-      --ink-soft:     #5b6b7d;   /* 補助テキスト */
-      --line:         #dce8f2;   /* 罫線 */
+      --ink:          #1c2b40;   /* 基本テキスト（濃紺＝読みやすさ重視） */
+      --ink-soft:     #5a6a7d;   /* 補助テキスト */
+      --line:         #d8e1ec;   /* 罫線 */
 
-      /* 薄い青 */
-      --blue:         #4a9fd4;   /* アクセント青 */
-      --blue-deep:    #2f7cb5;   /* 濃いめの青（文字・強調・リンク） */
-      --blue-pale:    #e6f2fb;   /* 薄い青の面 */
-      --blue-pale2:   #d5e9f7;
+      /* ネイビー（旧 --blue 系。値のみブランド色に） */
+      --blue:         #2e5288;   /* アクセント（ネイビー） */
+      --blue-deep:    #1f3c68;   /* 濃いネイビー（文字・強調・リンク） */
+      --blue-pale:    #e8eef7;   /* 薄いネイビーの面 */
+      --blue-pale2:   #d3deee;
 
-      /* 薄い黄色 */
-      --yellow:       #f6c84c;   /* アクセント黄 */
-      --yellow-soft:  #fbe08a;
-      --yellow-pale:  #fdf5d6;   /* 薄い黄色の面 */
+      /* ゴールド（旧 --yellow 系） */
+      --yellow:       #cfa14e;   /* アクセント（ゴールド） */
+      --yellow-soft:  #e6c988;
+      --yellow-pale:  #f8f1de;   /* 薄いゴールドの面 */
 
       /* ステータス */
       --good:         #4cae8a;   /* 安心（緑） */
@@ -71,8 +76,8 @@
 
       --radius:       18px;
       --radius-sm:    12px;
-      --shadow:       0 8px 24px rgba(47,124,181,.10);
-      --shadow-soft:  0 2px 10px rgba(47,124,181,.07);
+      --shadow:       0 8px 24px rgba(31,60,104,.10);
+      --shadow-soft:  0 2px 10px rgba(31,60,104,.07);
     }
 
     *{ box-sizing:border-box; margin:0; padding:0; }
@@ -1350,7 +1355,7 @@
     }
 
     /* 差額：プラス＝青、マイナス＝赤（小さな文字） */
-    .diff-plus{ color:#2f7cb5; font-weight:800; }
+    .diff-plus{ color:var(--blue-deep); font-weight:800; }
     .diff-minus{ color:#d05a6e; font-weight:800; }
     .kpi-diff{ min-height:1.05em; font-size:.8rem; margin-top:2px; }
     .fdiff{ display:block; margin-top:3px; font-size:.72rem; font-weight:700; white-space:nowrap; }
@@ -1368,7 +1373,7 @@
     #ins-total-box .lt-value{ display:flex; flex-wrap:wrap; gap:4px 20px; }
     #ins-total-box .ins-sum-item{ white-space:nowrap; }
     #ins-total-box .lt-diff{ white-space:nowrap; }
-    #ins-total-box .diff-plus{ color:#1f5f92; }
+    #ins-total-box .diff-plus{ color:#1f3c68; }
     #ins-total-box .diff-minus{ color:#b83c52; }
     #plan-effect{ margin-bottom:12px; }
     #compare-card2{ border:2px solid var(--blue-pale2); }
@@ -1377,6 +1382,9 @@
        【ワンルーム投資 専用スタイル ここから】
        ここはワンルーム版だけの見た目。他のライフプラン用に流用する場合はこのブロックごと削除/差し替え。
        ══════════════════════════════════════════════════════════════════ */
+    /* 【湘建】ヒーローのブランド帯 */
+    .hero-eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:.8rem; font-weight:800; letter-spacing:.12em; color:var(--blue-deep); background:#fff; border:1.5px solid var(--blue-pale2); border-radius:999px; padding:6px 14px; margin-bottom:12px; }
+    .hero-eyebrow i{ color:var(--yellow); }
     /* 物件カード（入力） */
     .row-item.re-row{ display:block; border:1.5px solid #e6d6a8; background:#fffdf5; }
     .rr-head{ display:flex; gap:8px; align-items:center; margin-bottom:12px; }
@@ -1410,7 +1418,7 @@
     .ic-row{ display:grid; grid-template-columns:130px 1fr auto; align-items:center; gap:10px; font-size:.86rem; }
     .ic-row .ic-rlabel{ font-weight:700; color:var(--ink); }
     .ic-row .ic-track{ position:relative; height:22px; background:#eef2f5; border-radius:6px; overflow:hidden; }
-    .ic-row .ic-fill{ position:absolute; left:0; top:0; height:100%; border-radius:6px; background:linear-gradient(90deg,#7dc0e8,#2f7cb5); }
+    .ic-row .ic-fill{ position:absolute; left:0; top:0; height:100%; border-radius:6px; background:linear-gradient(90deg,#8fabd6,#2e5288); }
     .ic-row .ic-amt{ font-weight:800; color:var(--blue-deep); white-space:nowrap; }
     .ic-total{ text-align:center; padding:14px; border-radius:12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2); margin-bottom:12px; }
     .ic-total .ict-num{ font-size:1.9rem; font-weight:800; color:var(--blue-deep); line-height:1.2; }
@@ -1582,8 +1590,9 @@
   <section class="hero">
     <div class="wrap hero-inner">
       <div class="hero-text">
+        <div class="hero-eyebrow"><i class="fa-solid fa-building"></i> SHOKEN｜株式会社湘建 オリジナル試算</div><!-- 【湘建】 -->
         <h1>払った<em>税金</em>を、<em>資産</em>に変える。</h1>
-        <p class="lead">ワンルームマンション投資を、お客様のライフプランにそのまま組み込んで試算します。まず「現状プラン」に今の家計を、「将来プラン」でワンルームを購入すると、<b>所得税・住民税の還付（損益通算）・家賃収入・団信・出口（売却）</b>までを反映した将来資産の差が、その場で青と赤の数字で見えます。 <span style="font-size:.76rem; color:var(--ink-soft);">（FP事務所・税理士事務所の独自試算）</span></p>
+        <p class="lead">マンション投資を、お客様のライフプランにそのまま組み込んで試算します。まず「現状プラン」に今の家計を、「将来プラン」で物件を購入すると、<b>所得税・住民税の還付（損益通算）・家賃収入・団信・10年後売却や2戸目3戸目の買い増し</b>までを反映した将来資産の差が、その場で青と赤の数字で見えます。 <span style="font-size:.76rem; color:var(--ink-soft);">（株式会社湘建様向け提案デモ・Office-M作成）</span></p>
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
@@ -1950,7 +1959,7 @@
 
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>家賃・空室・管理費・固定資産税・ローン利息・減価償却からその年の<strong>不動産所得</strong>を計算し、赤字なら給与と<strong>損益通算</strong>して所得税・住民税の還付額を自動で試算します。税率はお客様の年収（「ご家族の基本情報」で入力）から算出するので、<strong>年収が高い方ほど還付が大きく</strong>出ます。<br>※ 実際の還付は確定申告後（所得税は翌年3月ごろ、住民税は翌年度の天引き減）ですが、本ツールは分かりやすさを優先して<strong>同じ年に反映</strong>しています。退職後は損益通算する給与がなくなるため赤字による還付は見込まず、黒字には概算20％を課税しています。</span>
+                <span>家賃・空室・管理費・固定資産税・ローン利息・減価償却からその年の<strong>不動産所得</strong>を計算し、赤字なら給与と<strong>損益通算</strong>して所得税・住民税の還付額を自動で試算します。税率はお客様の年収（「ご家族の基本情報」で入力）から算出するので、<strong>年収が高い方ほど還付が大きく</strong>出ます。<br>※ 実際の還付は確定申告後（所得税は翌年3月ごろ、住民税は翌年度の天引き減）ですが、本ツールは分かりやすさを優先して<strong>同じ年に反映</strong>しています。退職後は損益通算する給与がなくなるため赤字による還付は見込まず、黒字には概算20％を課税しています。<br><b>2戸目・3戸目の買い増し</b>は「物件を追加」で前の物件の条件をコピーして試算できます（還付・団信は名義ごとに自動で合算）。</span>
               </div>
               <div class="note" style="background:var(--bad-pale);color:#8c4b4b;">
                 <i class="fa-solid fa-triangle-exclamation" style="color:var(--bad);"></i>
@@ -2004,7 +2013,7 @@
                 <div class="field"><label>服（被服）</label><div class="input-unit"><input type="number" id="e-cloth" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>雑費</label><div class="input-unit"><input type="number" id="e-misc" value="0" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">どの項目にも入らない細かな支出</span></div>
               </div>
-              <div class="subgroup-title sgt-plain"><span class="tag" style="background:#e6f2fb;color:#2f7cb5;">光</span> 水道・光熱・通信</div>
+              <div class="subgroup-title sgt-plain"><span class="tag" style="background:#e8eef7;color:#1f3c68;">光</span> 水道・光熱・通信</div>
               <div class="grid3">
                 <div class="field"><label>電気</label><div class="input-unit"><input type="number" id="e-elec" value="1.2" min="0" step="0.1"><span class="u">万円</span></div></div>
                 <div class="field"><label>ガス</label><div class="input-unit"><input type="number" id="e-gas" value="0.8" min="0" step="0.1"><span class="u">万円</span></div></div>
@@ -2986,8 +2995,11 @@
               <option>NISA・iDeCoなどの資産運用</option>
               <option>相続・贈与</option>
               <option>住宅・住宅ローン</option>
+              <option>湘建の無料セミナー・個別相談について</option><!-- 【湘建】 -->
+              <option>物件のご紹介（横浜・都内の区分マンション）</option><!-- 【湘建】 -->
               <option>ワンルームマンション投資（節税）</option><!-- 【ワンルームフック】 -->
-              <option>不動産投資の物件・シミュレーションの相談</option><!-- 【ワンルームフック】 -->
+              <option>10年後売却・買い増し（2戸目以降）の相談</option><!-- 【湘建】 -->
+              <option>賃貸管理・アフターサポートの内容確認</option><!-- 【湘建】 -->
               <option>団信と生命保険の整理</option><!-- 【ワンルームフック】 -->
               <option>教育資金</option>
               <option>老後資金</option>
@@ -2999,14 +3011,14 @@
           <div class="field"><label>ご質問・メッセージ（任意）</label><textarea id="rv-msg" rows="3" placeholder="気になることをご自由にご記入ください"></textarea></div>
           <div class="rv-privacy">
             <b><i class="fa-solid fa-shield-halved"></i> ご入力いただく個人情報の取り扱い</b>
-            <p><b>利用目的</b>：無料相談のご予約受付・日程調整のご連絡と、ご相談内容に応じたご案内（保険・資産運用・相続・住宅資金など）のために利用します。ご相談内容によっては、具体的な保険商品のご案内を行う場合があります。</p>
+            <p><b>利用目的</b>：無料相談のご予約受付・日程調整のご連絡と、ご相談内容に応じたご案内（マンション投資・セミナー・物件・賃貸管理に関するお問い合わせへの対応、保険・資産運用・相続・住宅資金など）のために利用します。ご相談内容によっては、具体的な保険商品のご案内を行う場合があります。</p>
             <p>マイナンバー・口座番号・クレジットカード番号などは<b>ご記入にならないでください</b>。</p>
             <details>
               <summary>取得する情報・送信方法・第三者提供・保管について</summary>
               <ul>
                 <li><b>取得する情報</b>：この画面でご記入いただくお名前・ご連絡先・ご相談内容・ご希望日時・メッセージのみです。シミュレーターに入力された金額などのデータは含みません。</li>
                 <li><b>送信方法</b>：お使いのメールソフトが開き、Office-M（<b>y.nakatani@office-m-tax.com</b>）宛のメールとして送信されます。この画面から外部のサーバーへ自動送信されることはありません。</li>
-                <li><b>第三者提供</b>：法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。</li>
+                <li><b>第三者提供</b>：法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。<!-- 【湘建】採用時：セミナー申込・物件紹介を湘建へ取り次ぐ運用にする場合は「ご同意のうえで株式会社湘建へ提供する場合があります」へ差し替えること（現在のデモ段階ではOffice-Mで完結） --></li>
                 <li><b>保管・訂正・削除</b>：ご相談対応に必要な期間のみ保管します。内容の確認・訂正・削除をご希望の場合は上記メールアドレスへご連絡ください。</li>
               </ul>
             </details>
@@ -3176,7 +3188,7 @@
           <li><b>制度・知識の最終更新：2026年8月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
-      <p style="margin-bottom:6px;"><b>本サイトは、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した試算ツールです。</b>特定の不動産会社・物件の販売者ではなく、<b>宅地建物取引業者ではありません</b>（物件の売買の媒介・代理は行いません）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<!-- 【ワンルームフック】運営主体・利益相反の表示 --><br><span style="font-size:.86em; opacity:.85;">当事務所は税理士事務所を母体とするFP事務所です。税務の個別のご相談・税務代理は、連携する税理士がお受けします（税理士業務は税理士が行います）。</span></p>
+      <p style="margin-bottom:6px;"><b>本ツールは、株式会社湘建様向けの提案用デモとして、Office-M（保険代理店業務を行うFP事務所・生命保険募集人）が作成した試算ツールです。</b>現時点で株式会社湘建の公式サービスとして提供されているものではありません（採用時には社名表示・セミナー/管理サービス等の記載・ご予約の宛先（連絡先）を同社の正式な情報に差し替えます）。Office-Mは宅地建物取引業者ではなく、物件の売買の媒介・代理は行いません。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<!-- 【湘建】運営主体・利益相反の表示 --><br><span style="font-size:.86em; opacity:.85;">当事務所は税理士事務所を母体とするFP事務所です。税務の個別のご相談・税務代理は、連携する税理士がお受けします（税理士業務は税理士が行います）。</span></p>
       <p class="no-print hidden" id="cust-advisor-wrap" style="margin-bottom:6px;"><button type="button" id="cust-advisor" class="cust-advisor-link">（担当者の方へ）このリンクを担当者として開く</button></p>
       <p>&copy; 2026 ライフプラン シミュレーター</p>
     </div>
@@ -4253,6 +4265,7 @@
         cost:       o.cost!=null ? o.cost : 80,
         rate:       o.rate!=null ? o.rate : 1.9,
         term:       o.term!=null ? o.term : 35,
+        danshin:    o.danshin!==false,        // 【湘建】団信あり/なし（2戸目以降は未加入の融資もある）
         rent:       o.rent!=null ? o.rent : 8.5,
         rentDown:   o.rentDown!=null ? o.rentDown : 0.5,
         vacancy:    o.vacancy!=null ? o.vacancy : 5,
@@ -4291,6 +4304,13 @@
           <div class="field"><label>購入時の諸費用</label><div class="input-unit"><input type="number" class="re-cost" value="${v.cost}" min="0" step="10"><span class="u">万円</span></div><span class="hint">登記・不動産取得税・融資事務手数料など（初年度の経費）</span></div>
           <div class="field"><label>借入金利</label><div class="input-unit"><input type="number" class="re-rate" value="${v.rate}" min="0" max="10" step="0.05"><span class="u">％</span></div></div>
           <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" class="re-term" value="${v.term}" min="1" max="50"><span class="u">年</span></div></div>
+          <div class="field"><label>団体信用生命保険（団信）</label>
+            <select class="re-danshin">
+              <option value="on"${v.danshin?' selected':''}>団信あり</option>
+              <option value="off"${v.danshin?'':' selected'}>団信なし</option>
+            </select>
+            <span class="hint">2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあります。「なし」にすると、万一の診断で残債が残る前提になります</span>
+          </div>
         </div>
 
         <div class="rr-sub"><i class="fa-solid fa-sack-dollar"></i> 家賃と運営コスト</div>
@@ -4315,9 +4335,10 @@
           <div class="field"><label>保有方針</label>
             <select class="re-exit">
               <option value="hold"${sel(v.exit,'hold')}>持ち続ける</option>
-              <option value="sell"${sel(v.exit,'sell')}>売却する</option>
+              <option value="sell10"${sel(v.exit,'sell10')}>購入10年後に売却する</option>
+              <option value="sell"${sel(v.exit,'sell')}>指定の年齢で売却する</option>
             </select>
-            <span class="hint">「持ち続ける」＝完済後の家賃が私的年金に。切り替えると老後資産への効き方の違いが分かります</span>
+            <span class="hint">「持ち続ける」＝完済後の家賃が私的年金に。「10年後に売却」は所有5年超のため譲渡税率が約20.315%（長期）で計算します（売却年齢の欄は使いません）</span>
           </div>
           <div class="field"><label>売却時の夫の年齢</label><div class="input-unit"><input type="number" class="re-sellage" value="${v.sellAge}" min="20" max="100"><span class="u">歳</span></div></div>
           <div class="field"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
@@ -4330,6 +4351,7 @@
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
       div.querySelector('.re-exit').addEventListener('change', recompute);
       div.querySelector('.re-owner').addEventListener('change', recompute);
+      div.querySelector('.re-danshin').addEventListener('change', recompute);
       REP.appendChild(div);
       if(typeof applyHousehold==='function') applyHousehold();   // 単身のときは名義の「妻」を隠す
       return div;
@@ -4347,6 +4369,7 @@
         cost:     rfv(r,'.re-cost',0),
         rate:     rfv(r,'.re-rate',0),
         term:     Math.max(Math.round(rfv(r,'.re-term',35)),1),
+        danshin:  r.querySelector('.re-danshin').value !== 'off',
         rent:     rfv(r,'.re-rent',0),
         vacancy:  rfv(r,'.re-vacancy',0),
         rentDown: rfv(r,'.re-rentdown',0),
@@ -4371,6 +4394,8 @@
         .map(readPropertyRow);
     }
     function allPropertyRows(){ return REP ? [...REP.querySelectorAll('.re-row')] : []; }
+    /* 売却する年齢（夫基準）。持ち続ける物件は null。'sell10'＝購入10年後（【湘建】よくある出口） */
+    function sellAgeOf(pr){ return pr.exit==='sell' ? pr.sellAge : (pr.exit==='sell10' ? pr.buyAge+10 : null); }
 
     /* その年の元利均等返済を1年分すすめる（残高と残月数から毎年計算＝金利変更にも対応） */
     function amortizeYear(bal, annualRatePct, remMonths){
@@ -4426,7 +4451,8 @@
       out.value = Math.max(pr.price*Math.pow(1 - pr.priceDown/100, yo+1), landValue);   // 土地の価値は残る前提の下限
       out.bal   = st.bal;
 
-      if(pr.exit==='sell' && hAge===pr.sellAge){          // 出口（売却）
+      const sellAt = sellAgeOf(pr);                       // 【湘建】'sell'＝指定年齢／'sell10'＝購入10年後
+      if(sellAt!=null && hAge===sellAt){                  // 出口（売却）
         const gross   = pr.sellPrice>0 ? pr.sellPrice : out.value;
         const feeSell = gross*0.04;                                    // 仲介手数料・登記等の目安
         const land    = pr.price*(1 - pr.bldgPct/100);
@@ -4477,17 +4503,28 @@
       const hAge0 = num('h-age',35);
       const infl  = num('inflation',2)/100;
       const props = readProperties().filter(pr=> pr.owner===who && pr.buyAge<=hAge0);
-      let debtErased = 0, netRentYear = 0, value = 0;
+      let insCount = 0, debtErased = 0, netRentYear = 0, value = 0;
+      let uninsCount = 0, uninsDebt = 0, uninsValue = 0, uninsEquity = 0;   // 【湘建】団信なしの物件
       props.forEach(pr=>{
         const st = { bal:0, remM:0, depAccum:0, done:false };
         let y = null;
         for(let a=pr.buyAge; a<=hAge0; a++) y = propYear(pr, st, a, infl);
-        if(!y || !y.own) return;
-        debtErased  += y.bal;                                 // 団信で消える残債
-        netRentYear += (y.rent - y.mgmt - y.fee - y.ptax);    // 返済がなくなった後の手取り家賃（年）
-        value       += y.value;
+        if(!y || !y.own || y.sold) return;   // 売却済み（今年売却を含む）は対象外＝手取りは現在資産に含まれる前提
+        if(pr.danshin !== false){
+          insCount++;
+          debtErased  += y.bal;                                 // 団信で消える残債
+          netRentYear += (y.rent - y.mgmt - y.fee - y.ptax);    // 返済がなくなった後の手取り家賃（年）
+          value       += y.value;
+        } else {
+          // 団信なし：残債はそのまま残る。売却して精算する前提で「評価額−残債」だけを資産と数える
+          uninsCount++;
+          uninsDebt   += y.bal;
+          uninsValue  += y.value;
+          uninsEquity += (y.value - y.bal);   // マイナス（残債割れ）もあり得る＝必要保障額を増やす
+        }
       });
-      return { count:props.length, debtErased, netRentYear, value };
+      return { count:insCount, debtErased, netRentYear, value,
+               uninsCount, uninsDebt, uninsValue, uninsEquity };
     }
 
     /* ---------- 「金融資産の推移」の表示期間切替（35年 ／ 終了年齢まで ／ 年数を指定）----------
@@ -4569,7 +4606,10 @@
           + `<br>1年目の不動産所得 <b class="${y.taxIncome<0?'rr-q-neg':''}">${y.taxIncome>=0?'＋':'−'}${fmt(Math.abs(y.taxIncome))}万円</b>`
           + `（うち減価償却 ${fmt(y.dep)}万・ローン利息 ${fmt(y.interest)}万・購入諸費用 ${fmt(y.initCost)}万）`
           + ` → <b>1年目の還付 約${fmt(Math.max(save,0))}万円</b>`
-          + (save<=0.5 && y.taxIncome<0 ? `<br><span class="rr-q-neg">※ 赤字が土地分の利息（${fmt(y.landInterest)}万円）以下のため、損益通算できる金額がありません。</span>` : '');
+          + (save<=0.5 && y.taxIncome<0 ? `<br><span class="rr-q-neg">※ 赤字が土地分の利息（${fmt(y.landInterest)}万円）以下のため、損益通算できる金額がありません。</span>` : '')
+          + (!pr.danshin ? `<br><span class="rr-q-neg">※ この物件のローンは<b>団信なし</b>の設定です。${isSingle() ? '万一のとき残債は相続財産の債務として残ります（単身のため必要保障額の計算には出ません）' : '万一のとき残債が残る前提で「万が一（保障）」の診断に反映します'}。</span>` : '')
+          + (pr.exit==='sell10' ? `<br>出口：<b>購入10年後（${esc(hNameH())}${pr.buyAge+10}歳）に売却</b>する設定です（長期譲渡・税率約20.315%）。` : '')
+          + ((sellAgeOf(pr)!=null && sellAgeOf(pr) < num('h-age',35)) ? `<br><span class="rr-q-neg">※ <b>売却年齢（${sellAgeOf(pr)}歳）が現在の年齢より前</b>のため、この物件は売却済み＝試算に乗りません。購入時の年齢か保有方針をご確認ください。</span>` : '');
       });
     }
 
@@ -4627,11 +4667,13 @@
       const diff       = Math.round(row.netAll - rowNo.netAll);
       const crossRow   = rows.find(r=> r.reRent>0 && r.reIncome>0);
       const paidRow    = rows.find(r=> r.reRent>0 && r.reDebt<0.5 && r.reLoan<0.5);
-      const depEnds    = props.filter(x=> x.exit!=='sell' || (x.buyAge + x.depYears) <= x.sellAge)
+      const depEnds    = props.filter(x=>{ const sa = sellAgeOf(x); return sa==null || (x.buyAge + x.depYears) <= sa; })
                               .map(x=> ({age:x.buyAge + x.depYears, yrs:x.depYears}));
       const depEnd     = depEnds.length ? depEnds.reduce((a,b)=> a.age<=b.age ? a : b) : null;
       const cfM        = firstYear.reCf/12;
-      const danshin    = props.reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);
+      const dActive = props.filter(x=>{ const sa=sellAgeOf(x); return sa==null || sa > hAge0; });   // 売却済みの物件は団信の話から除外
+      const danshin      = dActive.filter(x=> x.danshin!==false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);   // 団信ありの借入だけ
+      const noDanshinDebt = dActive.filter(x=> x.danshin===false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);   // 【湘建】団信なし
       const horizonLbl = (oneroomHorizon==='end') ? `${num('end-age',100)}歳まで（${years}年）`
                        : (oneroomHorizon==='retire') ? `退職時（${esc(hNameH())}${atAge}歳）` : `${years}年後（${esc(hNameH())}${atAge}歳）`;
 
@@ -4653,7 +4695,8 @@
       $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}の総資産は 約 ${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}万円<span style="font-size:1rem;">（買わなかった場合との差）</span></div>`
         + `<div class="ict-sub">物件${props.length}件・総額 <b>${fmt(totalPrice)}万円</b>を、自己資金 <b>${fmt(totalOwn)}万円</b>（頭金＋諸費用）でスタートし、`
         + `毎月の持ち出しは <b>${cfM>=0?'＋':'−'}${fmt2(Math.abs(cfM))}万円</b>。`
-        + `借入 ${fmt(danshin)}万円には<b>団信</b>が付くため、万一のときは無借金の物件と家賃がご家族に残ります。`
+        + (danshin>0 ? `借入 ${fmt(danshin)}万円には<b>団信</b>が付くため、万一のときは無借金の物件と家賃がご家族に残ります。` : '')
+        + (noDanshinDebt>0 ? `<b>団信なしの借入 ${fmt(noDanshinDebt)}万円</b>は万一のときも残るため、生命保険での備えとセットでご検討ください${isSingle() ? '（単身の場合、この残債は相続財産の債務として相続人に関わります）' : '（「万が一（保障）」の画面に反映済み）'}。` : '')
         + (paidRow ? `ローン完済は<b>${paidRow.hAge}歳</b>、以後の家賃 年 約${fmt(paidRow.reRent - paidRow.reOpex)}万円がそのまま収入になります。` : '')
         + `</div>`;
 
@@ -4684,6 +4727,8 @@
         + `・<b>還付の時期</b>：実際は確定申告後（所得税は翌年3月ごろ、住民税は翌年度の天引き減）ですが、分かりやすさを優先して同じ年に反映しています。退職後は損益通算する給与がないため還付を見込まず、黒字には概算20％を課税しています。<br>`
         + `・<b>売却</b>：譲渡所得税（所有5年超＝約20.315％／5年以下＝約39.63％）と仲介手数料（売却価格の4％目安）を差し引いた手取りを計上しています。減価償却した分だけ取得費が下がるため、譲渡益＝税額はその分大きくなります。<br>`
         + `・<b>不動産の評価額</b>：入力した年間下落率で減らし、土地部分（建物割合の残り）を下限としています。実際の売却価格は立地・時期・需給で大きく変わります。<br>`
+        + `・<b>団信</b>：物件ごとに「団信あり／なし」を設定できます。団信なしの借入は万一のときも残債が残るため、「万が一（保障）」の診断では評価額−残債だけを資産側に算入しています。<br>`
+        + `・<b>10年後売却・買い増し</b>：保有方針の「購入10年後に売却」は所有5年超（譲渡した年の1月1日判定）として長期譲渡税率 約20.315%で計算しています。2戸目・3戸目は「物件を追加」で同条件をコピーして試算できますが、<b>実際の融資枠・金利は既存借入の状況で変わる</b>ため、金融機関の審査条件をご確認ください。<br>`
         + `・<b>含めていないもの</b>：入退去のたびの原状回復費・広告料（AD）、大規模修繕の一時金、賃貸管理会社の変更、税制改正の影響。<br>`
         + `・<b>比較の考え方</b>：同じ自己資金・毎月の持ち出しを新NISA等の運用に回した場合とも見比べてください（「貯蓄・資産運用」で積立額を増やすと、この画面の点線が動きます）。<br>`
         + `<span style="color:var(--ink-soft);">Office-M（税理士事務所を母体とするFP事務所）試算</span>`;
@@ -4696,7 +4741,7 @@
         data:{ labels:['買わなかった場合','ワンルームを買った場合'], datasets:[{
           label:`${atAge}歳時点の総資産（金融資産＋不動産の純資産）`,
           data:[noBuy, buy],
-          backgroundColor:['#b9c4cf','#2f7cb5'], borderRadius:8, barPercentage:0.6
+          backgroundColor:['#b9c4cf','#2e5288'], borderRadius:8, barPercentage:0.6
         }]},
         options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
           layout:{ padding:{ right:96 } },
@@ -7255,10 +7300,10 @@
       const data = {
         labels,
         datasets: hasRe ? [
-          { type:'bar', label:'金融資産（預貯金＋運用）', data:finD, backgroundColor:'#4a9fd4', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 },
-          { type:'bar', label:'不動産（評価額−残債）',   data:reD,  backgroundColor:'#f0b93b', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
+          { type:'bar', label:'金融資産（預貯金＋運用）', data:finD, backgroundColor:'#2e5288', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 },
+          { type:'bar', label:'不動産（評価額−残債）',   data:reD,  backgroundColor:'#d9b45b', stack:'a', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
         ] : [
-          { type:'bar', label:'総資産', data:finD, backgroundColor:'#4a9fd4', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
+          { type:'bar', label:'総資産', data:finD, backgroundColor:'#2e5288', categoryPercentage:1.0, barPercentage:0.92, borderRadius:2, order:3 }
         ]
       };
       // 【ワンルームフック】ワンルームを買わなかった場合の総資産を点線で重ねる
@@ -7393,7 +7438,9 @@
           const cfM        = firstYear.reCf/12;
           const grossYield = totalPrice>0 ? props.reduce((a,x)=> a+x.rent*12,0)/totalPrice*100 : 0;
           const crossRow   = rows.find(r=> r.reRent>0 && r.reIncome>0);
-          const danshin    = props.reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);
+          const dActive = props.filter(x=>{ const sa=sellAgeOf(x); return sa==null || sa > num('h-age',35); });   // 売却済みは除外
+          const danshin      = dActive.filter(x=> x.danshin!==false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);
+          const noDanshinDebt = dActive.filter(x=> x.danshin===false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);   // 【湘建】
           const ownerRate  = Math.round(marginalTaxRate(num('h-income',0))*100);
           const paidRow    = rows.find(r=> r.reRent>0 && r.reDebt<0.5 && r.reLoan<0.5);
           const tone = diffRetire>=0 ? (taxTotal>=20 ? 'ok' : 'warn') : 'warn';
@@ -7403,7 +7450,8 @@
             + `${p.hRetire}歳時点の総資産は、買わない場合と比べて <b>${diffRetire>=0?'＋':'−'}${fmt(Math.abs(diffRetire))}万円</b>、${endRow.hAge}歳時点で <b>${diffEnd>=0?'＋':'−'}${fmt(Math.abs(diffEnd))}万円</b> の試算です。`;
           const good=[], con=[];
           if(taxTotal>0) good.push(`購入1年目は<b>諸費用 ${fmt(props.reduce((a,x)=>a+x.cost,0))}万円と減価償却</b>で大きな赤字が出るため、給与と損益通算して 約${fmt(Math.max(firstYear.reTaxSave,0))}万円 が還付されます（${esc(hNameH())}の想定税率 約${ownerRate}%）。`);
-          good.push(`借入 ${fmt(danshin)}万円 には<b>団体信用生命保険（団信）</b>が付きます。万一のときはローンが消え、<b>無借金の物件と家賃収入がご家族に残ります</b>。掛け捨ての生命保険 ${fmt(danshin)}万円分に相当する保障です。`);
+          if(danshin>0) good.push(`借入 ${fmt(danshin)}万円 には<b>団体信用生命保険（団信）</b>が付きます。万一のときはローンが消え、<b>無借金の物件と家賃収入がご家族に残ります</b>。掛け捨ての生命保険 ${fmt(danshin)}万円分に相当する保障です。`);
+          if(noDanshinDebt>0) con.push(`<b>団信なしの借入 ${fmt(noDanshinDebt)}万円</b>が含まれています。万一のときこのローンはそのまま残るため、残債相当の掛け捨て保険や売却前提の設計とセットで考える必要があります${isSingle() ? '（単身の場合、この残債は相続財産の債務として相続人に関わります）' : '（「万が一（保障）」の診断に反映済み）'}。`);
           good.push(`自己資金 ${fmt(totalOwn)}万円 で ${fmt(totalPrice)}万円 の資産を持てるのが不動産の特徴です（レバレッジ）。返済の元金部分は、毎年そのまま純資産に変わっていきます。`);
           good.push(`家賃・不動産価格は物価と連動しやすく、<b>インフレに強い</b>資産です。ローンの残高は物価が上がっても増えないため、インフレ局面では実質的な負担が軽くなります。`);
           if(paidRow) good.push(`ローン完済は<b>${paidRow.hAge}歳</b>。以後は家賃から経費を引いた年 約${fmt(paidRow.reRent - paidRow.reOpex)}万円 がそのまま収入になり、<b>公的年金に上乗せする「私的年金」</b>として働きます。`);
@@ -7506,8 +7554,13 @@
           }
         }
         // 【ワンルームフック】ワンルームの団信
-        if(nh.re.count) good.push(`ワンルーム（${esc(hNameH())}名義 ${nh.re.count}件）は<b>団信付き</b>。${esc(hNameH())}に万一のとき残債 約${fmt(nh.re.debtErased)}万円 がゼロになり、<b>無借金の物件（約${fmt(nh.re.value)}万円）と家賃 年 約${fmt(nh.re.netRentYear)}万円</b> がご家族に残ります。売って現金にすることも、持ち続けて毎月受け取ることもできます（この診断では家賃を${nh.yrs}年分＝約${fmt(nh.reRentCover)}万円として備えに算入しています）。`);
-        if(nw.re.count) good.push(`ワンルーム（${esc(wNameH())}名義 ${nw.re.count}件）の団信により、${esc(wNameH())}に万一のときも残債 約${fmt(nw.re.debtErased)}万円 がゼロになります。`);
+        if(nh.re.count) good.push(`ワンルーム（${esc(hNameH())}名義・団信あり ${nh.re.count}件）。${esc(hNameH())}に万一のとき残債 約${fmt(nh.re.debtErased)}万円 がゼロになり、<b>無借金の物件（約${fmt(nh.re.value)}万円）と家賃 年 約${fmt(nh.re.netRentYear)}万円</b> がご家族に残ります。売って現金にすることも、持ち続けて毎月受け取ることもできます（この診断では家賃を${nh.yrs}年分＝約${fmt(nh.reRentCover)}万円として備えに算入しています）。`);
+        if(nw.re.count) good.push(`ワンルーム（${esc(wNameH())}名義・団信あり ${nw.re.count}件）の団信により、${esc(wNameH())}に万一のときも残債 約${fmt(nw.re.debtErased)}万円 がゼロになります。`);
+        // 【湘建】団信なしの借入は万一のとき残る
+        if(nh.re.uninsCount || nw.re.uninsCount){
+          const uDebt = (nh.re.uninsDebt||0) + (nw.re.uninsDebt||0);
+          con.push(`<b>団信なしのローン（残債 合計 約${fmt(uDebt)}万円）は、万一のときもそのまま残ります</b>。物件を売却して精算するか、残債相当の掛け捨て保険で備えるか——保障の設計とセットで決めておく必要があります（この診断では「売却して精算」の前提とし、売却しても返しきれない残債割れの分だけを必要保障額に上乗せしています）。`);
+        }
         if(nh.re.count || nw.re.count) con.push(`ワンルームの団信も、対象は原則<b>死亡・高度障害</b>です。<b>働けなくなっただけでは免除されません</b>。また残るのは物件であって現金ではないため、<b>すぐに使える現金の備え</b>は別に必要です（売却には数か月かかるのが通常です）。`);
         if(hasIns && (nh.rawNeed>0 || nw.rawNeed>0) && nh.ins>=nh.rawNeed && nw.ins>=nw.rawNeed) good.push(`加入中の保険（${esc(hNameH())} 約${fmt(nh.ins)}万円／${esc(wNameH())} 約${fmt(nw.ins)}万円）で、計算上の必要保障額をカバーできる計算です。`);
         if(nh.insHasIncome || nw.insHasIncome) good.push(`収入保障保険（家族収入・逓減型）は、お子さまの成長とともに必要保障額が小さくなる考え方に沿った形の保険です（受取総額は年々減っていきます。診断では満了までの残り期間分に換算しています）。`);
@@ -9610,22 +9663,60 @@
               tasks:[ { who:'cust', text:'ご実家の名義・おおよその評価、相続人になる方の人数など、分かる範囲でお聞かせください。' },
                       { who:'staff', text:'分かった範囲で論点を整理してお持ちします。税額の判断は税理士にご確認いただきます。' } ] };
           } },
-        /* 【ワンルームフック】ワンルーム商談で必ず確認したい2点。
-           勧誘にならない言い方（NEXT_NG_REを通る文型）で、確認・段取りだけを出す */
-        { id:'talk.oneroomShoruiTalk', cat:'housing', src:'talk', impact:5, urgency:4,
-          when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/ワンルーム|区分|投資用|不動産投資|物件|利回り|サブリース/); },
+        /* 【湘建】湘建の営業フローに沿った「次の一手」。
+           セミナー/個別相談 → 物件紹介 → 賃貸管理の条件確認 → 出口・買い増し → 団信の穴 → 確定申告、の順で
+           商談を前に進める段取りを出す。勧誘にならない言い方（NEXT_NG_REを通る文型）で、確認・段取りだけを出す。
+           ※ セミナーの開催形態・管理プランの保証範囲などの詳細は、湘建の最新の公式情報に合わせて適宜文言を差し替えること */
+        { id:'talk.shokenSeminar', cat:'housing', src:'talk', impact:5, urgency:4,   // セミナー＝湘建の主導線。物件紹介と並んで必ず上位に出す
+          when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/セミナー|勉強会|個別相談|オンライン相談|湘建/); },
           make: function(){
-            return { title:'物件資料（レントロール・重要事項説明書）の確認',
-              basis:'ワンルーム投資の判断は、家賃・空室・管理費・修繕積立金の実額で大きく変わります。試算に使った数字が実際の資料と合っているかを、購入前に突き合わせておく必要があります。',
-              tasks:[ { who:'cust', text:'販売資料一式（レントロール・重要事項説明書・長期修繕計画書・管理規約・登記事項証明書）をお持ちください。' },
-                      { who:'staff', text:'試算の前提（家賃・空室率・管理費＋修繕積立金・固定資産税・建物割合）と資料の実額を並べて確認します。' } ],
-              caution:'物件そのものの良し悪しの判断は宅地建物取引業者が行います。当事務所は数字の確認とライフプランへの影響の整理を担当します。' };
+            return { title:'湘建の無料セミナー・個別相談の日程確認',
+              basis:'湘建では、マンション投資のしくみからリスクまでを整理する無料セミナーと個別相談を行っています。この試算の数字を実際の物件・管理条件で確かめる場として、契約の前に一度ご参加いただく流れです。参加しても契約の義務はありません。',
+              tasks:[ { who:'cust', text:'ご都合のよい候補日（平日夜・土日など）と、オンライン・来場のどちらがよいかをお聞かせください。' },
+                      { who:'staff', text:'直近のセミナー日程と個別相談の空き枠を確認してご案内します。当日はこの試算画面をそのまま使って、前提を一つずつ確認します。' } ],
+              caution:'セミナーの開催形態・特典は時期により変わります。最新の案内でご確認ください。' };
           } },
-        { id:'talk.oneroomZeimuTalk', cat:'tax', src:'talk', impact:4, urgency:3,
+        { id:'talk.shokenBukken', cat:'housing', src:'talk', impact:5, urgency:4,
+          when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/ワンルーム|区分|投資用|不動産投資|物件|利回り|エリア|横浜|都内/); },
+          make: function(){
+            return { title:'物件のご紹介と、試算の前提の突き合わせ',
+              basis:'湘建の取扱いは横浜・都内エリアの区分マンションが中心です。ご希望条件が決まると、この試算の前提（価格・家賃・管理費・修繕積立金・建物割合）を実際の物件資料の数字に置き換えられ、精度が一段上がります。',
+              tasks:[ { who:'cust', text:'ご予算・エリア・新築か中古かのご希望と、毎月いくらまでなら負担を続けられそうかをお聞かせください。' },
+                      { who:'staff', text:'条件に合う物件のレントロール・重要事項説明書・長期修繕計画書をご用意し、この画面の前提と実額を並べて確認します。' } ],
+              caution:'物件の売買の媒介・重要事項の説明は宅地建物取引士が行います。' };
+          } },
+        { id:'talk.shokenKanri', cat:'housing', src:'talk', impact:4, urgency:3,
+          when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/管理|サブリース|家賃保証|空室|原状回復|設備|入居率/); },
+          make: function(){
+            return { title:'賃貸管理・アフターサポートの条件確認',
+              basis:'購入後の手残りは、賃貸管理の手数料・空室時の対応・設備故障や原状回復の費用負担の条件で変わります。湘建の管理プラン（集金代行・サブリース等）の最新の条件を確認し、この試算の「空室・滞納損失」「賃貸管理手数料」を同じ条件にそろえます。',
+              tasks:[ { who:'cust', text:'ご自身で入居者対応をするか、管理会社に任せたいかのご希望をお聞かせください。' },
+                      { who:'staff', text:'湘建の賃貸管理プランの手数料・サポート範囲・免責期間が分かる資料をご用意し、この試算に同じ条件を入力してお見せします。' } ],
+              caution:'サポート・保証の範囲はプランと時期により変わります。最新の契約書・重要事項説明でご確認ください。' };
+          } },
+        { id:'talk.shokenExit', cat:'housing', src:'talk', impact:4, urgency:3,
+          when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/売却|出口|買い増し|2戸|２戸|3戸|３戸|複数戸|もう1戸|もう一戸/); },
+          make: function(){
+            return { title:'出口（10年後売却）と買い増しの方針整理',
+              basis:'ワンルームは「10年前後で売却して利益を確定する」「持ち続けて完済後の家賃を受け取る」「2戸目・3戸目に広げる」で結果が大きく変わります。譲渡税率は所有5年超（譲渡年の1月1日判定）で約39.63%→約20.315%に下がるため、売却するなら時期の設計が要になります。',
+              tasks:[ { who:'cust', text:'何年くらい持つイメージか、2戸目以降の買い増しに関心があるかをお聞かせください。' },
+                      { who:'staff', text:'この画面の「保有方針」を切り替えて、10年後売却・持ち続け・複数戸の3パターンの総資産を並べてお見せします。買い増し時の融資条件は金融機関に確認します。' } ],
+              caution:'将来の売却価格・家賃は想定であり、実際の相場を約束するものではありません。' };
+          } },
+        { id:'talk.shokenDanshin', cat:'hoken', src:'talk', impact:5, urgency:4,   // 保障の穴はhoken枠で必ず出す
+          when: function(){ return (typeof readProperties==='function' && readProperties().some(function(p){ return p.danshin===false; })) || talkHas(/団信なし|団信未加入|団信に入れ/); },
+          make: function(){
+            return { title:'団信なしの借入の保障の確認',
+              basis:'試算に団信なしの借入が含まれています。団信のないローンは万一のときもそのまま残るため、残債相当の保障をどう用意するか（掛け捨て保険・売却前提など）を先に決めておく必要があります。2戸目以降は団信なしの融資になる場合があります。',
+              tasks:[ { who:'cust', text:'各ローンの団信の有無と、特約（がん・三大疾病など）の内容が分かる書類をお持ちください。' },
+                      { who:'staff', text:'団信のない残債と必要保障額を整理し、備え方の選択肢を並べてお持ちします。ご意向を確認しながら進めます。' } ],
+              caution:'保険のご検討はご意向が最優先です。保険商品の詳細は募集人が説明します。' };
+          } },
+        { id:'talk.shokenZeimu', cat:'tax', src:'talk', impact:4, urgency:3,
           when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/損益通算|節税|確定申告|還付|減価償却/); },
           make: function(){
-            return { title:'確定申告と還付額の確認',
-              basis:'損益通算による還付を受けるには、給与所得者でも毎年の確定申告が必要です。初年度は購入諸費用のうち経費にできるものを漏らさないことで、還付額が変わります。',
+            return { title:'確定申告と還付額の確認（オーナー向け）',
+              basis:'損益通算による還付を受けるには、給与所得者でも毎年の確定申告が必要です。初年度は購入諸費用のうち経費にできるものを漏らさないことで還付額が変わります。2戸目以降は名義ごとに全物件を合算して計算します。',
               tasks:[ { who:'cust', text:'直近の源泉徴収票（ご夫婦分）と、購入時にかかる諸費用の内訳がわかる資料をご用意ください。' },
                       { who:'staff', text:'ご年収での還付見込みと、2年目以降どこまで縮むかを試算してお持ちします。税額の判断は連携する税理士が行います。' } ],
               caution:'税額の計算・申告の代理は税理士が行います。ここでの数字は目安です。' };
@@ -9663,7 +9754,7 @@
       const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
       function nextAssertSafe(list){
         list.forEach(function(it){
-          [it.title, it.basis].concat(it.tasks.map(function(t){ return t.text; })).forEach(function(s){
+          [it.title, it.basis, it.caution || ''].concat(it.tasks.map(function(t){ return t.text; })).forEach(function(s){
             if(NEXT_NG_RE.test(s) && window.console) console.error('[next] 表現の見直しが必要:', it.id, s);
           });
         });
@@ -10592,7 +10683,7 @@
         d.style.cssText = 'margin-top:16px; font-size:.7rem; color:#5b6b7d; line-height:1.7; border-top:1px solid #dce8e0; padding-top:10px;';
         const premise = document.querySelector('footer details.premise');
         const premiseHtml = premise ? premise.innerHTML.replace(/<summary[\s\S]*?<\/summary>/,'') : '';
-        d.innerHTML = '<b>本サイトは、保険代理店業務を行うFP事務所（Office-M・生命保険募集人）が作成した試算ツールです。</b>特定の不動産会社・物件の販売者ではなく、宅地建物取引業者ではありません。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。'
+        d.innerHTML = '<b>本ツールは、株式会社湘建様向けの提案用デモとして、Office-M（保険代理店業務を行うFP事務所・生命保険募集人）が作成した試算ツールです。</b>株式会社湘建の公式サービスではありません。Office-Mは宅地建物取引業者ではなく、物件の売買の媒介・代理は行いません。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。'
           + premiseHtml;
         res.appendChild(d);
       }
@@ -10827,7 +10918,12 @@
       // 【ワンルームフック】ワンルームの団信：残債がゼロになり、無借金の物件からの家賃が遺族の支えになる
       const re = danshinRelief(deceased);
       const reRentCover = re.netRentYear * yrs;
-      const cover = pension + income + p.assetsNow + reRentCover;
+      /* 【湘建】団信なしの物件は残債が残る。「売却して精算」する前提とし、
+         残債割れ（評価額＜残債）の不足分だけを必要額に上乗せする（＝coverから引く）。
+         正の純資産は算入しない：団信あり側も物件の資産価値は備えに数えない設計のため、
+         ここで正のequityを足すと「団信なしの方が有利」という論理的にあり得ない逆転が起きる（検証で実測） */
+      const reUninsShort = Math.min(re.uninsEquity, 0);
+      const cover = pension + income + p.assetsNow + reRentCover + reUninsShort;
       // 必要保障額（公的保障・収入・資産を差し引いた本来の必要額）と、加入中の保険を差し引いた不足額を分けて持つ
       const rawNeed = Math.max(0, Math.round((spend - cover)/100)*100);          // 100万円単位に丸め
       const insInfo = insCoverFor(deceased);                                     // 亡くなった方に掛かっている死亡保障
@@ -10899,7 +10995,10 @@
           const pensionLine = `<b>遺族年金 受給総額 約${fmt(r.pension)}万円</b>（初年度 約${fmt(r.pensionYear)}万円/年＝遺族基礎 ${fmt(r.pensionKiso)}＋遺族厚生 ${fmt(r.pensionKosei)}${r.pensionKafu>0 ? `＋中高齢寡婦加算 ${fmt(r.pensionKafu)}` : ''}。お子さまの成長・年齢で年ごとに変動${r.pensionKafuTotal>0 ? `。受給総額には中高齢寡婦加算 累計 約${fmt(r.pensionKafuTotal)}万円を含みます` : ''}）`
             + (r.deceased==='w' && r.pensionKosei===0 ? `<br><span style="color:#bf5656">※ 妻が亡くなった場合、55歳未満の夫には<b>遺族厚生年金が支給されません</b>（制度の盲点）。夫死亡時より保障が手薄になりやすい点に注意です。</span>` : '');
           const coverLine = `<b>用意できる資金 約${fmt(r.cover)}万円</b>＝ 遺族年金 約${fmt(r.pension)}＋${esc(survivorName)}の収入 約${fmt(r.income)}（${r.workYears}年分）＋いまの資産 ${fmt(r.assets)}`
-            + (r.re.count ? `＋<b>ワンルームの家賃 約${fmt(r.reRentCover)}万円</b>（団信で残債 ${fmt(r.re.debtErased)}万円がゼロになり、無借金の物件から年 約${fmt(r.re.netRentYear)}万円 × ${r.yrs}年）` : '');
+            + (r.re.count ? `＋<b>ワンルームの家賃 約${fmt(r.reRentCover)}万円</b>（団信で残債 ${fmt(r.re.debtErased)}万円がゼロになり、無借金の物件から年 約${fmt(r.re.netRentYear)}万円 × ${r.yrs}年）` : '')
+            + (r.re.uninsCount ? (r.re.uninsEquity>=0
+                ? `（団信なしの残債 ${fmt(r.re.uninsDebt)}万円は、物件の売却（評価額 ${fmt(r.re.uninsValue)}万円）で精算できる見込みのため必要額に加えていません。物件の資産価値そのものも、団信あり側と同じく備えには算入していません）`
+                : `−<b>団信なし物件の残債割れ 約${fmt(Math.abs(r.re.uninsEquity))}万円</b>（残債 ${fmt(r.re.uninsDebt)}万円 − 評価額 ${fmt(r.re.uninsValue)}万円。売却しても返しきれない分を必要額に上乗せ）`) : '');
           const workNote = (r.income>0 && r.p.children.length)
             ? `<br><span style="font-size:.82em; color:var(--ink-soft);">※ ${esc(survivorName)}が現在の収入（年 約${fmt(r.surNet)}万円）を${r.workYears}年間維持できる前提の計算です。お子さまを見ながら働き方をセーブする場合、その収入減の分だけ必要額は増えます。</span>` : '';
           const insLine = r.ins>0
@@ -11255,7 +11354,9 @@
       const diffEnd    = Math.round(rows[rows.length-1].netAll - noProp[noProp.length-1].netAll);
       const totalPrice = props.reduce((a,x)=> a+x.price, 0);
       const totalOwn   = props.reduce((a,x)=> a+x.down+x.cost, 0);
-      const danshin    = props.reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);
+      const dActive2 = props.filter(x=>{ const sa=sellAgeOf(x); return sa==null || sa > num('h-age',35); });   // 売却済みは除外
+      const danshin      = dActive2.filter(x=> x.danshin!==false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);
+      const noDanshinDebt = dActive2.filter(x=> x.danshin===false).reduce((a,x)=> a+Math.max(x.price-x.down,0), 0);   // 【湘建】
       const landInt1   = (first.reDetail||[]).reduce((a,y)=> a+(y.landInterest||0), 0);
       const cfM = first.reCf/12;
       const facts = [ famFact(p),
@@ -11269,7 +11370,7 @@
         + `<li class="warn">☐ 赤字のうち<b>土地取得分の借入利息（1年目 約${fmt(landInt1)}万円）は損益通算できません</b>（措法41条の4）</li>`
         + `</ul>`
         + `つまり「毎年ずっと節税」ではなく、<b>節税は初年度が中心</b>です。ワンルーム投資の本当の価値は、`
-        + `<b>①団信（借入 ${fmt(danshin)}万円分の生命保険） ②完済後の家賃という私的年金 ③インフレに強い実物資産</b> の3つにあります。`
+        + `<b>①団信（借入 ${fmt(danshin)}万円分の生命保険${noDanshinDebt>0?`。団信なしの${fmt(noDanshinDebt)}万円は対象外`:''}） ②完済後の家賃という私的年金 ③インフレに強い実物資産</b> の3つにあります。`
         + `<br>この前提での${p.hRetire}歳時点の総資産は、買わなかった場合と比べて <b>${diffRetire>=0?'＋':'−'}${fmt(Math.abs(diffRetire))}万円</b>（${rows[rows.length-1].hAge}歳時点で ${diffEnd>=0?'＋':'−'}${fmt(Math.abs(diffEnd))}万円）の試算です。`;
       const verdict = diffRetire>=0
         ? `診断：この条件なら、${p.hRetire}歳時点の総資産は買わない場合を <b>約${fmt(diffRetire)}万円 上回る</b>試算です。`
@@ -11317,7 +11418,7 @@
       // 【ワンルームフック】ワンルーム投資トピック（他ライフプランに流用時はこのトピックを削除）
       // 【ワンルームフック】self＝この話題自身を指す語。どの話かを決めるのには使うが、
       // 話題の中でどのファクトを出すかの採点からは外す（rankedFacts 参照）
-      oneroom:{ label:'ワンルームマンション投資', self:/ワンルームマンション投資|ワンルーム投資|ワンルーム/g, re:/ワンルーム|区分マンション|投資用マンション|マンション投資|不動産投資|投資用|家賃収入|大家|オーナーチェンジ|空室|サブリース|家賃保証|一括借り上げ|損益通算|表面利回り|実質利回り|デッドクロス|減価償却|賃貸経営|инвест|レバレッジ|団体信用生命保険|節税用|節税目的|不動産で節税|物件|入居者|管理会社|修繕積立|原状回復|滞納|入居率|利回り/i,
+      oneroom:{ label:'ワンルームマンション投資', self:/ワンルームマンション投資|ワンルーム投資|ワンルーム/g, re:/ワンルーム|区分マンション|投資用マンション|マンション投資|不動産投資|投資用|家賃収入|大家|オーナーチェンジ|空室|サブリース|家賃保証|一括借り上げ|損益通算|表面利回り|実質利回り|デッドクロス|減価償却|賃貸経営|レバレッジ|団体信用生命保険|節税用|節税目的|不動産で節税|物件|入居者|管理会社|修繕積立|原状回復|滞納|入居率|利回り/i,
         facts:['<b>ワンルーム投資の「節税」のしくみ</b>：家賃収入から必要経費（管理費・修繕積立金・賃貸管理手数料・固定資産税・ローンの<b>利息部分</b>・減価償却費）を引いた<b>不動産所得</b>が赤字になると、給与所得と<b>損益通算</b>できます。その結果、源泉徴収された所得税が戻り、翌年度の住民税も下がります。',
         '<b>節税の主役は「減価償却費」</b>：建物部分の価格を法定耐用年数で割った金額を、<b>現金が出ていかないのに経費にできる</b>のが減価償却です。ここが赤字を作る中心で、償却が終われば赤字も消えます。',
         '<b>初年度がいちばん還付が大きい</b>：不動産取得税・登記費用・融資事務手数料などの<b>購入諸費用</b>を初年度に経費計上できるためです。2年目以降は諸費用がなくなるので、赤字は一気に縮みます。「毎年ずっと節税できる」という説明は正しくありません。',
@@ -12495,7 +12596,7 @@
     /* ============================================================
        無料相談 予約フォーム（メールで送信）
        ============================================================ */
-    const OFFICE_EMAIL = 'y.nakatani@office-m-tax.com';
+    const OFFICE_EMAIL = 'y.nakatani@office-m-tax.com';   // 【湘建】採用時：予約の宛先を湘建の窓口アドレスへ差し替えること（画面の表示2か所も連動して変わる）
     const reserveModal = $('reserve-modal');
     // 同意チェックは開くたびに外す（前回の同意を引き継がない＝取得のたびに利用目的へ同意いただく）
     function openReserve(){ $('reserve-form-wrap').hidden=false; $('reserve-done').hidden=true; $('rv-err').textContent=''; if($('rv-agree')) $('rv-agree').checked=false; reserveModal.hidden=false; }
@@ -12996,8 +13097,9 @@
           s.customers[c.id] = c;
         }
         c.lifeplans = c.lifeplans || [];
-        const hit = c.lifeplans.find(l=> l && l.tool==='ワンルーム版' && l.acct===currentUser && l.name===name);
-        if(hit) hit.t = Date.now(); else c.lifeplans.push({ tool:'ワンルーム版', file:'oneroom.html', acct:currentUser, name, t:Date.now() });
+        // 旧ラベル「ワンルーム版」で登録済みのエントリも拾って「湘建版」に付け替える（重複登録の防止）
+        const hit = c.lifeplans.find(l=> l && (l.tool==='湘建版' || l.tool==='ワンルーム版') && l.acct===currentUser && l.name===name);
+        if(hit){ hit.tool = '湘建版'; hit.t = Date.now(); } else c.lifeplans.push({ tool:'湘建版', file:'oneroom.html', acct:currentUser, name, t:Date.now() });
         c.updatedAt = Date.now();
         localStorage.setItem(key, JSON.stringify(s));
       }catch(e){}

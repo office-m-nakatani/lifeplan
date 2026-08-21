@@ -1304,7 +1304,10 @@
     /* 生年月日（年＝西暦＋和暦併記・月・日のプルダウン） */
     .bd-field{ margin-bottom:12px; }
     .bd-row{ display:grid; grid-template-columns:1.7fr .8fr .8fr; gap:6px; align-items:center; }
-    .bd-row select{ padding-left:10px; padding-right:26px; }
+    /* 数値の欄は右揃えでそろえる（2026-08-20 ユーザー指示）。
+       .input-unit input は右揃えなのに、生年月日だけ左揃えで数字の位置がバラついていた。
+       padding-right は矢印（right 13px・幅12px）に文字がかからない量を確保する */
+    .bd-row select{ padding-left:10px; padding-right:30px; text-align:right; }
     /* 狭い画面では年（和暦併記で長い）を一行使い、月・日を横に並べる */
     @media(max-width:400px){
       .bd-row{ grid-template-columns:1fr 1fr; }
@@ -3799,6 +3802,10 @@
     }
 
     /* ---------- 資産運用の商品（自由追加・種類選択＋一括/積立） ---------- */
+    /* 運用商品の種類 → 既定の名前。名前を空欄にしたときはこれが表・グラフ・診断に出る。
+       ★計算そのものは種類で変わらない（積立額・利回り・期間だけで決まる）＝ラベル用 */
+    const INV_LABEL = { nisa:'NISA', ideco:'iDeCo', fund:'投資信託・株式',
+                        insurance:'貯蓄型保険', wholelife:'一時払い終身保険', other:'その他' };
     function investRow(type='nisa', name='', lump=0, monthly=3, ret=3.0, endAge=65, startAge, after='continue'){
       if(startAge==null || isNaN(startAge)) startAge = num('h-age',35);   // 既定＝現在の年齢（＝今から）
       const div = document.createElement('div');
@@ -3808,9 +3815,12 @@
         <div class="ir-head">
           <input type="checkbox" class="iv-on" checked title="このプランを計算に反映">
           <select class="iv-type">
-            ${o('nisa','NISA（つみたて・成長）')}${o('ideco','iDeCo')}${o('fund','投資信託・株式')}${o('insurance','貯蓄型保険・年金保険')}${o('other','その他（自由入力）')}
+            ${o('nisa','NISA（つみたて・成長）')}${o('ideco','iDeCo')}${o('fund','投資信託・株式')}${o('insurance','貯蓄型保険・年金保険')}${o('wholelife','一時払い終身保険')}${o('other','その他（自由入力）')}
           </select>
-          <input type="text" class="iv-name${type==='other'?'':' hidden'}" placeholder="商品名を入力" value="${name}">
+          <!-- 名前はどの種類でも付けられる（2026-08-20 ユーザー指示）。
+               以前は「その他」のときだけ入力できたため、ご夫婦で同じ商品を2本持つと
+               表もグラフも同じ名前が並んで見分けがつかず、「その他」を選ぶしかなかった -->
+          <input type="text" class="iv-name" placeholder="${INV_LABEL[type]||'商品名'}（名前を付けられます）" value="${name}">
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="ir-grid">
@@ -3829,20 +3839,23 @@
         </div>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       const typeSel = div.querySelector('.iv-type'), nameInp = div.querySelector('.iv-name');
-      typeSel.addEventListener('change', ()=> nameInp.classList.toggle('hidden', typeSel.value!=='other'));
+      // 種類を変えたら、名前の欄の例示だけ差し替える（入力済みの名前は消さない）
+      typeSel.addEventListener('change', ()=>{
+        nameInp.placeholder = (INV_LABEL[typeSel.value] || '商品名') + '（名前を付けられます）';
+      });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
       $('invest-list').appendChild(div);
     }
     function readInvestments(){
-      const label = {nisa:'NISA', ideco:'iDeCo', fund:'投資信託・株式', insurance:'貯蓄型保険'};
       return [...$('invest-list').querySelectorAll('.invest-row')]
         .filter(r=> r.querySelector('.iv-on').checked)   // チェックした商品だけ反映
         .map(r=>{
         const type = r.querySelector('.iv-type').value;
-        const nm = r.querySelector('.iv-name').value;
+        const nm = (r.querySelector('.iv-name').value||'').trim();
         return {
           type,
-          name: type==='other' ? (nm||'その他') : (label[type]||type),
+          // 名前を入れていればそれを、空欄なら種類の名前を使う（どの種類でも名前を付けられる）
+          name: nm || INV_LABEL[type] || type,
           lump: parseFloat(r.querySelector('.iv-lump').value)||0,
           monthly: parseFloat(r.querySelector('.iv-monthly').value)||0,
           ret: parseFloat(r.querySelector('.iv-ret').value)||0,

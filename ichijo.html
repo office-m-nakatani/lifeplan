@@ -2016,6 +2016,9 @@
                 <label>退職後の生活費（夫婦・月額）</label>
                 <div class="input-unit"><input type="number" id="e-retire-living" value="25" min="0" step="1"><span class="u">万円</span></div>
                 <span class="hint">総務省の高齢夫婦世帯の平均は月25万円前後／ゆとりある生活費は月35万円前後</span>
+                <!-- 今の物価で入力した額が、将来いくらとして計上されるかを実額で出す（2026-08-21 ユーザー指示）。
+                     .field は display:flex なので hidden 属性では消えない → style.display で切り替える -->
+                <span class="hint" id="retire-living-real" style="display:none;"></span>
                 <span class="hint" id="retire-living-note" style="display:none;"></span>
               </div>
             </div>
@@ -3782,8 +3785,34 @@
         note.innerHTML = '';
       }
     }
+    /* 老後の生活費は「今の物価」で入力していただき、計算では物価上昇率で毎年ふくらませている。
+       ところが画面には入力額（例：25万円）しか出ないため、実際にいくらとして計算しているのかが
+       見えず、「年金◯万円あるから足りる」と誤解しやすかった（2026-08-21 ユーザー指示）。
+       切り替わる年齢（おふたりとも退職したあと）と80歳時点の実額を出す。
+       ★切替の判定は simulate の bothRetired と同じ式にすること。ここだけ「夫の退職」で書くと
+         画面の年齢とグラフが切り替わる年がずれる。 */
+    function updateRetireLivingReal(){
+      const el = $('retire-living-real'); if(!el) return;
+      const ret = num('e-retire-living', 0), infl = num('inflation', 0)/100;
+      const hAge0 = num('h-age', 35);
+      if(ret <= 0){ el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      if(infl <= 0){
+        el.innerHTML = `物価上昇を見込まない設定のため、<b>このままの金額</b>で計上します。`;
+        return;
+      }
+      // おふたりとも退職したあとに切り替わる（夫の年齢に換算）
+      const switchAge = isSingle() ? num('h-retire',65)
+        : Math.max(num('h-retire',65), hAge0 + num('w-retire',65) - num('w-age',33));
+      const at = (age)=> ret * Math.pow(1+infl, Math.max(age - hAge0, 0));
+      const f1 = (v)=> (Math.round(v*10)/10).toLocaleString('ja-JP');
+      el.innerHTML = `この欄は<b>今の物価</b>での金額です。物価${(infl*100).toFixed(1)}%で計算すると、`
+        + `老後の生活費に切り替わる<b>${esc(hNameH())}${switchAge}歳</b>のとき月<b>${f1(at(switchAge))}万円</b>、`
+        + `<b>80歳</b>では月<b>${f1(at(80))}万円</b>として計上します。`;
+    }
     function updateLivingTotal(){
       try{ updateRetireLivingNote(); }catch(e){}
+      try{ updateRetireLivingReal(); }catch(e){}
       const el = $('living-total'); if(!el) return;
       const t = readLivingMonthly();
       el.textContent = (Math.round(t*10)/10).toLocaleString('ja-JP');
@@ -5993,6 +6022,8 @@
       try{ applyTeikibin(); }catch(e){}
       updateNetDisplay();
       updatePensionSplitHint();   // 公的年金の「おふたりの内訳」（按分の前提を画面に出す）
+      // 老後の生活費の実額（物価・退職年齢・年齢差のどれを変えても追従させる）
+      try{ updateRetireLivingReal(); }catch(e){}
       updateRealRaiseHint();      // 実質の昇給率（昇給率−物価上昇率。マイナスだと収入が毎年目減りする前提）
       updateEventWifeAges();
       refreshBirthHints();      // 生年月日の表示だけ更新（年齢欄は書き換えない）

@@ -1938,8 +1938,8 @@
             <div class="field">
               <label>投資プラン</label>
               <div class="seg" id="re-seg">
-                <button type="button" data-re="off">購入しない</button>
-                <button type="button" data-re="on" class="active">ワンルームを購入する</button>
+                <button type="button" data-re="off" class="active">購入しない</button>
+                <button type="button" data-re="on">ワンルームを購入する</button>
               </div>
               <span class="hint">「現状プラン」は購入しない、「将来プラン」で購入する——という組み立てにすると、上の<b>プラン切替</b>だけで買った場合と買わない場合を行き来できます。</span>
             </div>
@@ -4216,7 +4216,13 @@
          - チャットチップ、フッター前提文、SAVE_KEY、共有URL、ナビ
        ══════════════════════════════════════════════════════════════════ */
     const REP = $('property-list');
-    let reMode = 'on';                                     // 'on' = 購入する / 'off' = 購入しない
+    /* 既定は 'off'＝購入しない（2026-08-21 ユーザー指示）。
+       'on' で始めると「現状プラン」にもワンルームが1戸入った状態になり、お客様の数字を
+       ゼロから入れる商談で「資産の比較」が全項目 ±0 になってしまう（営業側が現状プランを
+       手で「購入しない」に戻す必要があった）。現状＝買わない／将来＝買う、が本来の組み立てで、
+       将来プランは結果タブの「ワンルームを買った場合で試す（1クリック）」から入れる。
+       ※ サンプル（田中太郎様）は sampleState が reMode を明示指定するのでこの変更の影響を受けない */
+    let reMode = 'off';                                    // 'on' = 購入する / 'off' = 購入しない
     let lastRows = null, lastNoPropRows = null, lastProps = [];
     let reTabIndex = 0;
     const fmt2 = (man)=> (Math.round(man*10)/10).toLocaleString('ja-JP', {minimumFractionDigits:1, maximumFractionDigits:1});

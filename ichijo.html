@@ -4637,8 +4637,26 @@
       }
       return rows;
     }
-    function buildLoanSchedule(){
-      const principal = Math.max(num('house-price',0), 0);   // house-price＝住宅ローン総額（借入額そのもの・頭金は別枠の現金）
+    /* 住宅ローン控除の「1年あたりの控除上限」（万円）。借入限度額×0.7%。
+       ★2026-08-21：simulate の中だけに書いてあったため、「次の一手」で頭金の損得を出すのに
+       同じ式をもう一度書く必要があった。同じ数字を2か所に書くと必ず片方だけ古くなるので関数にする。 */
+    function loanDedLimitPerPerson(){
+      const buyAge = num('buy-age',36), hAge0 = num('h-age',35), wAge0 = num('w-age',33);
+      const single = isSingle();
+      const dy = buyAge - hAge0;
+      let kids = []; try{ kids = readChildren(); }catch(e){}
+      const hasKid = kids.some(c=>{ const a = (parseInt(c.age)||0) + dy; return a >= 0 && a <= 18; });
+      const youngCouple = !single && (buyAge < 40 || (wAge0 + dy) < 40);
+      const kosodate = hasKid || youngCouple;
+      const zehChecked = $('zeh-on') ? $('zeh-on').checked : false;
+      return ((typeof htype!=='undefined' && htype==='ichijo') || zehChecked)
+        ? (kosodate ? 31.5 : 24.5)   // ZEH水準以上：借入限度4,500万/3,500万×0.7%
+        : (kosodate ? 28   : 21);    // 省エネ基準適合：借入限度4,000万/3,000万×0.7%
+    }
+    /* principalOverride を渡すと、その借入額でスケジュールを組む（頭金あり／なしの比較用）。
+       渡さなければ従来どおり画面の「住宅ローン総額」を使う＝既存の呼び出しは影響を受けない。 */
+    function buildLoanSchedule(principalOverride){
+      const principal = Math.max(principalOverride!=null ? principalOverride : num('house-price',0), 0);   // house-price＝住宅ローン総額（借入額そのもの・頭金は別枠の現金）
       const term = num('loan-term',35);
       const totalMonths = Math.max(0, Math.round(term*12));
       const bonusPay = num('loan-bonus-pay',0);
@@ -5595,22 +5613,14 @@
       // ---- 住宅ローン控除（年末残高×0.7%・最大13年）----
       // 上限は「住宅性能×子育て世帯等」で分岐し、さらに名義人ごとの納税額（所得税＋住民税の
       // 控除対象分・上限9.75万円）でキャップ。ペアローンは夫婦それぞれの割合・枠・納税額で計算
-      const kosodateAtBuy = (()=>{   // 子育て世帯＝入居時に18歳以下の子がいる／若者夫婦世帯＝夫婦いずれかが40歳未満（単身は対象外）
-        const dy = buyAge - hAge0;
-        const hasKid = children.some(c=>{ const a = c.age + dy; return a >= 0 && a <= 18; });   // 入居時にまだ生まれていない子は対象外
-        const youngCouple = !single && (buyAge < 40 || (wAge0 + dy) < 40);
-        return hasKid || youngCouple;
-      })();
-      /* 住宅ローン控除の借入限度額は「住宅の省エネ性能」で決まる制度で、ハウスメーカーでは決まらない。
+      /* 子育て世帯等の判定と性能区分の分岐は loanDedLimitPerPerson() に移した（「次の一手」と共通の1か所）。
+         住宅ローン控除の借入限度額は「住宅の省エネ性能」で決まる制度で、ハウスメーカーでは決まらない。
          以前は htype==='ichijo' だけで判定していたため、一般住宅を選んだままZEHで建てる方が
          年3.5万円×最大13年＝最大45.5万円ぶん過少に計上されていた。
          一条の家は常にZEH水準以上なので、一条選択時はチェックの状態にかかわらずZEH水準とする。
          ※ 下の const zeh はこの行より後で宣言されるため、ここで zeh を参照すると
             初期化前アクセスで recompute() ごと落ちる。チェックボックスを直接読むこと。 */
-      const zehChecked = $('zeh-on') ? $('zeh-on').checked : false;
-      const dedLimitPerPerson = ((typeof htype!=='undefined' && htype==='ichijo') || zehChecked)
-        ? (kosodateAtBuy ? 31.5 : 24.5)   // ZEH水準以上：借入限度4,500万/3,500万×0.7%
-        : (kosodateAtBuy ? 28   : 21);    // 省エネ基準適合：借入限度4,000万/3,000万×0.7%
+      const dedLimitPerPerson = loanDedLimitPerPerson();   // 判定は loanDedLimitPerPerson に一本化（「次の一手」と共通）
       const dedTaxCap = (gross)=>{        // その年の納税額の概算（所得税＋住民税の控除対象＝課税総所得×5%・上限9.75万円）
         if(gross<=0) return 0;
         const social = gross < 106 ? 0 : socialInsurance(gross);
@@ -8968,6 +8978,57 @@
               tasks:[ { who:'staff', text:'上の選択肢ごとに、不足の時期がどれだけ後ろへずれるかを同じ表に並べてお持ちします。保険で備える場合は、掛け捨て型と貯蓄型で毎月の負担と受け取り方がどう変わるかも同じ表に入れます。' },
                       { who:'cust', text:'生活の実感として取り組みやすい順に、順位をお聞かせください。' } ],
               caution:'保険で備える場合、掛け捨て型は解約しても戻りません。貯蓄型は途中で解約すると払込保険料を下回ることがあり、加入には健康状態の告知が必要です。運用の成果は保証されるものではありません。' };
+          } },
+        /* 頭金の置き場所（2026-08-21追加）。ご購入前で頭金を予定している方だけに出す。
+           そのお客様の借入額・金利・返済期間・完済の設定・住宅性能から、
+           「頭金を入れて浮く利息」と「入れないと増える住宅ローン控除」を実額で出して差引を示す。
+           ★どちらが得かは断定しない。前提（金利・控除の限度額・運用の成果）で入れ替わるため、
+             判断材料を並べて選ぶのはお客様、という形にする（保険業法300条1項）。 */
+        { id:'calc.atamakin', cat:'housing', src:'calc', impact:5, urgency:4,
+          when: function(c){
+            return c.buying && num('down',0) > 0 && num('house-price',0) > 0
+                   && c.p.hAge < num('buy-age',36);   // まだ購入していない＝まだ選べる段階
+          },
+          make: function(c){
+            const D = num('down',0), P = num('house-price',0);
+            const buyAge = num('buy-age',36), term = num('loan-term',35);
+            const payAge = num('loan-payoff-age',65);
+            const lump = (typeof loanPayoffMode==='function') && loanPayoffMode()==='lumpsum';
+            const holdY = Math.max(lump ? Math.min(payAge-buyAge, term) : term, 1);   // 借りている年数
+            // 頭金を入れる場合（借入P）と入れない場合（借入P+D）で、完済までに払う利息を比べる
+            const intUpTo = (sched, years)=>{
+              let s=0; const n=Math.min(Math.round(years*12), sched.rows.length);
+              for(let i=0;i<n;i++) s += sched.rows[i].interest;
+              return s;
+            };
+            const sA = buildLoanSchedule(P), sB = buildLoanSchedule(P + D);
+            const extraInterest = Math.max(intUpTo(sB, holdY) - intUpTo(sA, holdY), 0);
+            // 住宅ローン控除の増分（13年・年末残高×0.7%を控除上限でキャップ）
+            const lim = loanDedLimitPerPerson();
+            const ded = (sched)=>{ let s=0;
+              for(let y=1; y<=13 && y<=holdY; y++) s += Math.min(loanBalanceAt(sched, y)*0.007, lim);
+              return s; };
+            const dedGain = Math.max(ded(sB) - ded(sA), 0);
+            const net = extraInterest - dedGain;
+            const growAt = (r, years)=> D * Math.pow(1+r, Math.max(years,0));
+            const y60 = Math.max(60 - c.p.hAge, 0), y65 = Math.max(65 - c.p.hAge, 0);
+            return { title:'頭金'+fmt(D)+'万円の置き場所',
+              /* basis は esc() を通してから描画され、コピー用テキストにもそのまま入る。
+                 HTMLタグを書くと画面にもコピーにも「<b>」の文字が出るので、必ずプレーンな文にすること */
+              basis:'いまのご入力（借入'+fmt(P)+'万円・頭金'+fmt(D)+'万円・'+buyAge+'歳ご購入・'
+                    + (lump ? payAge+'歳で一括完済' : term+'年返済') + '）で計算すると、'
+                    + '頭金を入れることで払わずに済む利息は約'+fmt(extraInterest)+'万円です。'
+                    + '一方、借入が'+fmt(D)+'万円少なくなるぶん住宅ローン控除は約'+fmt(dedGain)+'万円減ります。'
+                    + '差引すると、頭金を手元に残す負担は約'+fmt(Math.abs(net))+'万円'
+                    + (net>=0 ? '（'+holdY+'年間の合計・年あたり約'+(Math.round(net/holdY*10)/10)+'万円）' : 'ぶん、むしろ有利')+'という計算になります。'
+                    + 'この'+fmt(D)+'万円を運用に回した場合は、年3%で'
+                    + (y60>0 ? '60歳に約'+fmt(growAt(0.03,y60))+'万円・' : '')
+                    + '65歳に約'+fmt(growAt(0.03,y65))+'万円、年5%なら'
+                    + (y60>0 ? '60歳に約'+fmt(growAt(0.05,y60))+'万円・' : '')
+                    + '65歳に約'+fmt(growAt(0.05,y65))+'万円という試算です（複利・非課税前提）。',
+              tasks:[ { who:'staff', text:'頭金を入れる場合と入れない場合で、毎月の返済額・手元に残る現金・万一のときに残る借入額の3つを同じ表に並べてお持ちします。保障で備える場合の毎月の負担も同じ表に入れます。' },
+                      { who:'cust', text:'手元にいくら現金を残しておくと安心か、金額の感覚をお聞かせください。教育費や車の買い替えなど、10年以内に使う予定のあるお金も教えてください。' } ],
+              caution:'金利が上がると、頭金を入れないことの負担はこの金額より大きくなります。住宅ローン控除には借入限度額があり、借入が大きいと増える控除は頭打ちになります。運用の成果は保証されるものではなく、元本を下回ることがあります。保険で備える場合、貯蓄型は途中で解約すると払込保険料を下回ることがあり、加入には健康状態の告知が必要です。どの置き方が有利かは前提によって入れ替わります。' };
           } },
         { id:'calc.hokenryo', cat:'balance', src:'calc', impact:4, urgency:3,
           when: function(c){ return !!(c.p.depletion || c.cashShort) && (num('e-life',0) + num('e-nonlife',0)) > 0; },

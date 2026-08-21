@@ -2,7 +2,7 @@
 <!--
   ============================================================================
   Office-M 顧客管理（保険営業CRM）
-  ・ライフプランツール（ichijo.html／ライフプラン②）と同じアカウント（lifeplan_accounts_v1）で
+  ・ライフプランツール（oneroom.html／ichijo.html／ライフプラン②）と同じアカウント（lifeplan_accounts_v1）で
     ログインし、各ツールの保存データ（lifeplan_ichijo_saves_v1__* / lifeplan2_saves_v1__* /
     lifeplan_saves_v1__*）を横断で一覧・顧客に紐付けできる。
   ・顧客情報・商談メモ・提案/契約保険・コミッションは localStorage（omcrm_v1__<user>）、
@@ -354,6 +354,7 @@ function b64ToBlob(b64, type){ const bin=atob(b64); const arr=new Uint8Array(bin
 
 /* ---------- ライフプラン保存データの横断スキャン ---------- */
 const LP_TOOLS = [
+  { key:'lifeplan_oneroom_saves_v1__', tool:'ワンルーム版', file:'oneroom.html' },
   { key:'lifeplan_ichijo_saves_v1__', tool:'一条版', file:'ichijo.html' },
   { key:'lifeplan2_saves_v1__',       tool:'ライフプラン②', file:'index2.html' },
   { key:'lifeplan_saves_v1__',        tool:'ライフプラン①', file:'index.html' }

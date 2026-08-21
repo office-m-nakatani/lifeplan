@@ -1434,6 +1434,9 @@
     .rr-exit-say{ margin:8px 0 2px; padding:8px 12px; border-radius:9px; background:var(--blue-pale);
       border:1px solid var(--blue-pale2); font-size:.78rem; color:var(--blue-deep); line-height:1.7; }
     .rr-exit-say i{ color:var(--blue); margin-right:5px; }
+    /* 【湘建】物件カード内のチェックボックス（.field input の width:100% を打ち消す） */
+    .rr-chk{ display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.85rem; font-weight:500; padding:9px 0 2px; }
+    .rr-chk input[type="checkbox"]{ width:18px; height:18px; flex:0 0 auto; margin:0; accent-color:var(--blue); }
     .rr-exit-say .rr-q-neg{ color:#b34f4f; }
     /* 【湘建】売却シミュレーションの結果ボックス（rr-quote の金色版・空なら消える） */
     .rr-sellsim:not(:empty){ margin-top:12px; background:var(--warn-pale); border:1px solid var(--yellow-soft); border-radius:10px; padding:10px 13px; font-size:.79rem; color:var(--ink); line-height:1.75; }
@@ -1498,11 +1501,36 @@
     .ic-legend div{ display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:start; }
     .ic-legend b{ color:var(--ink); white-space:nowrap; }
     .ic-legend span{ color:var(--ink-soft); }
-    @media(max-width:560px){ .ic-legend div{ grid-template-columns:1fr; gap:0; } }
+    @media(max-width:560px){ .ic-legend div{ grid-template-columns:1fr; gap:0; } .ic-legend b{ white-space:normal; } }
     @media(max-width:620px){
       .ic-vs{ grid-template-columns:1fr 1fr; gap:6px 10px; }
       .ic-vs .icv-arrow{ display:none; }
       .ic-vs .icv-diff{ grid-column:1 / -1; border-top:1px dashed var(--blue-pale2); padding-top:8px; }
+    }
+    /* 【湘建】一般的なワンルーム販売との違い */
+    .sk-diff{ margin:16px 0 6px; border:2px solid var(--yellow-soft); border-radius:14px; overflow:hidden; }
+    .sk-diff .skd-head{ background:var(--blue-deep); color:#fff; padding:11px 14px; }
+    .sk-diff .skd-head b{ display:block; font-size:.95rem; }
+    .sk-diff .skd-head span{ display:block; font-size:.75rem; opacity:.85; margin-top:2px; line-height:1.55; }
+    .sk-diff table{ width:100%; border-collapse:collapse; font-size:.8rem; }
+    .sk-diff th, .sk-diff td{ padding:9px 11px; border-bottom:1px solid var(--blue-pale2); vertical-align:top; line-height:1.65; text-align:left; }
+    .sk-diff thead th{ background:var(--blue-pale); font-size:.76rem; color:var(--ink-soft); white-space:nowrap; }
+    .sk-diff thead th.skd-us{ background:var(--warn-pale); color:#7a5c0f; }
+    .sk-diff td.skd-item{ font-weight:700; color:var(--ink); white-space:nowrap; }
+    .sk-diff td.skd-gen{ color:var(--ink-soft); }
+    .sk-diff td.skd-us{ background:var(--warn-pale); color:var(--ink); font-weight:600; }
+    .sk-diff td.skd-us b{ color:#7a5c0f; }
+    .sk-diff .skd-on{ display:inline-block; margin-top:3px; font-size:.72rem; font-weight:700; color:#2f6b4f; }
+    .sk-diff .skd-off{ display:inline-block; margin-top:3px; font-size:.72rem; color:var(--ink-soft); }
+    .sk-diff .skd-note{ padding:10px 13px; font-size:.74rem; color:var(--ink-soft); line-height:1.7; background:#fff; }
+    @media(max-width:640px){
+      .sk-diff table, .sk-diff thead, .sk-diff tbody, .sk-diff tr, .sk-diff td{ display:block; width:100%; }
+      .sk-diff thead{ display:none; }
+      .sk-diff tr{ border-bottom:1px solid var(--blue-pale2); padding:4px 0; }
+      .sk-diff td{ border:none; padding:4px 12px; }
+      .sk-diff td.skd-gen::before{ content:'一般に多い形：'; font-weight:700; color:var(--ink); }
+      .sk-diff td.skd-us::before{ content:'湘建：'; font-weight:800; color:#7a5c0f; }
+      .sk-diff td.skd-us{ border-radius:8px; margin:2px 8px 6px; }
     }
     .ic-note{ font-size:.8rem; color:var(--ink-soft); line-height:1.7; }
     .ic-fold{ margin-top:10px; }
@@ -2682,6 +2710,9 @@
           <div class="ic-vs-note" id="ic-vs-note"></div>
           <div class="chart-box tall"><canvas id="oneroomChart"></canvas></div>
           <div class="ic-bars" id="ic-bars" style="margin-top:12px;"></div>
+          <!-- 【湘建】一般的なワンルーム販売との違い。資料 p.8→p.9（不安を1つずつ打ち消す構成）に対応。
+               保証の料率・年数は資料に無いため書かない（設定値と「要確認」で表現する） -->
+          <div class="sk-diff" id="sk-diff"></div>
           <div class="no-print" style="text-align:center; margin-top:14px;">
             <button class="btn btn-ghost btn-sm" id="open-re-modal" type="button"><i class="fa-solid fa-table-list"></i> 物件ごとの収支・節税の内訳を見る</button>
           </div>
@@ -4393,6 +4424,14 @@
         rate:       o.rate!=null ? o.rate : 1.9,
         term:       o.term!=null ? o.term : 35,
         danshin:    o.danshin!==false,        // 【湘建】団信あり/なし（2戸目以降は未加入の融資もある）
+        danType:    o.danType || 'general',   // 【湘建】団信の保障範囲（一般／がん／全疾病／配偶者がん）
+        danAdd:     o.danAdd!=null ? o.danAdd : 0,        // 団信特約の上乗せ金利
+        mgmtType:   o.mgmtType || 'jitsugaku',            // 【湘建】管理方式（実額＝集金代行／家賃保証＝空室保証）
+        hoshoPct:   o.hoshoPct!=null ? o.hoshoPct : 90,   // 家賃保証で受け取る割合
+        repair:     o.repair!=null ? o.repair : 3,        // 原状回復・設備交換の費用（年あたりの目安）
+        repairCov:  o.repairCov===true,                   // 【湘建】設備修繕・リフォーム補償を付ける
+        sellVia:    o.sellVia || 'chukai',                // 【湘建】売却方法（仲介／買取）
+        kaitoriPct: o.kaitoriPct!=null ? o.kaitoriPct : 90,
         rent:       o.rent!=null ? o.rent : 8.5,
         rentDown:   o.rentDown!=null ? o.rentDown : 0.5,
         vacancy:    o.vacancy!=null ? o.vacancy : 5,
@@ -4441,16 +4480,42 @@
             </select>
             <span class="hint">2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあります。「なし」にすると、万一の診断で残債が残る前提になります</span>
           </div>
+          <!-- 【湘建】団信は死亡だけでなく、がん・全疾病・配偶者がんまで広げられる（湘建資料 p.10） -->
+          <div class="field rr-f-dantype"><label>団信の保障範囲</label>
+            <select class="re-dantype">
+              <option value="general"${sel(v.danType,'general')}>一般団信（死亡・高度障害）</option>
+              <option value="gan"${sel(v.danType,'gan')}>＋がん団信（がん診断で残債0）</option>
+              <option value="zen"${sel(v.danType,'zen')}>＋全疾病保障</option>
+              <option value="pair"${sel(v.danType,'pair')}>＋配偶者がん団信</option>
+            </select>
+            <span class="hint">死亡以外（がん・就業不能など）でも残債が消えるタイプ。<b>取扱いの有無・条件は金融機関によります</b></span>
+          </div>
+          <div class="field rr-f-dantype"><label>団信特約の上乗せ金利</label><div class="input-unit"><input type="number" class="re-danadd" value="${v.danAdd}" min="0" max="1" step="0.05"><span class="u">％</span></div><span class="hint">がん団信などを付けるときの上乗せ（実務の目安 ＋0.1〜0.3%）。返済額に反映します</span></div>
         </div>
 
         <div class="rr-sub"><i class="fa-solid fa-sack-dollar"></i> 家賃と運営コスト</div>
+        <!-- 【湘建】管理方式。空室保証（家賃保証）と、その中に付けられる設備修繕・リフォーム補償が
+             同社の強み（湘建資料 p.9）。実額の集金代行と切り替えて差を見せられるようにする -->
         <div class="rr-grid">
-          <div class="field"><label>家賃（月額）</label><div class="input-unit"><input type="number" class="re-rent" value="${v.rent}" min="0" step="0.1"><span class="u">万円</span></div></div>
-          <div class="field"><label>空室・滞納損失</label><div class="input-unit"><input type="number" class="re-vacancy" value="${v.vacancy}" min="0" max="50" step="1"><span class="u">％</span></div><span class="hint">年間で家賃が入らない割合</span></div>
-          <div class="field"><label>家賃の下落率（年）</label><div class="input-unit"><input type="number" class="re-rentdown" value="${v.rentDown}" min="0" max="5" step="0.1"><span class="u">％</span></div><span class="hint">築年数とともに下がる想定</span></div>
-          <div class="field"><label>賃貸管理手数料</label><div class="input-unit"><input type="number" class="re-mgmt" value="${v.mgmtPct}" min="0" max="20" step="0.5"><span class="u">％</span></div><span class="hint">集金家賃に対する管理会社への手数料</span></div>
-          <div class="field"><label>管理費＋修繕積立金（月）</label><div class="input-unit"><input type="number" class="re-fee" value="${v.fee}" min="0" step="0.1"><span class="u">万円</span></div><span class="hint">物価上昇に合わせて毎年上がる想定</span></div>
+          <div class="field"><label>管理のしかた</label>
+            <select class="re-mgmttype">
+              <option value="jitsugaku"${sel(v.mgmtType,'jitsugaku')}>集金代行（実額・空室は収入ゼロ）</option>
+              <option value="hosho"${sel(v.mgmtType,'hosho')}>家賃保証／空室保証（空室でも収入あり）</option>
+            </select>
+            <span class="hint">「家賃保証」は空室・滞納があっても保証賃料が入る形。<b>保証の割合・免責期間・見直し周期は契約によります</b></span>
+          </div>
+          <div class="field"><label>家賃（月額）</label><div class="input-unit"><input type="number" class="re-rent" value="${v.rent}" min="0" step="0.1"><span class="u">万円</span></div><span class="hint">満室のときの募集家賃</span></div>
+          <div class="field"><label>家賃の下落率（年）</label><div class="input-unit"><input type="number" class="re-rentdown" value="${v.rentDown}" min="0" max="5" step="0.1"><span class="u">％</span></div><span class="hint">築年数とともに下がる想定（保証賃料の見直しもここで見ます）</span></div>
+          <div class="field rr-f-jitsugaku"><label>空室・滞納損失</label><div class="input-unit"><input type="number" class="re-vacancy" value="${v.vacancy}" min="0" max="50" step="1"><span class="u">％</span></div><span class="hint">年間で家賃が入らない割合</span></div>
+          <div class="field rr-f-jitsugaku"><label>賃貸管理手数料</label><div class="input-unit"><input type="number" class="re-mgmt" value="${v.mgmtPct}" min="0" max="20" step="0.5"><span class="u">％</span></div><span class="hint">集金家賃に対する管理会社への手数料</span></div>
+          <div class="field rr-f-hosho"><label>受け取る保証賃料</label><div class="input-unit"><input type="number" class="re-hoshopct" value="${v.hoshoPct}" min="50" max="100" step="1"><span class="u">％</span></div><span class="hint">募集家賃に対する割合。差額が保証・管理の対価（<b>実際の割合は湘建にご確認ください</b>）</span></div>
+          <div class="field"><label>管理費＋修繕積立金（月）</label><div class="input-unit"><input type="number" class="re-fee" value="${v.fee}" min="0" step="0.1"><span class="u">万円</span></div><span class="hint">管理組合へ払うぶん。物価上昇に合わせて毎年上がる想定</span></div>
           <div class="field"><label>固定資産税等（年）</label><div class="input-unit"><input type="number" class="re-ptax" value="${v.ptax}" min="0" step="1"><span class="u">万円</span></div><span class="hint">固定資産税＋都市計画税の合計</span></div>
+          <div class="field"><label>原状回復・設備交換（年）</label><div class="input-unit"><input type="number" class="re-repair" value="${v.repair}" min="0" step="0.5"><span class="u">万円</span></div><span class="hint">エアコン・給湯器の交換、退去時のクロス張替えなどを年あたりに均した目安</span></div>
+          <div class="field rr-f-hosho"><label>設備修繕・リフォーム補償</label>
+            <label class="rr-chk"><input type="checkbox" class="re-repaircov"${v.repairCov?' checked':''}> 家賃保証に付ける</label>
+            <span class="hint">付けると上の「原状回復・設備交換」が<b>出ていかない前提</b>で試算します（<b>補償の範囲・上限は湘建にご確認ください</b>）</span>
+          </div>
         </div>
 
         <div class="rr-sub"><i class="fa-solid fa-percent"></i> 減価償却（節税額を左右します）</div>
@@ -4474,6 +4539,15 @@
             </select>
           </div>
           <div class="field rr-f-sellage"><label>売却する年齢</label><div class="input-unit"><input type="number" class="re-sellage" value="${v.sellAge}" min="20" max="100"><span class="u">歳</span></div><span class="hint">ご主人（左の「ご家族の基本情報」の年齢）が何歳のときに売るか</span></div>
+          <!-- 【湘建】売却は仲介だけでなく買取も選べる（湘建資料 p.9「仲介も買取も両対応」） -->
+          <div class="field rr-f-sellprice"><label>売却のしかた</label>
+            <select class="re-sellvia">
+              <option value="chukai"${sel(v.sellVia,'chukai')}>仲介（相場で買い手を探す）</option>
+              <option value="kaitori"${sel(v.sellVia,'kaitori')}>買取（湘建が直接買い取る）</option>
+            </select>
+            <span class="hint">仲介は手数料（4%目安）がかかり、買取は手数料なしで時期を選べるかわりに価格が下がります</span>
+          </div>
+          <div class="field rr-f-kaitori"><label>買取価格の目安</label><div class="input-unit"><input type="number" class="re-kaitoripct" value="${v.kaitoriPct}" min="50" max="100" step="1"><span class="u">％</span></div><span class="hint">相場に対する割合（<b>実際の買取価格は査定によります</b>）</span></div>
           <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
         </div>
         <div class="rr-exit-say"></div>
@@ -4496,9 +4570,11 @@
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
       div.querySelector('.re-exit').addEventListener('change', ()=>{ applyExitUI(div); recompute(); });
-      applyExitUI(div);
+      div.querySelector('.re-sellvia')?.addEventListener('change', ()=>{ applyExitUI(div); recompute(); });
+      div.querySelector('.re-mgmttype')?.addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
+      applyExitUI(div); applyPropOptionUI(div);
       div.querySelector('.re-owner').addEventListener('change', recompute);
-      div.querySelector('.re-danshin').addEventListener('change', recompute);
+      div.querySelector('.re-danshin').addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
       /* 【湘建】売却シミュレーションの「この想定を売却条件に反映」。
          結果ボックスは recompute のたびに描き直されるため、行への委譲で拾う */
       div.addEventListener('click', (e)=>{
@@ -4526,6 +4602,14 @@
         rate:     rfv(r,'.re-rate',0),
         term:     Math.max(Math.round(rfv(r,'.re-term',35)),1),
         danshin:  r.querySelector('.re-danshin').value !== 'off',
+        danType:  r.querySelector('.re-dantype')?.value || 'general',   /* 【湘建】団信の保障範囲 */
+        danAdd:   rfv(r,'.re-danadd',0),
+        mgmtType: r.querySelector('.re-mgmttype')?.value || 'jitsugaku',/* 【湘建】管理方式 */
+        hoshoPct: Math.min(Math.max(rfv(r,'.re-hoshopct',90),0),100),
+        repair:   Math.max(rfv(r,'.re-repair',0),0),
+        repairCov:!!r.querySelector('.re-repaircov')?.checked,
+        sellVia:  r.querySelector('.re-sellvia')?.value || 'chukai',    /* 【湘建】仲介／買取 */
+        kaitoriPct:Math.min(Math.max(rfv(r,'.re-kaitoripct',90),0),100),
         rent:     rfv(r,'.re-rent',0),
         vacancy:  rfv(r,'.re-vacancy',0),
         rentDown: rfv(r,'.re-rentdown',0),
@@ -4556,6 +4640,9 @@
     /* 売却する年齢（夫基準）。持ち続ける物件は null。'sell10'＝購入10年後（【湘建】よくある出口） */
     function sellAgeOf(pr){ return pr.exit==='sell' ? pr.sellAge : (pr.exit==='sell10' ? pr.buyAge+10 : null); }
 
+    /* 【湘建】団信の保障範囲のラベル（湘建資料 p.10：がん団信・全疾病保障・配偶者がん団信） */
+    const DAN_TYPE_LABEL = { general:'一般団信（死亡・高度障害）', gan:'がん団信（がん診断で残債0）',
+                             zen:'全疾病保障つき団信', pair:'配偶者がん団信つき' };
     /* 【湘建】出口の設定を1行の日本語にする。入力カードと結果画面の両方で同じ文言を使う
        （2か所に別々に書くと、片方だけ直して食い違う） */
     function exitSay(pr){
@@ -4567,11 +4654,21 @@
         + `（所有${held}年＝${longTerm ? '5年超なので長期譲渡・税率 約20.315%' : '<span class="rr-q-neg">5年以下なので短期譲渡・税率 約39.63%</span>'}）。`
         + (sa < num('h-age',35) ? `<span class="rr-q-neg">※ 売却年齢が現在の年齢より前のため、この物件は試算に乗りません。</span>` : '');
     }
+    /* 【湘建】管理方式・団信・売却方法に応じて、使う欄だけを出す */
+    function applyPropOptionUI(div){
+      const hosho = div.querySelector('.re-mgmttype')?.value === 'hosho';
+      div.querySelectorAll('.rr-f-jitsugaku').forEach(el=> el.classList.toggle('hidden', hosho));
+      div.querySelectorAll('.rr-f-hosho').forEach(el=> el.classList.toggle('hidden', !hosho));
+      const dan = div.querySelector('.re-danshin')?.value !== 'off';
+      div.querySelectorAll('.rr-f-dantype').forEach(el=> el.classList.toggle('hidden', !dan));
+    }
     /* 出口の選び方に応じて、使う欄だけを出す（持ち続けるのに売却年齢を出さない） */
     function applyExitUI(div){
       const ex = div.querySelector('.re-exit')?.value; if(!ex) return;
       div.querySelector('.rr-f-sellage')?.classList.toggle('hidden', ex !== 'sell');
-      div.querySelector('.rr-f-sellprice')?.classList.toggle('hidden', ex === 'hold');
+      div.querySelectorAll('.rr-f-sellprice').forEach(el=> el.classList.toggle('hidden', ex === 'hold'));
+      const kaitori = div.querySelector('.re-sellvia')?.value === 'kaitori';
+      div.querySelector('.rr-f-kaitori')?.classList.toggle('hidden', ex === 'hold' || !kaitori);
       const say = div.querySelector('.rr-exit-say');
       if(say){
         const i = allPropertyRows().indexOf(div);
@@ -4599,7 +4696,7 @@
 
     /* 物件1件の1年分を計算し、状態（残高・償却累計）を1年すすめる */
     function propYear(pr, st, hAge, infl){
-      const out = { own:false, bought:false, sold:false, rent:0, mgmt:0, fee:0, ptax:0,
+      const out = { own:false, bought:false, sold:false, rent:0, mgmt:0, fee:0, ptax:0, repair:0,
                     interest:0, principal:0, loanPay:0, dep:0, initCost:0, buyCash:0,
                     taxIncome:0, landInterest:0, cf:0, value:0, bal:0, sellGross:0, sellNet:0, sellTax:0 };
       if(st.done || hAge < pr.buyAge) return out;
@@ -4614,12 +4711,25 @@
         out.initCost = pr.cost;                          // 諸費用は初年度の経費として計上
       }
 
-      out.rent = pr.rent*12*(1 - pr.vacancy/100)*Math.pow(1 - pr.rentDown/100, yo);   // 実効家賃
-      out.mgmt = out.rent*pr.mgmtPct/100;                                             // 賃貸管理手数料
+      /* 【湘建】管理方式。
+         ・集金代行（実額）＝空室・滞納で家賃が落ち、管理手数料を払う。従来どおりの計算
+         ・家賃保証（空室保証）＝入居の有無にかかわらず保証賃料が入る。空室損失は0とし、
+           保証の対価は「受け取る割合」（家賃の◯％）で表す。管理手数料は保証料に含む前提で0
+         保証でも家賃そのものの見直し（数年ごと）はあるため、家賃の下落率は両方に効かせる */
+      const hosho = pr.mgmtType === 'hosho';
+      const rentBase = pr.rent*12*Math.pow(1 - pr.rentDown/100, yo);
+      out.rent = hosho ? rentBase*(pr.hoshoPct/100) : rentBase*(1 - pr.vacancy/100);
+      out.mgmt = hosho ? 0 : out.rent*pr.mgmtPct/100;                                 // 賃貸管理手数料
       out.fee  = pr.fee*12*Math.pow(1+infl, yo);                                      // 管理費＋修繕積立金（物価連動）
       out.ptax = pr.ptax;                                                             // 固定資産税・都市計画税
+      /* 【湘建】原状回復・設備交換（エアコン・給湯器の交換、退去時のクロス張替えなど）。
+         年あたりの目安を均した額。家賃保証に「設備修繕・リフォーム補償」を付けた場合は
+         この費用が出ていかない前提にする（＝湘建の強みが金額で見える） */
+      out.repair = (hosho && pr.repairCov) ? 0 : pr.repair*Math.pow(1+infl, yo);
 
-      const rate = (pr.rateUpAfter>0 && pr.rateUpTo>0 && yo>=pr.rateUpAfter) ? pr.rateUpTo : pr.rate;
+      // 団信の特約（がん団信など）を付けると金利に上乗せされる
+      const rateBase = pr.rate + (pr.danshin ? Math.max(pr.danAdd,0) : 0);
+      const rate = (pr.rateUpAfter>0 && pr.rateUpTo>0 && yo>=pr.rateUpAfter) ? pr.rateUpTo + (pr.danshin ? Math.max(pr.danAdd,0) : 0) : rateBase;
       const am = amortizeYear(st.bal, rate, st.remM);
       out.interest = am.interest; out.principal = am.principal; out.loanPay = am.payment;
       st.bal = am.end; st.remM = Math.max(st.remM-12, 0);
@@ -4628,17 +4738,21 @@
       if(yo < pr.depYears) out.dep = bldg/pr.depYears;    // 減価償却（建物のみ・定額法）
       st.depAccum += out.dep;
 
-      out.taxIncome    = out.rent - (out.mgmt + out.fee + out.ptax + out.interest + out.dep + out.initCost);
+      out.taxIncome    = out.rent - (out.mgmt + out.fee + out.ptax + out.repair + out.interest + out.dep + out.initCost);
       out.landInterest = out.interest*(1 - pr.bldgPct/100);   // 損益通算できない土地分の利息
-      out.cf    = out.rent - out.mgmt - out.fee - out.ptax - out.loanPay;   // 現金の出入り
+      out.cf    = out.rent - out.mgmt - out.fee - out.ptax - out.repair - out.loanPay;   // 現金の出入り
       const landValue = pr.price*(1 - pr.bldgPct/100);
       out.value = Math.max(pr.price*Math.pow(1 - pr.priceDown/100, yo+1), landValue);   // 土地の価値は残る前提の下限
       out.bal   = st.bal;
 
       const sellAt = sellAgeOf(pr);                       // 【湘建】'sell'＝指定年齢／'sell10'＝購入10年後
       if(sellAt!=null && hAge===sellAt){                  // 出口（売却）
-        const gross   = pr.sellPrice>0 ? pr.sellPrice : out.value;
-        const feeSell = gross*0.04;                                    // 仲介手数料・登記等の目安
+        /* 【湘建】仲介＝相場で買い手を探す（仲介手数料がかかる）／
+           買取＝湘建が直接買い取る（仲介手数料はかからないが価格は相場より下がる） */
+        const sellBase = pr.sellPrice>0 ? pr.sellPrice : out.value;
+        const kaitori  = pr.sellVia === 'kaitori';
+        const gross   = kaitori ? sellBase*(pr.kaitoriPct/100) : sellBase;
+        const feeSell = kaitori ? 0 : gross*0.04;                      // 仲介手数料・登記等の目安
         const land    = pr.price*(1 - pr.bldgPct/100);
         const book    = land + Math.max(bldg - st.depAccum, 0);        // 取得費（建物は未償却残高）
         const gain    = gross - book - feeSell;
@@ -4651,14 +4765,41 @@
       return out;
     }
 
-    /* 給与収入＋その他所得（不動産所得）にかかる 所得税＋住民税（万円）。grossToNet と同じ前提 */
-    function taxOnSalary(gross, otherIncome){
+    /* 【湘建】配偶者控除・配偶者特別控除（令和7年分以降・万円）。
+       本人の合計所得金額が 1,000万円を超えると適用できず、900万円・950万円の線で段階的に減る。
+       不動産所得の赤字を損益通算すると合計所得金額が下がるため、この境目をまたぐ方は
+       還付に「配偶者控除が戻るぶん」が上乗せされる（湘建資料 p.7 の「年収1,000万円以上なら…」の中身）。
+       ※ 赤字をつくること自体が目的になると本末転倒なので、画面では境目をまたぐときだけ知らせる。
+       ※ 配偶者の合計所得が58万円以下＝配偶者控除、58万円超133万円以下＝配偶者特別控除。 */
+    function spouseDeduction(myTotal, spouseTotal, forResident){
+      if(isSingle()) return 0;
+      if(myTotal > 1000 || spouseTotal > 133) return 0;
+      let base;                                   // 本人の合計所得が900万円以下のときの所得税の控除額
+      if(spouseTotal <= 95)       base = 38;      // 58万以下＝配偶者控除／95万以下は配偶者特別控除も同額
+      else if(spouseTotal <= 100) base = 36;
+      else if(spouseTotal <= 105) base = 31;
+      else if(spouseTotal <= 110) base = 26;
+      else if(spouseTotal <= 115) base = 21;
+      else if(spouseTotal <= 120) base = 16;
+      else if(spouseTotal <= 125) base = 11;
+      else if(spouseTotal <= 130) base = 6;
+      else                        base = 3;
+      const ratio = myTotal <= 900 ? 1 : (myTotal <= 950 ? 2/3 : 1/3);
+      return Math.round(Math.min(base, forResident ? 33 : base) * ratio);   // 住民税は33万円が上限
+    }
+    /* 給与収入から合計所得金額（給与所得）を出す。配偶者控除の判定に使う */
+    function salaryTotalIncome(gross){ const g=Math.max(gross,0); return Math.max(g - employmentDeduction(g), 0); }
+    /* 給与収入＋その他所得（不動産所得）にかかる 所得税＋住民税（万円）。grossToNet と同じ前提。
+       spouseTotal を渡すと配偶者控除・配偶者特別控除も反映する（渡さなければ従来どおり） */
+    function taxOnSalary(gross, otherIncome, spouseTotal){
       const g = Math.max(gross, 0);
       const social = g < 106 ? 0 : socialInsurance(g);
       const salaryIncome = Math.max(g - employmentDeduction(g), 0);
       const total = salaryIncome + otherIncome;
-      const taxableI = Math.max(total - social - 58, 0);
-      const taxableR = Math.max(total - social - 43, 0);
+      const spI = (spouseTotal == null) ? 0 : spouseDeduction(total, spouseTotal, false);
+      const spR = (spouseTotal == null) ? 0 : spouseDeduction(total, spouseTotal, true);
+      const taxableI = Math.max(total - social - 58 - spI, 0);
+      const taxableR = Math.max(total - social - 43 - spR, 0);
       return incomeTax(taxableI) + taxableR*0.10 + 0.5;
     }
     /* 損益通算の制限を反映した「給与と通算できる不動産所得」 */
@@ -4676,7 +4817,9 @@
         if(!ri) return;
         const adj = offsettable(ri, reLandOwner[o]);
         const working = ctx[o].working, gross = ctx[o].gross;
-        if(working && gross>0) save += taxOnSalary(gross, 0) - taxOnSalary(gross, adj);
+        // 配偶者の合計所得。損益通算で本人の合計所得が1,000万円の線を下回ると配偶者控除が戻る
+        const spTotal = isSingle() ? null : salaryTotalIncome(ctx[o==='h'?'w':'h'].gross);
+        if(working && gross>0) save += taxOnSalary(gross, 0, spTotal) - taxOnSalary(gross, adj, spTotal);
         else if(adj > 0)       save -= adj*0.20;   // 退職後の黒字は概算20%（所得税＋住民税）で課税
       });
       return save;
@@ -4783,17 +4926,28 @@
         const monthly = y.loanPay/12;
         const grossSalary = num(pr.owner==='w' ? 'w-income' : 'h-income', 0);
         const adj  = offsettable(y.taxIncome, y.landInterest);
-        const save = grossSalary>0 ? (taxOnSalary(grossSalary,0) - taxOnSalary(grossSalary, adj)) : 0;
+        const spTotal = isSingle() ? null : salaryTotalIncome(num(pr.owner==='w' ? 'h-income' : 'w-income', 0));
+        const save = grossSalary>0 ? (taxOnSalary(grossSalary,0,spTotal) - taxOnSalary(grossSalary, adj, spTotal)) : 0;
+        /* 【湘建】損益通算で合計所得金額が1,000万円（900万・950万）の線を下回ると配偶者控除が戻る。
+           またぐときだけ出す（常に出すと「赤字を作れば得」という誤ったメッセージになる） */
+        const myTotal0 = salaryTotalIncome(grossSalary);
+        const sdBefore = spTotal==null ? 0 : spouseDeduction(myTotal0, spTotal, false);
+        const sdAfter  = spTotal==null ? 0 : spouseDeduction(myTotal0 + adj, spTotal, false);
         const cfM = y.cf/12;
         box.innerHTML = `<i class="fa-solid fa-calculator"></i> `
           + `表面利回り <b>${Math.round(grossY*100)/100}%</b>／実質利回り <b>${Math.round(netY*100)/100}%</b>`
           + `　毎月のローン返済 <b>${fmt2(monthly)}万円</b>`
           + `<br>毎月の手残り <b class="${cfM<0?'rr-q-neg':''}">${cfM>=0?'＋':'−'}${fmt2(Math.abs(cfM))}万円</b>`
-          + `（家賃 ${fmt2(y.rent/12)}万 − 管理等 ${fmt2((y.mgmt+y.fee+y.ptax)/12)}万 − 返済 ${fmt2(monthly)}万）`
+          + `（${pr.mgmtType==='hosho'?'保証賃料':'実効家賃'} ${fmt2(y.rent/12)}万 − 管理等 ${fmt2((y.mgmt+y.fee+y.ptax+y.repair)/12)}万 − 返済 ${fmt2(monthly)}万）`
+          + (pr.mgmtType==='hosho' ? `<br><b>家賃保証</b>：空室でも募集家賃 ${fmt2(pr.rent)}万円の ${pr.hoshoPct}%（月 ${fmt2(pr.rent*pr.hoshoPct/100)}万円）が入る前提${pr.repairCov?'。<b>設備修繕・リフォーム補償つき</b>のため原状回復・設備交換の費用は見込んでいません':''}。` : '')
           + `<br>1年目の不動産所得 <b class="${y.taxIncome<0?'rr-q-neg':''}">${y.taxIncome>=0?'＋':'−'}${fmt(Math.abs(y.taxIncome))}万円</b>`
           + `（うち減価償却 ${fmt(y.dep)}万・ローン利息 ${fmt(y.interest)}万・購入諸費用 ${fmt(y.initCost)}万）`
           + ` → <b>1年目の還付 約${fmt(Math.max(save,0))}万円</b>`
+          + (sdAfter > sdBefore ? `<br><b>配偶者控除</b>：損益通算で合計所得金額が ${fmt(myTotal0)}万円 → ${fmt(myTotal0+adj)}万円 になり、`
+              + `配偶者控除（配偶者特別控除）が ${fmt(sdBefore)}万円 → <b>${fmt(sdAfter)}万円</b> に戻ります。上の還付額はこれを含んだ金額です。`
+              + `<span class="hint" style="display:block;">※ 合計所得金額が1,000万円を超えると適用できません（900万円・950万円の線でも段階的に減ります）。赤字をつくること自体が目的にならないようご注意ください。</span>` : '')
           + (save<=0.5 && y.taxIncome<0 ? `<br><span class="rr-q-neg">※ 赤字が土地分の利息（${fmt(y.landInterest)}万円）以下のため、損益通算できる金額がありません。</span>` : '')
+          + (pr.danshin && pr.danType!=='general' ? `<br>団信は<b>${DAN_TYPE_LABEL[pr.danType]}</b>の設定です（死亡以外でも残債が消える形。取扱いの有無・条件は金融機関によります）。` : '')
           + (!pr.danshin ? `<br><span class="rr-q-neg">※ この物件のローンは<b>団信なし</b>の設定です。${isSingle() ? '万一のとき残債は相続財産の債務として残ります（単身のため必要保障額の計算には出ません）' : '万一のとき残債が残る前提で「万が一（保障）」の診断に反映します'}。</span>` : '')
           + (pr.exit==='sell10' ? `<br>出口：<b>購入10年後（${esc(hNameH())}${pr.buyAge+10}歳）に売却</b>する設定です（長期譲渡・税率約20.315%）。` : '')
           + ((sellAgeOf(pr)!=null && sellAgeOf(pr) < num('h-age',35)) ? `<br><span class="rr-q-neg">※ <b>売却年齢（${sellAgeOf(pr)}歳）が現在の年齢より前</b>のため、この物件は売却済み＝試算に乗りません。購入時の年齢か保有方針をご確認ください。</span>` : '');
@@ -4821,8 +4975,10 @@
       let y = null;
       for(let a=pr.buyAge; a<=simAge; a++) y = propYear(prHold, st, a, infl);
       const auto  = y.value;                                   // 下落率からの自動計算値（土地の価値を下限に）
-      const gross = pr.mktPrice>0 ? pr.mktPrice : auto;
-      const feeSell = gross*0.04;
+      const base  = pr.mktPrice>0 ? pr.mktPrice : auto;
+      const kaitori = pr.sellVia === 'kaitori';                // 【湘建】買取は手数料なし・価格は掛け目
+      const gross = kaitori ? base*(pr.kaitoriPct/100) : base;
+      const feeSell = kaitori ? 0 : gross*0.04;
       const bldg  = pr.price*pr.bldgPct/100;
       const book  = pr.price*(1 - pr.bldgPct/100) + Math.max(bldg - st.depAccum, 0);
       const gain  = gross - book - feeSell;
@@ -4833,10 +4989,11 @@
       const own0  = pr.down + pr.cost;
       box.innerHTML = `<i class="fa-solid fa-magnifying-glass-chart"></i> <b>${simAge}歳（購入${hold}年後）に売却した場合の試算</b>`
         + `<br>想定売却価格 <b>${fmt(gross)}万円</b>`
-        + (pr.mktPrice>0
-            ? `（周辺の売出相場の入力値。下落率からの自動計算では ${fmt(auto)}万円）`
-            : `（下落率からの自動計算。周辺の売出相場を入れると、その価格で試算し直します）`)
-        + `<br>売却価格 ${fmt(gross)}万 − 諸費用（4%目安） ${fmt(feeSell)}万 − ローン残債 ${fmt(y.bal)}万 − 譲渡税 ${fmt(tax)}万`
+        + (kaitori ? `（<b>買取</b>：相場 ${fmt(base)}万円 × ${pr.kaitoriPct}%${pr.mktPrice>0?'':'／相場は下落率からの自動計算'}）`
+           : (pr.mktPrice>0
+              ? `（周辺の売出相場の入力値。下落率からの自動計算では ${fmt(auto)}万円）`
+              : `（下落率からの自動計算。周辺の売出相場を入れると、その価格で試算し直します）`))
+        + `<br>売却価格 ${fmt(gross)}万 ${kaitori ? '− 仲介手数料なし（買取）' : `− 諸費用（4%目安） ${fmt(feeSell)}万`} − ローン残債 ${fmt(y.bal)}万 − 譲渡税 ${fmt(tax)}万`
         + `<br>→ 手取りの想定 <b class="${net<0?'rr-q-neg':''}">約${net<0?'−':''}${fmt(Math.abs(net))}万円</b>（購入時の自己資金 ${fmt(own0)}万円）`
         + (gain<=0 ? `<br><span class="hint">※ 取得費・諸費用を下回るため譲渡税は0円で計算しています（売却損）。</span>` : '')
         + (!longTerm ? `<br><span class="rr-q-neg">※ 所有5年以下のため<b>短期譲渡（税率約39.63%）</b>で計算しています。長期譲渡（約20.315%）になるかは<b>譲渡した年の1月1日時点</b>の所有期間で判定されます（本ツールは購入からの経過年数で概算しています）。</span>` : '')
@@ -5005,7 +5162,7 @@
         { label:'売却の手取り',        v: sellSum },
         { label:`不動産の純資産（${atAge}歳時点）`, v: row.reNet },
         { label:'ローン返済',          v: -loanSum },
-        { label:'管理費・固定資産税等', v: -opexSum },
+        { label:'管理費・固定資産税・修繕等', v: -opexSum },
         { label:'頭金・購入時の諸費用', v: -buySum },
       ].filter(x=> Math.abs(x.v) >= 0.5);
       const wfExplained = wfItems.reduce((a,x)=> a+x.v, 0);
@@ -5014,6 +5171,7 @@
       if(Math.abs(wfRest) >= 0.5) wfItems.push({ label:'運用資産の差（積立・取崩し）', v: wfRest, rest:true });
       $('ic-vs-note').innerHTML = `下のグラフは、この差 <b>${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}万円</b> が<b>何でできているか</b>の内訳です（青＝増える側／赤＝出ていく側。合計がいちばん下の「差」になります）`;
       drawOneroomChart(wfItems, diff, horizonLbl);
+      renderShokenDiff(props);   // 【湘建】一般的なワンルーム販売との違い
       /* グラフの各項目が何を指すか。金額はグラフ側に出ているので、ここでは中身の説明だけ */
       const WF_DESC = {
         '家賃収入': `空室・滞納を差し引いた実効家賃の累計（${horizonLbl}まで）`,
@@ -5022,7 +5180,7 @@
         '売却の手取り': soldRow ? `${soldRow.hAge}歳で売却：売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税。手取りは現金として金融資産に加えています` : '売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税',
         [`不動産の純資産（${atAge}歳時点）`]: 'まだ保有している物件の 評価額 − ローン残債',
         'ローン返済': '元金＋利息の累計。<b>元金の分は「不動産の純資産」や「売却の手取り」として戻ってきます</b>（丸ごと出ていくお金ではありません）',
-        '管理費・固定資産税等': '管理費・修繕積立金・固定資産税・都市計画税・賃貸管理手数料の累計',
+        '管理費・固定資産税・修繕等': '管理費・修繕積立金・固定資産税・都市計画税・賃貸管理手数料・原状回復や設備交換の費用の累計',
         '頭金・購入時の諸費用': '登記・不動産取得税・融資事務手数料など、購入時に用意する自己資金',
         '運用資産の差（積立・取崩し）': '手元の現金が増減するぶん、積立に回せる額や、現金が足りない年に取り崩す額が変わります'
       };
@@ -5044,10 +5202,59 @@
         + `・<b>不動産の評価額</b>：入力した年間下落率で減らし、土地部分（建物割合の残り）を下限としています。実際の売却価格は立地・時期・需給で大きく変わります。<br>`
         + `・<b>団信</b>：物件ごとに「団信あり／なし」を設定できます。団信なしの借入は万一のときも残債が残るため、「万が一（保障）」の診断では評価額−残債だけを資産側に算入しています。<br>`
         + `・<b>10年後売却・買い増し</b>：保有方針の「購入10年後に売却」は所有5年超（譲渡した年の1月1日判定）として長期譲渡税率 約20.315%で計算しています。2戸目・3戸目は「物件を追加」で同条件をコピーして試算できますが、<b>実際の融資枠・金利は既存借入の状況で変わる</b>ため、金融機関の審査条件をご確認ください。<br>`
-        + `・<b>含めていないもの</b>：入退去のたびの原状回復費・広告料（AD）、大規模修繕の一時金、賃貸管理会社の変更、税制改正の影響。<br>`
+        + `・<b>家賃保証（空室保証）</b>：空室・滞納があっても「募集家賃×受け取る割合」が入る前提で計算し、空室損失と賃貸管理手数料は0にしています。保証賃料は据え置きではなく、入力した<b>家賃の下落率</b>で見直される前提です。<b>保証の割合・免責期間（引渡し直後など保証が始まらない期間）・見直しの周期・解約条件は契約によって異なります</b>ので、湘建の契約書でご確認ください。<br>`
+        + `・<b>設備修繕・リフォーム補償</b>：付けた場合は「原状回復・設備交換」が出ていかない前提で計算しています。<b>補償の範囲・上限額・免責はご確認ください</b>（対象外の工事は自己負担になります）。<br>`
+        + `・<b>買取</b>：仲介手数料をかけずに時期を選んで売れるかわりに、価格は相場に対する掛け目で計算しています。<b>実際の買取価格は査定によります</b>。<br>`
+        + `・<b>がん団信・全疾病保障・配偶者がん団信</b>：死亡以外でも残債が消えるタイプです。上乗せ金利を入力すると返済額に反映します。<b>取扱いの有無・保障の開始条件（上皮内がんの扱いなど）・告知は金融機関によって異なります</b>。本ツールの「万が一（保障）」の診断は<b>死亡</b>を前提にしているため、がん等での残債消滅は必要保障額には算入していません。<br>`
+        + `・<b>含めていないもの</b>：広告料（AD）、大規模修繕の一時金による修繕積立金の値上げ、賃貸管理会社の変更、税制改正の影響。<br>`
         + `・<b>比較の考え方</b>：同じ自己資金・毎月の持ち出しを新NISA等の運用に回した場合とも見比べてください（「貯蓄・資産運用」で積立額を増やすと、この画面の点線が動きます）。<br>`
         + `<span style="color:var(--ink-soft);">Office-M（税理士事務所を母体とするFP事務所）試算</span>`;
     }
+    /* 【湘建】一般的なワンルーム販売との違い（湘建資料 p.9「その不安、湘建が『赤ペン』で消します」）。
+       資料には保証の料率・年数・免責期間が書かれていないため、断定できる数字は書かない。
+       いま画面で選んでいる設定（家賃保証・補償・買取・団信の範囲）を「反映中／未設定」で示し、
+       条件そのものは湘建にご確認いただく形にしてある。 */
+    function renderShokenDiff(props){
+      const box = $('sk-diff'); if(!box) return;
+      if(!props || !props.length){ box.innerHTML=''; return; }
+      const anyHosho  = props.some(p=> p.mgmtType==='hosho');
+      const anyCov    = props.some(p=> p.mgmtType==='hosho' && p.repairCov);
+      const anyKaitori= props.some(p=> p.sellVia==='kaitori' && sellAgeOf(p)!=null);
+      const anyDanPlus= props.some(p=> p.danshin && p.danType!=='general');
+      const on  = (t)=> `<span class="skd-on"><i class="fa-solid fa-circle-check"></i> ${t}</span>`;
+      const off = (t)=> `<span class="skd-off"><i class="fa-regular fa-circle"></i> ${t}</span>`;
+      const rows = [
+        { item:'空室のとき',
+          gen:'入居者が決まるまで家賃はゼロ。次の募集まで持ち出しが増えます',
+          us:'<b>空室保証（家賃保証）</b>があり、空室・滞納があっても保証賃料が入ります',
+          st: anyHosho ? on('この試算に反映中（空室損失0で計算）') : off('いまは「集金代行（実額）」で計算中。物件の「管理のしかた」で切り替えられます') },
+        { item:'設備の故障・退去',
+          gen:'エアコンや給湯器の交換、原状回復はそのつど実費',
+          us:'家賃保証に<b>設備修繕・リフォーム補償</b>を付けられます',
+          st: anyCov ? on('この試算に反映中（原状回復・設備交換を0で計算）') : off('いまは実費で計算中') },
+        { item:'売りたいとき',
+          gen:'仲介で買い手を探すため、売れる時期が読みにくい',
+          us:'<b>仲介も買取も両対応</b>。急ぐときは買取で時期を選べます',
+          st: anyKaitori ? on('この試算は買取で計算中') : off('いまは仲介（手数料4%目安）で計算中') },
+        { item:'万一のとき',
+          gen:'一般団信（死亡・高度障害）が中心',
+          us:'<b>がん団信・全疾病保障・配偶者がん団信</b>まで広げられ、死亡以外でも残債が消えます',
+          st: anyDanPlus ? on('この試算に反映中（上乗せ金利も返済額に反映）') : off('いまは一般団信で計算中') },
+        { item:'確定申告',
+          gen:'初年度の申告や毎年の記帳を自分で',
+          us:'<b>申告のフォロー体制</b>があります',
+          st: off('この試算には費用として入れていません（本ツールは税理士事務所が作成しています）') }
+      ];
+      box.innerHTML = `<div class="skd-head"><b><i class="fa-solid fa-shield-halved"></i> 湘建だからできること（一般的なワンルーム販売との違い）</b>`
+          + `<span>ワンルーム投資の不安は「空室・設備修繕・家賃下落・確定申告」。湘建はこれを会社側で引き受けられる点が他社との違いです。</span></div>`
+        + `<table><thead><tr><th>不安なこと</th><th>一般に多い形</th><th class="skd-us">湘建</th></tr></thead><tbody>`
+        + rows.map(r=> `<tr><td class="skd-item">${r.item}</td><td class="skd-gen">${r.gen}</td>`
+            + `<td class="skd-us">${r.us}<br>${r.st}</td></tr>`).join('')
+        + `</tbody></table>`
+        + `<div class="skd-note">※ 保証・補償の<b>割合、免責期間、見直しの周期、対象範囲、上限額、解約条件</b>は契約によって異なります。上の試算は画面で入力した条件によるもので、実際の条件は湘建の契約書・重要事項説明でご確認ください。`
+        + `保証があっても<b>家賃そのものの見直し</b>や<b>物件価格の下落・金利上昇</b>の影響は残ります。</div>`;
+    }
+
     /* 【湘建】差の内訳グラフ（2026-08-21 ユーザー指摘）
        買った場合と買わなかった場合の総資産を棒2本で並べても、家計全体に対して差が小さく
        長さがほとんど同じに見える＝「差が分からない」。総資産は #ic-vs に数字で出し、
@@ -5139,8 +5346,9 @@
         const adj = offsettable(y.taxIncome, y.landInterest);
         const ownerAge = ownerAge0 + (x.hAge - hAge0b);
         const gross    = ownerGross*Math.pow(1+ownerRaise, x.hAge - hAge0b);
+        const spT = isSingle() ? null : salaryTotalIncome(num(pr.owner==='w' ? 'h-income' : 'w-income', 0));
         const save = (ownerAge < ownerRetire && gross>0)
-          ? (taxOnSalary(gross,0) - taxOnSalary(gross, adj))
+          ? (taxOnSalary(gross,0,spT) - taxOnSalary(gross, adj, spT))
           : (adj>0 ? -adj*0.20 : 0);
         const dis = y.taxIncome<0 ? Math.min(-y.taxIncome, y.landInterest) : 0;
         return `<tr${y.bought||y.sold?' class="milestone"':''}>
@@ -6568,7 +6776,7 @@
           reIncOwner[owner]  += y.taxIncome;
           reLandOwner[owner] += y.landInterest;
           reRent += y.rent;
-          reOpex += y.mgmt + y.fee + y.ptax;
+          reOpex += y.mgmt + y.fee + y.ptax + y.repair;   // 【湘建】原状回復・設備交換を含む
           reLoan += y.loanPay;
           reCf   += y.cf;
           reDep  += y.dep;
@@ -7672,9 +7880,13 @@
           investments:[ { type:'nisa', name:'つみたてNISA', lump:'500', monthly:'10', ret:'5', start:'40', end:'65', after:'use', on:true } ],
           /* 1戸目＝持ち続けて完済後の家賃を私的年金に／2戸目＝2年後に団信なし融資で買い増し・10年後に売却。
              高年収で税率が高いぶん損益通算の効果が出やすい層。雑費の経費計上（将来プランでON）の例も兼ねる */
+          /* 湘建の管理プランを入れた例：家賃保証＋設備修繕・リフォーム補償、1戸目はがん団信つき。
+             山本様（3戸）は集金代行（実額）のままにしてあり、2つを見比べられる */
           properties:[
-            { owner:'h', buyAge:40, exit:'hold', danshin:true },
-            { owner:'h', buyAge:42, exit:'sell10', danshin:false }
+            { owner:'h', buyAge:40, exit:'hold', danshin:true, danType:'gan', danAdd:0.2,
+              mgmtType:'hosho', hoshoPct:90, repairCov:true },
+            { owner:'h', buyAge:42, exit:'sell10', danshin:false,
+              mgmtType:'hosho', hoshoPct:90, repairCov:true }
           ],
           miraiFields:{ 're-misc-on':true, 're-misc':'40' }
         }); }
@@ -10164,10 +10376,10 @@
           when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/管理|サブリース|家賃保証|空室|原状回復|設備|入居率/); },
           make: function(){
             return { title:'賃貸管理・アフターサポートの条件確認',
-              basis:'購入後の手残りは、賃貸管理の手数料・空室時の対応・設備故障や原状回復の費用負担の条件で変わります。湘建の管理プラン（集金代行・サブリース等）の最新の条件を確認し、この試算の「空室・滞納損失」「賃貸管理手数料」を同じ条件にそろえます。',
+              basis:'購入後の手残りは、賃貸管理の手数料・空室時の対応・設備故障や原状回復の費用負担の条件で変わります。湘建には空室保証（家賃保証）があり、その中に設備修繕・リフォームの補償を付けられるため、一般的な集金代行とは手残りの出方が変わります。この試算の「管理のしかた」を実際の契約条件にそろえて比べます。',
               tasks:[ { who:'cust', text:'ご自身で入居者対応をするか、管理会社に任せたいかのご希望をお聞かせください。' },
-                      { who:'staff', text:'湘建の賃貸管理プランの手数料・サポート範囲・免責期間が分かる資料をご用意し、この試算に同じ条件を入力してお見せします。' } ],
-              caution:'サポート・保証の範囲はプランと時期により変わります。最新の契約書・重要事項説明でご確認ください。' };
+                      { who:'staff', text:'湘建の管理プランについて、受け取る保証賃料の割合・免責期間・見直しの周期・補償の対象範囲と上限が分かる資料をご用意し、この試算に同じ条件を入力して集金代行と並べてお見せします。' } ],
+              caution:'保証・補償の範囲はプランと時期により変わります。最新の契約書・重要事項説明でご確認ください。保証があっても家賃そのものの見直しや、物件価格の下落・金利上昇の影響は残ります。' };
           } },
         { id:'talk.shokenExit', cat:'housing', src:'talk', impact:4, urgency:3,
           when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/売却|出口|買い増し|2戸|２戸|3戸|３戸|複数戸|もう1戸|もう一戸/); },
@@ -10175,15 +10387,15 @@
             return { title:'出口（10年後売却）と買い増しの方針整理',
               basis:'ワンルームは「10年前後で売却して利益を確定する」「持ち続けて完済後の家賃を受け取る」「2戸目・3戸目に広げる」で結果が大きく変わります。譲渡税率は所有5年超（譲渡年の1月1日判定）で約39.63%→約20.315%に下がるため、売却するなら時期の設計が要になります。',
               tasks:[ { who:'cust', text:'何年くらい持つイメージか、2戸目以降の買い増しに関心があるかをお聞かせください。' },
-                      { who:'staff', text:'この画面の「保有方針」を切り替えて、10年後売却・持ち続け・複数戸の3パターンの総資産を並べてお見せします。買い増し時の融資条件は金融機関に確認します。' } ],
+                      { who:'staff', text:'この画面の「出口（いつ売るか）」を切り替えて、10年後売却・持ち続け・複数戸の3パターンの総資産を並べてお見せします。湘建は仲介と買取の両方に対応できるため、時期を選びたい場合の買取の目安価格も確認してお持ちします。買い増し時の融資条件は金融機関に確認します。' } ],
               caution:'将来の売却価格・家賃は想定であり、実際の相場を約束するものではありません。' };
           } },
         { id:'talk.shokenDanshin', cat:'hoken', src:'talk', impact:5, urgency:4,   // 保障の穴はhoken枠で必ず出す
           when: function(){ return (typeof readProperties==='function' && readProperties().some(function(p){ return p.danshin===false; })) || talkHas(/団信なし|団信未加入|団信に入れ/); },
           make: function(){
             return { title:'団信なしの借入の保障の確認',
-              basis:'試算に団信なしの借入が含まれています。団信のないローンは万一のときもそのまま残るため、残債相当の保障をどう用意するか（掛け捨て保険・売却前提など）を先に決めておく必要があります。2戸目以降は団信なしの融資になる場合があります。',
-              tasks:[ { who:'cust', text:'各ローンの団信の有無と、特約（がん・三大疾病など）の内容が分かる書類をお持ちください。' },
+              basis:'試算に団信なしの借入が含まれています。団信のないローンは万一のときもそのまま残るため、残債相当の保障をどう用意するか（掛け捨て保険・売却前提など）を先に決めておく必要があります。2戸目以降は団信なしの融資になる場合があります。逆に団信を付けられる場合は、がん団信・全疾病保障・配偶者がん団信まで広げると、死亡以外でも残債が消える形にできます。',
+              tasks:[ { who:'cust', text:'各ローンの団信の有無と、特約（がん・全疾病・配偶者がんなど）の内容が分かる書類をお持ちください。' },
                       { who:'staff', text:'団信のない残債と必要保障額を整理し、備え方の選択肢を並べてお持ちします。ご意向を確認しながら進めます。' } ],
               caution:'保険のご検討はご意向が最優先です。保険商品の詳細は募集人が説明します。' };
           } },
@@ -10191,10 +10403,10 @@
           when: function(){ return (typeof readProperties==='function' && readProperties().length>0) || talkHas(/損益通算|節税|確定申告|還付|減価償却/); },
           make: function(){
             return { title:'確定申告と還付額の確認（オーナー向け）',
-              basis:'損益通算による還付を受けるには、給与所得者でも毎年の確定申告が必要です。初年度は購入諸費用のうち経費にできるものを漏らさないことで還付額が変わります。2戸目以降は名義ごとに全物件を合算して計算します。',
+              basis:'損益通算による還付を受けるには、給与所得者でも毎年の確定申告が必要です。初年度は購入諸費用のうち経費にできるものを漏らさないことで還付額が変わります。2戸目以降は名義ごとに全物件を合算して計算します。湘建には申告のフォロー体制があるため、初年度の進め方をあわせて確認します。合計所得金額が1,000万円前後の方は、損益通算で配偶者控除・配偶者特別控除の適用が変わる場合があります（1,000万円を超えると適用できず、900万円・950万円の線でも段階的に減ります）。',
               tasks:[ { who:'cust', text:'直近の源泉徴収票（ご夫婦分）と、購入時にかかる諸費用の内訳がわかる資料をご用意ください。' },
-                      { who:'staff', text:'ご年収での還付見込みと、2年目以降どこまで縮むかを試算してお持ちします。税額の判断は連携する税理士が行います。' } ],
-              caution:'税額の計算・申告の代理は税理士が行います。ここでの数字は目安です。' };
+                      { who:'staff', text:'ご年収での還付見込みと、2年目以降どこまで縮むかを試算してお持ちします。湘建の申告フォローで対応できる範囲も確認してお伝えします。税額の判断は連携する税理士が行います。' } ],
+              caution:'税額の計算・申告の代理は税理士が行います。ここでの数字は目安です。赤字をつくること自体が目的になると本末転倒ですので、収支と両にらみでご判断ください。' };
           } },
         { id:'talk.souzoku', cat:'tax', src:'talk', impact:3, urgency:2,
           when: function(){ return talkHas(/相続|贈与|実家|親御|義父|義母/); },

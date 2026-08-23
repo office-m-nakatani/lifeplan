@@ -363,6 +363,17 @@
     .cr-grid .field label{ min-height:1.2em; }
     .cr-quote{ margin-top:11px; background:var(--blue-pale); border:1px solid var(--blue-pale2); border-radius:10px; padding:9px 12px; font-size:.78rem; color:var(--blue-deep); line-height:1.6; }
     .cr-quote i{ color:var(--blue); margin-right:4px; }
+    .cr-allow{ margin-top:7px; background:var(--good-pale); border:1px solid #cfe9dd; border-radius:10px; padding:9px 12px; font-size:.78rem; color:#1f6b4d; line-height:1.6; }
+    .cr-allow i{ color:var(--good); margin-right:4px; }
+    /* 児童手当（世帯合計）のまとめ */
+    .allow-box{ margin-top:14px; border:1.5px solid #cfe9dd; background:var(--good-pale); border-radius:14px; padding:14px 16px; font-size:.82rem; color:#1f6b4d; line-height:1.7; }
+    .allow-box .ab-head{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:.9rem; color:#186047; margin-bottom:6px; }
+    .allow-box .ab-head i{ color:var(--good); }
+    .allow-box .ab-total{ font-size:1.25rem; font-weight:800; color:#186047; }
+    .allow-box .ab-note{ margin-top:6px; font-size:.75rem; color:#4d7a67; }
+    .allow-box table{ width:100%; border-collapse:collapse; margin-top:8px; }
+    .allow-box td{ padding:4px 0; font-size:.79rem; border-top:1px dashed #bfe0d1; }
+    .allow-box td:last-child{ text-align:right; font-weight:700; white-space:nowrap; }
 
     /* ZEH（省エネ住宅）オプション */
     .zeh-box{ margin-top:14px; border:1.5px solid #cfe9dd; background:var(--good-pale); border-radius:14px; padding:14px 16px; }
@@ -987,6 +998,7 @@
           <div class="acc-body">
             <div id="children-list"></div>
             <button class="btn-add" id="add-child" type="button"><i class="fa-solid fa-plus"></i> お子さまを追加</button>
+            <div class="allow-box" id="allow-box" hidden></div>
             <div class="note">
               <i class="fa-solid fa-lightbulb"></i>
               <span>教育費は文部科学省などの平均をもとに、年齢に応じて自動で見込みます（幼稚園〜大学）。進路プランを切り替えると金額が変わります。</span>
@@ -1539,7 +1551,7 @@
       <div class="table-head">
         <h3><i class="fa-solid fa-table-cells"></i> 年齢別キャッシュフロー表</h3>
       </div>
-      <p class="scroll-hint">金額の単位：万円<span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
+      <p class="scroll-hint">金額の単位：万円　／　「収入」にはお子さまの<b>児童手当</b>を自動で含めています<span class="dd-legend"><span class="dd-swatch"></span>オレンジの帯＝資産の取り崩し期</span></p>
       <!-- 表示期間を絞っているときだけ出す。切替UIは上の「金融資産の推移」にあるので、行が少ない理由が分かるようにする -->
       <p class="cf-horizon-note hidden" id="cf-horizon-note"></p>
       <div class="table-scroll">
@@ -1813,7 +1825,7 @@
         <ul>
           <li><b>手取り額</b>：年収から給与所得控除・社会保険料（厚生年金9.15%〈標準報酬上限を簡易反映〉・健康保険 約5%・雇用保険0.6%）・所得税（累進、復興特別所得税込）・住民税を概算する簡易計算です。<b>年収106万円未満は社会保険の本人負担なし（扶養内）</b>として計算します（2026年10月に予定される106万円要件の撤廃など、成立済み・予定の制度改正は未反映です）。<b>扶養控除・iDeCo等の個別の控除は未考慮</b>のため実際と差が出ることがあります（面談で補正します）。<b>会社員を想定</b>しており、自営業の方は社会保険・退職金の前提が異なります。</li>
           <li><b>公的年金</b>：受給額そのものの試算は行わず、<b>ご入力いただいた月額</b>を受給開始年齢から計上します。物価スライドには<b>マクロ経済スライドによる調整（物価上昇率−0.6%ポイント・下限0）</b>を簡易反映し、年金にかかる<b>税・社会保険料（国保・介護保険料等）を年金額に応じて約3〜12%概算控除</b>した手取り相当額を使います。「ねんきん定期便」の見込額のご利用をおすすめします。</li>
-          <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
+          <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳年度末までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
           <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
           <li><b>物価上昇（インフレ）</b>：ご入力の率を生活費・教育費・住宅維持費に適用し、資産の「実質価値」の表示にも使用します。</li>
@@ -1898,6 +1910,47 @@
       return k12CostPerYear(age, c.k12) + highEdCostPerYear(age, c.highEd, c.lodging);
     }
 
+    /* ---------- 児童手当（2024年10月改正後・万円） ----------
+       月額 3歳未満15,000円／3歳〜高校生年代10,000円／第3子以降は一律30,000円。所得制限なし。
+       「第何子」は22歳到達後最初の3月31日までの子を年上から数える（大学生年代も数に入る）ため、
+       上の子が数から外れると下の子が繰り上がって減額される。年単位の簡易計算とし、
+       支給は0〜17歳の18年間、カウント対象は0〜21歳として総額を実額に合わせている
+       （第1子・第2子＝約234万円、第3子以降＝約648万円）。 */
+    const ALLOW_YEAR = { under3: 1.5*12, normal: 1.0*12, third: 3.0*12 };  // 年額・万円
+    const ALLOW_PAY_MAX = 17;    // この年齢まで支給（18歳年度末の簡易表現）
+    const ALLOW_COUNT_MAX = 21;  // この年齢まで「第何子」の数に入る（22歳年度末の簡易表現）
+    /* children=[{age}] の t 年後の受給額。{ total, per:[{amount, order}] } を返す */
+    function childAllowanceAt(children, t){
+      const per = children.map(()=> ({ amount:0, order:0 }));
+      const counted = children
+        .map((c,i)=> ({ i, ca:c.age + t }))
+        .filter(x=> x.ca >= 0 && x.ca <= ALLOW_COUNT_MAX)
+        .sort((a,b)=> b.ca - a.ca);                       // 年上から
+      let total = 0;
+      counted.forEach((x,idx)=>{
+        const order = idx + 1;
+        per[x.i].order = order;
+        if(x.ca <= ALLOW_PAY_MAX){
+          const amt = (order >= 3) ? ALLOW_YEAR.third : (x.ca <= 2 ? ALLOW_YEAR.under3 : ALLOW_YEAR.normal);
+          per[x.i].amount = amt;
+          total += amt;
+        }
+      });
+      return { total, per };
+    }
+    /* これから受け取る総額（世帯合計・お子さまごと） */
+    function childAllowanceRemain(children){
+      const perTotal = children.map(()=> 0);
+      let total = 0;
+      for(let t=0; t<=ALLOW_COUNT_MAX+1; t++){
+        const a = childAllowanceAt(children, t);
+        a.per.forEach((p,i)=> perTotal[i] += p.amount);
+        total += a.total;
+      }
+      return { total, perTotal };
+    }
+
+
     /* ---------- 子ども・イベントの動的行 ---------- */
     const childrenList = $('children-list');
     const eventsList = $('events-list');
@@ -1935,7 +1988,8 @@
             </select>
           </div>
         </div>
-        <p class="cr-quote"></p>`;
+        <p class="cr-quote"></p>
+        <p class="cr-allow"></p>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); renumberChildPlaceholders(); recompute(); });
       div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', ()=>{ updateChildQuote(div); recompute(); }));
       div.querySelector('.cr-gender-seg').addEventListener('click', (e)=>{
@@ -1966,6 +2020,51 @@
         q.innerHTML = `<i class="fa-solid fa-coins"></i> 相場の目安：<b>${info.label}・${lodging==='boarding'?'下宿':'自宅'}</b>で${info.years}年間 約 <b>${fmt(school+lodge)}万円</b>（学費${fmt(school)}${lodge>0?` ＋ 下宿${fmt(lodge)}`:''}）／ 幼〜高は約 ${fmt(k12Total)}万円`;
       } else {
         q.innerHTML = `<i class="fa-solid fa-coins"></i> 相場の目安：高校卒業まで（幼〜高）で約 <b>${fmt(k12Total)}万円</b>`;
+      }
+    }
+
+    /* 児童手当：お子さまごとの行＋世帯合計を、入力に合わせて更新する */
+    const fmt1 = (man)=> (Math.round(man*10)/10).toLocaleString('ja-JP');   // 月1.5万円などを丸めずに表示
+    function updateAllowanceUI(){
+      const rows = [...childrenList.querySelectorAll('.row-item')];
+      const box = $('allow-box');
+      if(!rows.length){ if(box) box.hidden = true; return; }
+      const kids = readChildren();
+      const now = childAllowanceAt(kids, 0);
+      const remain = childAllowanceRemain(kids);
+
+      rows.forEach((div,i)=>{
+        const q = div.querySelector('.cr-allow');
+        if(!q) return;
+        const age = kids[i].age, p = now.per[i], mine = remain.perTotal[i];
+        let head;
+        if(p.amount > 0){
+          head = `いまは<b>第${p.order}子</b>として 月 <b>${fmt1(p.amount/12)}万円</b>`;
+        } else if(age > ALLOW_PAY_MAX){
+          head = `支給の対象年齢（高校生年代まで）を過ぎています`;
+        } else {
+          head = `これから支給の対象になります`;
+        }
+        q.innerHTML = `<i class="fa-solid fa-hand-holding-heart"></i> 児童手当：${head}／ このお子さま分で今後 <b>約${fmt(mine)}万円</b>`;
+      });
+
+      if(box){
+        box.hidden = false;
+        const third = now.per.some(p=> p.order>=3 && p.amount>0);
+        const rowsHtml = kids.map((c,i)=>{
+          const p = now.per[i], mine = remain.perTotal[i];
+          const state = p.amount>0 ? `第${p.order}子・月${fmt1(p.amount/12)}万円`
+                      : (c.age>ALLOW_PAY_MAX ? '対象年齢を終了' : 'これから対象');
+          return `<tr><td>${esc(c.name)}（${c.age}歳）　<span style="opacity:.75">${state}</span></td><td>今後 ${fmt(mine)}万円</td></tr>`;
+        }).join('');
+        box.innerHTML =
+          `<div class="ab-head"><i class="fa-solid fa-hand-holding-heart"></i>児童手当（2024年10月改正後）を自動で収入に含めています</div>`
+          + `今後の受取見込み 合計 <span class="ab-total">約 ${fmt(remain.total)}万円</span>`
+          + (now.total>0 ? `（いまは年 ${fmt(now.total)}万円＝月 ${fmt1(now.total/12)}万円）` : '')
+          + `<table>${rowsHtml}</table>`
+          + `<div class="ab-note">3歳未満は月1.5万円、3歳〜高校生年代は月1万円、<b>第3子以降は一律月3万円</b>（所得制限なし）。`
+          + (third ? `第3子加算が入っています。上のお子さまが22歳年度末を過ぎると下のお子さまが繰り上がり、月3万円→1万円に下がります（グラフにも反映済み）。` : `「第何子」は22歳年度末までのお子さまを年上から数えます。`)
+          + `　※年単位の簡易計算です。</div>`;
       }
     }
 
@@ -3084,15 +3183,7 @@
         }
         // 児童手当（2024年10月拡充・所得制限なし）：3歳未満1.5万/月・3歳〜高校生年代1万/月・第3子以降3万/月
         // 第3子カウントは22歳までの子を年長順（同年齢＝双子等は入力順）に並べて3番目以降（簡易判定）
-        {
-          const ranked = children.map((c,i)=> ({ a: c.age + t, i }))
-            .filter(k=> k.a>=0 && k.a<=22)
-            .sort((x,y)=> y.a - x.a || x.i - y.i);
-          ranked.forEach((k, rank)=>{
-            if(k.a>18) return;                             // 手当の支給は高校生年代（18歳）まで
-            income += rank>=2 ? 36 : (k.a<3 ? 18 : 12);    // 年長から3番目以降＝第3子加算
-          });
-        }
+        income += childAllowanceAt(children, t).total;
         if(hAge === hRetire){ income += hBonus; eventList.push({label:hNameH()+' 退職金', type:'family'}); }
         if(!single && wAge === wRetire){ income += wBonus; eventList.push({label:wNameH()+' 退職金', type:'family'}); }
 
@@ -3347,6 +3438,7 @@
 
     function recompute(){
       updateNetDisplay();
+      updateAllowanceUI();
       updateEventWifeAges();
       updateLoanBalanceHint();
       updateMonthlyPayDisplay();
@@ -4144,7 +4236,11 @@
         const good=[], con=[];
         good.push(`進路（公立・私立・下宿）まで織り込んだ、具体的な必要額が把握できています。`);
         if(totalMonthly>0) good.push(`月 ${fmt(totalMonthly)}万円 の積立があり、教育資金づくりの助けになります。`);
-        good.push(`児童手当を使わず積み立てると、お子さま1人あたり約200万円の準備になります。`);
+        const allow = childAllowanceRemain(p.children);
+        if(allow.total>0){
+          const cover = p.eduRemain>0 ? Math.min(99, Math.round(allow.total / p.eduRemain * 100)) : 0;
+          good.push(`児童手当は今後 合計 約<b>${fmt(allow.total)}万円</b>の見込みです（2024年10月改正後・所得制限なし）。${cover>0?`使わずに積み立てれば、教育費の約${cover}%をこれでまかなえます。`:'使わずに積み立てるのが、いちばん確実な準備です。'}`);
+        }
         con.push(`いちばんの山は19歳からの進学費用。${esc(yg.name)}の進学まで あと${yrsToUniv}年 です。`);
         con.push(`無理なく備えるには <b>月 約${fmt(monthly)}万円</b> の積立（新NISA＋学資保険）が目安です（学資保険は早期解約で払込額を下回ることがあります）。`);
         if(p.depletion) con.push(`教育費のピークと重なり、家計が苦しくなる時期があります。早めの準備を。`);

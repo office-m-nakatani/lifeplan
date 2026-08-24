@@ -1292,6 +1292,13 @@
     .np-item .np-point{ background:var(--blue-pale); border-radius:8px; padding:6px 9px; margin-top:5px; }
     .np-note{ margin:10px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; }
+    /* Ctrl+S を押したのに何も起きない、を無くすための小さな知らせ */
+    .pdf-hint{ position:fixed; left:50%; bottom:24px; transform:translate(-50%, 12px);
+      z-index:9999; max-width:min(92vw, 520px); padding:10px 14px; border-radius:12px;
+      background:rgba(28,42,56,.94); color:#fff; font-size:.82rem; line-height:1.6;
+      box-shadow:0 8px 24px rgba(0,0,0,.25); opacity:0; pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease; }
+    .pdf-hint.is-on{ opacity:1; transform:translate(-50%, 0); }
     .pdf-mode .nx-plan-wrap{ display:none !important; }
     @media print{ .nx-plan-wrap{ display:none !important; } }
 
@@ -10620,7 +10627,7 @@
         pdf.save(who ? `ライフプラン_${who}.pdf` : 'ライフプラン.pdf');
       } catch(e){
         // 「印刷」ボタンは2026-08-18に廃止済み。存在しないボタンへ誘導しない（検証役検出）
-        alert('PDFの作成に失敗しました。恐れ入りますが、ブラウザのメニュー（⋮ または「ファイル」）から「印刷」→「PDFに保存」をお試しください（キーボードの Ctrl+P でも開けます）。');
+        alert('PDFの作成に失敗しました。恐れ入りますが、キーボードの Ctrl+P（ブラウザのメニューなら「印刷」）から、送信先を「PDFに保存」にしてお試しください。\n※「名前を付けて保存」は選ばないでください。PDFではなく、HTMLと画像などのフォルダが保存されてしまいます。');
       } finally { exitPdfMode(); btn.disabled=false; btn.innerHTML=orig; }
     }
     $('btn-send').addEventListener('click', sendPDF);
@@ -10629,18 +10636,46 @@
        ブラウザ標準の Ctrl+S は「ウェブページ、完全」保存で、HTMLと _files フォルダ
        （Chart.js・html2canvas・jsPDF・Font Awesome・Google Fonts）が散らばるうえ、
        保存が途中で終わると .ダウンロード のまま残り、開き直してもグラフもアイコンも出ない。
-       お客様の資料として残す用途では常に PDF が正解なので、こちらへ寄せる。 */
-    document.addEventListener('keydown', (e)=>{
-      if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
-      if((e.key||'').toLowerCase() !== 's') return;
+       お客様の資料として残す用途では常に PDF が正解なので、こちらへ寄せる。
+       ★2026-08-24：お客様のデスクトップに「◯◯様_files」フォルダ（all.min・css2・
+         chart.umd.min.js.ダウンロード 等）ができていた＝ここをすり抜けてページ保存が走っていた。
+         原因になりうる2点をふさぐ：
+         ①日本語入力がオンだと keydown の e.key が 'Process' になり 's' 判定が外れる
+           → e.code / e.keyCode でも見る（キーボード配列が変わっても効く）
+         ②他のハンドラが先に止めると届かない → キャプチャ段階で window に張る
+       ※ ブラウザのメニューからの「名前を付けて保存」はページ側からは止められない。
+         そちらへ誘導しないよう、PDF失敗時の案内文も『印刷→PDFに保存』だけにしてある。 */
+    function isSaveKey(e){
+      if(!(e.ctrlKey || e.metaKey) || e.altKey) return false;
+      return (e.key||'').toLowerCase() === 's' || e.code === 'KeyS' || e.keyCode === 83;
+    }
+    window.addEventListener('keydown', (e)=>{
+      if(!isSaveKey(e)) return;
+      e.preventDefault();                      // まずページ保存ダイアログを出させない
       // 議事録の下書きや入力欄を編集中のCtrl+SでPDF作成が走らないようにする（保存のつもりで押される）
       if(e.target && e.target.closest && e.target.closest('#mn-doc, input, textarea, [contenteditable="true"]')){
-        e.preventDefault(); return;
+        pdfHint('入力中のためPDFは作成していません。PDFにするときは入力欄の外で Ctrl+S、または「PDF作成」ボタンを押してください。');
+        return;
       }
-      e.preventDefault();                      // ページ保存ダイアログを出させない
-      if($('btn-send').disabled) return;       // 作成中の二重起動を防ぐ
+      const b = $('btn-send');
+      if(!b || b.disabled) return;             // 作成中の二重起動を防ぐ
       sendPDF();
-    });
+    }, true);
+    /* 画面の隅に数秒出す小さな知らせ（Ctrl+Sを押したのに何も起きない、を無くすため） */
+    let pdfHintTimer = null;
+    function pdfHint(msg){
+      let el = $('pdf-hint');
+      if(!el){
+        el = document.createElement('div');
+        el.id = 'pdf-hint'; el.className = 'pdf-hint no-print';
+        el.setAttribute('role','status');
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.classList.add('is-on');
+      clearTimeout(pdfHintTimer);
+      pdfHintTimer = setTimeout(()=>{ el.classList.remove('is-on'); }, 4200);
+    }
 
     /* ============================================================
        詳細（項目別の表）モーダル

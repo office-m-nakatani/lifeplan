@@ -3063,7 +3063,7 @@
              コピーは専用ボタン（社内用の見出しが必ず付く）のみ -->
         <div class="nx-plan-wrap" id="nx-plan-wrap">
           <div class="nx-plan-head"><i class="fa-solid fa-lock"></i> 提案の検討メモ（担当者用）</div>
-          <p class="hint" style="display:block; margin:4px 0 8px;">試算の結果から、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
+          <p class="hint" style="display:block; margin:4px 0 8px;">試算の結果から、<b>住宅購入の見立て（安心点・懸念点・進め方）</b>と、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
           <div class="vc-tools">
             <button type="button" class="btn btn-primary btn-sm" id="nx-plan-build"><i class="fa-solid fa-compass"></i> 検討メモを作る</button>
             <button type="button" class="btn btn-ghost btn-sm" id="nx-plan-copy"><i class="fa-solid fa-copy"></i> 社内用にコピー</button>
@@ -8122,6 +8122,13 @@
         if(!cap) return false;
         if(!vcCapOn()) return false;
         if(!mnUtter.length && panel.dataset.vcMode !== 'open') return false;   // 待機中のミニは枠ごとたたむ
+        /* 展開中は「文字起こし」タブのときだけ字幕枠を出す（2026-08-24 ユーザー指示）。
+           以前はタブに関係なく上に出ていたため、「次の一手」を開いても画面の大半が
+           空の字幕枠で埋まり、肝心のリストが見えなかった。ミニの字幕2行は従来どおり */
+        if(panel.dataset.vcMode === 'open'){
+          const t = document.querySelector('.vc-tab[aria-selected="true"]');
+          if(t && t.dataset.vcTab !== 'cap') return false;
+        }
         return true;
       }
       function vcCapSync(){
@@ -9755,6 +9762,7 @@
         Object.keys(map).forEach(function(k){ const el = $(map[k]); if(el) el.hidden = (k!==t); });
         if(panel.dataset.vcMode !== 'open') vcSetMode('open');
         if(t==='memo') renderVcMemos();
+        vcCapSync();   // 字幕枠は「文字起こし」タブのときだけ出す（タブ切替に追従）
         vcSaveUI(); vcSyncDockH();
       }
       const vcTabEls = [].slice.call(document.querySelectorAll('.vc-tab'));
@@ -9954,6 +9962,67 @@
             + '<p class="np-risk"><span class="np-k">必ず説明：</span>変額の満期金・解約返戻金は運用実績で変動し最低保証なし（死亡保険金には最低保証）・保険関係費。'
             + '「15年で100%」は<b>約束ではなく目安</b>で、下回ることも上回ることもある。NISAは値動きあり・保障なし。'
             + '<b>進学直前の2〜3年は値動きのない置き場所へ移す出口</b>まで提案書に書く。年5%は目安であり保証しない。</p></div>';
+        }
+
+        /* ---- 住宅購入の見立て（これから購入・購入予定の方だけ。2026-08-24 ユーザー指示） ----
+           年収・家族構成・手元資金から「安心して勧められる点」と「先に潰しておく懸念」を
+           この家庭の実数で並べ、進め方まで書く。営業観点を含むため担当者メモ限定
+           （お客様向けの出力には出さない）。断定・煽りの文言はここでも使わない */
+        if(c.buying && num('house-price',0) > 0){
+          const hp = num('house-price',0), dn = num('down',0);
+          const income = num('h-income',0) + (p.single ? 0 : num('w-income',0));
+          const schedB = buildLoanSchedule();
+          const payY = loanPaymentForYear(schedB, 0);                            // 初年度の年間返済額（ボーナス込み）
+          const payM = Math.round(payY/12*10)/10;                                // 月平均
+          const burden = income > 0 ? Math.round(payY/income*1000)/10 : 0;       // 返済負担率（額面・%）
+          const mult = income > 0 ? Math.round(hp/income*10)/10 : 0;             // 年収倍率
+          const buyAgeB = num('buy-age',36), termB = num('loan-term',35);
+          const lumpB = (typeof loanPayoffMode==='function') && loanPayoffMode()==='lumpsum';
+          const endAgeB = lumpB ? num('loan-payoff-age',65) : (buyAgeB + termB);
+          const cashAfter = Math.round(p.cashNow - dn);
+          const rentB = num('rent',0);
+          const varB = (typeof loanRateType==='function') && loanRateType()!=='fixed';
+          const rB = num('loan-rate',0);
+          const upM = (varB && hp>0) ? Math.round((emiForMonths(hp,(rB+1)/100/12,termB*12) - emiForMonths(hp,rB/100/12,termB*12))*10)/10 : 0;
+          const good = [], warn = [];
+          if(income>0 && burden>0){
+            if(burden <= 20)      good.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝余裕のある水準（目安20〜25%）');
+            else if(burden <= 25) good.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝一般的な目安（25%以内）に収まる');
+            else warn.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝目安の25%を超える' + (burden > 30 ? '（30%超は審査に通っても家計の体感は重い）' : '') + '。教育費が乗る時期の年間収支を先に確認');
+          }
+          if(mult>0){
+            if(mult <= 7) good.push('借入は世帯年収の約<b>' + mult + '倍</b>＝よくある範囲（目安7倍以内）');
+            else warn.push('借入は世帯年収の約<b>' + mult + '倍</b>＝審査に通っても余裕は薄い水準。金額か頭金の調整余地を持っておく');
+          }
+          if(endAgeB <= 65) good.push('完済は<b>' + endAgeB + '歳</b>' + (lumpB ? '（一括完済の設計）' : '') + '＝年金生活に返済を持ち込まない');
+          else warn.push('完済が<b>' + endAgeB + '歳</b>＝65歳以降も返済が残る。退職金・繰上げでの完済設計（何歳で・いくら・原資はどこ）を先に決める');
+          if(p.cashNow > 0){
+            if(cashAfter >= c.defense) good.push('頭金' + fmt(dn) + '万円を出しても手元に約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）を確保できる');
+            else warn.push('頭金' + fmt(dn) + '万円を出すと手元が約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）を割り込む。頭金の減額か「頭金の置き場所」（次の一手）の比較へ');
+          }
+          if(varB && upM > 0) warn.push('変動金利（当初' + rB + '%）＝金利が+1%になると返済は月約<b>' + upM + '万円</b>増える計算。上がっても払える月額かを先に見せる');
+          if(!p.single && (typeof loanType==='function') && loanType()==='pair')
+            warn.push('ペアローン前提＝' + esc(wNameH()) + 'の収入が下がる期間（産休・育休・時短）も返済額は変わらない。片働き期間の家計で耐えられるかを確認');
+          if(p.children.length && c.yg && p.eduRemain > 0)
+            warn.push('返済と教育費のピーク（いちばん下のお子さまの大学入学はおよそ' + Math.max(18 - c.yg.age, 0) + '年後）が重なる。その時期の年間収支をキャッシュフロー表で先に見せる');
+          if(p.depletion) warn.push('この前提のままでは' + esc(hNameH()) + ' ' + p.depletion.hAge + '歳ごろに資金不足の試算＝先に前提（就労・生活費・積立）の置き方を一緒に整えてからクロージングへ');
+          else good.push('この前提なら' + num('end-age',100) + '歳まで資金がショートしない試算＝この資産推移グラフそのものが、いちばんの安心材料になる');
+          const li = function(a){ return a.map(function(x){ return '・' + x; }).join('<br>'); };
+          h += sec('住宅購入の見立て（借入' + fmt(hp) + '万円・頭金' + fmt(dn) + '万円・' + buyAgeB + '歳ご購入）')
+            + '<div class="np-item">'
+            + (good.length ? '<p><span class="np-k">安心して勧められる点：</span><br>' + li(good) + '</p>' : '')
+            + (warn.length ? '<p class="np-risk"><span class="np-k">先に潰しておく懸念：</span><br>' + li(warn) + '</p>' : '')
+            + '<p class="np-point"><span class="np-k">進め方（この家庭の場合）：</span>'
+            + '懸念は<b>お客様が言い出す前に、こちらから数字つきで出す</b>——家に帰って気づかれると商談ごと止まるが、その場なら対策とセットで示せる。'
+            + '金額は総額でなく<b>月平均約' + payM + '万円</b>に落とし、'
+            + (rentB > 0 ? 'いまの家賃' + rentB + '万円との差に' : '毎月の収支に')
+            + '固定資産税・維持費まで含めた「住居費の実額」で比べる。'
+            + ((typeof htype!=='undefined' && htype==='ichijo') ? '一条の光熱費・売電・メンテ差は「上乗せの価値」ではなく<b>毎月の実質負担に織り込んだ差額</b>で見せる（「家（一条比較）」タブ）。' : '')
+            + '迷いが残るときは買う・買わないの二択にせず、<b>頭金・時期・金額の3つのつまみをその場で動かして</b>資産推移グラフで答えを見せる（このツールの出番）。'
+            + '締めは「次の一手」の宿題（ねんきん定期便・保険証券など）とセットで<b>次回面談の日程をその場で決める</b>。</p>'
+            + '<p class="np-risk"><span class="np-k">必ず守る：</span>審査に通る＝無理なく返せる、ではない（負担率は額面の目安で、手取り・教育費しだいで体感は変わる）。'
+            + '買わないほうがよい試算が出たら、それもそのまま見せる——正直な見立てが信頼と紹介を生む。金額・時期の判断はお客様のもの。断定表現は使わない。</p>'
+            + '</div>';
         }
 
         /* ---- 三大資金② 住宅資金（ローン残債と完済設計） ---- */

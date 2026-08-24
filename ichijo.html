@@ -10351,6 +10351,17 @@
        印刷用のスタイルと enterPdfMode/exitPdfMode はPDF作成が使うので残す。
        ブラウザのメニューからの印刷（Ctrl+P）は @media print が効くのでこれまでどおり */
 
+    /* 画像化に失敗したcanvasの見分け。背景色に#ffffffを指定しているので、
+       描けていれば必ず不透明になる＝抜き取った点がすべて透明なら中身が空 */
+    function canvasIsBlank(c){
+      try{
+        const ctx = c.getContext('2d');
+        const xs = Math.max(Math.floor(c.width/2), 0);
+        const pts = [[2,2], [xs, Math.floor(c.height*0.25)], [xs, Math.floor(c.height*0.5)], [xs, Math.floor(c.height*0.75)]];
+        return pts.every(function(p){ return ctx.getImageData(p[0], p[1], 1, 1).data[3] === 0; });
+      }catch(e){ return false; }   // 読み取れないときは判定しない（描けている前提で進む）
+    }
+
     // PDF作成：結果を画像化→A4複数ページのPDFにして保存（ダウンロード）
     async function sendPDF(){
       const btn = $('btn-send'); const orig = btn.innerHTML;
@@ -10363,7 +10374,20 @@
         const target = (document.getElementById('results') && document.getElementById('results').closest('.wrap'))
                       || document.querySelector('.layout')
                       || document.querySelector('.wrap:not(.hero-inner):not(.plan-wrap)');
-        const canvas = await html2canvas(target, { scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth:1024, ignoreElements:(el)=> el.classList && (el.classList.contains('no-print')||el.classList.contains('plan-wrap')) });
+        /* html2canvas は本文全体を1枚の巨大なcanvasに描く。ブラウザのcanvasは1辺65,535pxが上限で、
+           超えても例外は出ず、中身が空（透明）のcanvasが返る。それをJPEGにすると透明は黒になるため、
+           全ページ真っ黒のPDFが「成功」として保存されてしまう。
+           ★2026-08-24：お客様のPDF30ページが全ページ真っ黒になった（1920×69,923pxで上限超え）。
+             項目を足すほど本文は伸びるので、倍率を高さから決めて必ず上限内に収める。 */
+        const MAX_CANVAS_H = 60000;   // 上限65,535pxに対する安全幅
+        const targetH = Math.max(target.getBoundingClientRect().height, 1);
+        const shot = (sc)=> html2canvas(target, { scale:sc, backgroundColor:'#ffffff', useCORS:true, windowWidth:1024, ignoreElements:(el)=> el.classList && (el.classList.contains('no-print')||el.classList.contains('plan-wrap')) });
+        let canvas = await shot(Math.min(2, MAX_CANVAS_H / targetH));
+        /* 端末のメモリ次第では上限より手前で失敗することもある。真っ黒なPDFを保存する前に気づく */
+        if(canvasIsBlank(canvas)){
+          canvas = await shot(Math.max(Math.min(2, MAX_CANVAS_H / targetH) / 2, 0.5));
+          if(canvasIsBlank(canvas)) throw new Error('canvas blank');
+        }
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p','mm','a4');
         const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();

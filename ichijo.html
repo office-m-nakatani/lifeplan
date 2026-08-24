@@ -1256,7 +1256,11 @@
     .nx-group-h{ display:flex; align-items:center; gap:7px; font-size:.85rem; font-weight:800; color:var(--blue-deep); margin-bottom:5px; }
     .nx-item{ display:flex; align-items:flex-start; gap:9px; padding:8px 10px; margin-bottom:6px;
       background:var(--bg-soft); border:1.5px solid var(--line); border-radius:10px; cursor:pointer; }
-    .nx-item input{ flex:0 0 auto; width:18px; height:18px; margin-top:2px; accent-color:var(--blue); }
+    .nx-item input[type="checkbox"]{ flex:0 0 auto; width:18px; height:18px; margin-top:2px; accent-color:var(--blue); }
+    /* 担当者メモのTODO行。期限は日付欄で調整できる（.nx-item の18px指定を受けない） */
+    .np-todo .nx-body{ cursor:pointer; }
+    .nx-due-date{ width:auto; height:auto; font-size:.74rem; font-weight:700; color:var(--blue-deep);
+      padding:3px 6px; border:1px solid var(--line); border-radius:7px; background:#fff; min-height:32px; }
     .nx-body{ flex:1 1 auto; min-width:0; font-size:.85rem; line-height:1.7; }
     .nx-lead{ color:var(--blue-deep); }
     .nx-txt{ display:block; }
@@ -3063,9 +3067,8 @@
              コピーは専用ボタン（社内用の見出しが必ず付く）のみ -->
         <div class="nx-plan-wrap" id="nx-plan-wrap">
           <div class="nx-plan-head"><i class="fa-solid fa-lock"></i> 提案の検討メモ（担当者用）</div>
-          <p class="hint" style="display:block; margin:4px 0 8px;">試算の結果から、<b>住宅購入の見立て（安心点・懸念点・進め方）</b>と、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
+          <p class="hint" style="display:block; margin:4px 0 8px;">上の「次の一手を作る」を押すと、<b>このメモも一緒に作られます</b>。試算の結果から、<b>住宅購入の見立て（安心点・懸念点・進め方）</b>と、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
           <div class="vc-tools">
-            <button type="button" class="btn btn-primary btn-sm" id="nx-plan-build"><i class="fa-solid fa-compass"></i> 検討メモを作る</button>
             <button type="button" class="btn btn-ghost btn-sm" id="nx-plan-copy"><i class="fa-solid fa-copy"></i> 社内用にコピー</button>
           </div>
           <div id="nx-plan"></div>
@@ -9573,6 +9576,27 @@
         }
         return d;
       }
+      /* 期限は担当者が調整できる。既定値を入れておき、変えたらこの端末に顧客ごとで保存する
+         （2026-08-24 ユーザー指示）。作り直しても調整した日付が戻らないようにするため */
+      const NX_DUE_KEY = 'lifeplan_ichijo_next_due_v1';
+      function nxDueISO(days){
+        const d = new Date(); d.setDate(d.getDate() + days);
+        const p2 = function(n){ return (n<10 ? '0' : '') + n; };
+        return d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate());
+      }
+      function nxDueMap(){
+        let m; try{ m = JSON.parse(localStorage.getItem(NX_DUE_KEY)||'{}'); }catch(e){ return {}; }
+        return (m && typeof m === 'object') ? m : {};
+      }
+      function nxRestoreDue(box){
+        const m = nxDueMap(), sc = nxScope();
+        box.querySelectorAll('.np-todo').forEach(function(row){
+          const el = row.querySelector('.nx-due-date'); if(!el) return;
+          const v = m[sc + '::' + row.dataset.nx];
+          if(v) el.value = v;
+          el.setAttribute('value', el.value);   // 社内用コピーは写しから作るので、属性にも載せる
+        });
+      }
       function nxRestoreDone(box){
         const d = nxDone(), sc = nxScope();
         box.querySelectorAll('.nx-item').forEach(function(el){
@@ -9587,6 +9611,13 @@
         nxLast = res;
         box.innerHTML = renderNextHTML(res);
         nxRestoreDone(box);
+        /* 検討メモ（担当者用）も同時に作る（2026-08-24 ユーザー指示）。
+           別ボタンだったころは押し忘れると住宅購入の見立てが出ないままだった */
+        const pbox = $('nx-plan');
+        if(pbox){
+          try{ pbox.innerHTML = planBuild(); nxRestoreDone(pbox); nxRestoreDue(pbox); }
+          catch(e){ pbox.innerHTML = '<p class="nx-empty">検討メモはいまは作成できませんでした。</p>'; }
+        }
         vcSyncDockH();
       }
       if($('next-actions')) $('next-actions').addEventListener('change', (e)=>{
@@ -9594,6 +9625,24 @@
         const on = el.querySelector('input') && el.querySelector('input').checked;
         el.classList.toggle('is-done', !!on);
         const d = nxDone(), k = nxScope() + '::' + el.dataset.nx;
+        if(on) d[k] = 1; else delete d[k];
+        try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){}
+      });
+
+      /* 検討メモのTODO（済チェックと期限）。next-actions とは別の箱なのでハンドラも別に張る */
+      if($('nx-plan')) $('nx-plan').addEventListener('change', (e)=>{
+        const row = e.target.closest('.np-todo'); if(!row) return;
+        if(e.target.classList.contains('nx-due-date')){
+          e.target.setAttribute('value', e.target.value);
+          const m = nxDueMap(), dk = nxScope() + '::' + row.dataset.nx;
+          if(e.target.value) m[dk] = e.target.value; else delete m[dk];
+          try{ localStorage.setItem(NX_DUE_KEY, JSON.stringify(m)); }catch(_){}
+          return;
+        }
+        if(e.target.type !== 'checkbox') return;
+        const on = !!e.target.checked;
+        row.classList.toggle('is-done', on);
+        const d = nxDone(), k = nxScope() + '::' + row.dataset.nx;
         if(on) d[k] = 1; else delete d[k];
         try{ localStorage.setItem(NX_DONE_KEY, JSON.stringify(d)); }catch(_){}
       });
@@ -9809,6 +9858,24 @@
            出さない原則（保険業法300条1項・skill insurance-diagnosis）はそのまま。
          ・保存しない（localStorageに置かない）＝毎回その場で作る。
          ============================================================ */
+      /* 検討メモのTODO行（済チェック＋調整できる期限）。
+         data-nx のキーは項目ごとに固定＝並びが変わっても済チェックが別項目に付かない */
+      let planTodoN = 0;
+      function planTodoGroup(icon, title, key, items, days){
+        if(!items || !items.length) return '';
+        return '<div class="nx-group">'
+          + '<div class="nx-group-h"><i class="fa-solid ' + icon + '"></i> ' + title + '</div>'
+          + items.map(function(it){
+              const id = 'nxp-' + (++planTodoN);
+              const nx = 'plan.house.' + key + '.' + it.k;
+              return '<div class="nx-item np-todo" data-nx="' + esc(nx) + '">'
+                + '<input type="checkbox" id="' + id + '">'
+                + '<label class="nx-body" for="' + id + '"><span class="nx-txt">' + it.t + '</span></label>'
+                + '<span class="nx-due"><input type="date" class="nx-due-date" value="' + nxDueISO(days) + '" title="期限（調整できます）" aria-label="期限"></span>'
+                + '</div>';
+            }).join('')
+          + '</div>';
+      }
       function planItem(t, fit, risk, point){
         return '<div class="np-item"><span class="np-t">' + t + '</span>'
           + (fit  ? '<p><span class="np-k">向く場面：</span>' + fit + '</p>' : '')
@@ -9964,10 +10031,13 @@
             + '<b>進学直前の2〜3年は値動きのない置き場所へ移す出口</b>まで提案書に書く。年5%は目安であり保証しない。</p></div>';
         }
 
-        /* ---- 住宅購入の見立て（これから購入・購入予定の方だけ。2026-08-24 ユーザー指示） ----
-           年収・家族構成・手元資金から「安心して勧められる点」と「先に潰しておく懸念」を
-           この家庭の実数で並べ、進め方まで書く。営業観点を含むため担当者メモ限定
-           （お客様向けの出力には出さない）。断定・煽りの文言はここでも使わない */
+        /* ---- 住宅購入の見立て（これから購入の方だけ。2026-08-24 ユーザー指示） ----
+           年収・家族構成・手元資金から「安心して勧められる点」「先に潰しておく懸念」「進め方」を
+           この家庭の実数で出し、そのまま担当者のTODO（済チェック＋期限）にする。
+           期限は既定値を入れておき、日付欄で調整できる（顧客ごとにこの端末へ保存）。
+           ★キーは項目ごとに固定する。並び順の番号にすると、入力が変わって項目が増減したとき
+             別の項目に済チェックが付いて見える（顧客ごとに分けている意味がなくなる）。
+           営業観点を含むため担当者メモ限定＝お客様向けの出力（次の一手・PDF・共有）には出さない */
         if(c.buying && num('house-price',0) > 0){
           const hp = num('house-price',0), dn = num('down',0);
           const income = num('h-income',0) + (p.single ? 0 : num('w-income',0));
@@ -9984,45 +10054,41 @@
           const varB = (typeof loanRateType==='function') && loanRateType()!=='fixed';
           const rB = num('loan-rate',0);
           const upM = (varB && hp>0) ? Math.round((emiForMonths(hp,(rB+1)/100/12,termB*12) - emiForMonths(hp,rB/100/12,termB*12))*10)/10 : 0;
-          const good = [], warn = [];
+          const good = [], warn = [], how = [];
           if(income>0 && burden>0){
-            if(burden <= 20)      good.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝余裕のある水準（目安20〜25%）');
-            else if(burden <= 25) good.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝一般的な目安（25%以内）に収まる');
-            else warn.push('返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）＝目安の25%を超える' + (burden > 30 ? '（30%超は審査に通っても家計の体感は重い）' : '') + '。教育費が乗る時期の年間収支を先に確認');
+            if(burden <= 25) good.push({ k:'burden', t:'返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）が' + (burden <= 20 ? '余裕のある水準' : '一般的な目安（25%以内）') + 'であることを伝える' });
+            else warn.push({ k:'burden', t:'返済負担率 約<b>' + burden + '%</b>（額面・月平均約' + payM + '万円）が目安の25%を超える' + (burden > 30 ? '（30%超は審査に通っても家計の体感は重い）' : '') + '。教育費が乗る時期の年間収支を先に確認しておく' });
           }
           if(mult>0){
-            if(mult <= 7) good.push('借入は世帯年収の約<b>' + mult + '倍</b>＝よくある範囲（目安7倍以内）');
-            else warn.push('借入は世帯年収の約<b>' + mult + '倍</b>＝審査に通っても余裕は薄い水準。金額か頭金の調整余地を持っておく');
+            if(mult <= 7) good.push({ k:'mult', t:'借入が世帯年収の約<b>' + mult + '倍</b>＝よくある範囲（目安7倍以内）であることを伝える' });
+            else warn.push({ k:'mult', t:'借入が世帯年収の約<b>' + mult + '倍</b>＝審査に通っても余裕は薄い。金額か頭金の調整余地を用意しておく' });
           }
-          if(endAgeB <= 65) good.push('完済は<b>' + endAgeB + '歳</b>' + (lumpB ? '（一括完済の設計）' : '') + '＝年金生活に返済を持ち込まない');
-          else warn.push('完済が<b>' + endAgeB + '歳</b>＝65歳以降も返済が残る。退職金・繰上げでの完済設計（何歳で・いくら・原資はどこ）を先に決める');
+          if(endAgeB <= 65) good.push({ k:'end', t:'完済が<b>' + endAgeB + '歳</b>' + (lumpB ? '（一括完済の設計）' : '') + '＝年金生活に返済を持ち込まないことを伝える' });
+          else warn.push({ k:'end', t:'完済が<b>' + endAgeB + '歳</b>＝65歳以降も返済が残る。完済設計（何歳で・いくら・原資はどこ）を先に決める' });
           if(p.cashNow > 0){
-            if(cashAfter >= c.defense) good.push('頭金' + fmt(dn) + '万円を出しても手元に約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）を確保できる');
-            else warn.push('頭金' + fmt(dn) + '万円を出すと手元が約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）を割り込む。頭金の減額か「頭金の置き場所」（次の一手）の比較へ');
+            if(cashAfter >= c.defense) good.push({ k:'cash', t:'頭金' + fmt(dn) + '万円を出しても手元に約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）が残ることを伝える' });
+            else warn.push({ k:'cash', t:'頭金' + fmt(dn) + '万円で手元が約<b>' + fmt(cashAfter) + '万円</b>＝生活費6か月分（約' + fmt(c.defense) + '万円）を割り込む。頭金の減額か「頭金の置き場所」（次の一手）の比較を用意する' });
           }
-          if(varB && upM > 0) warn.push('変動金利（当初' + rB + '%）＝金利が+1%になると返済は月約<b>' + upM + '万円</b>増える計算。上がっても払える月額かを先に見せる');
+          if(varB && upM > 0) warn.push({ k:'rate', t:'変動金利（当初' + rB + '%）＝+1%で返済は月約<b>' + upM + '万円</b>増える計算。上がっても払える月額かを先に見せる' });
           if(!p.single && (typeof loanType==='function') && loanType()==='pair')
-            warn.push('ペアローン前提＝' + esc(wNameH()) + 'の収入が下がる期間（産休・育休・時短）も返済額は変わらない。片働き期間の家計で耐えられるかを確認');
+            warn.push({ k:'pair', t:'ペアローン前提＝' + esc(wNameH()) + 'の収入が下がる期間（産休・育休・時短）も返済額は変わらない。片働き期間の家計で耐えられるかを確認する' });
           if(p.children.length && c.yg && p.eduRemain > 0)
-            warn.push('返済と教育費のピーク（いちばん下のお子さまの大学入学はおよそ' + Math.max(18 - c.yg.age, 0) + '年後）が重なる。その時期の年間収支をキャッシュフロー表で先に見せる');
-          if(p.depletion) warn.push('この前提のままでは' + esc(hNameH()) + ' ' + p.depletion.hAge + '歳ごろに資金不足の試算＝先に前提（就労・生活費・積立）の置き方を一緒に整えてからクロージングへ');
-          else good.push('この前提なら' + num('end-age',100) + '歳まで資金がショートしない試算＝この資産推移グラフそのものが、いちばんの安心材料になる');
-          const li = function(a){ return a.map(function(x){ return '・' + x; }).join('<br>'); };
+            warn.push({ k:'edu', t:'返済と教育費のピーク（いちばん下のお子さまの大学入学はおよそ' + Math.max(18 - c.yg.age, 0) + '年後）が重なる。その時期の年間収支をキャッシュフロー表で先に見せる' });
+          if(p.depletion) warn.push({ k:'short', t:'この前提のままでは' + esc(hNameH()) + ' ' + p.depletion.hAge + '歳ごろに資金不足の試算。前提（就労・生活費・積立）の置き方を一緒に整えてからクロージングへ' });
+          else good.push({ k:'noshort', t:'この前提なら' + num('end-age',100) + '歳まで資金がショートしない試算＝資産推移グラフそのものを安心材料として見せる' });
+          how.push({ k:'first', t:'懸念は<b>お客様が言い出す前に、こちらから数字つきで出す</b>。家に帰って気づかれると商談ごと止まるが、その場なら対策とセットで示せる' });
+          how.push({ k:'month', t:'金額は総額でなく<b>月平均約' + payM + '万円</b>に落とし、' + (rentB > 0 ? 'いまの家賃' + rentB + '万円との差に' : '毎月の収支に') + '固定資産税・維持費まで含めた「住居費の実額」で比べて見せる' });
+          if(typeof htype!=='undefined' && htype==='ichijo')
+            how.push({ k:'ichijo', t:'一条の光熱費・売電・メンテ差は「上乗せの価値」ではなく<b>毎月の実質負担に織り込んだ差額</b>で見せる（「家（一条比較）」タブ）' });
+          how.push({ k:'knob', t:'迷いが残るときは買う・買わないの二択にせず、<b>頭金・時期・金額の3つのつまみをその場で動かして</b>資産推移グラフで答えを見せる' });
+          how.push({ k:'next', t:'締めは「次の一手」の宿題（ねんきん定期便・保険証券など）とセットで<b>次回面談の日程をその場で決める</b>' });
           h += sec('住宅購入の見立て（借入' + fmt(hp) + '万円・頭金' + fmt(dn) + '万円・' + buyAgeB + '歳ご購入）')
-            + '<div class="np-item">'
-            + (good.length ? '<p><span class="np-k">安心して勧められる点：</span><br>' + li(good) + '</p>' : '')
-            + (warn.length ? '<p class="np-risk"><span class="np-k">先に潰しておく懸念：</span><br>' + li(warn) + '</p>' : '')
-            + '<p class="np-point"><span class="np-k">進め方（この家庭の場合）：</span>'
-            + '懸念は<b>お客様が言い出す前に、こちらから数字つきで出す</b>——家に帰って気づかれると商談ごと止まるが、その場なら対策とセットで示せる。'
-            + '金額は総額でなく<b>月平均約' + payM + '万円</b>に落とし、'
-            + (rentB > 0 ? 'いまの家賃' + rentB + '万円との差に' : '毎月の収支に')
-            + '固定資産税・維持費まで含めた「住居費の実額」で比べる。'
-            + ((typeof htype!=='undefined' && htype==='ichijo') ? '一条の光熱費・売電・メンテ差は「上乗せの価値」ではなく<b>毎月の実質負担に織り込んだ差額</b>で見せる（「家（一条比較）」タブ）。' : '')
-            + '迷いが残るときは買う・買わないの二択にせず、<b>頭金・時期・金額の3つのつまみをその場で動かして</b>資産推移グラフで答えを見せる（このツールの出番）。'
-            + '締めは「次の一手」の宿題（ねんきん定期便・保険証券など）とセットで<b>次回面談の日程をその場で決める</b>。</p>'
-            + '<p class="np-risk"><span class="np-k">必ず守る：</span>審査に通る＝無理なく返せる、ではない（負担率は額面の目安で、手取り・教育費しだいで体感は変わる）。'
-            + '買わないほうがよい試算が出たら、それもそのまま見せる——正直な見立てが信頼と紹介を生む。金額・時期の判断はお客様のもの。断定表現は使わない。</p>'
-            + '</div>';
+            + planTodoGroup('fa-circle-check', '面談で伝える安心材料', 'good', good, 5)
+            + planTodoGroup('fa-triangle-exclamation', '先に潰しておく懸念', 'warn', warn, 3)
+            + planTodoGroup('fa-route', '進め方（この家庭の場合）', 'how', how, 7)
+            + '<p class="np-note">※ 審査に通る＝無理なく返せる、ではありません（負担率は額面の目安で、手取り・教育費しだいで体感は変わります）。'
+            + '買わないほうがよい試算が出たら、それもそのまま見せること——正直な見立てが信頼と紹介につながります。'
+            + '金額・時期の判断はお客様のもので、断定表現は使いません。</p>';
         }
 
         /* ---- 三大資金② 住宅資金（ローン残債と完済設計） ---- */
@@ -10136,16 +10202,35 @@
       function planToText(){
         const box = $('nx-plan');
         if(!box || !box.innerText.trim()) return '';
+        /* TODO行の済チェックと期限は入力要素の値で、innerText には出ない。
+           写しを作って「［済］」「（期限 …）」に書き換えてから文字にする。
+           innerText は画面に置かれた要素でないと改行が入らないため、
+           画面外に一瞬だけ置いてから読む（textContent だと全文が1行になる） */
+        const cl = box.cloneNode(true);
+        cl.removeAttribute('id');
+        cl.querySelectorAll('.np-todo').forEach(function(row){
+          const c = row.querySelector('input[type="checkbox"]');
+          const d = row.querySelector('input[type="date"]');
+          const head = document.createElement('span');
+          head.textContent = (c && c.checked) ? '［済］ ' : '［　］ ';
+          row.insertBefore(head, row.firstChild);
+          const tail = document.createElement('span');
+          tail.textContent = '（期限 ' + ((d && d.getAttribute('value')) || '未定') + '）';
+          row.appendChild(tail);
+        });
+        cl.querySelectorAll('input').forEach(function(i){ i.remove(); });
+        cl.style.cssText = 'position:absolute; left:-9999px; top:0; width:640px;';
+        document.body.appendChild(cl);
+        let txt = '';
+        try{ txt = cl.innerText; } finally { cl.remove(); }
+        /* 写しは横並び（flex）なので innerText だと「［　］／本文／（期限 …）」が3行に割れる。
+           社内メモとして読みやすいよう1行に戻す */
+        txt = txt.replace(/(［[済　]］)\n/g, '$1 ').replace(/\n（期限 /g, '（期限 ');
         const who = fullName('h-sei','h-name');   // 記録の取り違え防止に姓名で残す
         return '【社内用｜お客様に渡さない】提案の検討メモ（' + new Date().toLocaleDateString('ja-JP')
           + (who ? '・' + who + '様の面談' : '') + '）\n\n'
-          + box.innerText.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+          + txt.replace(/\n{3,}/g, '\n\n').trim() + '\n';
       }
-      if($('nx-plan-build')) $('nx-plan-build').addEventListener('click', ()=>{
-        const box = $('nx-plan'); if(!box) return;
-        box.innerHTML = planBuild();
-        vcSyncDockH();
-      });
       if($('nx-plan-copy')) $('nx-plan-copy').addEventListener('click', ()=>{
         const txt = planToText();
         if(!txt){ alert('先に「検討メモを作る」を押してください。'); return; }

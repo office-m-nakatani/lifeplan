@@ -1251,6 +1251,21 @@
     .mn-att input{ flex:1; min-width:0; min-height:44px; padding:9px 12px; border:1.5px solid var(--line);
       border-radius:9px; font-family:inherit; font-size:.85rem; }
 
+    /* ---------- 意向シート（2026-08-29追加） ---------- */
+    .ikou-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
+    .ikou-chip{ display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:8px 14px;
+      background:var(--bg-soft); border:1.5px solid var(--line); border-radius:999px;
+      font-family:inherit; font-size:.85rem; color:var(--ink); cursor:pointer; }
+    .ikou-chip:hover{ background:var(--blue-pale); }
+    .ikou-chip.is-on{ background:var(--blue-pale); border-color:var(--blue); color:var(--blue-deep); font-weight:800; }
+    .ikou-rank{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+      border-radius:50%; background:var(--blue); color:#fff; font-size:.72rem; font-weight:800; }
+    .ikou-band{ margin-bottom:14px; padding:10px 14px; background:var(--blue-pale);
+      border:1.5px solid var(--blue-pale2); border-radius:var(--radius-sm); }
+    .ikou-band-h{ display:flex; align-items:center; gap:7px; font-size:.82rem; font-weight:800; color:var(--blue-deep); }
+    .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
+    .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
+
     /* ---------- 次の一手 ---------- */
     .nx-group{ margin-bottom:10px; }
     .nx-group-h{ display:flex; align-items:center; gap:7px; font-size:.85rem; font-weight:800; color:var(--blue-deep); margin-bottom:5px; }
@@ -1633,6 +1648,7 @@
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
       <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
+        <button type="button" data-nav-input="ikou"><i class="fa-solid fa-clipboard-question"></i> はじめに伺うこと</button>
         <button type="button" data-nav-input="family"><i class="fa-solid fa-house-user"></i> ご家族・住まい</button>
         <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
         <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
@@ -1763,6 +1779,73 @@
         </div>
 
         <!-- 住まい（旧③） -->
+        <!-- ===== はじめに伺うこと（意向シート）2026-08-29追加 =====
+             結果を見せる前にご意向を伺って残す欄。保険業法294条の2（意向把握義務）は
+             「把握 → 意向に沿った提案 → 意向と合致しているかの確認」の3点セットで、
+             当初の意向と最終的な意向の対比まで求められるが、このツールには意向を
+             選んで残す欄が1つも無かった（次の一手・検討メモ・議事録はいずれも担当者が書くもの）。
+             ★選択肢に保険の種類名・商品名は入れない。並び順で特定の方向へ誘導しない
+               （監督指針：重視事項の例示にあたって恣意的に特定の契約へ誘導しないこと）。
+             ★#input-panel の中に置いてあるので、保存・共有・自動保存に自動で乗る。
+               id は SHARE_FIELD_IDS には足さない（'!'付きで自動往復する）。 -->
+        <div class="acc" data-acc data-sec="ikou">
+          <button class="acc-head" type="button">
+            <span class="acc-ico ico-teal"><i class="fa-solid fa-clipboard-question"></i></span>
+            <span class="acc-title"><b>はじめに伺うこと</b><span>ご意向（試算より先に伺います）</span></span>
+            <i class="fa-solid fa-chevron-down acc-chev"></i>
+          </button>
+          <div class="acc-body">
+            <p class="hint" style="display:block; margin-bottom:10px;">数字をお見せする前に、いま大事にされていることを伺います。ここで伺った内容は結果画面の上にも表示され、PDFにも残ります。<b>お答えにくい項目は空欄のままで構いません。</b></p>
+
+            <div class="field">
+              <label>1. いま優先したいこと（当てはまるものを選んでください・複数可）</label>
+              <div class="ikou-chips" id="ikou-priority-chips"></div>
+              <input type="hidden" id="ikou-priority" value="">
+              <span class="hint">選んだ順に記録します。順位を付け直したいときは、いったん外してから選び直してください。</span>
+            </div>
+
+            <div class="grid2">
+              <div class="field">
+                <label>2. 毎月の住居費として、無理なく続けられる上限</label>
+                <div class="input-unit"><input type="number" id="ikou-monthly" value="" min="0" step="1" placeholder="例：13"><span class="u">万円</span></div>
+                <span class="hint">返済だけでなく、固定資産税・保険料・修繕積立まで含めた住居費の上限としてお聞きします。</span>
+              </div>
+              <div class="field">
+                <label>3. そのお金を使う想定の時期</label>
+                <select id="ikou-when">
+                  <option value="">（お答えいただける場合）</option>
+                  <option value="near">10年以内に使う予定がある</option>
+                  <option value="edu">お子さまの進学期に使う</option>
+                  <option value="old">老後まで使わない</option>
+                  <option value="mixed">いくつかに分かれている</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>4. 「万一への備え」と「将来のための積立」では、いまどちらに近いお気持ちですか</label>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:.78rem; color:var(--ink-soft); white-space:nowrap;">万一への備え</span>
+                <input type="range" id="ikou-balance" min="1" max="5" step="1" value="3" style="flex:1 1 auto; accent-color:var(--blue);">
+                <span style="font-size:.78rem; color:var(--ink-soft); white-space:nowrap;">将来のための積立</span>
+              </div>
+              <span class="hint">どちらが正しいというものではありません。<b>まん中のままでも構いません。</b>いまのお気持ちの記録としてお聞きします。</span>
+            </div>
+
+            <div class="field">
+              <label>5. そのほか、大事にされていること・気になっていること</label>
+              <input type="text" id="ikou-note" placeholder="例：妻の職場が変わるかもしれない／親の家をどうするか決まっていない" autocomplete="off">
+              <span class="hint">※ この内容は<b>お客様への共有リンクにも入ります</b>。ご本人以外に転送される可能性があるため、個人を特定できる情報は書かないでください。</span>
+            </div>
+
+            <div class="vc-tools" style="margin-top:4px;">
+              <button type="button" class="btn btn-ghost btn-sm" id="ikou-stamp"><i class="fa-solid fa-bookmark"></i> この内容を「最初に伺った内容」として記録する</button>
+            </div>
+            <input type="hidden" id="ikou-first" value="">
+            <div id="ikou-diff" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
         <div class="acc" data-acc data-sec="home">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-teal"><i class="fa-solid fa-house-chimney"></i></span>
@@ -1886,6 +1969,16 @@
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
                 <span>毎月のローン返済額は金利・期間から自動計算します。住宅ローン控除（年末残高×0.7%）も最大13年分、自動で反映します。</span>
+              </div>
+
+              <!-- 金利シナリオ表（2026-08-29追加）。常設・読み取り専用。
+                   既存のストレステストは「押すと表示中のプランに一時反映」する切替式で、
+                   比較カードは解除してから見る運用になっていた＝商談の主戦場で使えない。
+                   こちらは何も切り替えず、据え置きと上昇の3段階を同時に並べる。
+                   STRESS を一時的に借りて返済予定表だけを組み直すので、画面の状態は変えない。 -->
+              <div class="stress-box no-print" id="rate-scenario-box">
+                <div class="lp-title"><i class="fa-solid fa-arrow-trend-up"></i> 金利が上がったら（このプランの借入）</div>
+                <div id="rate-scenarios"></div>
               </div>
 
               <!-- もしもの検証（ストレステスト）：表示のみ・保存対象外 -->
@@ -2464,6 +2557,11 @@
       <!-- ===================== 結果パネル ===================== -->
       <div class="results" id="results">
 
+        <!-- 伺ったご意向の帯（2026-08-29追加）。全ての結果画面の上に出す。
+             結論より先に意向が目に入る順序にすることで、不足額を見せてから商品へ誘導する
+             順序を構造的に取れなくする。空のときは何も出さない。 -->
+        <div id="ikou-summary"></div>
+
         <!-- 各画面のカードは view-wrap で束ねる（2026-08-17）。data-view はラッパーに1つだけ付け、
              ペア表示（.results.rpair-2）のときは2つのラッパーがCSSグリッドで左右に並ぶ -->
         <div class="view-wrap" data-view="assets">
@@ -2555,6 +2653,13 @@
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
             <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="600" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（一般住宅との差・編集可）</span></span>
+            <!-- ★2026-08-29追加：この価格差を借入元本に乗せるかどうか。
+                 既定ON。OFFにすると、便益（光熱費・売電・維持費）だけが資産推移に乗り、
+                 その代わりに払う価格差が乗らない状態になるため、必ず注記を添える。 -->
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="ic-gap-loan" checked style="width:18px; height:18px; accent-color:var(--blue);">
+              この価格差を借入に乗せて資産推移を出す
+            </label>
           </div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この差額を、わが家の数字で確かめる（無料相談）</button>
@@ -4502,6 +4607,7 @@
     });
     // 建物価格差の変更 → 再計算
     if($('ic-price-gap')) $('ic-price-gap').addEventListener('input', recompute);
+    if($('ic-gap-loan')) $('ic-gap-loan').addEventListener('change', recompute);
     if($('ic-conserv')) $('ic-conserv').addEventListener('change', recompute);   // 控えめ表示（表示専用・保存対象外）
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
@@ -4573,6 +4679,190 @@
     /* ---------- ストレステスト（もしもの検証・表示のみ／保存対象外）----------
        rateBump＝全期間の金利に上乗せ（%）、incomeCut＝給与収入の減少率（0.2＝−20%）。
        年金・児童手当・退職金には適用しない（給与だけの下振れを見る） */
+    /* ---------- 金利シナリオ表（2026-08-29追加） ----------
+       商談でいちばん飛んでくる「金利が上がったらどうなるの」に、その場で答えるための表。
+       ・据え置き／+0.5%／+1.0%／+1.5% を、何も切り替えずに同時に並べる
+       ・返済予定表だけを組み直すので simulate は呼ばない（recompute のたびに4本組んでも軽い）
+       ・STRESS.rateBump を一時的に借りて getLoanRateSchedule に効かせ、必ず元へ戻す
+       ★全期間固定を選んでいるときは、上がらないことを1行で書く（それ自体が説明材料になる）
+       ★断定表現は使わない。「この範囲に収まることを示すものではありません」を必ず添える */
+    const RATE_SCENARIOS = [0, 0.5, 1.0, 1.5];
+    function renderRateScenarios(){
+      const box = $('rate-scenario-box'), host = $('rate-scenarios');
+      if(!box || !host) return;
+      const hasLoan = (houseType !== 'rent') && num('house-price', 0) > 0;
+      box.classList.toggle('hidden', !hasLoan);
+      if(!hasLoan) return;
+      const fixed = (typeof loanRateType === 'function') && loanRateType() === 'fixed';
+      const baseRate = num('loan-rate', 0);
+      if(fixed){
+        host.innerHTML = '<p class="hint" style="display:block;">いまは<b>全期間固定金利（' + baseRate + '%）</b>を選ばれているため、'
+          + '返済額は完済まで変わらない前提で計算しています。変動金利にすると、ここに上昇したときの表が出ます。</p>';
+        return;
+      }
+      const buyAge = (houseType === 'owned') ? num('owned-age', num('h-age', 35)) : num('buy-age', num('h-age', 35));
+      const keep = STRESS.rateBump;
+      const rows = [];
+      try{
+        RATE_SCENARIOS.forEach(function(bump){
+          STRESS.rateBump = bump;
+          const sc = buildLoanSchedule();
+          let total = 0, maxM = 0;
+          for(let i = 0; i < sc.rows.length; i++){
+            total += sc.rows[i].payment;
+            // ボーナス払いの月が突出するので、12か月の移動平均で「いちばん重い時期の月額」を見る
+            if(i + 12 <= sc.rows.length){
+              let w = 0;
+              for(let j = i; j < i + 12; j++) w += sc.rows[j].payment;
+              if(w / 12 > maxM) maxM = w / 12;
+            }
+          }
+          const first = loanPaymentForYear(sc, 0) / 12;
+          const bal65 = loanBalanceAt(sc, Math.max(65 - buyAge, 0));
+          rows.push({ bump: bump, first: first, maxM: maxM, total: total, bal65: bal65 });
+        });
+      } finally { STRESS.rateBump = keep; }   // 何があっても元へ戻す（画面の状態を変えないための肝）
+      const base = rows[0];
+      const r1 = function(v){ return Math.round(v * 10) / 10; };
+      // 段階金利のときは「据え置き」が何を指すのかを注記に明示する
+      const stepN = (typeof loanRateType === 'function' && loanRateType() === 'step5') ? 5 : 10;
+      const el0 = $('rate_' + loanRateType() + '_0'), elLast = (function(){
+        let last = null;
+        for(let i = 0; i < 8; i++){ const e = $('rate_' + loanRateType() + '_' + i); if(e) last = e; }
+        return last;
+      })();
+      const stepLbl = (el0 && elLast && el0.value !== elLast.value)
+        ? stepN + '年ごとに ' + el0.value + '% → ' + elLast.value + '% へ上昇するご入力' : '';
+      const cells = rows.map(function(x){
+        const isBase = (x.bump === 0);
+        const dm = r1(x.first - base.first), dt = Math.round(x.total - base.total);
+        /* 段階金利（step5/step10）を選んでいる場合、「据え置き」の行は 0.95% で固定という意味ではなく
+           「いまご入力の金利の推移どおり」という意味になる。ここを「0.95%のまま」と書くと誤解させる。 */
+        return '<tr' + (isBase ? ' style="background:var(--blue-pale);"' : '') + '>'
+          + '<td style="font-weight:800; white-space:nowrap;">' + (isBase ? '据え置き<br><span style="font-weight:400; font-size:.74rem; color:var(--ink-soft);">いまのご入力どおり</span>'
+              : '＋' + x.bump + '%<br><span style="font-weight:400; font-size:.74rem; color:var(--ink-soft);">全期間に上乗せ</span>') + '</td>'
+          + '<td>' + r1(x.first) + '万円' + (isBase ? '' : '<br><span class="cmp-diff-down" style="font-size:.76rem;">＋' + dm + '万円</span>') + '</td>'
+          + '<td>' + r1(x.maxM) + '万円</td>'
+          + '<td>' + fmt(x.total) + '万円' + (isBase ? '' : '<br><span class="cmp-diff-down" style="font-size:.76rem;">＋' + fmt(dt) + '万円</span>') + '</td>'
+          + '<td>' + fmt(x.bal65) + '万円</td>'
+          + '</tr>';
+      }).join('');
+      host.innerHTML =
+        '<div style="overflow-x:auto;"><table class="cf" style="width:100%; min-width:520px; font-size:.82rem;">'
+        + '<thead><tr><th>金利</th><th>毎月の返済<br><span style="font-weight:400; font-size:.72rem;">（初年度・平均）</span></th>'
+        + '<th>いちばん重い時期<br><span style="font-weight:400; font-size:.72rem;">（月額）</span></th>'
+        + '<th>総返済額</th><th>65歳時点の残債</th></tr></thead>'
+        + '<tbody>' + cells + '</tbody></table></div>'
+        + '<span class="hint" style="display:block; margin-top:6px;">いまのご入力（借入' + fmt(loanPrincipalBase()) + '万円・当初' + baseRate + '%・'
+        + num('loan-term', 35) + '年' + (stepLbl ? '・' + stepLbl : '') + '）に対して、そこからさらに金利が上がった場合を並べたものです。<b>切り替え操作は要りません</b>。'
+        + '上の資産推移のグラフは「据え置き」の行で計算しています。'
+        + '<b>実際の金利がこの範囲に収まることを示すものではありません。</b>'
+        + '金利は見直しのたびに変わり、上がることも下がることもあります。'
+        + '変動金利の返済額の見直しには、金融機関により5年ごと・上げ幅1.25倍までといった決まりがある場合があり、その場合は上の表と異なる動きになります。'
+        + '正確な条件は、お借入れ先の金融機関でご確認ください。</span>';
+    }
+
+    /* ---------- 意向シート（2026-08-29追加） ----------
+       保険業法294条の2が求める「把握 → 意向に沿った提案 → 合致の確認」の記録を、
+       ツールの側で残せるようにする。当初意向と最終意向の対比まで扱う。
+       ★選択肢に保険の種類名・商品名は入れない。並び順を固定し、保障系を先頭にも末尾にも置かない。
+       ★選択結果から商品や保険種類を自動で提示しない（誘導になるため）。 */
+    const IKOU_PRIORITIES = [
+      { k:'hiroi',  label:'家の広さ・間取り' },
+      { k:'seino',  label:'家の性能・光熱費' },
+      { k:'tochi',  label:'立地・通勤通学' },
+      { k:'hensai', label:'毎月の返済のしやすさ' },
+      { k:'kyoiku', label:'教育資金' },
+      { k:'rougo',  label:'老後資金' },
+      { k:'mannichi', label:'万一への備え' },
+      { k:'sozoku', label:'ご親族・相続のこと' }
+    ];
+    const IKOU_WHEN_LABEL = { near:'10年以内に使う予定がある', edu:'お子さまの進学期に使う', old:'老後まで使わない', mixed:'いくつかに分かれている' };
+    const IKOU_BALANCE_LABEL = { 1:'万一への備えに近い', 2:'やや万一への備え', 3:'どちらとも', 4:'やや将来の積立', 5:'将来の積立に近い' };
+
+    function ikouSelected(){
+      const v = ($('ikou-priority') && $('ikou-priority').value) || '';
+      return v ? v.split(',').filter(Boolean) : [];
+    }
+    function renderIkouChips(){
+      const host = $('ikou-priority-chips'); if(!host) return;
+      const sel = ikouSelected();
+      host.innerHTML = IKOU_PRIORITIES.map(function(o){
+        const i = sel.indexOf(o.k);
+        return '<button type="button" class="ikou-chip' + (i >= 0 ? ' is-on' : '') + '" data-ikou="' + o.k + '">'
+          + (i >= 0 ? '<span class="ikou-rank">' + (i + 1) + '</span>' : '') + esc(o.label) + '</button>';
+      }).join('');
+    }
+    function ikouRead(){
+      return {
+        pr: ikouSelected(),
+        monthly: ($('ikou-monthly') && $('ikou-monthly').value) || '',
+        when: ($('ikou-when') && $('ikou-when').value) || '',
+        balance: ($('ikou-balance') && $('ikou-balance').value) || '3',
+        note: ($('ikou-note') && $('ikou-note').value.trim()) || ''
+      };
+    }
+    function ikouIsEmpty(o){ return !o.pr.length && !o.monthly && !o.when && !o.note && o.balance === '3'; }
+    function ikouText(o){
+      const parts = [];
+      if(o.pr.length) parts.push('優先：' + o.pr.map(function(k, i){
+        const f = IKOU_PRIORITIES.filter(function(x){ return x.k === k; })[0];
+        return (i + 1) + '.' + (f ? f.label : k);
+      }).join('　'));
+      if(o.monthly) parts.push('住居費の上限：月' + o.monthly + '万円');
+      if(o.when) parts.push('使う時期：' + (IKOU_WHEN_LABEL[o.when] || o.when));
+      parts.push('お気持ち：' + (IKOU_BALANCE_LABEL[o.balance] || o.balance));
+      if(o.note) parts.push('ほかに：' + o.note);
+      return parts;
+    }
+    function renderIkouSummary(){
+      const host = $('ikou-summary'); if(!host) return;
+      const o = ikouRead();
+      if(ikouIsEmpty(o)){ host.innerHTML = ''; return; }
+      host.innerHTML = '<div class="ikou-band"><div class="ikou-band-h"><i class="fa-solid fa-clipboard-question"></i> 本日伺ったご意向</div>'
+        + '<div class="ikou-band-b">' + ikouText(o).map(esc).join(' ／ ') + '</div>'
+        + '<div class="ikou-band-n">※ この試算は、上のご意向を踏まえてご覧いただくためのものです。ご意向は「はじめに伺うこと」でいつでも直せます。</div></div>';
+    }
+    function renderIkouDiff(){
+      const host = $('ikou-diff'); if(!host) return;
+      let first = null;
+      try{ first = JSON.parse(($('ikou-first') && $('ikou-first').value) || 'null'); }catch(e){ first = null; }
+      if(!first || !first.at){ host.innerHTML = ''; return; }
+      const now = ikouRead();
+      const same = JSON.stringify({ pr:first.pr, monthly:first.monthly, when:first.when, balance:first.balance, note:first.note })
+                 === JSON.stringify(now);
+      host.innerHTML = '<div class="note" style="background:var(--blue-pale); border-color:var(--blue-pale2);">'
+        + '<i class="fa-solid fa-bookmark" style="color:var(--blue-deep);"></i><span>'
+        + '<b>最初に伺った内容（' + esc(first.at) + '）：</b>' + esc(ikouText(first).join(' ／ '))
+        + (same ? '<br>今回も同じ内容です。' :
+            '<br><b>今回は上と変わっています。</b>変わったきっかけを「そのほか」欄に書き添えておくと、次回の面談で経緯が分かります。')
+        + '</span></div>';
+    }
+    function ikouWire(){
+      const chips = $('ikou-priority-chips');
+      if(chips) chips.addEventListener('click', function(e){
+        const b = e.target.closest('[data-ikou]'); if(!b) return;
+        const k = b.dataset.ikou, sel = ikouSelected(), i = sel.indexOf(k);
+        if(i >= 0) sel.splice(i, 1); else sel.push(k);
+        $('ikou-priority').value = sel.join(',');
+        renderIkouChips(); renderIkouSummary(); renderIkouDiff(); scheduleDraftSave();
+      });
+      ['ikou-monthly','ikou-when','ikou-balance','ikou-note'].forEach(function(id){
+        const el = $(id); if(!el) return;
+        el.addEventListener('input', function(){ renderIkouSummary(); renderIkouDiff(); scheduleDraftSave(); });
+        el.addEventListener('change', function(){ renderIkouSummary(); renderIkouDiff(); scheduleDraftSave(); });
+      });
+      const stamp = $('ikou-stamp');
+      if(stamp) stamp.addEventListener('click', function(){
+        const o = ikouRead();
+        if(ikouIsEmpty(o)){ alert('先に、伺った内容を入力してください。'); return; }
+        const d = new Date();
+        o.at = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+        $('ikou-first').value = JSON.stringify(o);
+        renderIkouDiff(); scheduleDraftSave();
+      });
+    }
+
     const STRESS = { rateBump: 0, incomeCut: 0 };
     const stressGross = (g)=> g * (1 - STRESS.incomeCut);
     function updateStressUI(){
@@ -4666,10 +4956,26 @@
         ? (kosodate ? 31.5 : 24.5)   // ZEH水準以上：借入限度4,500万/3,500万×0.7%
         : (kosodate ? 28   : 21);    // 省エネ基準適合：借入限度4,000万/3,000万×0.7%
     }
+    /* 借入元本の実額。「建物価格差を借入に乗せる」がONで、住宅の性能タイプが一条のときは、
+       一般住宅との建物価格差（ic-price-gap）を借入に加える。
+       ★2026-08-29 追加：これが無かったため、将来プランで一条を選ぶと
+         「維持費が下がる・売電が入る・光熱費が減る」という便益だけが資産推移に乗り、
+         その代わりに払う建物価格差というコストは借入にも house-price にも一切乗らなかった。
+         結果として、一条を選ぶだけで資産推移が構造上かならず改善する状態になっていた。
+         ★30年比較カード（renderIchijoCompare）は別勘定。あちらは光熱費・売電・メンテの
+           3項目だけを比べる表で、価格差は「差し引いても残るか」の形で別に扱っている。 */
+    function loanPrincipalBase(){
+      const base = num('house-price', 0);
+      if(houseType === 'rent') return base;
+      if(typeof htype === 'undefined' || htype !== 'ichijo') return base;
+      const cb = $('ic-gap-loan');
+      if(cb && !cb.checked) return base;
+      return base + Math.max(num('ic-price-gap', 600), 0);
+    }
     /* principalOverride を渡すと、その借入額でスケジュールを組む（頭金あり／なしの比較用）。
        渡さなければ従来どおり画面の「住宅ローン総額」を使う＝既存の呼び出しは影響を受けない。 */
     function buildLoanSchedule(principalOverride){
-      const principal = Math.max(principalOverride!=null ? principalOverride : num('house-price',0), 0);   // house-price＝住宅ローン総額（借入額そのもの・頭金は別枠の現金）
+      const principal = Math.max(principalOverride!=null ? principalOverride : loanPrincipalBase(), 0);   // 借入額そのもの（頭金は別枠の現金。建物価格差を乗せる設定なら loanPrincipalBase が加算する）
       const term = num('loan-term',35);
       const totalMonths = Math.max(0, Math.round(term*12));
       const bonusPay = num('loan-bonus-pay',0);
@@ -5608,7 +5914,7 @@
       // 住居
       const rent = num('rent',0);
       const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
-      const price = num('house-price',0), down = num('down',0);   // price＝住宅ローン総額（借入額）
+      const price = loanPrincipalBase(), down = num('down',0);   // price＝借入額（建物価格差を乗せる設定なら、その分を含む）
       const loanTerm = num('loan-term',35);
       const propTax = num('prop-tax',0), maint = num('maint',0);
       const principal = Math.max(price, 0);   // 借入額そのもの（頭金は下のdownThisYearで購入年の現金支出として計上）
@@ -6169,6 +6475,8 @@
       updateCfHorizonNote(rows, viewRows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
+      if(typeof renderRateScenarios==='function') renderRateScenarios();   // 金利が上がった場合の表（切替なしで4行同時）
+      if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
       scheduleMarks();         // 「入力する」ボタンの入力済み表示を更新（1フレーム1回に畳む）
@@ -7672,9 +7980,9 @@
        ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
        ============================================================ */
     const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance','kaigo'];   // 指紋・基準の単位（全acc）
-    const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };
-    const INPUT_GROUP_ORDER = ['family','living','save','insurance','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）
-    const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
+    const INPUT_GROUPS = { ikou:['ikou'], family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };
+    const INPUT_GROUP_ORDER = ['ikou','family','living','save','insurance','kaigo'];   // 意向シートは先頭（2026-08-29新設）・介護は団信・生命保険の右（2026-08-19新設）
+    const INPUT_GROUP_LABEL = { ikou:'はじめに伺うこと', family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／家＝一条比較／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
     /* 「資産の比較」は独立した画面にする（ユーザー指示 2026-08-20）。
@@ -12504,7 +12812,10 @@
     // 現在の入力内容を1つのオブジェクトにまとめる
     function collectState(){
       const fields = {};
-      document.querySelectorAll('#input-panel [id], #age-point-1, #age-point-2').forEach(el=>{
+      /* ★2026-08-29：#ic-price-gap / #ic-gap-loan は結果パネル（#results）の中にあり
+         #input-panel の外なので、この一覧に足さないと保存も共有もされない。
+         実際、建物価格差は編集しても保存されず、開き直すと既定の600万へ戻っていた。 */
+      document.querySelectorAll('#input-panel [id], #age-point-1, #age-point-2, #ic-price-gap, #ic-gap-loan').forEach(el=>{
         if(!el.id || (el.tagName!=='INPUT' && el.tagName!=='SELECT')) return;
         fields[el.id] = (el.type==='checkbox') ? el.checked : el.value;
       });
@@ -12998,7 +13309,10 @@
     // 初期値と同じ項目は共有データから省く（受け取り側も同じ初期値から復元するので情報は失われない）
     function shareDefaultFields(){
       const f = {};
-      document.querySelectorAll('#input-panel [id], #age-point-1, #age-point-2').forEach(el=>{
+      /* ★2026-08-29：#ic-price-gap / #ic-gap-loan は結果パネル（#results）の中にあり
+         #input-panel の外なので、この一覧に足さないと保存も共有もされない。
+         実際、建物価格差は編集しても保存されず、開き直すと既定の600万へ戻っていた。 */
+      document.querySelectorAll('#input-panel [id], #age-point-1, #age-point-2, #ic-price-gap, #ic-gap-loan').forEach(el=>{
         if((el.tagName!=='INPUT' && el.tagName!=='SELECT') || !el.id) return;
         if(el.type==='checkbox') f[el.id] = el.defaultChecked;
         else if(el.tagName==='SELECT'){ const o=[...el.options].find(o=>o.defaultSelected)||el.options[0]; f[el.id]=o?o.value:''; }
@@ -13325,6 +13639,7 @@
     /* 起動直後（＝どのお客様も読み込んでいない状態）の入力内容を控えておく。
        サンプルはこれに差分を重ねて作るので、既定値を変えてもサンプルが古いままにならない。
        ドラフトの復元はバナーを押したときだけ走るので、この時点は必ず既定値 */
+    try{ ikouWire(); renderIkouChips(); }catch(e){}   // 意向シートの配線（INITIAL_STATE を取る前に描いておく）
     try{ INITIAL_STATE = collectState(); }catch(e){}
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */

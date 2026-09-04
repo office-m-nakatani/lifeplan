@@ -47,6 +47,7 @@ tailwind.config = {
       <button data-view="inbox"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
       <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">進捗ボード</button>
       <button data-view="partner"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">分野別ボード</button>
+      <button data-view="referral"  class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">送客・実績</button>
       <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
     </nav>
     <div class="relative shrink-0 hidden md:block">
@@ -238,6 +239,13 @@ function sanitizeCase(c){
     if(!d || typeof d!=='object') return;
     if(d.nextDate && !DATE_RE.test(String(d.nextDate))) d.nextDate='';
     if(!Object.prototype.hasOwnProperty.call(NEEDS, d.need)) d.need='undetermined';
+    if(d.outcome && !['未定','対応中','受注','失注'].includes(d.outcome)) d.outcome='未定';
+    if(d.joinRequest && typeof d.joinRequest==='object'){
+      d.joinRequest.reason = String(d.joinRequest.reason||'').slice(0,200);
+      if(!DATE_RE.test(String(d.joinRequest.date||''))) d.joinRequest.date='';
+      if(!ROLE_DEFS[d.joinRequest.by]) d.joinRequest.by=null;
+    } else if(d.joinRequest) delete d.joinRequest;
+    if(d.amount!=null && d.amount!==''){ const n=Number(d.amount); d.amount = isNaN(n)?null:n; }
     if('manualNeed' in d) d.manualNeed = !!d.manualNeed;
     if(d.decline && typeof d.decline==='object'){
       d.decline.reason = String(d.decline.reason||'').slice(0,200);
@@ -950,6 +958,7 @@ function render(){
   else if(VIEW==='inbox') html = renderInbox();
   else if(VIEW==='kanban') html = renderKanban();
   else if(VIEW==='partner') html = renderPartner();
+  else if(VIEW==='referral') html = renderReferral();
   else if(VIEW==='dashboard') html = renderDashboard();
   app.innerHTML = bannerHTML() + html;
 }
@@ -1212,6 +1221,105 @@ function renderPartner(){
 }
 
 /* ---- ダッシュボード ---- */
+/* ---- 送客・実績（このツールの目的＝お互いの送客が全員の売上になっているかを見る） ---- */
+function amountOf(c, key){ const d=c.domains&&c.domains[key]; return (d && d.outcome==='受注' && Number(d.amount)) ? Number(d.amount) : 0; }
+function teamAmount(c){ return DOMAINS.reduce((s,dm)=> s + amountOf(c, dm.key), 0); }
+function renderReferral(){
+  const base = scope();
+  const me   = roleDomain();                     // 提携先＝自分の分野
+  const mine = isAdmin() ? null : ROLE;
+
+  // 紹介元ごとの集計（誰がお客様を供給したか）
+  const bySource = {};
+  base.forEach(c=>{
+    const k = c.referredBy || '__self';
+    const b = bySource[k] = bySource[k] || { cases:0, won:0, amount:0, names:[] };
+    b.cases++;
+    const amt = teamAmount(c);
+    b.amount += amt;
+    if(amt>0) b.won++;
+    if(b.names.length<3) b.names.push(c.name||c.id);
+  });
+
+  // 分野ごとの成果（自分が受け取った仕事）
+  const byDomain = DOMAINS.map(dm=>{
+    const rel = base.filter(c=>c.domains?.[dm.key]?.need==='required');
+    const won = rel.filter(c=>c.domains[dm.key].outcome==='受注');
+    const amount = rel.reduce((s,c)=> s + amountOf(c, dm.key), 0);
+    // 提携先には他分野の金額は見せない（件数のみ）。自分の分野と、自分が紹介した案件の総額だけ数字を出す
+    const showAmount = isAdmin() || me===dm.key;
+    return { dm, cases:rel.length, won:won.length, amount, showAmount,
+      fromPartners: rel.filter(c=>c.referredBy && c.referredBy!==dm.key).length };
+  });
+
+  const given    = mine ? base.filter(c=>c.referredBy===mine) : base.filter(c=>c.referredBy);
+  const givenAmt = given.reduce((s,c)=> s + teamAmount(c), 0);
+  const received = mine ? base.filter(c=>c.referredBy && c.referredBy!==mine && c.domains?.[me]?.need==='required') : [];
+  const myAmount = mine ? base.reduce((s,c)=> s + amountOf(c, me), 0) : base.reduce((s,c)=> s + teamAmount(c), 0);
+
+  const tile = (label,val,sub,col)=>`<div class="bg-white rounded-2xl border border-line p-4">
+    <p class="text-[11px] text-sub font-bold">${label}</p>
+    <p class="font-black text-xl sm:text-2xl mt-1 break-all" style="color:${col||'#243B33'}">${val}</p>
+    ${sub?`<p class="text-[11px] text-sub mt-0.5">${sub}</p>`:''}</div>`;
+  const yen = n => n ? ('¥'+Number(n).toLocaleString()+'万') : '—';
+
+  const srcRows = Object.keys(bySource).sort((a,b)=>bySource[b].amount-bySource[a].amount).map(k=>{
+    const b = bySource[k];
+    const label = k==='__self' ? '事務局が直接お受けした' : (ROLE_DEFS[k]?.label || k);
+    const color = k==='__self' ? '#8A98A5' : (ROLE_DEFS[k]?.color || '#8B5CF6');
+    const isMe = mine && k===mine;
+    return `<div class="flex items-center gap-2 py-2.5 border-b border-line last:border-0 min-w-0 ${isMe?'bg-grnL rounded-lg px-2':''}">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${color}"></span>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-sm truncate">${esc(label)}${isMe?'<span class="text-[10px] font-black text-white px-2 py-0.5 rounded-full ml-1" style="background:#2E9E68">あなた</span>':''}</p>
+        <p class="text-[11px] text-sub truncate">${b.names.map(esc).join('・')}${b.cases>3?(' ほか'+(b.cases-3)+'名'):''}</p>
+      </div>
+      <div class="text-right shrink-0 w-14">
+        <p class="font-black text-sm">${b.cases}名</p>
+        <p class="text-[11px] text-sub">うち受注 ${b.won}</p>
+      </div>
+      <div class="text-right shrink-0 w-20">
+        <p class="font-black text-[13px] whitespace-nowrap" style="color:#16794C">${isAdmin()?yen(b.amount):(isMe?yen(b.amount):'—')}</p>
+        <p class="text-[11px] text-sub">チーム売上</p>
+      </div>
+    </div>`;
+  }).join('') || '<p class="text-sm text-sub py-4">まだご紹介の記録がありません。</p>';
+
+  const domRows = byDomain.map(x=>`
+    <div class="flex items-center gap-2 py-2.5 border-b border-line last:border-0 min-w-0 ${me===x.dm.key?'bg-grnL rounded-lg px-2':''}">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${x.dm.color}"></span>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-[13px] leading-tight">${x.dm.label}<span class="text-[11px] text-sub font-normal block">（${x.dm.role}）</span></p>
+        <p class="text-[11px] text-sub">他の分野からのご紹介で関わった案件 ${x.fromPartners}件</p>
+      </div>
+      <div class="text-right shrink-0 w-14"><p class="font-black text-sm">${x.cases}件</p><p class="text-[11px] text-sub">うち受注 ${x.won}</p></div>
+      <div class="text-right shrink-0 w-20"><p class="font-black text-[13px] whitespace-nowrap" style="color:#16794C">${x.showAmount?yen(x.amount):'—'}</p><p class="text-[11px] text-sub">${x.showAmount?'売上':'非公開'}</p></div>
+    </div>`).join('');
+
+  return `
+  <div class="rounded-2xl p-4 mb-4" style="background:#F2FAF5;border:2px solid #2E9E68">
+    <p class="font-black text-[15px]">お互いにお客様をご紹介し、チーム全体の売上にする</p>
+    <p class="text-xs text-sub mt-1">ご紹介いただいたお客様が、どの分野の仕事になり、いくらの売上になったかを共有します。各分野の担当が自分の「受注状況・ご請求額」を入れると、ここに反映されます。</p>
+  </div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 min-w-0">
+    ${tile(mine?'あなたがご紹介したお客様':'提携先からのご紹介', given.length+'名', mine?'あなたが供給した案件':'パートナー全体', '#8B5CF6')}
+    ${tile(mine?'そのご紹介が生んだチーム売上':'ご紹介から生まれたチーム売上', yen(givenAmt), '受注済みのみ集計', '#16794C')}
+    ${tile(mine?'あなたが受け取ったご依頼':'関与している分野の総数', mine?(received.length+'件'):(byDomain.filter(x=>x.cases).length+'分野'), mine?'他の分野からのご紹介':'', '#0EA5E9')}
+    ${tile(mine?'あなたの売上':'チーム受注総額', yen(myAmount), mine?'この端末で見える案件のみ':'全案件の合計', '#2E9E68')}
+  </div>
+  <div class="grid lg:grid-cols-2 gap-3">
+    <div class="bg-white rounded-2xl border border-line p-4">
+      <p class="font-black text-sm mb-2">どなたからのご紹介か（お客様の供給元）</p>
+      <div>${srcRows}</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-line p-4">
+      <p class="font-black text-sm mb-2">分野ごとの成果（受け取った仕事）</p>
+      <div>${domRows}</div>
+      <p class="text-[11px] text-sub mt-2">${isAdmin()?'金額は各分野の担当が入力した「ご請求額」の合計です。':'他の分野の金額は表示されません（あなたの分野のみ）。'}</p>
+    </div>
+  </div>`;
+}
+
 function renderDashboard(){
   const base = scope();
   const open = base.filter(c=>c.stage!=='closed_lost');
@@ -1267,6 +1375,8 @@ function renderDashboard(){
     ${tile('緊急度「高」', urgent+'件','', urgent?'#E5484D':'#2E9E68')}
     ${(()=>{ const refs=base.filter(c=>c.referredBy); const byRole={}; refs.forEach(c=>{ const l=ROLE_DEFS[c.referredBy]?.label||c.referredBy; byRole[l]=(byRole[l]||0)+1; });
       return tile('提携先からのご紹介', refs.length+'件', Object.entries(byRole).map(([k,v])=>esc(k)+v).join('・')||'双方向お繋ぎの実績', '#8B5CF6'); })()}
+    ${(()=>{ const amt = base.reduce((s,c)=>s+teamAmount(c),0);
+      return tile('チーム受注総額', amt?('¥'+amt.toLocaleString()+'万'):'—', '各分野の受注済みご請求額の合計', '#16794C'); })()}
   </div>
   <div class="grid lg:grid-cols-3 gap-3">
     <div class="bg-white rounded-2xl border border-line p-4 lg:col-span-1">
@@ -1347,6 +1457,23 @@ function clearDecline(id,dkey){
   d.updatedAt = new Date().toISOString();
   upsert(c); savedFlash(); renderDetail();
 }
+/* 提携先が「この分野にも入ってもらいたい」と事務局へ提案する（お客様を供給し合うための入口） */
+function proposeTeam(id,dkey){
+  if(isAdmin()) return;
+  const c = getC(id); if(!c) return;
+  const meta = domainMeta(dkey); if(!meta) return;
+  const r = prompt(meta.label+'（'+meta.role+'）にも、この案件に入ってもらうよう事務局へ提案します。\n理由・お願いしたいことをご記入ください。', '');
+  if(r===null) return;
+  c.domains = c.domains || {};
+  const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+  d.joinRequest = { by:ROLE, date:todayISO(), reason:(r||'').trim()||'この分野の対応が必要と思われます' };
+  d.updatedAt = new Date().toISOString();
+  c.followHistory = c.followHistory || [];
+  c.followHistory.unshift({date:todayISO(), type:'メモ',
+    memo:'【'+ROLE_DEFS[ROLE].label+'】'+meta.label+'にも参加をご提案：'+d.joinRequest.reason});
+  markDirty(); upsert(c); savedFlash(); renderDetail();
+  toast('提案を記録しました。「自分の更新を書き出して返信」で事務局へお送りください');
+}
 /* 関わるチームの切替（＝共有範囲。不要にするときは理由を必ず残す） */
 function toggleTeam(id,dkey){
   if(!canEditCore()) return;
@@ -1360,6 +1487,7 @@ function toggleTeam(id,dkey){
     d.need='not_required'; d.reason=(r||'').trim()||'今回は関わらない（共有対象外）'; d.stage='未判定';
   } else {
     d.need='required'; d.reason='';
+    if(d.joinRequest){ c.followHistory=c.followHistory||[]; c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true, memo:'【参加提案を採用】'+(ROLE_DEFS[d.joinRequest.by]?.label||'提携先')+'のご提案どおり '+meta.label+' に参加いただきます'}); delete d.joinRequest; }
     if(!d.assignee && DOM_ASSIGNEE[dkey]) d.assignee = DOM_ASSIGNEE[dkey];
   }
   d.manualNeed = true;
@@ -1382,6 +1510,24 @@ function domField(id,dkey,prop,value){
   c.domains[dkey].updatedAt=new Date().toISOString();
   markDirty(); upsert(c); savedFlash(); renderDetail();
 }
+function domOutcome(id,dkey,prop,value){
+  if(!canEditDomain(dkey)) return;
+  const c = getC(id); if(!c) return;
+  const d = c.domains[dkey] = c.domains[dkey] || {need:'required',stage:'未判定',assignee:'',next:'',reason:''};
+  const before = d.outcome || '未定';
+  if(prop==='amount'){ const n = Number(value); d.amount = (value===''||isNaN(n)) ? null : n; }
+  else d.outcome = value;
+  d.updatedAt = new Date().toISOString();
+  // 受注に変わった瞬間に、紹介してくれた相手へ返る記録を残す（ご紹介が売上になったことが紹介元に伝わる）
+  if(prop==='outcome' && value==='受注' && before!=='受注'){
+    const meta = domainMeta(dkey);
+    const from = c.referredBy ? (ROLE_DEFS[c.referredBy]?.label||'提携先') : null;
+    c.followHistory = c.followHistory || [];
+    c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true,
+      memo:'【成果】'+meta.label+'が受注'+(d.amount?('・¥'+Number(d.amount).toLocaleString()+'万'):'')+(from?('（'+from+'からのご紹介が売上につながりました）'):'')});
+  }
+  markDirty(); upsert(c); savedFlash(); renderDetail();
+}
 function domData(id,dkey,prop,value){
   if(!canEditDomain(dkey)) return;
   const c=getC(id);
@@ -1402,6 +1548,27 @@ function addFollow(id){
 }
 
 /* 分野ごとの追加情報（税務=控除期限/旧耐震/可否、不動産=査定・媒介、FP=補助金額） */
+/* どの分野にも共通の成果欄。「お客様を供給し合った結果＝全員の売上」を数字で残すための入口 */
+function outcomeBlock(c, dm, d, editable){
+  if(d.need!=='required') return '';
+  const OUT = ['未定','対応中','受注','失注'];
+  const cur = d.outcome || '未定';
+  const col = cur==='受注' ? '#16794C' : cur==='失注' ? '#8A98A5' : cur==='対応中' ? '#2E9E68' : '#8A98A5';
+  return `<div class="mt-2.5 pt-2.5 border-t border-line">
+    <p class="text-[11px] font-black mb-1.5" style="color:${dm.color}">この分野の成果（チーム全体の売上として集計されます）</p>
+    <div class="grid grid-cols-2 gap-2.5">
+      ${editable
+        ? `<label class="text-xs text-sub font-bold">受注状況
+            <select onchange="domOutcome('${c.id}','${dm.key}','outcome',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-bold mt-1" style="color:${col}">${OUT.map(o=>`<option ${cur===o?'selected':''}>${o}</option>`).join('')}</select>
+          </label>
+          <label class="text-xs text-sub font-bold">ご請求額（万円）
+            <input type="number" value="${d.amount??''}" placeholder="税別の見込みでも可" onchange="domOutcome('${c.id}','${dm.key}','amount',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+          </label>`
+        : `<div><p class="text-xs text-sub font-bold">受注状況</p><p class="mt-1 text-[15px] font-bold" style="color:${col}">${esc(cur)}</p></div>
+           <div><p class="text-xs text-sub font-bold">ご請求額</p><p class="mt-1 text-[15px]">${d.amount?('¥'+Number(d.amount).toLocaleString()+'万'):'—'}</p></div>`}
+    </div>
+  </div>`;
+}
 function domainExtras(c, dm, d, editable){
   if(d.need!=='required') return '';
   const data = d.data||{};
@@ -1491,13 +1658,28 @@ function renderDetail(){
 
   /* --- 関わるチーム（共有範囲）のチップ --- */
   const teamChips = DOMAINS.map(dm=>{
-    const dd = c.domains?.[dm.key];
-    const on = dd?.need==='required';
-    const tip = on ? (dm.label+'：共有中（'+dm.role+'）') : (dm.label+'：'+(dd?.reason||'共有しない'));
-    return `<button ${canEditCore()?`onclick="toggleTeam('${c.id}','${dm.key}')"`:'disabled'} title="${esc(tip)}"
+    const dd  = c.domains?.[dm.key];
+    const on  = dd?.need==='required';
+    const req = dd?.joinRequest;
+    const isMine = !isAdmin() && roleDomain()===dm.key;
+    // 事務局＝共有のON/OFF、提携先＝「この分野にも入ってもらいたい」と提案できる（お互いに仕事を回すための導線）
+    const canPropose = !isAdmin() && !on && !isMine;
+    const tip = on ? (dm.label+'：共有中（'+dm.role+'）')
+              : req ? (dm.label+'：'+(ROLE_DEFS[req.by]?.label||'提携先')+'から参加のご提案「'+(req.reason||'')+'」')
+              : canPropose ? (dm.label+'：この分野にも入ってもらうよう事務局へ提案できます')
+              : (dm.label+'：'+(dd?.reason||'共有しない'));
+    const handler = canEditCore() ? `onclick="toggleTeam('${c.id}','${dm.key}')"`
+                  : canPropose   ? `onclick="proposeTeam('${c.id}','${dm.key}')"`
+                  : 'disabled';
+    const style = on ? `background:${dm.color};border-color:${dm.color};color:#fff`
+                : req ? 'background:#FFF7E6;border-color:#F5A524;color:#B45309'
+                : canPropose ? 'background:#fff;border-color:#C9D4CB;color:#5C6B60'
+                : 'background:#F1F4F2;border-color:#E2E9E3;color:#8A98A5';
+    const suffix = on ? '' : req ? '（参加のご提案あり）' : canPropose ? '（＋お願いする）' : '（共有しない）';
+    return `<button ${handler} title="${esc(tip)}"
       class="text-xs font-bold px-3 py-2 rounded-full border text-left"
-      style="${on?`background:${dm.color};border-color:${dm.color};color:#fff`:'background:#F1F4F2;border-color:#E2E9E3;color:#8A98A5'}">
-      ${dm.label}${on?'':'（共有しない）'}</button>`;
+      style="${style}">
+      ${dm.label}${suffix}</button>`;
   }).join('');
 
   /* --- 6分野（1行1分野・進捗バーつき・役割で編集可否） --- */
@@ -1551,13 +1733,13 @@ function renderDetail(){
         <label class="text-xs text-sub font-bold">期日
           <input type="date" value="${esc(d.nextDate||'')}" onchange="domField('${c.id}','${dm.key}','nextDate',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1 ${d.nextDate&&d.nextDate<todayISO()?'text-red font-bold':''}">
         </label>`}
-      </div>${domainExtras(c, dm, d, editable)}`;
+      </div>${domainExtras(c, dm, d, editable)}${outcomeBlock(c, dm, d, editable)}`;
     } else {
       controls = `<div class="grid grid-cols-2 xl:grid-cols-5 gap-2.5">
         ${ro('要否', NEEDS[d.need]?.label)}
         ${d.need==='not_required' ? `<div class="col-span-1 xl:col-span-4">${ro('不要の理由', d.reason)}</div>`
           : `${ro('進捗ステージ', d.stage)}${ro('担当', d.assignee)}${ro('次アクション', d.next)}${ro('期日', d.nextDate)}`}
-      </div>${domainExtras(c, dm, d, editable)}`;
+      </div>${domainExtras(c, dm, d, editable)}${outcomeBlock(c, dm, d, editable)}`;
     }
     return `<div class="bg-white rounded-xl border-l-4 border p-4 ${dim}" style="border-left-color:${dm.color};${mine?'border-color:'+dm.color+';box-shadow:0 0 0 2px '+dm.color+'33':'border-color:#E2E9E3'}">
       <div class="flex items-center gap-2 flex-wrap mb-3">

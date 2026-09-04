@@ -223,6 +223,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 function sanitizeCase(c){
   if(!c || typeof c!=='object') return c;
+  const knownRole = r => !!r && Object.prototype.hasOwnProperty.call(ROLE_DEFS, r);   // ループ内で使うので必ず先に定義する
   if(!ID_RE.test(String(c.id||''))) c.id = newId();   // idはonclick属性に埋まるため、取込データは必ず安全な形へ再採番
   ['nextActionDate','inheritanceStartDate','demolitionDate','insuranceCancelDate','createdAt','referredAt','birthday'].forEach(k=>{ if(c[k] && !DATE_RE.test(String(c[k]))) c[k]=''; });
   if(c.stage) c.stage = normStage(c.stage);                                    // 旧（解体専用）ステージを読み替え
@@ -243,17 +244,18 @@ function sanitizeCase(c){
     if(d.joinRequest && typeof d.joinRequest==='object'){
       d.joinRequest.reason = String(d.joinRequest.reason||'').slice(0,200);
       if(!DATE_RE.test(String(d.joinRequest.date||''))) d.joinRequest.date='';
-      if(!ROLE_DEFS[d.joinRequest.by]) d.joinRequest.by=null;
+      if(!knownRole(d.joinRequest.by)) d.joinRequest.by=null;
     } else if(d.joinRequest) delete d.joinRequest;
     if(d.amount!=null && d.amount!==''){ const n=Number(d.amount); d.amount = isNaN(n)?null:n; }
     if('manualNeed' in d) d.manualNeed = !!d.manualNeed;
     if(d.decline && typeof d.decline==='object'){
       d.decline.reason = String(d.decline.reason||'').slice(0,200);
       if(!DATE_RE.test(String(d.decline.date||''))) d.decline.date='';
-      if(!ROLE_DEFS[d.decline.by]) d.decline.by=null;
+      if(!knownRole(d.decline.by)) d.decline.by=null;
     } else if(d.decline) delete d.decline;
   });
-  if(c.referredBy && !ROLE_DEFS[c.referredBy]) c.referredBy=null;
+  if(c.referredBy && !knownRole(c.referredBy)) c.referredBy=null;
+  if(c.teamAmountTotal!=null){ const n=Number(c.teamAmountTotal); c.teamAmountTotal = isNaN(n)?null:Math.max(0,n); }
   if(c.thirdPartyConsent && typeof c.thirdPartyConsent==='object'){
     c.thirdPartyConsent.obtained = c.thirdPartyConsent.obtained===true;
     if(c.thirdPartyConsent.date && !DATE_RE.test(String(c.thirdPartyConsent.date))) c.thirdPartyConsent.date='';
@@ -412,7 +414,7 @@ function pickForRole(c, role, opts){
   Object.keys(c.domains||{}).forEach(k=>{
     if(k===role) return;
     const ph = domainPhase(k, c.domains[k]);
-    domainsSummary[k] = { phase: ph.label, reason: c.domains[k].need==='not_required' ? (c.domains[k].reason||'') : undefined };
+    domainsSummary[k] = { phase: ph.label, outcome: c.domains[k].outcome||'', reason: c.domains[k].need==='not_required' ? (c.domains[k].reason||'') : undefined };   // 金額は渡さず、受注したかどうかだけ共有
   });
   const roleLabel = ROLE_DEFS[role].label;
   const out = {
@@ -426,13 +428,18 @@ function pickForRole(c, role, opts){
     inheritanceStartDate:c.inheritanceStartDate||null, demolitionDate:c.demolitionDate||null,
     subsidyApplicable:c.subsidyApplicable, insuranceStatus:c.insuranceStatus||'unknown', insuranceCancelDate:c.insuranceCancelDate||null,
     referredBy:c.referredBy||null,
+    // 本人同意の記録も渡す。これが無いと、紹介元が自分のお客様を返信するたびに「同意未記録」と判定され送れなくなる
+    thirdPartyConsent: c.thirdPartyConsent ? { obtained: !!c.thirdPartyConsent.obtained, date: c.thirdPartyConsent.date||'', method: c.thirdPartyConsent.method||'' } : {obtained:false,date:'',method:''},
     domains: { [role]: JSON.parse(JSON.stringify(c.domains?.[role]||{need:'required',stage:'未判定',assignee:'',next:'',reason:''})) },
     domainsSummary,
-    followHistory: (c.followHistory||[]).filter(h => h.memo && (h.memo.startsWith('【'+roleLabel+'】') || !h.memo.startsWith('【'))).slice(0,30),
+    // 【成果】【参加提案を採用】は「ご紹介が売上になった」ことを紹介元へ返す記録なので必ず含める
+    followHistory: (c.followHistory||[]).filter(h => h.memo && (h.memo.startsWith('【'+roleLabel+'】') || h.memo.startsWith('【成果】') || h.memo.startsWith('【参加提案を採用】') || !h.memo.startsWith('【'))).slice(0,30),
   };
   if(opts.teamNote) out.teamNote = c.teamNote||'';
   if(opts.contacts && CONTACT_ROLES.includes(role)){ out.phone = c.phone; out.mobile = c.mobile||''; out.email = c.email; }
   if(opts.estimate){ out.estimateRangeLow=c.estimateRangeLow; out.estimateRangeHigh=c.estimateRangeHigh; out.finalEstimate=c.finalEstimate; }
+  // ご紹介くださった方には「そのご紹介がチーム全体でいくらの売上になったか」を返す（各社の内訳は渡さない）
+  if(role && role===c.referredBy) out.teamAmountTotal = DOMAINS.reduce((sum,dm)=> sum + ((c.domains?.[dm.key]?.outcome==='受注' && Number(c.domains[dm.key].amount)) || 0), 0);
   return out;
   // notes（社内メモ）・緊急度スコアは常に共有しない
 }
@@ -645,6 +652,8 @@ function exportReturn(){
     cases: mine.map(c => ({
       id:c.id,
       domains:{ [dk]: c.domains[dk] },
+      // 他分野への「入ってもらいたい」提案は自分の分野の外に書かれるので、別枠で必ず届ける
+      joinRequests: Object.fromEntries(Object.entries(c.domains||{}).filter(([k,v])=>k!==dk && v && v.joinRequest && v.joinRequest.by===ROLE).map(([k,v])=>[k, v.joinRequest])),
       followHistory:(c.followHistory||[]).filter(h=>h.memo && h.memo.startsWith('【'+roleLabel+'】')),
       inheritanceStartDate:c.inheritanceStartDate||null
     })).concat(referrals.map(c=>JSON.parse(JSON.stringify(c)))) };
@@ -661,7 +670,7 @@ function applyReturn(e){
     const p = JSON.parse(r.result);
     if(p.type!=='akiya_crm_share' || !Array.isArray(p.cases) || !ROLE_DEFS[p.role]) throw 0;
     if(p.direction && p.direction!=='return'){ toast('これは社内→提携先の送付ファイルです。反映には提携先の「返信」ファイルを選んでください'); return; }
-    const dk = ROLE_DEFS[p.role].domain; let upd=0, conflict=0, notes=0, refs=0;
+    const dk = ROLE_DEFS[p.role].domain; let upd=0, conflict=0, notes=0, refs=0, joins=0;
     p.cases.forEach(pc=>{
       sanitizeCase(pc);
       const c = getC(pc.id);
@@ -696,6 +705,19 @@ function applyReturn(e){
         else if(localU && remoteU < localU){ conflict++; }
         else { c.domains[dk] = pc.domains[dk]; upd++; }
       }
+      // 参加のご提案は2経路で届く：joinRequests（自分の分野の更新に同梱）と、紹介案件のフルコピー内の domains[*].joinRequest
+      const incomingJoins = Object.assign({},
+        (pc.domains && typeof pc.domains==='object')
+          ? Object.fromEntries(Object.entries(pc.domains).filter(([k,v])=>k!==dk && v && v.joinRequest).map(([k,v])=>[k, v.joinRequest]))
+          : {},
+        (pc.joinRequests && typeof pc.joinRequests==='object') ? pc.joinRequests : {});
+      if(Object.keys(incomingJoins).length){
+        Object.entries(incomingJoins).forEach(([k,jr])=>{
+          if(!domainMeta(k) || !jr) return;
+          const dd = c.domains[k] = c.domains[k] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+          if(dd.need!=='required' && !dd.joinRequest){ dd.joinRequest = { by:p.role, date: DATE_RE.test(String(jr.date||''))?jr.date:todayISO(), reason:String(jr.reason||'').slice(0,200) }; joins++; }
+        });
+      }
       if(!c.inheritanceStartDate && pc.inheritanceStartDate) c.inheritanceStartDate = pc.inheritanceStartDate;   // 戸籍を見る専門家の記入を取り込む
       (pc.followHistory||[]).forEach(h=>{
         if(!(c.followHistory||[]).some(x=>x.date===h.date && x.memo===h.memo)){ (c.followHistory=c.followHistory||[]).unshift(h); notes++; }
@@ -706,6 +728,7 @@ function applyReturn(e){
     toast(ROLE_DEFS[p.role].label+'の更新を反映：'+upd+'件'
       +(conflict?('／競合'+conflict+'件は社内が新しいため未反映'):'')
       +(refs?('／ご紹介の新規受入'+refs+'件'):'')
+      +(joins?('／参加のご提案'+joins+'件'):'')
       +'（新規メモ'+notes+'件）');
   } catch(err){ toast('この返信ファイルを反映できませんでした'); } };
   r.readAsText(f); e.target.value=''; toggleMenu();
@@ -1223,7 +1246,18 @@ function renderPartner(){
 /* ---- ダッシュボード ---- */
 /* ---- 送客・実績（このツールの目的＝お互いの送客が全員の売上になっているかを見る） ---- */
 function amountOf(c, key){ const d=c.domains&&c.domains[key]; return (d && d.outcome==='受注' && Number(d.amount)) ? Number(d.amount) : 0; }
-function teamAmount(c){ return DOMAINS.reduce((s,dm)=> s + amountOf(c, dm.key), 0); }
+/* 手元の分野の合計。提携先の端末には他社の内訳が無いので、共有ファイルで受け取った総額（紹介元にだけ返る）を使う */
+function teamAmount(c){
+  const own = DOMAINS.reduce((s,dm)=> s + amountOf(c, dm.key), 0);
+  if(isAdmin()) return own;
+  return Math.max(own, Number(c.teamAmountTotal)||0);
+}
+/* 受注したかどうか。提携先は共有された進捗サマリー（金額なし）からも判定する */
+function isWon(c){
+  if(DOMAINS.some(dm=>c.domains?.[dm.key]?.outcome==='受注')) return true;
+  const sum = c.domainsSummary||{};
+  return Object.keys(sum).some(k=>sum[k] && sum[k].outcome==='受注');
+}
 function renderReferral(){
   const base = scope();
   const me   = roleDomain();                     // 提携先＝自分の分野
@@ -1235,9 +1269,8 @@ function renderReferral(){
     const k = c.referredBy || '__self';
     const b = bySource[k] = bySource[k] || { cases:0, won:0, amount:0, names:[] };
     b.cases++;
-    const amt = teamAmount(c);
-    b.amount += amt;
-    if(amt>0) b.won++;
+    b.amount += teamAmount(c);
+    if(isWon(c)) b.won++;
     if(b.names.length<3) b.names.push(c.name||c.id);
   });
 
@@ -1307,12 +1340,12 @@ function renderReferral(){
     ${tile(mine?'あなたが受け取ったご依頼':'関与している分野の総数', mine?(received.length+'件'):(byDomain.filter(x=>x.cases).length+'分野'), mine?'他の分野からのご紹介':'', '#0EA5E9')}
     ${tile(mine?'あなたの売上':'チーム受注総額', yen(myAmount), mine?'この端末で見える案件のみ':'全案件の合計', '#2E9E68')}
   </div>
-  <div class="grid lg:grid-cols-2 gap-3">
-    <div class="bg-white rounded-2xl border border-line p-4">
+  <div class="grid lg:grid-cols-2 gap-3 min-w-0">
+    <div class="bg-white rounded-2xl border border-line p-4 min-w-0 overflow-x-hidden">
       <p class="font-black text-sm mb-2">どなたからのご紹介か（お客様の供給元）</p>
       <div>${srcRows}</div>
     </div>
-    <div class="bg-white rounded-2xl border border-line p-4">
+    <div class="bg-white rounded-2xl border border-line p-4 min-w-0 overflow-x-hidden">
       <p class="font-black text-sm mb-2">分野ごとの成果（受け取った仕事）</p>
       <div>${domRows}</div>
       <p class="text-[11px] text-sub mt-2">${isAdmin()?'金額は各分野の担当が入力した「ご請求額」の合計です。':'他の分野の金額は表示されません（あなたの分野のみ）。'}</p>
@@ -1474,6 +1507,20 @@ function proposeTeam(id,dkey){
   markDirty(); upsert(c); savedFlash(); renderDetail();
   toast('提案を記録しました。「自分の更新を書き出して返信」で事務局へお送りください');
 }
+/* 事務局が参加のご提案を見送る（提案者にも理由が返るよう履歴に残す） */
+function rejectJoin(id,dkey){
+  if(!canEditCore()) return;
+  const c = getC(id); const d = c && c.domains && c.domains[dkey]; if(!d || !d.joinRequest) return;
+  const meta = domainMeta(dkey);
+  const r = prompt(meta.label+'への参加のご提案を見送ります。\n理由をご記入ください（提案者にも共有されます）。', '');
+  if(r===null) return;
+  const by = ROLE_DEFS[d.joinRequest.by]?.label||'提携先';
+  delete d.joinRequest;
+  d.updatedAt = new Date().toISOString();
+  c.followHistory = c.followHistory || [];
+  c.followHistory.unshift({date:todayISO(), type:'メモ', memo:'【参加提案を見送り】'+by+'よりご提案の '+meta.label+' は今回見送ります：'+((r||'').trim()||'現時点では不要と判断')});
+  upsert(c); savedFlash(); renderDetail();
+}
 /* 関わるチームの切替（＝共有範囲。不要にするときは理由を必ず残す） */
 function toggleTeam(id,dkey){
   if(!canEditCore()) return;
@@ -1515,7 +1562,7 @@ function domOutcome(id,dkey,prop,value){
   const c = getC(id); if(!c) return;
   const d = c.domains[dkey] = c.domains[dkey] || {need:'required',stage:'未判定',assignee:'',next:'',reason:''};
   const before = d.outcome || '未定';
-  if(prop==='amount'){ const n = Number(value); d.amount = (value===''||isNaN(n)) ? null : n; }
+  if(prop==='amount'){ const n = Number(value); d.amount = (value===''||isNaN(n)) ? null : Math.max(0, n); }
   else d.outcome = value;
   d.updatedAt = new Date().toISOString();
   // 受注に変わった瞬間に、紹介してくれた相手へ返る記録を残す（ご紹介が売上になったことが紹介元に伝わる）
@@ -1562,10 +1609,10 @@ function outcomeBlock(c, dm, d, editable){
             <select onchange="domOutcome('${c.id}','${dm.key}','outcome',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-bold mt-1" style="color:${col}">${OUT.map(o=>`<option ${cur===o?'selected':''}>${o}</option>`).join('')}</select>
           </label>
           <label class="text-xs text-sub font-bold">ご請求額（万円）
-            <input type="number" value="${d.amount??''}" placeholder="税別の見込みでも可" onchange="domOutcome('${c.id}','${dm.key}','amount',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
+            <input type="number" min="0" value="${d.amount??''}" placeholder="税別の見込みでも可" onchange="domOutcome('${c.id}','${dm.key}','amount',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
           </label>`
         : `<div><p class="text-xs text-sub font-bold">受注状況</p><p class="mt-1 text-[15px] font-bold" style="color:${col}">${esc(cur)}</p></div>
-           <div><p class="text-xs text-sub font-bold">ご請求額</p><p class="mt-1 text-[15px]">${d.amount?('¥'+Number(d.amount).toLocaleString()+'万'):'—'}</p></div>`}
+           <div><p class="text-xs text-sub font-bold">ご請求額</p><p class="mt-1 text-[15px]">${(isAdmin()||canEditDomain(dm.key))?(d.amount?('¥'+Number(d.amount).toLocaleString()+'万'):'—'):'<span class="text-sub text-sm">非公開</span>'}</p></div>`}
     </div>
   </div>`;
 }
@@ -1663,7 +1710,7 @@ function renderDetail(){
     const req = dd?.joinRequest;
     const isMine = !isAdmin() && roleDomain()===dm.key;
     // 事務局＝共有のON/OFF、提携先＝「この分野にも入ってもらいたい」と提案できる（お互いに仕事を回すための導線）
-    const canPropose = !isAdmin() && !on && !isMine;
+    const canPropose = !isAdmin() && !on && !isMine && !req;   // 提案済みは重ねて押せない
     const tip = on ? (dm.label+'：共有中（'+dm.role+'）')
               : req ? (dm.label+'：'+(ROLE_DEFS[req.by]?.label||'提携先')+'から参加のご提案「'+(req.reason||'')+'」')
               : canPropose ? (dm.label+'：この分野にも入ってもらうよう事務局へ提案できます')
@@ -1671,6 +1718,7 @@ function renderDetail(){
     const handler = canEditCore() ? `onclick="toggleTeam('${c.id}','${dm.key}')"`
                   : canPropose   ? `onclick="proposeTeam('${c.id}','${dm.key}')"`
                   : 'disabled';
+    const declineBtn = (canEditCore() && req) ? `<button onclick="rejectJoin('${c.id}','${dm.key}')" class="text-[10px] font-bold border border-line rounded-full px-2 py-1 ml-1 bg-white text-sub">提案を見送る</button>` : '';
     const style = on ? `background:${dm.color};border-color:${dm.color};color:#fff`
                 : req ? 'background:#FFF7E6;border-color:#F5A524;color:#B45309'
                 : canPropose ? 'background:#fff;border-color:#C9D4CB;color:#5C6B60'
@@ -1679,7 +1727,7 @@ function renderDetail(){
     return `<button ${handler} title="${esc(tip)}"
       class="text-xs font-bold px-3 py-2 rounded-full border text-left"
       style="${style}">
-      ${dm.label}${suffix}</button>`;
+      ${dm.label}${suffix}</button>${declineBtn}`;
   }).join('');
 
   /* --- 6分野（1行1分野・進捗バーつき・役割で編集可否） --- */

@@ -324,7 +324,7 @@
     body.customer-mode #btn-save{ display:none !important; }
     body.customer-mode #btn-share-top{ display:none !important; }   /* 共有リンクを作るのは担当者だけ */
     body.customer-mode #btn-quick{ display:none !important; }       /* 1分モードは担当者の入口（お客様の画面では出さない） */
-    body.customer-mode #btn-route{ display:none !important; }       /* 商談の順路も担当者の入口 */
+    body.customer-mode #btn-next{ display:none !important; }        /* 次の一手も担当者の入口 */
     /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
     .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
       font-size:.78rem; text-decoration:underline; cursor:pointer; }
@@ -1348,37 +1348,8 @@
       .nxv-rl{ font-size:.72rem; }
     }
 
-    /* ---------- 商談の順路（2026-09-06追加） ---------- */
-    /* ★表示を絞るのは「誤操作の防止」であって法的な保護ではない。
-         body のクラスは DevTools で外せる。だからモードの中に
-         「このモードでも保険の内容説明はできません」を消せない位置で固定表示する。
-       ★ホワイトリスト方式：順路モードに入ったら data-hoken-only を既定で隠し、
-         保障の順路のときだけ出す。新しく足した保険まわりの表示にこの属性を付けておけば、
-         何もしなくても自動で隠れる。 */
-    body.route-mode:not(.route-hoken) [data-hoken-only]{ display:none !important; }
-    /* 検討メモ（保険会社名・商品類型の覚え書き）とAI相談チャットは、
-       保障の順路でも出さない。商談中は画面がお客様の側を向いているため。 */
-    body.route-mode #nx-plan-wrap, body.route-mode #chat-card,
-    body.route-mode #nav-result button[data-nav-result="chat"],
-    /* 右下の「AIに相談」の浮きボタンは、帯の固定文言（保険の内容説明はできません）に
-       かぶって読めなくする。順路の間は出さない（チャット自体も隠しているので入口も閉じる） */
-    body.route-mode #chat-fab{ display:none !important; }
-    body.route-mode{ padding-bottom:150px; }   /* 帯のぶん本文の下に余白 */
-    #rt-band{ position:fixed; left:0; right:0; bottom:0; z-index:60; padding:9px 14px 11px;
-      background:#1f3328; color:#fff; box-shadow:0 -3px 14px rgba(0,0,0,.18); }
-    #rt-band .rt-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:1100px; margin:0 auto; }
-    #rt-band .rt-step{ font-size:.74rem; font-weight:800; opacity:.85; white-space:nowrap; }
-    #rt-band .rt-say{ flex:1 1 260px; min-width:0; font-size:.86rem; line-height:1.6; font-weight:700; }
-    #rt-band .rt-ask{ flex:1 1 260px; min-width:0; font-size:.8rem; line-height:1.6; opacity:.9; }
-    #rt-band .rt-fix{ max-width:1100px; margin:6px auto 0; font-size:.72rem; opacity:.85; line-height:1.5; }
-    #rt-band button{ min-height:38px; padding:7px 13px; border-radius:9px; border:1.5px solid rgba(255,255,255,.45);
-      background:transparent; color:#fff; font-family:inherit; font-size:.8rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-    #rt-band button.rt-go{ background:#fff; color:#1f3328; border-color:#fff; }
-    @media (max-width:640px){ #rt-band .rt-ask{ flex-basis:100%; } body.route-mode{ padding-bottom:200px; } }
-    /* お客様の画面・共有リンク・PDF・印刷では帯を出さない */
-    body.customer-mode #rt-band, body.pdf-mode #rt-band{ display:none !important; }
-    @media print{ #rt-band{ display:none !important; } }
-    /* 1枚サマリー（画面には出さず、画像化のためだけに置く） */
+    /* ---------- 本日の確認シート（A4縦1枚。もと「商談の順路」の最後の1枚を独立させた） ----------
+       画面には出さず、画像化のためだけに置く */
     #rt-sheet{ position:absolute; left:-99999px; top:0; width:794px; padding:34px 40px;
       background:#fff; color:#1f3328; font-family:'Noto Sans JP',sans-serif; }
     #rt-sheet h2{ font-size:20px; margin:0 0 4px; }
@@ -1515,9 +1486,23 @@
     .nx-basis{ display:block; margin-top:3px; font-size:.76rem; color:var(--ink-soft); }
     .nx-caution{ display:block; margin-top:3px; font-size:.76rem; color:#7a5c0f; }
     .nx-due{ flex:0 0 auto; font-size:.74rem; font-weight:800; color:var(--blue-deep); white-space:nowrap; }
+    /* 見出し行（チェックボックスと連動する。ここだけがクリックで済になる） */
+    .nx-head{ display:block; cursor:pointer; }
+    /* 「根拠と注意点」の開閉ボタン。根拠と注意は必ず一緒に開き、一緒に閉じる */
+    .nx-why{ display:inline-flex; align-items:center; gap:6px; margin-top:5px; padding:4px 10px; min-height:30px;
+      background:#fff; border:1px solid var(--line); border-radius:999px;
+      font-family:inherit; font-size:.72rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+    .nx-why:hover{ border-color:var(--blue); color:var(--blue-deep); }
+    /* ★.nx-detail は span なので、開いたときだけ block にする。
+       display:block を無条件に書くと [hidden] のUA既定（display:none）を打ち消して
+       畳めなくなる（同じ詳細度で後勝ちするため）。閉じる側も明示する。 */
+    .nx-detail{ display:block; }
+    .nx-detail[hidden]{ display:none; }
     .nx-item.is-done .nx-body{ opacity:.55; text-decoration:line-through; }
-    /* 不利益事実（caution）は済チェックでも打ち消さない＝顧客に見せながら消えると困る */
+    /* 不利益事実（caution）は済チェックでも打ち消さない＝顧客に見せながら消えると困る。
+       開閉ボタンと根拠も打ち消し線を掛けない（読めなくなるため） */
     .nx-item.is-done .nx-caution{ opacity:1; text-decoration:none; }
+    .nx-item.is-done .nx-why, .nx-item.is-done .nx-detail{ text-decoration:none; }
     .nx-more{ font-size:.82rem; margin-bottom:8px; }
     .nx-more summary{ cursor:pointer; font-weight:700; color:var(--blue-deep); min-height:44px; display:flex; align-items:center; gap:6px; }
     .nx-disclaimer{ margin:8px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
@@ -1818,10 +1803,11 @@
              仕様の置き場所は「サンプル読込の隣」だったが、サンプルは保存モーダルの中にあり、
              初回商談でいちばん早く押したいものが2階層奥になるため、操作バーの本線に出した。 -->
         <button class="btn btn-ghost btn-sm" id="btn-quick"><i class="fa-solid fa-bolt"></i> 1分で概算</button>
-        <!-- 商談の順路（2026-09-06追加）。Office-Mの担当者が使う機能として運用する。
-             社外の住宅担当者へ配布する判断は、業務委託契約での募集関連行為の範囲・
-             紹介料の設計・個人情報の取扱い・一条工務店の許諾の4点が整ってから別途行う。 -->
-        <button class="btn btn-ghost btn-sm" id="btn-route"><i class="fa-solid fa-route"></i> 商談の順路</button>
+        <!-- 次の一手（2026-09-06：もと「商談の順路」の位置）。
+             次の一手は音声メモの4つ目のタブの中にあり、録音を使わない担当者には
+             存在が見えなかった（音声メモを開く→展開→タブ→作る、の4手が必要だった）。
+             商談の締めでいちばん押したいものなので、操作バーの本線に出して1手にする。 -->
+        <button class="btn btn-ghost btn-sm" id="btn-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
@@ -1905,7 +1891,7 @@
         <button type="button" data-nav-result="assets"><i class="fa-solid fa-coins"></i> お金（資産と収支）</button>
         <button type="button" data-nav-result="compare"><i class="fa-solid fa-scale-unbalanced-flip"></i> 資産の比較</button>
         <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-house-chimney-window"></i> 家（一条比較）</button>
-        <button type="button" data-nav-result="hoken" data-hoken-only><i class="fa-solid fa-umbrella"></i> 万が一（保障）</button>
+        <button type="button" data-nav-result="hoken"><i class="fa-solid fa-umbrella"></i> 万が一（保障）</button>
         <button type="button" data-nav-result="ai"><i class="fa-solid fa-robot"></i> AI診断</button>
         <button type="button" data-nav-result="cf"><i class="fa-solid fa-table-cells"></i> キャッシュフロー表</button>
         <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
@@ -2951,7 +2937,7 @@
 
         <div class="view-wrap" data-view="hoken">
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
-        <div class="card" id="hoken-diff-card" data-hoken-only>
+        <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
           <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
@@ -2991,7 +2977,7 @@
              ★重ねる保障の線は「生命保険」だけ。必要保障額は団信で消える残債を
                すでに差し引いた金額なので、団信を足した合計線と比べると団信を2回引くことになる。
              既定では閉じておき、開いたときにだけ計算する（遅延描画）。 -->
-        <div class="card" id="need-card" data-hoken-only>
+        <div class="card" id="need-card">
           <details id="need-details">
             <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-chart-area"></i> 必要保障額と、いまの生命保険（年齢ごと）</summary>
             <div id="need-body" style="margin-top:10px;"></div>
@@ -3000,7 +2986,7 @@
 
         <!-- 生きているが働けないとき（2026-09-06追加）。
              既定では閉じておき、開いたときにだけ計算する（カードを積むと375pxで縦に破綻するため）。 -->
-        <div class="card" id="dis-card" data-hoken-only>
+        <div class="card" id="dis-card">
           <details id="dis-details">
             <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-bed-pulse"></i> 生きているが働けないとき（毎月の収支）</summary>
             <div id="dis-body" style="margin-top:10px;"></div>
@@ -3114,22 +3100,7 @@
     </div>
   </div>
 
-  <!-- ===================== 商談の順路（担当者用）===================== -->
-  <div class="modal-overlay" id="route-modal" hidden>
-    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="商談の順路">
-      <div class="modal-head">
-        <h3><i class="fa-solid fa-route"></i> 商談の順路</h3>
-        <button class="modal-close" id="route-close" aria-label="閉じる">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p class="qs-note">画面を順番に切り替えながらご説明するための機能です。下に<b>次にお伝えする一言</b>と<b>次に伺う質問</b>が出ます。<br>
-          <b>この順路の中でも、保険の内容のご説明はできません。</b>保険のご説明・お手続きは、生命保険募集人（Office-M）が行います。</p>
-        <div id="route-list"></div>
-        <p class="at-note" style="margin-top:12px;">※ 記録するのは「どの順路を使ったか」「どの画面を何回出したか」「相談導線を押したか」「この画面を商談で見せた、の1タップ」だけです。お客様を特定する情報は記録しません。お客様の画面（共有リンク）では記録しません。</p>
-      </div>
-    </div>
-  </div>
-  <div id="rt-band" class="no-print" hidden></div>
+  <!-- 本日の確認シート（A4縦1枚）を画像化するための下地。画面には出ない -->
   <div id="rt-sheet" aria-hidden="true"></div>
 
   <!-- ===================== 1分モード（初回商談用・5項目）===================== -->
@@ -3504,12 +3475,18 @@
            上＝お客様に見せてよい宿題リスト（コピーはLINE・メールで渡りうる前提の文言）。
            下＝担当者専用の提案検討メモ（商品名・単価向上の観点を含む。お客様に見せない・渡さない） -->
       <div class="vc-pane" id="vc-pane-next" role="tabpanel" aria-labelledby="vc-tab-next" hidden>
+        <!-- 2026-09-06 作り直し：操作バーの「次の一手」から開くと自動で作られるので、
+             ここは「作り直す」。コピーは渡す相手で分ける（お客様へ送る文面／担当のTODO）。
+             「本日の確認シート」は、廃止した「商談の順路」から移してきた1枚もの。 -->
         <div class="vc-tools">
-          <button type="button" class="btn btn-primary btn-sm" id="nx-build"><i class="fa-solid fa-list-check"></i> 次の一手を作る</button>
+          <button type="button" class="btn btn-primary btn-sm" id="nx-build"><i class="fa-solid fa-rotate"></i> 作り直す</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-why-all"><i class="fa-solid fa-chevron-down"></i> 根拠をすべて開く</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> お客様へ送る文面</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy-staff"><i class="fa-solid fa-copy"></i> 担当のTODO</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nx-sheet"><i class="fa-solid fa-file-arrow-down"></i> 本日の確認シート</button>
           <!-- 担当者メモは既定で閉じておき、このボタンで開く（2026-08-24 ユーザー指示）。
                お客様と画面を見ているときに、社内向けの内容がいきなり目に入らないようにするため -->
           <button type="button" class="btn btn-ghost btn-sm" id="nx-plan-toggle" aria-expanded="false" aria-controls="nx-plan-wrap"><i class="fa-solid fa-lock"></i> 提案の検討メモ</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="nx-copy"><i class="fa-solid fa-copy"></i> コピー</button>
         </div>
         <div id="next-actions"></div>
 
@@ -5126,136 +5103,13 @@
        保険業法300条1項2号（誤解させるおそれのある表示）に触れる言い回しを機械的に弾く。 */
     const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
 
-    /* ---------- 商談の順路と、使われ方の記録（2026-09-06追加） ----------
-       画面を順番に出すだけの機能。描画は既存の switchView をそのまま呼ぶ。
-       ★帯の文言は静的な文字列だけで作り、NEXT_NG_RE / nextAssertSafe を必ず通す。
-         保険商品の説明台本は一切書かない（一条工務店の営業担当は保険募集人ではなく
-         募集関連行為従事者であり、具体的な保険商品の推奨・説明をすると
-         無登録募集の議論になる＝保険業法275条1項）。
-       ★表示を絞るのは誤操作の防止であって法的な保護ではない。
-         だから「このモードでも保険の内容説明はできません」を消せない位置に固定表示する。
-       ★記録は個人を特定しない範囲だけ。共有リンク・お客様モードでは記録しない。 */
-    const ROUTE_LOG_KEY = 'lifeplan_ichijo_route_log_v1';
-    const ROUTES = {
-      first: { label:'初回15分', hint:'いまの30年 → 建てたら → 一条にしたら', hoken:false, steps:[
-        { type:'result', view:'assets', say:'いまのご家計のままだと、100歳までのお金の動きはこの形になります。',
-          ask:'いまのお住まいの家賃は、駐車場代や共益費まで入れると月いくらでしょうか。' },
-        { type:'result', view:'ichijo', say:'建てた後に毎月かかる住居費を、いまの住居費と並べてご覧いただけます。',
-          ask:'毎月の住居費は、いくらまでなら無理なくお出しになれそうでしょうか。' },
-        { type:'result', view:'compare', say:'いまのままの場合と、建てた場合を並べると、差がどこで開くかが見えます。',
-          ask:'次にお会いするときまでに、ご確認いただけそうなことはありますか。' } ]},
-      money: { label:'資金計画', hint:'住まいの入力 → 月次の置換表 → 資産の動き', hoken:false, steps:[
-        { type:'input',  view:'family', say:'お借入れの金額・金利・年数を入れると、金利が上がった場合も同じ画面で並びます。',
-          ask:'金融機関のご予定や、金利のタイプはお決まりでしょうか。' },
-        { type:'result', view:'ichijo', say:'いまの住居費と、建てた後の住居費を毎月の金額で並べています。増える費目もそのまま出しています。',
-          ask:'固定資産税や修繕費まで含めた金額を見て、いかがでしょうか。' },
-        { type:'result', view:'assets', say:'その毎月の金額で、100歳までのお金の動きがこう変わります。',
-          ask:'ご不安に感じられるところは、どのあたりでしょうか。' } ]},
-      hoken: { label:'保障', hint:'必要保障額の重ね描き → 働けない期間', hoken:true, steps:[
-        { type:'result', view:'hoken', say:'万一のときに必要な金額と、いまの保障を年齢ごとに並べています。',
-          ask:'いまご加入の内容が分かる書類は、お手元にございますか。' },
-        { type:'result', view:'ai', say:'ご入力の数字から、気をつけたい点をまとめています。',
-          ask:'次にお会いするときまでに、ご用意いただけそうな資料はありますか。' } ]}
-    };
-    let routeKey = null, routeStep = 0;
-    function routeIsCustomer(){ return document.body.classList.contains('customer-mode'); }
-    function routeLog(kind, val){
-      if(routeIsCustomer()) return;   // お客様の画面・共有リンクでは記録しない
-      try{
-        let o; try{ o = JSON.parse(localStorage.getItem(ROUTE_LOG_KEY)||'{}'); }catch(e){ o = {}; }
-        o.routes = o.routes || {}; o.views = o.views || {};
-        if(kind==='route') o.routes[val] = (o.routes[val]||0) + 1;
-        if(kind==='view')  o.views[val]  = (o.views[val] ||0) + 1;
-        if(kind==='cta')   o.cta   = (o.cta   ||0) + 1;
-        if(kind==='shown') o.shown = (o.shown ||0) + 1;
-        o.updated = Date.now();
-        localStorage.setItem(ROUTE_LOG_KEY, JSON.stringify(o));
-      }catch(e){}
-    }
-    function routeReadLog(){
-      try{ return JSON.parse(localStorage.getItem(ROUTE_LOG_KEY)||'{}'); }catch(e){ return {}; }
-    }
-    /* おすすめの順路。もとは意向シートの優先順位から選んでいたが、
-       意向シートを廃止した（2026-09-06）ため、初回面談の順路を既定にする。 */
-    function routeSuggest(){ return 'first'; }
-    function routeRenderList(){
-      const host = $('route-list'); if(!host) return;
-      const rec = routeSuggest();
-      host.innerHTML = Object.keys(ROUTES).map(function(k){
-        const r = ROUTES[k];
-        return '<button type="button" class="dx-toggle" data-route="' + k + '" style="margin-bottom:8px;">'
-          + '<b>' + esc(r.label) + '</b>' + (k===rec ? '（まずはこちら）' : '')
-          + '<br><span style="font-weight:400; font-size:.78rem; color:var(--ink-soft);">' + esc(r.hint) + '</span></button>';
-      }).join('');
-      host.querySelectorAll('[data-route]').forEach(function(b){
-        b.addEventListener('click', function(){ routeStart(b.dataset.route); });
-      });
-    }
-    function routeStart(k){
-      if(!ROUTES[k]) return;
-      routeKey = k; routeStep = 0;
-      document.body.classList.add('route-mode');
-      document.body.classList.toggle('route-hoken', !!ROUTES[k].hoken);
-      $('route-modal').hidden = true;
-      routeLog('route', k);
-      routeGoto(0);
-    }
-    function routeEnd(){
-      routeKey = null; routeStep = 0;
-      document.body.classList.remove('route-mode', 'route-hoken');
-      const band = $('rt-band'); if(band) band.hidden = true;
-    }
-    function routeGoto(i){
-      const r = ROUTES[routeKey]; if(!r) return;
-      routeStep = Math.min(Math.max(i, 0), r.steps.length - 1);
-      const st = r.steps[routeStep];
-      try{ switchView(st.type, st.view); }catch(e){}
-      routeLog('view', st.type + ':' + st.view);
-      routeRenderBand();
-      window.scrollTo({ top:0 });
-    }
-    function routeRenderBand(){
-      const band = $('rt-band'); if(!band) return;
-      const r = ROUTES[routeKey];
-      if(!r || routeIsCustomer()){ band.hidden = true; return; }
-      const st = r.steps[routeStep];
-      /* 帯の文言は静的な文字列だが、あとから書き換えたときに素通りしないよう毎回検査する。
-         引っかかったら文言を出さず、無難な一言に落とす（黙って断定表現を出さない）。 */
-      let say = st.say, ask = st.ask;
-      try{
-        if(typeof NEXT_NG_RE !== 'undefined' && (NEXT_NG_RE.test(say) || NEXT_NG_RE.test(ask))){
-          say = 'この画面をご一緒にご覧ください。'; ask = 'ここまでで、気になる点はございますか。';
-        }
-      }catch(e){}
-      const last = (routeStep >= r.steps.length - 1);
-      band.hidden = false;
-      band.innerHTML =
-        '<div class="rt-row">'
-        + '<span class="rt-step">' + esc(r.label) + ' ' + (routeStep+1) + '/' + r.steps.length + '</span>'
-        + '<span class="rt-say">' + esc(say) + '</span>'
-        + '<span class="rt-ask"><i class="fa-solid fa-comment-dots"></i> ' + esc(ask) + '</span>'
-        + '<button type="button" id="rt-shown"><i class="fa-regular fa-eye"></i> 見せた</button>'
-        + (routeStep>0 ? '<button type="button" id="rt-prev">戻る</button>' : '')
-        + (last ? '<button type="button" class="rt-go" id="rt-sheet-btn"><i class="fa-solid fa-file-arrow-down"></i> 今日の1枚</button>'
-                : '<button type="button" class="rt-go" id="rt-next">次へ</button>')
-        + '<button type="button" id="rt-end">終わる</button>'
-        + '</div>'
-        + '<div class="rt-fix">この順路の中でも、<b>保険の内容のご説明はできません</b>。保険のご説明・お手続きは生命保険募集人（Office-M）が行います。</div>';
-      const on = function(id, fn){ const e = $(id); if(e) e.addEventListener('click', fn); };
-      on('rt-next', function(){ routeGoto(routeStep+1); });
-      on('rt-prev', function(){ routeGoto(routeStep-1); });
-      on('rt-end', routeEnd);
-      on('rt-shown', function(){
-        routeLog('shown');
-        const b = $('rt-shown'); if(!b) return;
-        const o = b.innerHTML; b.innerHTML = '<i class="fa-solid fa-check"></i> 記録しました';
-        setTimeout(function(){ const b2 = $('rt-shown'); if(b2) b2.innerHTML = o; }, 1500);
-      });
-      on('rt-sheet-btn', routeSheet);
-    }
-    /* 今日の1枚（A4縦1枚）。html2canvas は読込済み。1枚ものなので
-       canvas の1辺65,535px 上限には触れない。canvasIsBlank の検出は流用する。 */
-    async function routeSheet(){
+    /* ---------- 本日の確認シート（A4縦1枚・2026-09-06） ----------
+       もと「商談の順路」の最終ステップ。順路そのものは、画面を順番に出すだけで
+       担当者ごとの進め方と噛み合わず、帯が結果グラフの下端にかぶるため廃止した。
+       このシートは一条の住宅担当者・保険募集人のどちらも面談の締めで使うので、
+       「次の一手」の中に残す（入口＝次の一手タブの「本日の確認シート」ボタン）。
+       html2canvas は読込済み。1枚ものなので canvas の1辺65,535px 上限には触れない。 */
+    async function todaySheet(){
       const sheet = $('rt-sheet');
       if(!sheet || typeof html2canvas === 'undefined' || !window.jspdf){ alert('準備中です。数秒おいて再度お試しください。'); return; }
       const sum = (PLANS[PLANS.active] && PLANS[PLANS.active].sum) || [];
@@ -5302,6 +5156,8 @@
         const who = (currentSaveName || fullName('h-sei','h-name') || '').trim();
         pdf.save(who ? '本日の確認シート_' + who + '.pdf' : '本日の確認シート.pdf');
       }catch(e){
+        // 失敗の中身は画面に出さず、原因追跡用にコンソールへ残す（お客様の前で出るのは一言だけ）
+        if(window.console) console.error('[本日の確認シート]', e);
         alert('1枚シートの作成に失敗しました。恐れ入りますが、もう一度お試しください。');
       }finally{ sheet.innerHTML = ''; }
     }
@@ -10851,17 +10707,37 @@
         });
         return { main:nextAssertSafe(main), rest:nextAssertSafe(rest), fam:nextAssertSafe(famList) };
       }
+      /* 1件ずつの表示（2026-09-06 作り直し）。
+         もとは13件ぶんの「やること＋根拠＋注意」を全部開いたまま並べていて、
+         画面に4,000字が出た＝商談の場では読めない。見出しだけを並べ、
+         根拠と注意はボタンで開く形にする。
+         ★根拠と注意（不利益事実）は必ず同じ塊にして、一緒に開き・一緒に閉じる。
+           金額の書いてある根拠だけが見えて注意が畳まれている状態を作らない
+           （保険業法300条1項1号・景品表示法5条の打消し表示の考え方）。 */
+      let nxItemN = 0;
       function nextItemHTML(it, t){
-        return '<label class="nx-item" data-nx="' + esc(it.id + '|' + t.who) + '">'
-          + '<input type="checkbox">'
+        const id = 'nxc-' + (++nxItemN);
+        return '<div class="nx-item" data-nx="' + esc(it.id + '|' + t.who) + '">'
+          + '<input type="checkbox" id="' + id + '">'
           + '<span class="nx-body">'
-          +   '<b class="nx-lead">' + esc(it.title) + '：</b>'
-          +   '<span class="nx-txt">' + esc(t.text) + '</span>'
-          +   '<span class="nx-basis">根拠：' + esc(it.basis) + '</span>'
-          +   (it.caution ? '<span class="nx-caution">※ ' + esc(it.caution) + '</span>' : '')
+          +   '<label class="nx-head" for="' + id + '">'
+          +     '<b class="nx-lead">' + esc(it.title) + '：</b>'
+          +     '<span class="nx-txt">' + esc(t.text) + '</span>'
+          +   '</label>'
+          +   '<button type="button" class="nx-why" aria-expanded="false">'
+          +     '<i class="fa-solid fa-chevron-down"></i> 根拠と注意点</button>'
+          +   '<span class="nx-detail" hidden>'
+          +     '<span class="nx-basis">根拠：' + esc(it.basis) + '</span>'
+          +     (it.caution ? '<span class="nx-caution">※ ' + esc(it.caution) + '</span>' : '')
+          +   '</span>'
           + '</span>'
           + '<span class="nx-due">' + esc(t.due) + '</span>'
-          + '</label>';
+          + '</div>';
+      }
+      function nxWhySet(btn, open){
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.innerHTML = '<i class="fa-solid fa-chevron-' + (open ? 'up' : 'down') + '"></i> 根拠と注意点';
+        const d = btn.parentNode.querySelector('.nx-detail'); if(d) d.hidden = !open;
       }
       /* ---------- 次の一手の図解（2026-09-03 ユーザー指示） ----------
          文字の一覧だけだと、商談の場で「何から手をつけるか」「いつまでか」が読み取れない。
@@ -11025,7 +10901,12 @@
              + (staff ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-briefcase"></i> 担当（当方）が行うこと</div>' + staff + '</div>' : '')
              + famHtml + more + disc;
       }
-      function nextToText(res, head){
+      /* only:'cust' ＝お客様へそのまま送れる文面／'staff' ＝担当者の手元のTODO。
+         分けた理由：1つのコピーに両方入っていたため、お客様へ送るときに
+         「担当が行うこと」を毎回手で消す運用になっていた（消し忘れの事故のもと）。
+         ★お客様へ渡りうる 'cust' 側からは、免責・注意書きを絶対に落とさない。 */
+      function nextToText(res, head, only){
+        const wantC = (only !== 'staff'), wantS = (only !== 'cust');
         const line = function(it, t){
           return '□ ' + it.title + '（' + t.due + '）：' + t.text + '\n   根拠：' + it.basis
                + (it.caution ? '\n   ※ ' + it.caution : '');
@@ -11036,10 +10917,18 @@
           }).filter(Boolean);
           return rows.length ? ('■ ' + label + '\n' + rows.join('\n') + '\n') : '';
         };
-        const famBlock = (res.fam && res.fam.length)
-          ? '■ ご家族の状況から（介護・相続）\n'
-            + res.fam.map(function(it){ return it.tasks.map(function(t){ return line(it,t); }).join('\n'); }).join('\n') + '\n'
-          : '';
+        const famRows = (res.fam || []).map(function(it){
+          return it.tasks.filter(function(t){ return (t.who==='cust') ? wantC : wantS; })
+                         .map(function(t){ return line(it,t); }).join('\n');
+        }).filter(Boolean);
+        const famBlock = famRows.length ? ('■ ご家族の状況から（介護・相続）\n' + famRows.join('\n') + '\n') : '';
+        if(only === 'staff'){
+          return '【社内用】担当のTODO（' + (head || '次の一手') + '）\n'
+            + '■ 次回面談：' + (($('mn-next-date') && $('mn-next-date').value.trim()) || '（未定）') + '\n'
+            + block('担当が行うこと','staff')
+            + famBlock
+            + '※ これは担当者の手元用です。お客様へそのままお渡しする文面ではありません。\n';
+        }
         /* テキストにも打消し表示を必ず付ける。
            この文字列はコピーしてLINE・メールで顧客へ渡りうるため、画面の nx-disclaimer と同じ内容を末尾に置く
            （議事録に取り込む場合は MN_NOTES と重なるが、単独コピーでも欠けないことを優先する） */
@@ -11049,7 +10938,6 @@
         return (head || '次の一手') + '（次回までの宿題）\n'
           + '■ 次回面談：' + (nextMeet || '（未定。宿題の答え合わせの日程を、この場で仮でもお決めください）') + '\n'
           + block('お客様にお願いしたいこと','cust')
-          + block('担当が行うこと','staff')
           + famBlock
           + '※ 上記は本日ご入力いただいた条件による試算にもとづく確認事項で、将来の受取額・運用成果・税額を保証するものではありません。前提が変わると結果も変わります。\n'
           + '※ 特定の保険商品・金融商品をおすすめするものではありません。保障の詳細は約款および「契約締結前交付書面（契約概要・注意喚起情報／ご契約のしおり・重要事項説明書）」をご確認ください。\n'
@@ -11370,13 +11258,34 @@
       if($('mn-dl'))    $('mn-dl').addEventListener('click', mnDownload);
       if($('mn-dl2'))   $('mn-dl2').addEventListener('click', mnDownload);
       if($('nx-build')) $('nx-build').addEventListener('click', nxRun);
-      if($('nx-copy'))  $('nx-copy').addEventListener('click', ()=>{
-        if(!nxLast){ alert('先に「次の一手を作る」を押してください。'); return; }
-        const txt = nextToText(nxLast, '次の一手');
+      function nxCopy(only, label){
+        if(!nxLast) nxRun();
+        if(!nxLast){ alert('いまは作成できませんでした。入力内容をご確認のうえ、もう一度お試しください。'); return; }
+        const txt = nextToText(nxLast, '次の一手', only);
         if(navigator.clipboard && navigator.clipboard.writeText){
-          navigator.clipboard.writeText(txt).then(function(){ setStatus('次の一手をコピーしました'); },
-                                                  function(){ mnCopyFallback(txt, '次の一手'); });
-        } else mnCopyFallback(txt, '次の一手');
+          navigator.clipboard.writeText(txt).then(function(){ setStatus(label + 'をコピーしました'); },
+                                                  function(){ mnCopyFallback(txt, label); });
+        } else mnCopyFallback(txt, label);
+      }
+      if($('nx-copy'))       $('nx-copy').addEventListener('click', ()=> nxCopy('cust','お客様へ送る文面'));
+      if($('nx-copy-staff')) $('nx-copy-staff').addEventListener('click', ()=> nxCopy('staff','担当のTODO'));
+      if($('nx-sheet'))      $('nx-sheet').addEventListener('click', ()=>{ try{ todaySheet(); }catch(e){} });
+      /* 1件ずつの「根拠と注意点」の開閉と、まとめて開閉 */
+      if($('next-actions')) $('next-actions').addEventListener('click', (e)=>{
+        const b = e.target.closest('.nx-why'); if(!b) return;
+        e.preventDefault();
+        nxWhySet(b, b.getAttribute('aria-expanded') !== 'true');
+        vcSyncDockH();
+      });
+      if($('nx-why-all')) $('nx-why-all').addEventListener('click', ()=>{
+        const box = $('next-actions'); if(!box) return;
+        const btns = [].slice.call(box.querySelectorAll('.nx-why'));
+        if(!btns.length) return;
+        const open = !btns.every(function(b){ return b.getAttribute('aria-expanded')==='true'; });
+        btns.forEach(function(b){ nxWhySet(b, open); });
+        $('nx-why-all').innerHTML = '<i class="fa-solid fa-chevron-' + (open ? 'up' : 'down') + '"></i> '
+          + (open ? '根拠をすべて閉じる' : '根拠をすべて開く');
+        vcSyncDockH();
       });
 
       /* ============================================================
@@ -11817,6 +11726,16 @@
         vcSetMode('open');   // 全画面で開く（ユーザー指示 2026-08-18）
         renderVcMemos(); vcSyncDockH(); vcCapFollow();
       });
+      /* 操作バーの「次の一手」＝4つ目のタブへの近道（2026-09-06 ユーザー指示）。
+         まだ中身が無ければ、開くと同時に作る（「作る」を押させない） */
+      if($('btn-next')) $('btn-next').addEventListener('click', ()=>{
+        panel.hidden = false;
+        vcSetMode('open');
+        vcSetTab('next');
+        const box = $('next-actions');
+        if(box && !box.innerHTML.trim()) nxRun();
+        vcSyncDockH();
+      });
       $('vc-close').addEventListener('click', ()=>{
         vcStopRec();
         panel.hidden = true;
@@ -11953,12 +11872,6 @@
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
     if($('dis-details')) $('dis-details').addEventListener('toggle', ()=>{ renderDisability(); });
     if($('need-details')) $('need-details').addEventListener('toggle', ()=>{ renderNeedCard(); });
-    // 商談の順路
-    if($('btn-route')) $('btn-route').addEventListener('click', ()=>{ routeRenderList(); $('route-modal').hidden = false; });
-    if($('route-close')) $('route-close').addEventListener('click', ()=>{ $('route-modal').hidden = true; });
-    if($('route-modal')) $('route-modal').addEventListener('click', (e)=>{ if(e.target===$('route-modal')) $('route-modal').hidden = true; });
-    // 相談導線・予約ボタンの押下を記録（個人は特定しない・件数だけ）
-    if($('open-reserve')) $('open-reserve').addEventListener('click', ()=>{ if(typeof routeLog==='function') routeLog('cta'); });
     if($('rs-when-seg')) $('rs-when-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('[data-rswhen]'); if(!b) return;
       rsWhen = b.dataset.rswhen;
@@ -14502,9 +14415,6 @@
         c.lifeplans = c.lifeplans || [];
         const hit = c.lifeplans.find(l=> l && l.tool==='一条版' && l.acct===currentUser && l.name===name);
         if(hit) hit.t = Date.now(); else c.lifeplans.push({ tool:'一条版', file:'ichijo.html', acct:currentUser, name, t:Date.now() });
-        /* 商談の順路の使われ方（件数だけ）を、お客様の記録にではなくアカウント単位で持たせる。
-           お客様を特定する情報は入れない（どの順路を何回・どの画面を何回・導線の押下件数だけ）。 */
-        try{ if(typeof routeReadLog==='function') s.routeUsage = routeReadLog(); }catch(e){}
         c.updatedAt = Date.now();
         localStorage.setItem(key, JSON.stringify(s));
       }catch(e){}

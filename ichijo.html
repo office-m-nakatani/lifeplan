@@ -1332,6 +1332,23 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 働けない期間の収入の谷（2026-09-06追加） ---------- */
+    .dis-sum{ display:flex; flex-wrap:wrap; gap:8px 20px; margin:10px 0; padding:10px 14px;
+      background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:var(--radius-sm); }
+    .dis-kpi{ font-size:.78rem; color:var(--ink-soft); }
+    .dis-kpi b{ display:block; font-size:1.05rem; color:var(--ink); }
+    .dis-scroll{ overflow-x:auto; }
+    .dis-chart{ position:relative; height:300px; min-width:520px; }
+    .dis-cols{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .dis-col{ padding:10px 12px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:10px; }
+    .dis-col-h{ font-size:.83rem; font-weight:800; padding-bottom:6px; border-bottom:1.5px solid var(--line); margin-bottom:7px; }
+    .dis-col ul{ margin:0; padding-left:1.1em; }
+    .dis-col li{ font-size:.79rem; line-height:1.7; margin-bottom:4px; }
+    .dis-gray{ margin-top:10px; padding:9px 12px; background:#eef0f1; border:1.5px solid #d5dadd;
+      border-radius:var(--radius-sm); font-size:.79rem; line-height:1.7; color:#4a5559; }
+    .dis-note{ display:block; margin-top:10px; font-size:.78rem; color:var(--ink); line-height:1.75; }
+    @media (max-width:640px){ .dis-cols{ grid-template-columns:1fr; } }
+
     /* ---------- 今の住居費との月次置換表（2026-09-06追加） ---------- */
     .rs-seg{ margin-bottom:10px; }
     .rs-grid{ display:grid; grid-template-columns:1.5fr 1fr 1fr 1.1fr; gap:0;
@@ -2511,6 +2528,37 @@
                      同じ金額の使い道の違いを並べるだけの場所。優劣は書かない（保険業法300条1項6号） -->
                 <div class="dx-wrap hidden" id="dansin-cost"></div>
               </div>
+
+              <!-- 働けなくなったときの前提（2026-09-06追加）。
+                   結果は「万が一（保障）」の〈生きているが働けないとき〉で使う。
+                   ★賞与の欄を置いているのは、傷病手当金が「支給開始日以前12か月の
+                     標準報酬月額の平均÷30×2/3」を原則とするため。賞与込みの年収の1/12から
+                     作ると金額が過大に出て、公的な保障を実際より厚く見せてしまう。 -->
+              <div class="loan-payoff-box" style="margin-top:14px;">
+                <div class="lp-title"><i class="fa-solid fa-bed-pulse"></i> 働けなくなったときの前提（<span id="dis-hname">世帯主</span>の方）</div>
+                <div class="grid3">
+                  <div class="field">
+                    <label>ご就業の形</label>
+                    <select id="dis-emp">
+                      <option value="kaisha">会社員・公務員（健康保険）</option>
+                      <option value="jiei">自営・フリーランス（国民健康保険）</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>働けなくなる年齢（仮に）</label>
+                    <div class="input-unit"><input type="number" id="dis-age" value="45" min="18" max="70"><span class="u">歳</span></div>
+                  </div>
+                  <div class="field">
+                    <label>見る期間</label>
+                    <div class="input-unit"><input type="number" id="dis-months" value="24" min="1" max="36"><span class="u">か月</span></div>
+                  </div>
+                </div>
+                <div class="field" style="max-width:340px; margin-top:10px;">
+                  <label>年収のうち賞与（年額）</label>
+                  <div class="input-unit"><input type="number" id="h-shoyo" value="0" min="0" step="10"><span class="u">万円</span></div>
+                  <span class="hint">ご入力の年収に賞与が含まれている場合、その<b>年額</b>をご入力ください。傷病手当金は<b>賞与を除いた月額</b>をもとに計算されるためです（0のままだと、実際より多めの金額で表示されます）。</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2916,6 +2964,15 @@
             <p class="hint" style="display:block; margin-top:8px;">この金額は、「加入中の保険」で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の<b>「生命保険」の行（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+          </details>
+        </div>
+
+        <!-- 生きているが働けないとき（2026-09-06追加）。
+             既定では閉じておき、開いたときにだけ計算する（カードを積むと375pxで縦に破綻するため）。 -->
+        <div class="card" id="dis-card">
+          <details id="dis-details">
+            <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-bed-pulse"></i> 生きているが働けないとき（毎月の収支）</summary>
+            <div id="dis-body" style="margin-top:10px;"></div>
           </details>
         </div>
 
@@ -5094,6 +5151,158 @@
       });
     }
 
+    /* ---------- 働けない期間の収入の谷（2026-09-06追加） ----------
+       亡くなったときの保障は「万一のときの死亡保障額」で見られるが、
+       「生きているけれど働けない」期間は、この試算のどこにも出ていなかった。
+       ・simulate には一切手を入れない。月次の独立した計算として作る。
+       ・傷病手当金は「支給される日数の通算が1年6か月に達するまで」（2022年から通算制）。
+         帯は「通算1年6か月分を連続して受けた場合の一例」であることを固定表示する。
+         連続前提で「19か月目に落ちる」といった断定的な書き方はしない。
+       ・金額は賞与を除いた月額から作る（標準報酬月額の考え方に合わせる）。
+       ・自営・フリーランスは健康保険の被保険者ではないため、傷病手当金は初月からゼロ。
+       ・障害年金は金額を持たない（審査を経て受給できる場合があり、等級で金額が異なる）。
+       ・住民税は grossToNet が内訳を返さないため金額を出さず、説明行に留める。 */
+    const SICK_PAY_MONTHS = 18;        // 傷病手当金：支給される日数の通算が1年6か月に達するまで
+    const SICK_PAY_RATE = 2 / 3;       // 標準報酬日額の約3分の2
+    let disChart = null;
+    function disBuild(){
+      const empType = ($('dis-emp') && $('dis-emp').value) || 'kaisha';
+      const hAge0 = num('h-age', 35);
+      const startAge = Math.max(num('dis-age', 45), hAge0);
+      const months = Math.min(Math.max(Math.round(num('dis-months', 24)), 1), 36);
+      const hIncome = num('h-income', 0);
+      const shoyo = Math.min(Math.max(num('h-shoyo', 0), 0), hIncome);
+      const wage12 = Math.max(hIncome - shoyo, 0) / 12;        // 賞与を除いた月額（万円）
+      const sickM = (empType === 'kaisha') ? wage12 * SICK_PAY_RATE : 0;
+      // 配偶者の手取り（月）。いまのご入力のまま続く前提
+      const single = (typeof isSingle === 'function') && isSingle();
+      const wNetM = single ? 0 : grossToNet(num('w-income', 0)) / 12;
+      // 休業中も引かれ続ける社会保険料（会社員のみ金額を出す）
+      const socialM = (empType === 'kaisha') ? socialInsurance(hIncome) / 12 : 0;
+      // 住居費（持ち家＝その時点の住宅ローン返済／賃貸＝家賃ほか）
+      let housingM = 0, housingLabel = '住宅ローンの返済';
+      if(houseType === 'rent'){
+        housingM = rentMonthlyTotal(); housingLabel = '家賃ほかの住居費';
+      }else{
+        const buyAge = (houseType === 'owned') ? num('owned-age', hAge0) : num('buy-age', hAge0);
+        const yo = Math.max(startAge - buyAge, 0);
+        housingM = (yo < num('loan-term', 35)) ? loanPaymentForYear(buildLoanSchedule(), yo) / 12 : 0;
+      }
+      const livingM = readLivingBaseMonthly();
+      // 教育費（その時点のお子さまの年齢で月割り）
+      let eduM = 0;
+      try{
+        const dy = startAge - hAge0;
+        readChildren().forEach(function(c){
+          const a = (parseInt(c.age, 10) || 0) + dy;
+          if(a >= 0) eduM += eduCostPerYear(a, c) / 12;
+        });
+      }catch(e){}
+      const outM = socialM + housingM + livingM + eduM;
+      const cash0 = ($('cash-on') && $('cash-on').checked) ? num('cash', 0) : 0;
+      const rows = [];
+      let bal = cash0, zeroMonth = 0;
+      for(let m = 1; m <= months; m++){
+        const sick = (m <= SICK_PAY_MONTHS) ? sickM : 0;
+        const inM = sick + wNetM;
+        const gap = inM - outM;
+        bal += gap;
+        if(bal < 0 && !zeroMonth) zeroMonth = m;
+        rows.push({ m:m, sick:sick, wNet:wNetM, social:socialM, housing:housingM,
+                    living:livingM, edu:eduM, gap:gap, bal:bal });
+      }
+      return { empType:empType, startAge:startAge, months:months, shoyo:shoyo, wage12:wage12,
+               sickM:sickM, wNetM:wNetM, socialM:socialM, housingM:housingM, housingLabel:housingLabel,
+               livingM:livingM, eduM:eduM, outM:outM, cash0:cash0, zeroMonth:zeroMonth, rows:rows,
+               gapIn: sickM + wNetM - outM, gapAfter: wNetM - outM };
+    }
+    function disDansinCols(){
+      const t = (typeof dansinTypeOf === 'function') ? dansinTypeOf('h') : 'general';
+      const stop = ['お亡くなりになったとき', '約款に定める高度障害の状態に該当したとき'];
+      if(t === 'gan')    stop.push('がんと診断確定され、約款に定める条件を満たしたとき');
+      if(t === 'sandai') stop.push('がん・急性心筋梗塞・脳卒中で、約款に定める所定の状態に該当したとき');
+      const go = ['働けない状態が続いていても、上の所定の状態に該当しないとき',
+                  'ケガや病気の種類・程度が、約款の支払対象に当てはまらないとき',
+                  '所定の状態が、約款に定める継続期間（例：60日以上の継続など）に達していないとき'];
+      const li = function(a){ return a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join(''); };
+      return '<div class="dis-cols">'
+        + '<div class="dis-col"><div class="dis-col-h">この団信で返済が止まるケース</div><ul>' + li(stop) + '</ul></div>'
+        + '<div class="dis-col"><div class="dis-col-h">止まらないケース（返済が続く）</div><ul>' + li(go) + '</ul></div>'
+        + '</div>';
+    }
+    function renderDisability(){
+      const host = $('dis-body'), det = $('dis-details');
+      if(!host || !det || !det.open) return;
+      const d = disBuild();
+      const f1 = function(v){ return Math.round(v * 10) / 10; };
+      const labels = d.rows.map(function(r){ return r.m + 'か月目'; });
+      const neg = function(k){ return d.rows.map(function(r){ return -f1(r[k]); }); };
+      host.innerHTML =
+        '<p class="hint" style="display:block;">' + d.startAge + '歳で働けなくなり、その状態が' + d.months + 'か月続いた場合の、'
+        + '<b>毎月の収入と支出</b>を並べたものです。'
+        + (d.empType === 'kaisha'
+            ? '青い帯の傷病手当金は、<b>通算1年6か月分を連続して受けた場合の一例</b>として置いています。'
+            : '<b>傷病手当金は健康保険の被保険者向けで、国民健康保険には原則ありません</b>。そのため収入の帯に傷病手当金は入れていません。')
+        + '</p>'
+        + '<div class="dis-sum">'
+        /* 自営・フリーランスは傷病手当金が無く、期間の前後で金額が変わらない。
+           同じ数字を2つ並べると「1年6か月の区切りがある」と誤って伝わるので、1つにまとめる。 */
+        +   (d.empType === 'kaisha'
+              ? '<div class="dis-kpi">傷病手当金を受けている間の毎月の不足<b>' + (d.gapIn >= 0 ? '不足なし' : '約' + f1(-d.gapIn) + '万円') + '</b></div>'
+                + '<div class="dis-kpi">その期間が終わったあとの毎月の不足<b>' + (d.gapAfter >= 0 ? '不足なし' : '約' + f1(-d.gapAfter) + '万円') + '</b></div>'
+              : '<div class="dis-kpi">毎月の不足<b>' + (d.gapAfter >= 0 ? '不足なし' : '約' + f1(-d.gapAfter) + '万円') + '</b></div>')
+        +   '<div class="dis-kpi">預貯金（' + f1(d.cash0) + '万円）で足りなくなる時期<b>'
+        +     (d.zeroMonth ? d.zeroMonth + 'か月目' : (d.months + 'か月の間は足ります')) + '</b></div>'
+        + '</div>'
+        + '<div class="dis-scroll"><div class="dis-chart"><canvas id="disChart"></canvas></div></div>'
+        + disDansinCols()
+        + '<div class="dis-gray"><i class="fa-solid fa-circle-info"></i> <b>障害年金</b>：'
+        + '審査を経て受給できる場合があり、等級により金額が異なります。受給できるとは限らないため、この表には入れていません。</div>'
+        + '<span class="dis-note">'
+        + '※ 傷病手当金は健康保険の被保険者向けで、<b>国民健康保険には原則ありません</b>。<br>'
+        + '※ 支給されるのは<b>支給される日数の通算が1年6か月に達するまで</b>で、待期3日などの要件があります。実際の支給額・期間は個別に異なる<b>概算</b>です。'
+        + 'この帯は<b>通算1年6か月分を連続して受けた場合の一例</b>です。<br>'
+        + '※ 金額は「支給開始日以前12か月の標準報酬月額の平均÷30×2/3」を原則とするため、<b>賞与を除いた月額</b>から算出した概算です'
+        + (d.shoyo <= 0 ? '（賞与を0としてご入力の年収から計算しています。<b>年収に賞与が含まれている場合、実際の金額はこれより少なくなります</b>）' : '')
+        + '。標準報酬の扱いは、この試算の社会保険料と同じ簡易計算にそろえています。<br>'
+        + '※ <b>住民税は前年の所得に対して翌年に課税される</b>ため、休業中も前年分の負担が続きます（この表には金額を入れていません）。<br>'
+        + (d.empType === 'jiei'
+            ? '※ 国民健康保険料・国民年金保険料は、所得やお住まいの自治体により大きく異なるため、この表には金額を入れていません（実際にはこの不足額に加えてご負担があります）。<br>'
+            : '※ 休業中も健康保険料・厚生年金保険料のご負担は続く前提で計上しています（産前産後・育児休業の免除は対象外です）。<br>')
+        + '※ がん団信・三大疾病団信・全疾病団信の支払条件（所定の状態の60日以上継続・就業不能12か月継続など）は<b>商品ごとに異なります</b>。ご契約の約款でご確認ください。<br>'
+        + '※ 働けない状態を対象とする保障には、一般に<b>支払対象外となる期間（免責期間）</b>が定められていることや、<b>精神疾患が対象外・支払期間が限定される</b>ことがあります。<br>'
+        + '※ 配偶者の方の収入・生活費・教育費は、いまのご入力のまま続く前提で置いた概算です。'
+        + '</span>';
+      const cv = $('disChart');
+      if(!cv || typeof Chart === 'undefined') return;
+      if(disChart){ try{ disChart.destroy(); }catch(e){} disChart = null; }
+      const ds = [];
+      if(d.empType === 'kaisha') ds.push({ label:'傷病手当金', data:d.rows.map(function(r){ return f1(r.sick); }), backgroundColor:'#4f9ecf', stack:'a' });
+      if(d.wNetM > 0) ds.push({ label:'配偶者の手取り', data:d.rows.map(function(r){ return f1(r.wNet); }), backgroundColor:'#8fc7a6', stack:'a' });
+      if(d.socialM > 0) ds.push({ label:'社会保険料', data:neg('social'), backgroundColor:'#c9a227', stack:'a' });
+      ds.push({ label:d.housingLabel, data:neg('housing'), backgroundColor:'#d9776f', stack:'a' });
+      ds.push({ label:'生活費', data:neg('living'), backgroundColor:'#b9a0c9', stack:'a' });
+      if(d.eduM > 0) ds.push({ label:'教育費', data:neg('edu'), backgroundColor:'#e0a23b', stack:'a' });
+      /* 預貯金の残りは数百万円、毎月の帯は数十万円と桁が2つ違う。
+         同じ軸に載せると帯がぺたんと潰れて何も読めなくなるので、右側の別の軸に載せる。 */
+      ds.push({ type:'line', label:'預貯金の残り（右軸）', data:d.rows.map(function(r){ return f1(r.bal); }),
+                borderColor:'#2f7cb5', backgroundColor:'#2f7cb5', borderWidth:2, pointRadius:0, tension:.2,
+                order:0, yAxisID:'y1' });
+      disChart = new Chart(cv.getContext('2d'), {
+        type:'bar',
+        data:{ labels:labels, datasets:ds },
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+            tooltip:{ callbacks:{ label:function(c){ return ' ' + c.dataset.label + ' ' + Math.abs(c.parsed.y) + '万円'; } } } },
+          scales:{ x:{ stacked:true, ticks:{ maxRotation:0, autoSkip:true, font:{ size:10 } } },
+                   y:{ stacked:true, position:'left', title:{ display:true, text:'毎月の収入と支出（万円）', font:{ size:10 } },
+                       ticks:{ callback:function(v){ return v + '万'; }, font:{ size:10 } } },
+                   y1:{ stacked:false, position:'right', grid:{ drawOnChartArea:false },
+                        title:{ display:true, text:'預貯金の残り（万円）', font:{ size:10 } },
+                        ticks:{ callback:function(v){ return v + '万'; }, font:{ size:10 } } } } }
+      });
+    }
+
     /* ---------- 今の住居費との月次置換表（2026-09-06追加） ----------
        いまの賃貸の住居費と、建てた後に毎月かかる住居費を1枚に並べる。
        ★本体（simulate）と同じ入力・同じ式から作る。表だけの独自計算はしない。
@@ -6937,6 +7146,7 @@
       if(typeof renderDansinCost==='function') renderDansinCost();   // 団信の上乗せ金利を円に直した表示
       if(typeof renderEstBanner==='function') renderEstBanner();   // 「目安のままの入力が◯件」の帯
       if(typeof renderRentSwap==='function') renderRentSwap();   // 今の住居費と建てた後の住居費（毎月）
+      if(typeof renderDisability==='function') renderDisability();   // 生きているが働けないとき（開いているときだけ計算）
       if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
@@ -11410,6 +11620,7 @@
     $('add-event').addEventListener('click', ()=>{ eventRow(45,'車の買い替え',200); recompute(); });
     $('add-income').addEventListener('click', ()=>{ incomeRow(50,'臨時収入',100); recompute(); });
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
+    if($('dis-details')) $('dis-details').addEventListener('toggle', ()=>{ renderDisability(); });
     if($('rs-when-seg')) $('rs-when-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('[data-rswhen]'); if(!b) return;
       rsWhen = b.dataset.rswhen;

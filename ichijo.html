@@ -908,10 +908,9 @@
     body.tab-mode .layout{ display:block; }
     @media screen{
       body.tab-mode:not(.pdf-mode) #input-panel .acc:not(.view-active){ display:none !important; }
-      /* ★2026-09-06：#ikou-summary（伺ったご意向の帯）と #est-banner（目安のままの件数）は、
-         どの結果画面でも出したいので除外する。どちらも .view-wrap ではないため、
-         この規則にそのまま当たって display:none になっていた（意向の帯は一度も出ていなかった）。 */
-      body.tab-mode:not(.pdf-mode) .results > *:not(.view-active):not(#ikou-summary):not(#est-banner){ display:none !important; }
+      /* ★2026-09-06：#est-banner（目安のままの件数）は、どの結果画面でも出したいので除外する。
+         .view-wrap ではないため、この規則にそのまま当たって display:none になっていた。 */
+      body.tab-mode:not(.pdf-mode) .results > *:not(.view-active):not(#est-banner){ display:none !important; }
       body.tab-mode:not(.pdf-mode) .table-section[data-view]:not(.view-active){ display:none !important; }
     }
     body.tab-mode .results{ position:static; }
@@ -1348,21 +1347,6 @@
       .nxv-row{ gap:7px; }
       .nxv-rl{ font-size:.72rem; }
     }
-
-    /* ---------- 意向シート（2026-08-29追加） ---------- */
-    .ikou-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
-    .ikou-chip{ display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:8px 14px;
-      background:var(--bg-soft); border:1.5px solid var(--line); border-radius:999px;
-      font-family:inherit; font-size:.85rem; color:var(--ink); cursor:pointer; }
-    .ikou-chip:hover{ background:var(--blue-pale); }
-    .ikou-chip.is-on{ background:var(--blue-pale); border-color:var(--blue); color:var(--blue-deep); font-weight:800; }
-    .ikou-rank{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
-      border-radius:50%; background:var(--blue); color:#fff; font-size:.72rem; font-weight:800; }
-    .ikou-band{ margin-bottom:14px; padding:10px 14px; background:var(--blue-pale);
-      border:1.5px solid var(--blue-pale2); border-radius:var(--radius-sm); }
-    .ikou-band-h{ display:flex; align-items:center; gap:7px; font-size:.82rem; font-weight:800; color:var(--blue-deep); }
-    .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
-    .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
     /* ---------- 商談の順路（2026-09-06追加） ---------- */
     /* ★表示を絞るのは「誤操作の防止」であって法的な保護ではない。
@@ -1905,7 +1889,6 @@
       <span class="tool-nav-label"><i class="fa-solid fa-pen-to-square"></i> 入力する</span>
       <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
-        <button type="button" data-nav-input="ikou"><i class="fa-solid fa-clipboard-question"></i> はじめに伺うこと</button>
         <button type="button" data-nav-input="family"><i class="fa-solid fa-house-user"></i> ご家族・住まい</button>
         <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
         <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
@@ -2036,73 +2019,6 @@
         </div>
 
         <!-- 住まい（旧③） -->
-        <!-- ===== はじめに伺うこと（意向シート）2026-08-29追加 =====
-             結果を見せる前にご意向を伺って残す欄。保険業法294条の2（意向把握義務）は
-             「把握 → 意向に沿った提案 → 意向と合致しているかの確認」の3点セットで、
-             当初の意向と最終的な意向の対比まで求められるが、このツールには意向を
-             選んで残す欄が1つも無かった（次の一手・検討メモ・議事録はいずれも担当者が書くもの）。
-             ★選択肢に保険の種類名・商品名は入れない。並び順で特定の方向へ誘導しない
-               （監督指針：重視事項の例示にあたって恣意的に特定の契約へ誘導しないこと）。
-             ★#input-panel の中に置いてあるので、保存・共有・自動保存に自動で乗る。
-               id は SHARE_FIELD_IDS には足さない（'!'付きで自動往復する）。 -->
-        <div class="acc" data-acc data-sec="ikou">
-          <button class="acc-head" type="button">
-            <span class="acc-ico ico-teal"><i class="fa-solid fa-clipboard-question"></i></span>
-            <span class="acc-title"><b>はじめに伺うこと</b><span>ご意向（試算より先に伺います）</span></span>
-            <i class="fa-solid fa-chevron-down acc-chev"></i>
-          </button>
-          <div class="acc-body">
-            <p class="hint" style="display:block; margin-bottom:10px;">数字をお見せする前に、いま大事にされていることを伺います。ここで伺った内容は結果画面の上にも表示され、PDFにも残ります。<b>お答えにくい項目は空欄のままで構いません。</b></p>
-
-            <div class="field">
-              <label>1. いま優先したいこと（当てはまるものを選んでください・複数可）</label>
-              <div class="ikou-chips" id="ikou-priority-chips"></div>
-              <input type="hidden" id="ikou-priority" value="">
-              <span class="hint">選んだ順に記録します。順位を付け直したいときは、いったん外してから選び直してください。</span>
-            </div>
-
-            <div class="grid2">
-              <div class="field">
-                <label>2. 毎月の住居費として、無理なく続けられる上限</label>
-                <div class="input-unit"><input type="number" id="ikou-monthly" value="" min="0" step="1" placeholder="例：13"><span class="u">万円</span></div>
-                <span class="hint">返済だけでなく、固定資産税・保険料・修繕積立まで含めた住居費の上限としてお聞きします。</span>
-              </div>
-              <div class="field">
-                <label>3. そのお金を使う想定の時期</label>
-                <select id="ikou-when">
-                  <option value="">（お答えいただける場合）</option>
-                  <option value="near">10年以内に使う予定がある</option>
-                  <option value="edu">お子さまの進学期に使う</option>
-                  <option value="old">老後まで使わない</option>
-                  <option value="mixed">いくつかに分かれている</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>4. 「万一への備え」と「将来のための積立」では、いまどちらに近いお気持ちですか</label>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:.78rem; color:var(--ink-soft); white-space:nowrap;">万一への備え</span>
-                <input type="range" id="ikou-balance" min="1" max="5" step="1" value="3" style="flex:1 1 auto; accent-color:var(--blue);">
-                <span style="font-size:.78rem; color:var(--ink-soft); white-space:nowrap;">将来のための積立</span>
-              </div>
-              <span class="hint">どちらが正しいというものではありません。<b>まん中のままでも構いません。</b>いまのお気持ちの記録としてお聞きします。</span>
-            </div>
-
-            <div class="field">
-              <label>5. そのほか、大事にされていること・気になっていること</label>
-              <input type="text" id="ikou-note" placeholder="例：妻の職場が変わるかもしれない／親の家をどうするか決まっていない" autocomplete="off">
-              <span class="hint">※ この内容は<b>お客様への共有リンクにも入ります</b>。ご本人以外に転送される可能性があるため、個人を特定できる情報は書かないでください。</span>
-            </div>
-
-            <div class="vc-tools" style="margin-top:4px;">
-              <button type="button" class="btn btn-ghost btn-sm" id="ikou-stamp"><i class="fa-solid fa-bookmark"></i> この内容を「最初に伺った内容」として記録する</button>
-            </div>
-            <input type="hidden" id="ikou-first" value="">
-            <div id="ikou-diff" style="margin-top:8px;"></div>
-          </div>
-        </div>
-
         <div class="acc" data-acc data-sec="home">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-teal"><i class="fa-solid fa-house-chimney"></i></span>
@@ -2357,6 +2273,14 @@
                 <div class="field"><label>携帯代</label><div class="input-unit"><input type="number" id="e-phone" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
                 <div class="field"><label>ネット代</label><div class="input-unit"><input type="number" id="e-net" value="0.5" min="0" step="0.5"><span class="u">万円</span></div></div>
               </div>
+              <!-- 一条を選んでいるときだけ出す説明（2026-09-06追加）。
+                   電気・ガスを0で置くのは前提であって保証ではないため、変動要因を必ず併記する
+                   （景品表示法5条1号＝実際より著しく優良と誤認させる表示にしない）。 -->
+              <p class="hint" id="util-ichijo-note" style="display:none; margin:2px 2px 0; font-size:.76rem; line-height:1.75; color:var(--ink-soft);">
+                一条工務店の家は<b>オール電化</b>のためガス代がかからず、<b>大容量の太陽光＋蓄電池</b>で電気代も年間を通してまかなえる前提のため、
+                <b>電気・ガスを0</b>で置いています（同じ節約を二重に引かないよう、「住まい」のZEH欄にある<b>「光熱費の削減（年）」も0</b>にしています。売電収入はそのまま計上します）。
+                実際の金額は<b>地域・日射・使用量・電力契約・季節</b>により変わり、0にならない月もあります。実額で見込む場合は、上の欄に直接ご入力ください。
+              </p>
               <div class="subgroup-title sgt-plain"><span class="tag" style="background:#eef0f4;color:#5b6b7d;">車</span> 車・保険</div>
               <div class="grid3">
                 <div class="field"><label>ガソリン代</label><div class="input-unit"><input type="number" id="e-fuel" value="1" min="0" step="0.5"><span class="u">万円</span></div></div>
@@ -2864,11 +2788,6 @@
 
       <!-- ===================== 結果パネル ===================== -->
       <div class="results" id="results">
-
-        <!-- 伺ったご意向の帯（2026-08-29追加）。全ての結果画面の上に出す。
-             結論より先に意向が目に入る順序にすることで、不足額を見せてから商品へ誘導する
-             順序を構造的に取れなくする。空のときは何も出さない。 -->
-        <div id="ikou-summary"></div>
 
         <!-- 「目安のまま」の件数（2026-09-06追加）。1分モードで出した概算を、
              確定した数字として見せないための表示。印刷・PDFにも出す（no-print を付けない） -->
@@ -4785,6 +4704,13 @@
     const ICHIJO_MAINT_DEFAULT = 6, GEN_MAINT_DEFAULT = 15;   // 年間の修繕・管理費 既定：一条＝タイル外壁で塗替え不要のため控えめ／一般＝相場
     let userEditedMaint = false;    // 修繕・管理（年）を手入力したら住宅タイプ切替で上書きしない
     if($('maint')) $('maint').addEventListener('input', ()=>{ userEditedMaint = true; });
+    /* 光熱費（電気・ガス）の自動0化。一条＝オール電化＋大容量太陽光のため、
+       「ガス代という概念が無い／電気代も年間を通してかからない」前提で置く（2026-09-06 ユーザー指示）。
+       ★手入力された実額はプリセットで巻き戻さない。
+       ★一般住宅へ戻したときに元の金額へ復帰できるよう、0にする前の値を控えておく。 */
+    let userEditedUtil = false;
+    let utilBeforeIchijo = null;
+    ['e-elec','e-gas'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', ()=>{ userEditedUtil = true; }); });
 
     const htypeSeg = $('htype-seg');
     if(htypeSeg) htypeSeg.addEventListener('click', (e)=>{
@@ -4889,8 +4815,19 @@
       const isIchijo = (htype==='ichijo');
       const note = $('ichijo-perf-note'); if(note) note.classList.toggle('hidden', !isIchijo);
       const cfg  = $('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', !isIchijo);
+      const uNote = $('util-ichijo-note'); if(uNote) uNote.style.display = isIchijo ? 'block' : 'none';
       // 年間修繕費の既定：一条はタイル外壁で塗替え不要のため控えめ（手入力があれば尊重）
       if($('maint') && !userEditedMaint) $('maint').value = isIchijo ? ICHIJO_MAINT_DEFAULT : GEN_MAINT_DEFAULT;
+      /* 電気・ガス：一条はオール電化＋大容量太陽光のため0で置く。一般住宅へ戻したら元の金額に復帰する。 */
+      if(!userEditedUtil && $('e-elec') && $('e-gas')){
+        if(isIchijo){
+          if(utilBeforeIchijo === null) utilBeforeIchijo = { elec:$('e-elec').value, gas:$('e-gas').value };
+          $('e-elec').value = '0'; $('e-gas').value = '0';
+        } else if(utilBeforeIchijo){
+          $('e-elec').value = utilBeforeIchijo.elec; $('e-gas').value = utilBeforeIchijo.gas;
+          utilBeforeIchijo = null;
+        }
+      }
       if($('zeh-on')){
         if(isIchijo){
           const m = ichijoSolarModel();
@@ -4898,7 +4835,10 @@
           $('zeh-fields').classList.remove('hidden');
           if(!userEditedZeh){   // 手入力済みの値（実見積など）はモデル値で上書きしない
             if($('zeh-sell')) $('zeh-sell').value = Math.round(m.sellY1);               // 初年度の売電収入
-            if($('zeh-save')) $('zeh-save').value = Math.round(m.selfMan + m.utilSave); // 自家消費＋高断熱の節約
+            /* 光熱費の削減。この欄は「生活費に電気・ガスを実額で置いたまま」差し引く前提の欄なので、
+               生活費側を0にしているときに金額を入れると、同じ節約を二重に引くことになる（＝0にする）。 */
+            const utilZero = (num('e-elec', 0) === 0 && num('e-gas', 0) === 0);
+            if($('zeh-save')) $('zeh-save').value = utilZero ? 0 : Math.round(m.selfMan + m.utilSave);
           }
         } else {
           // 一般住宅はベースライン（太陽光・高断熱の上乗せなし）
@@ -5179,107 +5119,6 @@
         + '正確な条件は、お借入れ先の金融機関でご確認ください。</span>';
     }
 
-    /* ---------- 意向シート（2026-08-29追加） ----------
-       保険業法294条の2が求める「把握 → 意向に沿った提案 → 合致の確認」の記録を、
-       ツールの側で残せるようにする。当初意向と最終意向の対比まで扱う。
-       ★選択肢に保険の種類名・商品名は入れない。並び順を固定し、保障系を先頭にも末尾にも置かない。
-       ★選択結果から商品や保険種類を自動で提示しない（誘導になるため）。 */
-    const IKOU_PRIORITIES = [
-      { k:'hiroi',  label:'家の広さ・間取り' },
-      { k:'seino',  label:'家の性能・光熱費' },
-      { k:'tochi',  label:'立地・通勤通学' },
-      { k:'hensai', label:'毎月の返済のしやすさ' },
-      { k:'kyoiku', label:'教育資金' },
-      { k:'rougo',  label:'老後資金' },
-      { k:'mannichi', label:'万一への備え' },
-      { k:'sozoku', label:'ご親族・相続のこと' }
-    ];
-    const IKOU_WHEN_LABEL = { near:'10年以内に使う予定がある', edu:'お子さまの進学期に使う', old:'老後まで使わない', mixed:'いくつかに分かれている' };
-    const IKOU_BALANCE_LABEL = { 1:'万一への備えに近い', 2:'やや万一への備え', 3:'どちらとも', 4:'やや将来の積立', 5:'将来の積立に近い' };
-
-    function ikouSelected(){
-      const v = ($('ikou-priority') && $('ikou-priority').value) || '';
-      return v ? v.split(',').filter(Boolean) : [];
-    }
-    function renderIkouChips(){
-      const host = $('ikou-priority-chips'); if(!host) return;
-      const sel = ikouSelected();
-      host.innerHTML = IKOU_PRIORITIES.map(function(o){
-        const i = sel.indexOf(o.k);
-        return '<button type="button" class="ikou-chip' + (i >= 0 ? ' is-on' : '') + '" data-ikou="' + o.k + '">'
-          + (i >= 0 ? '<span class="ikou-rank">' + (i + 1) + '</span>' : '') + esc(o.label) + '</button>';
-      }).join('');
-    }
-    function ikouRead(){
-      return {
-        pr: ikouSelected(),
-        monthly: ($('ikou-monthly') && $('ikou-monthly').value) || '',
-        when: ($('ikou-when') && $('ikou-when').value) || '',
-        balance: ($('ikou-balance') && $('ikou-balance').value) || '3',
-        note: ($('ikou-note') && $('ikou-note').value.trim()) || ''
-      };
-    }
-    function ikouIsEmpty(o){ return !o.pr.length && !o.monthly && !o.when && !o.note && o.balance === '3'; }
-    function ikouText(o){
-      const parts = [];
-      if(o.pr.length) parts.push('優先：' + o.pr.map(function(k, i){
-        const f = IKOU_PRIORITIES.filter(function(x){ return x.k === k; })[0];
-        return (i + 1) + '.' + (f ? f.label : k);
-      }).join('　'));
-      if(o.monthly) parts.push('住居費の上限：月' + o.monthly + '万円');
-      if(o.when) parts.push('使う時期：' + (IKOU_WHEN_LABEL[o.when] || o.when));
-      parts.push('お気持ち：' + (IKOU_BALANCE_LABEL[o.balance] || o.balance));
-      if(o.note) parts.push('ほかに：' + o.note);
-      return parts;
-    }
-    function renderIkouSummary(){
-      const host = $('ikou-summary'); if(!host) return;
-      const o = ikouRead();
-      if(ikouIsEmpty(o)){ host.innerHTML = ''; return; }
-      host.innerHTML = '<div class="ikou-band"><div class="ikou-band-h"><i class="fa-solid fa-clipboard-question"></i> 本日伺ったご意向</div>'
-        + '<div class="ikou-band-b">' + ikouText(o).map(esc).join(' ／ ') + '</div>'
-        + '<div class="ikou-band-n">※ この試算は、上のご意向を踏まえてご覧いただくためのものです。ご意向は「はじめに伺うこと」でいつでも直せます。</div></div>';
-    }
-    function renderIkouDiff(){
-      const host = $('ikou-diff'); if(!host) return;
-      let first = null;
-      try{ first = JSON.parse(($('ikou-first') && $('ikou-first').value) || 'null'); }catch(e){ first = null; }
-      if(!first || !first.at){ host.innerHTML = ''; return; }
-      const now = ikouRead();
-      const same = JSON.stringify({ pr:first.pr, monthly:first.monthly, when:first.when, balance:first.balance, note:first.note })
-                 === JSON.stringify(now);
-      host.innerHTML = '<div class="note" style="background:var(--blue-pale); border-color:var(--blue-pale2);">'
-        + '<i class="fa-solid fa-bookmark" style="color:var(--blue-deep);"></i><span>'
-        + '<b>最初に伺った内容（' + esc(first.at) + '）：</b>' + esc(ikouText(first).join(' ／ '))
-        + (same ? '<br>今回も同じ内容です。' :
-            '<br><b>今回は上と変わっています。</b>変わったきっかけを「そのほか」欄に書き添えておくと、次回の面談で経緯が分かります。')
-        + '</span></div>';
-    }
-    function ikouWire(){
-      const chips = $('ikou-priority-chips');
-      if(chips) chips.addEventListener('click', function(e){
-        const b = e.target.closest('[data-ikou]'); if(!b) return;
-        const k = b.dataset.ikou, sel = ikouSelected(), i = sel.indexOf(k);
-        if(i >= 0) sel.splice(i, 1); else sel.push(k);
-        $('ikou-priority').value = sel.join(',');
-        renderIkouChips(); renderIkouSummary(); renderIkouDiff(); scheduleDraftSave();
-        if(typeof renderDansinCost==='function') renderDansinCost();   // 意向が入ると団信の2列表のロックが外れる
-      });
-      ['ikou-monthly','ikou-when','ikou-balance','ikou-note'].forEach(function(id){
-        const el = $(id); if(!el) return;
-        el.addEventListener('input', function(){ renderIkouSummary(); renderIkouDiff(); scheduleDraftSave(); });
-        el.addEventListener('change', function(){ renderIkouSummary(); renderIkouDiff(); scheduleDraftSave(); });
-      });
-      const stamp = $('ikou-stamp');
-      if(stamp) stamp.addEventListener('click', function(){
-        const o = ikouRead();
-        if(ikouIsEmpty(o)){ alert('先に、伺った内容を入力してください。'); return; }
-        const d = new Date();
-        o.at = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
-        $('ikou-first').value = JSON.stringify(o);
-        renderIkouDiff(); scheduleDraftSave();
-      });
-    }
 
     /* 「次の一手」と「商談の順路の帯」が共通で使う、断定表現の検査。
        ★もとは音声メモのIIFEの中に置いていたが、順路の帯の文言も同じ検査を通す必要がある。
@@ -5336,21 +5175,16 @@
     function routeReadLog(){
       try{ return JSON.parse(localStorage.getItem(ROUTE_LOG_KEY)||'{}'); }catch(e){ return {}; }
     }
-    // 意向シートの優先順位から、おすすめの順路を決める
-    function routeSuggest(){
-      let pr = [];
-      try{ pr = ikouSelected(); }catch(e){}
-      if(pr.indexOf('mannichi') === 0) return 'hoken';
-      if(pr.indexOf('hensai') === 0 || pr.indexOf('rougo') === 0 || pr.indexOf('kyoiku') === 0) return 'money';
-      return 'first';
-    }
+    /* おすすめの順路。もとは意向シートの優先順位から選んでいたが、
+       意向シートを廃止した（2026-09-06）ため、初回面談の順路を既定にする。 */
+    function routeSuggest(){ return 'first'; }
     function routeRenderList(){
       const host = $('route-list'); if(!host) return;
       const rec = routeSuggest();
       host.innerHTML = Object.keys(ROUTES).map(function(k){
         const r = ROUTES[k];
         return '<button type="button" class="dx-toggle" data-route="' + k + '" style="margin-bottom:8px;">'
-          + '<b>' + esc(r.label) + '</b>' + (k===rec ? '（ご意向からのおすすめ）' : '')
+          + '<b>' + esc(r.label) + '</b>' + (k===rec ? '（まずはこちら）' : '')
           + '<br><span style="font-weight:400; font-size:.78rem; color:var(--ink-soft);">' + esc(r.hint) + '</span></button>';
       }).join('');
       host.querySelectorAll('[data-route]').forEach(function(b){
@@ -5841,6 +5675,9 @@
       // ── 今（賃貸）──
       const nowRent = gNow('rent', 0), nowPark = gNow('rent-parking', 0), nowKyo = gNow('rent-kyoueki', 0);
       const utilNow = simpleExp ? 0 : (gNow('e-elec', 0) + gNow('e-gas', 0) + gNow('e-water', 0));
+      /* 建てた後の光熱費。もとは「今と同額」で固定していたが、一条＝オール電化＋太陽光で
+         電気・ガスを0に置けるようにしたため、表示中のプラン側の実額を読む（simulate と同じ経路）。 */
+      const utilAft = simpleExp ? 0 : (num('e-elec', 0) + num('e-gas', 0) + num('e-water', 0));
       // ── 建てた後 ──
       const loanM = after ? 0 : loanPaymentForYear(sc, 0) / 12;
       const taxM  = num('prop-tax', 0) / 12;
@@ -5869,7 +5706,7 @@
         sellM = sellY / 12;
       }
       const nowTotal = nowRent + nowPark + nowKyo + utilNow;
-      const aftTotal = loanM + taxM + maintM + kasaiM + utilNow - saveM - sellM;
+      const aftTotal = loanM + taxM + maintM + kasaiM + utilAft - saveM - sellM;
 
       let rows = '';
       rows += rsRow('家賃 / 住宅ローンの返済', after ? '完済後は返済がありません' : 'ボーナス払いを含む初年度の月あたり', nowRent, loanM);
@@ -5878,7 +5715,9 @@
       rows += rsRow('固定資産税', '年額を12で割った金額', 0, taxM);
       rows += rsRow('修繕・管理', '年額を12で割った金額', 0, maintM);
       rows += rsRow('火災・地震保険', cyc + '年ごとの総額を月あたりに直した金額', 0, kasaiM);
-      if(!simpleExp) rows += rsRow('光熱費（電気・ガス・水道）', '建てた後も同じ金額で見込んでいます', utilNow, utilNow);
+      if(!simpleExp) rows += rsRow('光熱費（電気・ガス・水道）',
+        (utilAft < utilNow ? 'オール電化＋太陽光で電気・ガスを0で見込んだ場合の金額です' : '建てた後も同じ金額で見込んでいます'),
+        utilNow, utilAft);
       if(zehOn && saveM > 0) rows += rsRow('光熱費の削減（差し引き）', '太陽光の自家消費と高断熱による削減', 0, -saveM);
       if(zehOn) rows += rsRow('売電収入（差し引き）', after ? '完済後の時点。売電単価は年度により変わります' : '初年度の売電収入', 0, -sellM);
       rows += '<div class="rs-lb rs-total">合計（月）</div>'
@@ -5911,7 +5750,9 @@
         (1) 左右の「特徴」「留意点」を同数・同じ文字サイズにする（民間側にだけ有利な事実を並べない）
         (2)「安い」「有利」「お得」「損」を使わない
         (3) 生命保険料控除の軽減額は所得や他の契約で変わるため、金額を断定しない（限度額だけを制度の時点つきで書く）
-        (4) 意向シートで優先したいことを1つ以上選ぶまで、2列表は開かない（保険業法294条の2の順序）
+        (4) 2列表はボタンを押したときだけ開く（結論を先に見せない）。
+            ※もとは意向シートで優先したいことを選ぶまで開かない作りだったが、
+              意向シートを廃止した（2026-09-06）ため、ご意向は口頭で伺う前提に戻した。
        保険会社名・商品名・保険料の試算は一切出さない（出すと294条の3の比較推奨の射程に入り、
        証跡の保存体制が要る＝localStorage では満たせない）。 */
     const SEIHO_KOJO_2026 = { general: 4, generalKid: 6, cap: 12 };   // 一般生命保険料控除（所得税）の限度額（万円）
@@ -5939,7 +5780,6 @@
       const man1 = function(v){ return (Math.round(v * 10) / 10); };
       const stepNote = (loanRateType() !== 'fixed')
         ? '金利が段階的に上がる設定のときは、後の年ほど上乗せ分の金額も大きくなるため、毎月あたりは当初と全期間の平均の両方を出しています。' : '';
-      const gate = ikouSelected().length > 0;
       const cols =
         '<div class="dx-lead"><i class="fa-solid fa-circle-info"></i> どちらが良いかを示すものではなく、<b>同じ金額の使い道の違い</b>です。並び順にも意味はありません。</div>'
         + '<div class="dx-cols">'
@@ -5979,14 +5819,12 @@
         + 'この上乗せは<b>ローン全体にかかる金利によるもので、おひとりずつの団信の対価に分けたものではありません</b>。'
         + '実際の上乗せ幅・保障の条件は、お借入れ先の金融機関でご確認ください。</span>'
         + '</div>'
-        + '<button type="button" class="dx-toggle" id="dx-toggle"' + (gate ? '' : ' disabled')
-        + '>' + (gate
-            ? '<i class="fa-solid fa-chevron-' + (dxOpen ? 'up' : 'down') + '"></i> 同じ金額の使い道を並べて見る（団信に上乗せする／民間の保障に充てる）'
-            : '<i class="fa-solid fa-lock"></i> この比較は、先に「はじめに伺うこと」でお客様のご意向（優先したいこと）を1つ以上お選びいただいてから開きます')
+        + '<button type="button" class="dx-toggle" id="dx-toggle">'
+        +   '<i class="fa-solid fa-chevron-' + (dxOpen ? 'up' : 'down') + '"></i> 同じ金額の使い道を並べて見る（団信に上乗せする／民間の保障に充てる）'
         + '</button>'
-        + '<div id="dx-cols"' + (gate && dxOpen ? '' : ' class="hidden"') + '>' + cols + '</div>';
+        + '<div id="dx-cols"' + (dxOpen ? '' : ' class="hidden"') + '>' + cols + '</div>';
       const btn = $('dx-toggle');
-      if(btn && gate) btn.addEventListener('click', function(){ dxOpen = !dxOpen; renderDansinCost(); });
+      if(btn) btn.addEventListener('click', function(){ dxOpen = !dxOpen; renderDansinCost(); });
     }
 
     const STRESS = { rateBump: 0, incomeCut: 0 };
@@ -7619,7 +7457,6 @@
       if(typeof renderRentSwap==='function') renderRentSwap();   // 今の住居費と建てた後の住居費（毎月）
       if(typeof renderDisability==='function') renderDisability();   // 生きているが働けないとき（開いているときだけ計算）
       if(typeof renderNeedCard==='function') renderNeedCard();   // 必要保障額と生命保険の重ね描き（開いているときだけ計算）
-      if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
       scheduleMarks();         // 「入力する」ボタンの入力済み表示を更新（1フレーム1回に畳む）
@@ -9125,9 +8962,9 @@
        ・グラフは display:none の間に描かれるとサイズ0になるため、表示した直後に resize する
        ============================================================ */
     const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance','kaigo'];   // 指紋・基準の単位（全acc）
-    const INPUT_GROUPS = { ikou:['ikou'], family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };
-    const INPUT_GROUP_ORDER = ['ikou','family','living','save','insurance','kaigo'];   // 意向シートは先頭（2026-08-29新設）・介護は団信・生命保険の右（2026-08-19新設）
-    const INPUT_GROUP_LABEL = { ikou:'はじめに伺うこと', family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
+    const INPUT_GROUPS = { family:['family','home'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };
+    const INPUT_GROUP_ORDER = ['family','living','save','insurance','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）。意向シートは2026-09-06に廃止
+    const INPUT_GROUP_LABEL = { family:'ご家族・住まい', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／家＝一条比較／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
     /* 「資産の比較」は独立した画面にする（ユーザー指示 2026-08-20）。
@@ -14327,7 +14164,8 @@
       setPenMode(s.penMode || 'direct');        // 公的年金の入力方法を復元（旧保存は月額入力。teikibinなら月額を引き直す）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
       if(s.htype){ htype = s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
-      userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない
+      userEditedMaint = true; userEditedZeh = true; userEditedUtil = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない
+      if($('util-ichijo-note')) $('util-ichijo-note').style.display = (htype==='ichijo') ? 'block' : 'none';
       // 金利はカスタム値（既定の0.95でも3.1でもない値）のときだけ保護。既定値なら金利タイプ切替との連動を生かす
       userEditedRate = (()=>{ const v = parseFloat($('loan-rate')?.value); return isFinite(v) && v!==0.95 && v!==3.1; })();
       if(s.household){ [...householdSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.household===s.household)); applyHousehold(); }
@@ -15074,7 +14912,6 @@
     /* 起動直後（＝どのお客様も読み込んでいない状態）の入力内容を控えておく。
        サンプルはこれに差分を重ねて作るので、既定値を変えてもサンプルが古いままにならない。
        ドラフトの復元はバナーを押したときだけ走るので、この時点は必ず既定値 */
-    try{ ikouWire(); renderIkouChips(); }catch(e){}   // 意向シートの配線（INITIAL_STATE を取る前に描いておく）
     try{ INITIAL_STATE = collectState(); }catch(e){}
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */

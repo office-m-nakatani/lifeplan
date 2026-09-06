@@ -1479,7 +1479,16 @@
     .mt-top select{ min-height:40px; padding:6px 10px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.86rem; background:#fff; }
     .mt-badge{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; background:#1f3328; color:#fff; font-size:.72rem; font-weight:800; }
     .mt-log{ flex:1 1 auto; min-height:220px; max-height:none; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:10px; }
-    .mt-ava{ background:linear-gradient(135deg,#2f4a3a,#1f3328); }
+    /* 上長の顔（イラスト）。相談の相手が見えていた方が話しかけやすい、というユーザー指摘で追加。
+       返事の横（chat-ava）と、上の行（mt-face）に同じ絵を出す。絵文字は使わずインラインSVG。 */
+    .mt-ava{ width:38px; height:38px; border-radius:12px; background:#eef4f0; border:1.5px solid #d9e3dc; overflow:hidden; padding:0; }
+    .mt-ava svg{ width:100%; height:100%; display:block; }
+    .mt-face{ display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; flex:0 0 auto;
+      border-radius:50%; overflow:hidden; background:#eef4f0; border:1.5px solid #d9e3dc; }
+    .mt-face svg{ width:100%; height:100%; display:block; }
+    .mt-who{ display:flex; flex-direction:column; line-height:1.35; min-width:0; }
+    .mt-who b{ font-size:.86rem; color:#1f3328; }
+    .mt-who span{ font-size:.7rem; color:var(--ink-soft); }
     .chat-msg.bot .chat-bubble.mt-bub{ background:#f6f8f6; border-color:#d9e3dc; }
     .mt-bub .mt-h{ display:block; margin:8px 0 3px; font-size:.74rem; font-weight:800; color:#1f3328; letter-spacing:.02em; }
     .mt-bub .mt-h:first-child{ margin-top:0; }
@@ -3638,8 +3647,10 @@
       </div>
       <div class="modal-body">
         <div class="mt-top">
-          <label for="mt-persona" style="font-size:.78rem; color:var(--ink-soft);">上長</label>
-          <select id="mt-persona"></select>
+          <!-- 誰に相談しているのかが見えるように、顔（イラスト）と名乗りを置く。絵は mtFaceSVG が描く -->
+          <span class="mt-face" id="mt-face" aria-hidden="true"></span>
+          <span class="mt-who"><b id="mt-who-name">師匠</b><span id="mt-who-sub">上長</span></span>
+          <select id="mt-persona" aria-label="上長を切り替える"></select>
           <button type="button" class="btn btn-ghost btn-sm" id="mt-set-btn" aria-expanded="false"><i class="fa-solid fa-sliders"></i> 人物設定</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mt-kpi-btn" aria-expanded="false"><i class="fa-solid fa-chart-simple"></i> 今月の数字</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mt-self-btn" aria-expanded="false"><i class="fa-solid fa-list-check"></i> 自分で点検</button>
@@ -5686,11 +5697,73 @@
       });
       return out;
     }
+    /* 判定語の重み：長い語ほど確かな手がかり。「今月」「数字が」のような短い語ひとつで
+       「この話や」と決めつけると、まったく違う型の返事になる（ユーザー指摘）。
+       そこで語の長さで重みを変え、点が足りないときは断定せず、最後に問い返す。 */
+    function mtKwScore(t, kws){
+      let s = 0;
+      (kws || []).forEach(function(k){
+        if(!k) return;
+        const w = mtNorm(k);
+        if(!w || t.indexOf(w) < 0) return;
+        s += (w.length >= 4 ? 1.6 : (w.length >= 3 ? 1.2 : 0.8));
+      });
+      return s;
+    }
+    const MT_SURE = 1.6;   /* これ未満は「たぶん」。答えは出すが、最後に「ちがっていたら」を付ける */
     function mtScoreIntents(t){
-      return MT_INTENTS.map(function(it){ return { it:it, s:mtHasKw(t, it.kw) }; })
+      const flat = String(t).replace(/[。、\s]/g, '');
+      return MT_INTENTS.map(function(it){
+        let s = mtKwScore(t, it.kw);
+        // 相談ボタン・選び直しから来た「型そのもの」の言葉は、迷わずその型で答える
+        if(mtNorm(it.name).replace(/[。、\s]/g, '') === flat) s += 5;
+        return { it:it, s:s }; })
         .filter(function(x){ return x.s > 0; })
         .sort(function(a, b){ return b.s - a.s; })
-        .slice(0, 2).map(function(x){ return x.it; });
+        .slice(0, 2).map(function(x){ x.it._s = x.s; return x.it; });
+    }
+    /* 話が絞れないときに出す4択。相談文の手がかりで、聞く方向を変える（いつも同じ4つを出さない） */
+    function mtPickOpts(t, intents){
+      const O = {
+        short:   { k:'short',    t:'今月の数字が足りない',        d:'目標・今の件数・残り日数から逆算する',        q:'今月の数字が足りない' },
+        referral:{ k:'referral', t:'紹介が出ない・見込みが切れた', d:'頼む相手・頼み方・タイミング',              q:'紹介が出ない' },
+        rejected:{ k:'rejected', t:'お客様に断られた・止まった',   d:'4段の返し方と、次の一手',                    q:'断られた・キャンセルされた' },
+        staff:   { k:'staff',    t:'部下・チームのこと',          d:'1on1・動かない・辞めそう・数字の詰め方',      q:'部下が動かない' },
+        talk:    { k:'talk',     t:'商談の進め方・話し方',        d:'入り方・聞く順番・クロージング',              q:'商談の入り方を教えて' },
+        know:    { k:'know',     t:'相続・法人・税金・不動産の中身', d:'FP1級と税理士の目で確かめるところ',        q:'提案を点検' },
+        self:    { k:'self',     t:'自分が続かない・しんどい',      d:'段階・習慣・時間の使い方',                    q:'モチベーションが続かない' },
+        price:   { k:'price',    t:'単価・提案の中身',            d:'必要保障額・見直し・比べ方',                  q:'単価が上がらない' }
+      };
+      const out = [];
+      const push = function(k){ const o = O[k]; if(o && out.indexOf(o) < 0) out.push(o); };
+      if(/部下|メンバー|新人|若手|後輩|チーム|支店|採用|1on1|マネジ|育成/.test(t)){ push('staff'); }
+      if(/相続|贈与|法人|税|不動産|退職金|事業承継|年金|実家|空き家|決算/.test(t)) push('know');
+      if(/断ら|考えます|保留|検討|返事|音信|キャンセル|解約|見送/.test(t)) push('rejected');
+      if(/紹介|見込み|人脈|新規|開拓|販路|名簿|アポが/.test(t)) push('referral');
+      if(/数字|目標|件数|達成|ノルマ|営業日|ペース|未達|足りな/.test(t)) push('short');
+      if(/単価|保険料|値段|安い|高い|提案|設計|見直し/.test(t)) push('price');
+      if(/商談|面談|話し方|聞き方|クロージング|アポ|初回/.test(t)) push('talk');
+      if(/しんどい|つらい|続かな|やる気|不安|自信|眠れ|疲れ|逃げ/.test(t)) push('self');
+      (intents || []).forEach(function(i){ push(i.key); });
+      ['short','referral','rejected','staff'].forEach(push);   /* 足りない分は定番で埋める */
+      return out.slice(0, 4);
+    }
+    /* 組み立てに失敗しても「分からない」で終わらせない。近い4択を出して、そこから続ける */
+    function mtOops(P){
+      const tone = mtTone(P);
+      return mtFill(mtPick(MT_OPENERS[tone] || MT_OPENERS.shisho), P)
+        + (tone === 'zsedai' ? 'すみません、いまの書き方だとうまく組み立てられませんでした。近いものを押してもらえれば、そこから具体的に返します。'
+                             : '今の書き方では組み立てられん。近いのを押せ。そこから話す。')
+        + mtAskHTML(tone === 'zsedai' ? 'いちばん近いのはどれですか' : '近いのはどれや', mtPickOpts('', []),
+            { kind:'pick', title:'話を絞る', head:'pick_head' });
+    }
+    /* 直前の相談。「それでもダメだった」「他には？」のような一言を、前の話の続きとして受け取る */
+    let mtLast = { text:'', name:'', at:0 };
+    let mtLastActs = [];   /* 前回渡した「今日やること」。続きの相談で同じ手を繰り返さないため */
+    function mtIsFollow(q){
+      const t = mtNorm(q).replace(/\s/g, '');
+      if(!t || t.length > 24) return false;
+      return /^(それ|そこ|そう|でも|けど|だけど|やっぱ|やはり|やってみ|やった|試し|ダメ|だめ|無理|できな|できませ|うん|はい|他に|ほかに|もっと|続き|次は|どうやって|どうすれ|なんで|なぜ|具体的)/.test(t);
     }
     /* 知識の検索：師匠の判断軸・本の原則・勉強会の教え を1つの箱にして点数をつける。
        ctx（会社の重み）で勉強会の教えの点数を増減する。 */
@@ -5810,6 +5883,58 @@
 
     /* ---------- 3倍化：お客様の断り文句（TOTならこう返す）・切り口・自分に聞く・繰り返し・段階・点検 ---------- */
     function mtTone(P){ return (P && P.style === 'zsedai') ? 'zsedai' : 'shisho'; }
+
+    /* ---------- 上長の顔（イラスト） ----------
+       「本当に話している相手」に見えた方が、人間の上長に聞けない話を出しやすい、というユーザー指摘で追加。
+       タイプで描き分ける（体育会系＝角刈り・太い眉・への字／褒め伸ばし＝やわらかい髪・眼鏡・笑顔）。
+       絵文字は使わない（全案件共通の原則）。インラインSVGなので外部への読み込みも無い。
+       ★保存する会話の本文には入れない（mtSanitize がSVGを落とすため）。顔は吹き出しの外＝アイコンだけに出す。 */
+    function mtFaceSVG(tone){
+      const z = (tone === 'zsedai');
+      const head = z
+        ? '<path d="M19.4 26.4c0-9.6 5.6-15 12.6-15s12.6 5.4 12.6 15c-.2-3.8-1.6-6-3.6-7-4.4 2.8-11.4 3.4-16.2 1.2-2.2 1.4-3.6 3.4-3.4 5.8Z" fill="#4a3a2c"/>'
+        : '<path d="M19 25.6c0-9.6 5.8-15.2 13-15.2s13 5.6 13 15.2c-1.9-4.4-4.6-7-8-8.1-3.4 2.4-8.6 3.4-13.3 2.4-1.8 1.4-3.1 3.4-3.7 5.7Z" fill="#3d3028"/>';
+      const brow = z
+        ? '<path d="M23.6 24.8c1.8-1 4.6-1 6.2 0" fill="none" stroke="#4a3a2c" stroke-width="1.8" stroke-linecap="round"/>'
+          + '<path d="M34.2 24.8c1.6-1 4.4-1 6.2 0" fill="none" stroke="#4a3a2c" stroke-width="1.8" stroke-linecap="round"/>'
+        : '<path d="M24.4 24.4c1.8-1.4 4.8-1.4 6.4 0" fill="none" stroke="#3d3028" stroke-width="2.6" stroke-linecap="round"/>'
+          + '<path d="M33.2 24.4c1.6-1.4 4.6-1.4 6.4 0" fill="none" stroke="#3d3028" stroke-width="2.6" stroke-linecap="round"/>';
+      const eyes = '<circle cx="27.2" cy="29.8" r="1.9" fill="#3d3028"/><circle cx="36.8" cy="29.8" r="1.9" fill="#3d3028"/>';
+      const glass = z
+        ? '<rect x="22.6" y="26.4" width="9.2" height="6.8" rx="3.2" fill="none" stroke="#3d3028" stroke-width="1.5"/>'
+          + '<rect x="32.2" y="26.4" width="9.2" height="6.8" rx="3.2" fill="none" stroke="#3d3028" stroke-width="1.5"/>'
+          + '<path d="M31.8 29.4h.4M22.6 29.2l-3.2-.6M41.4 29.2l3.2-.6" fill="none" stroke="#3d3028" stroke-width="1.5" stroke-linecap="round"/>'
+        : '';
+      const mouth = z
+        ? '<path d="M28.4 36.2q3.6 3.2 7.2 0" fill="none" stroke="#a46a52" stroke-width="1.9" stroke-linecap="round"/>'
+        : '<path d="M28.4 37.2q3.6-2.4 7.2 0" fill="none" stroke="#a46a52" stroke-width="1.9" stroke-linecap="round"/>';
+      return '<svg viewBox="0 0 64 64" role="img" aria-label="上長のイラスト">'
+        + '<rect width="64" height="64" fill="' + (z ? '#fdf3e2' : '#eaf1f7') + '"/>'
+        + '<path d="M4 64c0-12 12-18 28-18s28 6 28 18H4Z" fill="' + (z ? '#3f6480' : '#1b3f5e') + '"/>'   /* 肩（スーツ） */
+        + '<path d="M23 47 32 61l9-14-9-4-9 4Z" fill="#fffdf8"/>'                                          /* シャツの襟 */
+        + '<path d="m32 49.4 3.2 2.6-2 11h-2.4l-2-11Z" fill="' + (z ? '#5aa8cf' : '#bf4123') + '"/>'       /* ネクタイ */
+        + '<ellipse cx="32" cy="27" rx="12.8" ry="14.2" fill="' + (z ? '#f9d6bd' : '#f7cdb4') + '"/>'      /* 顔 */
+        + '<circle cx="18.9" cy="28.6" r="2.5" fill="' + (z ? '#f2c6a8' : '#f0bda2') + '"/>'
+        + '<circle cx="45.1" cy="28.6" r="2.5" fill="' + (z ? '#f2c6a8' : '#f0bda2') + '"/>'
+        + head + brow + eyes + glass + mouth
+        + '</svg>';
+    }
+    /* 返事の横に出すアイコン（吹き出しの外側なので、保存・復元しても消えない） */
+    function mtAvaHTML(){
+      let tone = 'shisho';
+      try{ tone = mtTone(mtP()); }catch(e){}
+      return '<span class="chat-ava mt-ava">' + mtFaceSVG(tone) + '</span>';
+    }
+    /* 上の行の顔と名乗り。上長を切り替えたら描き直す */
+    function mtRenderFace(){
+      const el = $('mt-face'); if(!el) return;
+      const P = mtP() || {};
+      el.innerHTML = mtFaceSVG(mtTone(P));
+      const n = $('mt-who-name'), s = $('mt-who-sub');
+      if(n) n.textContent = P.name || '師匠';
+      const co = String(P.company || '').replace(/[（(][^）)]*[）)]/g, '').trim();
+      if(s) s.textContent = co + (co ? '／' : '') + (P.style === 'zsedai' ? '褒め伸ばし' : '体育会系');
+    }
     function mtStage(){ return MT_STAGES.filter(function(s){ return s.id === MT.stage; })[0] || MT_STAGES[0]; }
     /* 定型文（MT_TEXTS）を口調別に1つ。配列なら使い回しを避けて選ぶ */
     function mtT(key, tone){
@@ -6148,7 +6273,9 @@
       }
       const idx = parseInt(v, 10);
       card.classList.add('mt-ask-done'); btn.classList.add('mt-opt-picked');
-      if(!live){ mtPend = null; mtSend(label.replace(/（.*）$/, '')); return; }
+      // 前の問いのボタンを後から押したときは、その文をそのまま相談として送る
+      //（括弧まで落とすと「自分のこと」だけになって、また絞れなくなる）
+      if(!live){ mtPend = null; mtSend(label); return; }
       const pend = mtPend; mtPend = null;
       mtAdd('user', esc('→ ' + label));
       mtReply(function(P){ return mtContinue(pend, idx, null, P); });
@@ -6192,9 +6319,9 @@
     function mtReply(build){
       const P = mtP();
       const typing = document.createElement('div'); typing.className = 'chat-msg bot';
-      typing.innerHTML = '<span class="chat-ava mt-ava"><i class="fa-solid fa-user-tie"></i></span><div class="chat-bubble mt-bub"><span class="typing"><span></span><span></span><span></span></span></div>';
+      typing.innerHTML = mtAvaHTML() + '<div class="chat-bubble mt-bub"><span class="typing"><span></span><span></span><span></span></span></div>';
       if(mtLog){ mtLog.appendChild(typing); mtLog.scrollTop = mtLog.scrollHeight; }
-      let html; try{ html = build(P); }catch(e){ html = '今は答えを組み立てられんかった。言い方を変えてもう一回。'; mtPend = null; }
+      let html; try{ html = build(P); }catch(e){ mtPend = null; html = mtOops(P); }
       setTimeout(function(){ typing.remove(); mtAdd('bot', html); }, 500 + Math.floor(Math.random() * 700));
     }
 
@@ -6206,11 +6333,17 @@
       if(l){ mtLastLines.push(l); if(mtLastLines.length > 12) mtLastLines.shift(); }
       return l;
     }
-    function mtAnswer(q, P){
+    function mtAnswer(q, P, o){
+      o = o || {};
       const t = mtNorm(q);
       const tone = (P.style === 'zsedai') ? 'zsedai' : 'shisho';
       const reacts = mtDetectReact(t, P);
       const intents = mtScoreIntents(t);
+      // 点が足りない・2位と僅差のときは断定しない（外したまま話を進めない）
+      const s0 = (intents[0] && intents[0]._s) || 0, s1 = (intents[1] && intents[1]._s) || 0;
+      // 「しんどい」のような短い一言は、語がひとつ当たっただけで型を決めない（外すと別の話の返事になる）
+      const vagueMsg = t.replace(/\s/g, '').length <= 10;
+      const sure = s0 >= MT_SURE && (s0 - s1) >= 0.4 && !(vagueMsg && s0 < 3);
       const ko = mtFindKotowari(t);   // お客様の断り文句（TOTならこう返す）
       const know = mtKnowledge(t, intents, P, reacts);
       mtPend = null;                  // 新しい相談が来たら、前の問い返しは流す
@@ -6227,15 +6360,23 @@
       // 呼びかけ＋反応
       const opener = reacts.length ? mtFill(mtFreshLine(reacts[0].open[tone] || reacts[0].open.shisho), P) : mtFill(mtPick(MT_OPENERS[tone] || MT_OPENERS.shisho), P);
       h += opener;
+      if(o.follow) h += '<span class="mt-note">' + esc(tone === 'zsedai'
+        ? 'さきほどの「' + o.follow + '」の続きとして見ますね。同じやり方をもう一度渡しても進まないので、変えるところを出します。'
+        : 'さっきの「' + o.follow + '」の続きやな。同じ手をもう一回渡してもしゃあない。変えるとこを出す。') + '</span>';
       if(reacts.length > 1) h += ' ' + mtFill(mtFreshLine(reacts[1].open[tone] || reacts[1].open.shisho), P);
       if(tone === 'zsedai') h += '<span class="mt-h">まず良いところ</span>' + esc(mtPraise(t, hasNum, intents, reacts));
 
       // 見立て
-      const main = intents[0] || null;
+      // 「しんどい」だけのような気持ちの一言は、型を決めつけない。反応を返してから、先に聞く
+      const emo = vagueMsg && s0 < 3 && reacts.length > 0 && !/[0-9０-９]/.test(t);
+      const main = emo ? null : (intents[0] || null);
       h += '<span class="mt-h">見立て</span>';
       const isReport = reacts.some(function(r){ return r.key === 'report'; });
       if(main){
-        h += (tone === 'zsedai' ? '整理すると「<b>' + esc(main.name) + '</b>」の話ですね。' : '話は「<b>' + esc(main.name) + '</b>」やな。');
+        h += sure
+          ? (tone === 'zsedai' ? '整理すると「<b>' + esc(main.name) + '</b>」の話ですね。' : '話は「<b>' + esc(main.name) + '</b>」やな。')
+          : (tone === 'zsedai' ? 'たぶん「<b>' + esc(main.name) + '</b>」に近い話ですね。ちがっていたら、いちばん下から選び直せます。'
+                               : 'たぶん「<b>' + esc(main.name) + '</b>」の話やな。ちがうなら、いちばん下から選び直せ。');
         if(main.view) h += ' ' + esc(main.view);
         else if(know[0]) h += ' ' + esc(mtShort(know[0].gist, 90));
       } else if(ko){
@@ -6250,14 +6391,13 @@
       } else if(reacts.length){
         h += (tone === 'zsedai' ? 'まず気持ちの方に返しました。ここからは行動の話にしますね。' : 'それは中身の相談やない。まず反応を返した。ここから先は行動の話をする。');
       } else {
-        // どの型にも当たらないときは、4択＋その他で問い返す（診断してから処方）
-        h += (tone === 'zsedai' ? 'どのテーマか絞れなかったので、近いものを選んでください。' : 'どの話か絞れんかった。近いのを選べ。');
-        h += mtAskHTML('いちばん近いのはどれか', [
-          { t:'今月の数字が足りない', d:'目標・今の件数・残り日数から逆算する', q:'今月の数字が足りない' },
-          { t:'紹介が出ない', d:'頼む相手・頼み方・タイミング', q:'紹介が出ない' },
-          { t:'お客様に断られた・止まった', d:'TOTならこう返す（4段）と次の一手', q:'断られた・キャンセルされた' },
-          { t:'部下・チームのこと', d:'1on1・動かない・辞めそう・数字の詰め方', q:'部下が動かない' }
-        ], { kind:'pick', title:'問い返し', head:'pick_head' });
+        // どの型にも当たらないときでも「分からない」では終わらせない。
+        // 相談文の手がかりで4択を作り直して、そこから続ける（診断してから処方）
+        const vague = t.replace(/\s/g, '').length <= 8;
+        h += (tone === 'zsedai'
+          ? (vague ? 'もう少しだけ場面を教えてください。' : 'こちらの型と重なる言葉が無かったので、近いところから入りますね。')
+          : (vague ? '一言だけでは的が絞れん。場面を足せ。' : 'まだ的が絞れとらん。だいたいこの中のどれかや。'));
+        if(vague) h += '<span class="mt-note">' + esc('先に3つ：誰の話か（お客様／部下／自分）・いつまでか・何が起きたか。') + '</span>';
       }
 
       // 数字
@@ -6280,7 +6420,7 @@
       if(ko) h += mtKotowariHTML(ko, P);
       // この切り口から伝えてみる（顧客向けの話題があるとき。自分の管理の相談には出さない）
       if(!(main && main.role === 'self')){
-        const kk = mtFindKirikuchi(t, MT.recentKk);
+        const kk = mtFindKirikuchi(t, MT.recentKk).slice(0, sure ? 3 : 2);
         if(kk.length){ h += mtKirikuchiHTML(kk, P); MT.recentKk = kk.map(function(k){ return k.id; }).concat(MT.recentKk).slice(0, 12); }
       }
       // FP1級の目で見る（知識の論点が相談に入っているとき）
@@ -6313,7 +6453,15 @@
       know.forEach(function(k){ const a = useMgmt ? (k.mgmt || k.sales) : k.sales; if(a) acts.push(a); });
       if(reacts.some(function(r){ return r.key === 'health'; })) acts.unshift('今日は睡眠を先に確保し、明日の朝に筋トレか30分歩く');
       if(reacts.some(function(r){ return r.key === 'time' || r.key === 'promise'; })) acts.unshift('相手に今日中に連絡を入れ、事実と次の行動だけを伝える（言い訳は書かない）');
-      acts = acts.filter(function(a, i){ return a && acts.indexOf(a) === i; }).slice(0, 3);
+      acts = acts.filter(function(a, i){ return a && acts.indexOf(a) === i; });
+      // 続きの相談では、前に渡した行動をうしろに回して、まだ渡していない手を先に出す
+      if(o.follow && mtLastActs.length){
+        acts = acts.filter(function(a){ return mtLastActs.indexOf(a) < 0; }).concat(acts.filter(function(a){ return mtLastActs.indexOf(a) >= 0; }));
+      }
+      acts = acts.slice(0, 3);
+      mtLastActs = acts.slice(0);
+      if(!acts.length) acts = ['止まっている案件を3件だけ書き出し、止まった理由を1行ずつ書く（連絡待ち・提案待ち・意思決定待ち）',
+                               '既契約のお客様2人に、今日中に近況伺いの連絡を入れる（売り込みはしない）'];
       if(acts.length){
         h += '<span class="mt-h">今日やること</span><ul>' + acts.map(function(a){ return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>';
       }
@@ -6329,8 +6477,24 @@
 
       // 問い返し（4択＋その他）：1級の論点があれば、その状況を1問で切り分ける。選ぶと枝ごとの要点を返す
       if(fp[0] && fp[0].q && fp[0].opts && fp[0].opts.length >= 2 && !mtPend){
-        h += mtAskHTML(fp[0].q, fp[0].opts.map(function(o){ return { t:o.t }; }), { kind:'ask', key:fp[0].key, check:(useMgmt ? { mgmt:true } : null), title:'答えを絞る（' + mtFPEye(fp[0]) + '）', head:'ask_head' });
+        h += mtAskHTML(fp[0].q, fp[0].opts.map(function(x){ return { t:x.t }; }), { kind:'ask', key:fp[0].key, check:(useMgmt ? { mgmt:true } : null), title:'答えを絞る（' + mtFPEye(fp[0]) + '）', head:'ask_head' });
       }
+      // 型に当たらなかったとき（気持ちだけの一言も含む）は、最後に必ず1問返す。
+      // ここで黙ると「分からない」で終わってしまう（報告への返しだけは、問い返さずに受け取る）
+      if(!main && !ko && !fp.length && !isReport && !mtPend){
+        h += mtAskHTML(tone === 'zsedai' ? 'いちばん近いのはどれですか' : '近いのはどれや', mtPickOpts(t, intents),
+          { kind:'pick', title:'話を絞る', head:'pick_head' });
+      }
+      // 「たぶん」で答えたときは、最後に別の型を出して選び直せるようにする（外したまま進めない）
+      if(main && !sure && !mtPend){
+        const alt = mtPickOpts(t, intents).filter(function(x){ return x.k !== main.key; }).slice(0, 4);
+        if(alt.length >= 2){
+          h += mtAskHTML(tone === 'zsedai' ? '話がずれていたら、近いものを押してください' : '話がずれとったら、近いのを押せ',
+            alt, { kind:'pick', title:'ちがっていたら', head:'pick_head' });
+        }
+      }
+      // 続きの一言（「それでもダメだった」など）を、この話の続きとして受け取れるように覚えておく
+      mtLast = { text:String(q).slice(0, 160), name:(main ? main.name : (ko ? '「' + ko.said + '」への返し' : (fp[0] ? fp[0].name : ''))), at:Date.now() };
       return h;
     }
 
@@ -6371,7 +6535,7 @@
     function mtAdd(who, html, save){
       if(!mtLog) return;
       const d = document.createElement('div'); d.className = 'chat-msg ' + who;
-      d.innerHTML = (who === 'bot' ? '<span class="chat-ava mt-ava"><i class="fa-solid fa-user-tie"></i></span>' : '') + '<div class="chat-bubble' + (who === 'bot' ? ' mt-bub' : '') + '">' + html + '</div>';
+      d.innerHTML = (who === 'bot' ? mtAvaHTML() : '') + '<div class="chat-bubble' + (who === 'bot' ? ' mt-bub' : '') + '">' + html + '</div>';
       mtLog.appendChild(d);
       mtLog.scrollTop = mtLog.scrollHeight;
       if(save !== false){
@@ -6399,7 +6563,7 @@
       mtAdd('user', esc(q));
       if($('mt-text')) $('mt-text').value = '';
       const typing = document.createElement('div'); typing.className = 'chat-msg bot';
-      typing.innerHTML = '<span class="chat-ava mt-ava"><i class="fa-solid fa-user-tie"></i></span><div class="chat-bubble mt-bub"><span class="typing"><span></span><span></span><span></span></span></div>';
+      typing.innerHTML = mtAvaHTML() + '<div class="chat-bubble mt-bub"><span class="typing"><span></span><span></span><span></span></span></div>';
       mtLog.appendChild(typing); mtLog.scrollTop = mtLog.scrollHeight;
       let html;
       const raw = q.trim();
@@ -6433,8 +6597,14 @@
           const pnl = $('mt-self'); if(pnl){ pnl.hidden = false; const btn = $('mt-self-btn'); if(btn) btn.setAttribute('aria-expanded', 'true'); pnl.scrollIntoView({ block:'nearest' }); }
           html = mtFill(mtPick(MT_OPENERS[mtTone(P)]), P) + '上の「自分で点検」の10問に、はい／いいえで答えて「点検する」を押す。感想は要らん、事実だけ。';
         }
-        else html = mtAnswer(q, P);
-      }catch(e){ html = '今は答えを組み立てられんかった。言い方を変えてもう一回。'; mtPend = null; }
+        else {
+          // 「それでもダメだった」「他には？」のような続きの一言は、前の相談にくっつけて見る
+          // （毎回ゼロから当て直すと、まったく違う型の返事になる）
+          let qq = q, fol = '';
+          if(mtIsFollow(q) && mtLast.text && (Date.now() - mtLast.at) < 30 * 60 * 1000){ fol = mtLast.name || ''; qq = mtLast.text + ' ' + q; }
+          html = mtAnswer(qq, P, { follow:fol });
+        }
+      }catch(e){ mtPend = null; html = mtOops(P); }
       setTimeout(function(){ typing.remove(); mtAdd('bot', html); }, 500 + Math.floor(Math.random() * 700));
     }
     function mtRenderPersonaSelect(){
@@ -6476,7 +6646,7 @@
     }
     function mtOpen(){
       MT = mtLoad();
-      mtRenderPersonaSelect(); mtFillSettings(); mtFillKpi(); mtRenderLog();
+      mtRenderPersonaSelect(); mtRenderFace(); mtFillSettings(); mtFillKpi(); mtRenderLog();
       mtRenderStage(); mtStageBadge();
       const sq = $('mt-self-qs'); if(sq && !sq.innerHTML) sq.innerHTML = mtSelfPanelHTML();
       const qk = $('mt-quick');
@@ -6500,18 +6670,18 @@
       if($('mt-quick')) $('mt-quick').addEventListener('click', function(e){ const b = e.target.closest('[data-mtq]'); if(b) mtSend(b.dataset.mtq); });
       /* FP1級の目：問い返しの選択肢（4択＋その他） */
       if(mtLog) mtLog.addEventListener('click', function(e){ const b = e.target.closest('[data-mtopt]'); if(b && mtLog.contains(b)) mtChoose(b); });
-      if($('mt-persona')) $('mt-persona').addEventListener('change', function(){ MT.active = $('mt-persona').value; mtPend = null; mtSave(); mtFillSettings(); mtFillKpi(); mtRenderLog(); });
+      if($('mt-persona')) $('mt-persona').addEventListener('change', function(){ MT.active = $('mt-persona').value; mtPend = null; mtSave(); mtRenderFace(); mtFillSettings(); mtFillKpi(); mtRenderLog(); });
       const tog = function(btnId, panelId){
         const b = $(btnId), p = $(panelId); if(!b || !p) return;
         b.addEventListener('click', function(){ p.hidden = !p.hidden; b.setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); if(!p.hidden) p.scrollIntoView({ block:'nearest' }); });
       };
       tog('mt-set-btn', 'mt-settings'); tog('mt-kpi-btn', 'mt-kpi');
-      if($('mts-save')) $('mts-save').addEventListener('click', function(){ mtReadSettings(); mtAdd('bot', mtFill(mtP().style === 'zsedai' ? '設定、覚えました。{call}、次からこの感じで話しますね。' : '設定を覚えた。{call}、次からこの口で話す。', mtP()), false); });
+      if($('mts-save')) $('mts-save').addEventListener('click', function(){ mtReadSettings(); mtRenderFace(); mtAdd('bot', mtFill(mtP().style === 'zsedai' ? '設定、覚えました。{call}、次からこの感じで話しますね。' : '設定を覚えた。{call}、次からこの口で話す。', mtP()), false); });
       if($('mts-new')) $('mts-new').addEventListener('click', function(){
         const name = prompt('会社名・場面（例：一条工務店 高松展示場）'); if(!name) return;
         const id = 'c' + Date.now().toString(36);
         MT.personas[id] = Object.assign({}, JSON.parse(JSON.stringify(mtP())), { id:id, company:name.trim() });
-        MT.active = id; mtSave(); mtRenderPersonaSelect(); mtFillSettings(); mtFillKpi(); mtRenderLog();
+        MT.active = id; mtSave(); mtRenderPersonaSelect(); mtRenderFace(); mtFillSettings(); mtFillKpi(); mtRenderLog();
       });
       if($('mts-del')) $('mts-del').addEventListener('click', function(){
         if(MT.active === 'default') return;
@@ -6519,7 +6689,7 @@
         MT.deleted = Array.isArray(MT.deleted) ? MT.deleted : [];
         if(MT.deleted.indexOf(MT.active) < 0) MT.deleted.push(MT.active);   // 既定の上長も、消したら復活させない
         delete MT.personas[MT.active]; delete MT.kpi[MT.active]; delete MT.log[MT.active];
-        MT.active = 'default'; mtSave(); mtRenderPersonaSelect(); mtFillSettings(); mtFillKpi(); mtRenderLog();
+        MT.active = 'default'; mtSave(); mtRenderPersonaSelect(); mtRenderFace(); mtFillSettings(); mtFillKpi(); mtRenderLog();
       });
       if($('mt-clear')) $('mt-clear').addEventListener('click', function(){
         if(!confirm('この上長との会話を消します。人物設定と数字は残ります。')) return;

@@ -323,6 +323,7 @@
     /* お客様モードでは、担当者専用の操作（アカウント保存・共有リンク作成）を隠す */
     body.customer-mode #btn-save{ display:none !important; }
     body.customer-mode #btn-share-top{ display:none !important; }   /* 共有リンクを作るのは担当者だけ */
+    body.customer-mode #btn-quick{ display:none !important; }       /* 1分モードは担当者の入口（お客様の画面では出さない） */
     /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
     .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
       font-size:.78rem; text-decoration:underline; cursor:pointer; }
@@ -906,7 +907,10 @@
     body.tab-mode .layout{ display:block; }
     @media screen{
       body.tab-mode:not(.pdf-mode) #input-panel .acc:not(.view-active){ display:none !important; }
-      body.tab-mode:not(.pdf-mode) .results > *:not(.view-active){ display:none !important; }
+      /* ★2026-09-06：#ikou-summary（伺ったご意向の帯）と #est-banner（目安のままの件数）は、
+         どの結果画面でも出したいので除外する。どちらも .view-wrap ではないため、
+         この規則にそのまま当たって display:none になっていた（意向の帯は一度も出ていなかった）。 */
+      body.tab-mode:not(.pdf-mode) .results > *:not(.view-active):not(#ikou-summary):not(#est-banner){ display:none !important; }
       body.tab-mode:not(.pdf-mode) .table-section[data-view]:not(.view-active){ display:none !important; }
     }
     body.tab-mode .results{ position:static; }
@@ -1328,6 +1332,27 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 1分モード／「目安のまま」の帯（2026-09-06追加） ---------- */
+    .qs-note{ margin:0 0 12px; padding:9px 12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2);
+      border-radius:var(--radius-sm); font-size:.8rem; line-height:1.7; color:var(--ink); }
+    .qs-field{ margin-bottom:12px; }
+    .qs-field > label{ display:block; font-size:.86rem; font-weight:800; margin-bottom:5px; }
+    .qs-field .input-unit input, .qs-field input[type="text"]{ min-height:52px; font-size:1.05rem; font-weight:700; }
+    /* 素の text 入力（お子さまの年齢）は .field の中に無いので、枠と余白を自分で持つ */
+    .qs-field input[type="text"]{ width:100%; padding:10px 12px; border:1.5px solid var(--line);
+      border-radius:10px; background:#fff; color:var(--ink); font-family:inherit; }
+    .qs-field .hint{ display:block; margin-top:4px; font-size:.76rem; font-weight:400;
+      color:var(--ink-soft); line-height:1.6; }
+    .est-band{ margin-bottom:14px; padding:10px 14px; background:var(--warn-pale);
+      border:1.5px solid var(--warn); border-radius:var(--radius-sm); }
+    .est-band-h{ display:flex; align-items:flex-start; gap:7px; font-size:.85rem; font-weight:800; color:#7a5c0f; line-height:1.55; }
+    .est-band-h i{ flex:0 0 auto; margin-top:3px; }
+    .est-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+    .est-chip{ min-height:34px; padding:5px 11px; background:#fff; border:1.5px solid var(--warn);
+      border-radius:999px; font-family:inherit; font-size:.78rem; font-weight:700; color:#7a5c0f; cursor:pointer; }
+    .est-chip:hover{ background:var(--warn-pale); }
+    .est-band-n{ margin-top:6px; font-size:.74rem; color:var(--ink-soft); line-height:1.65; }
+
     /* ---------- 団信の上乗せを円で見る（2026-09-06追加） ---------- */
     .dx-wrap{ margin-top:10px; }
     .dx-badge{ padding:9px 12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2);
@@ -1671,6 +1696,10 @@
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
+        <!-- 1分モード（2026-09-06追加）。展示場の初回商談で、5項目だけ伺って概算を出すための入口。
+             仕様の置き場所は「サンプル読込の隣」だったが、サンプルは保存モーダルの中にあり、
+             初回商談でいちばん早く押したいものが2階層奥になるため、操作バーの本線に出した。 -->
+        <button class="btn btn-ghost btn-sm" id="btn-quick"><i class="fa-solid fa-bolt"></i> 1分で概算</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
@@ -2656,6 +2685,10 @@
              順序を構造的に取れなくする。空のときは何も出さない。 -->
         <div id="ikou-summary"></div>
 
+        <!-- 「目安のまま」の件数（2026-09-06追加）。1分モードで出した概算を、
+             確定した数字として見せないための表示。印刷・PDFにも出す（no-print を付けない） -->
+        <div id="est-banner"></div>
+
         <!-- 各画面のカードは view-wrap で束ねる（2026-08-17）。data-view はラッパーに1つだけ付け、
              ペア表示（.results.rpair-2）のときは2つのラッパーがCSSグリッドで左右に並ぶ -->
         <div class="view-wrap" data-view="assets">
@@ -2935,6 +2968,55 @@
             <tbody id="at-body"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 1分モード（初回商談用・5項目）===================== -->
+  <div class="modal-overlay" id="quick-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="1分で概算">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-bolt"></i> 1分で概算（初回商談用）</h3>
+        <button class="modal-close" id="quick-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="qs-note">この5項目だけで、いったん概算を出します。<b>ほかの欄は一般的な目安のまま</b>で計算し、結果画面の上に「目安のままの入力が何件あるか」を出します。あとから1つずつ直していけます。<br>
+          <b>現状プラン</b>＝いまのお住まい（賃貸）、<b>将来プラン</b>＝一条工務店の家をご購入、という形で入れます。どちらもあとから自由に変えられます。</p>
+
+        <div class="qs-field">
+          <label>ご家族の形</label>
+          <div class="seg" id="qs-household-seg">
+            <button type="button" data-qsh="couple" class="active">ご夫婦</button>
+            <button type="button" data-qsh="single">おひとり</button>
+          </div>
+        </div>
+        <div class="qs-field">
+          <label>ご年齢（世帯主の方）</label>
+          <div class="input-unit"><input type="number" id="qs-age" value="35" min="18" max="70" inputmode="numeric"><span class="u">歳</span></div>
+        </div>
+        <div class="qs-field">
+          <label>年収（世帯主の方・額面）</label>
+          <div class="input-unit"><input type="number" id="qs-inc-h" value="550" min="0" step="10" inputmode="numeric"><span class="u">万円</span></div>
+        </div>
+        <div class="qs-field" id="qs-inc-w-field">
+          <label>年収（配偶者の方・額面）</label>
+          <div class="input-unit"><input type="number" id="qs-inc-w" value="300" min="0" step="10" inputmode="numeric"><span class="u">万円</span></div>
+          <span class="hint">お勤めでない場合は 0 のままで結構です</span>
+        </div>
+        <div class="qs-field">
+          <label>お子さまの年齢</label>
+          <input type="text" id="qs-kids" placeholder="例：6,3" inputmode="numeric">
+          <span class="hint">カンマ区切りでご入力ください。いらっしゃらない場合は空欄のままで結構です</span>
+        </div>
+        <div class="qs-field">
+          <label>住宅ローンの借入予定額</label>
+          <div class="input-unit"><input type="number" id="qs-price" value="4000" min="0" step="100" inputmode="numeric"><span class="u">万円</span></div>
+          <span class="hint">まだ決まっていない場合は、ご予算のおおよその金額で結構です</span>
+        </div>
+
+        <button class="btn btn-primary btn-sm btn-full" id="quick-go" type="button"><i class="fa-solid fa-play"></i> この5項目で概算を出す</button>
+        <p class="at-note" style="margin-top:12px;">※ 入力していない欄には<b>一般的な目安の金額</b>が入ります。目安のままの数字は、確定した見込みではありません。<br>
+          <span id="qs-staff-note">※ 担当者の方へ：目安のままの結果を根拠に、保障や運用のご提案へは進まないでください。ご意向を伺い、実際の数字を埋めてからにしてください。</span></p>
       </div>
     </div>
   </div>
@@ -6662,6 +6744,7 @@
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       if(typeof renderRateScenarios==='function') renderRateScenarios();   // 金利が上がった場合の表（切替なしで4行同時）
       if(typeof renderDansinCost==='function') renderDansinCost();   // 団信の上乗せ金利を円に直した表示
+      if(typeof renderEstBanner==='function') renderEstBanner();   // 「目安のままの入力が◯件」の帯
       if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
@@ -8214,9 +8297,89 @@
       });
       return parts.join('|');
     }
+    /* 起動直後（＝どのお客様も読み込んでいない、既定値だけの状態）の指紋。
+       ★inputBaseline とは別に持つ。お客様モードでは inputBaseline が
+         「担当者から共有された内容」に取り直されるため（L14054）、
+         それを既定値と思って比べると、お客様が触っていない欄が全部「目安のまま」になってしまう。 */
+    let defaultFP = null;
     function captureInputBaseline(){
       inputBaseline = Object.create(null);
       INPUT_SECTIONS.forEach(k=>{ inputBaseline[k] = sectionFingerprint(k); });
+      if(!defaultFP) defaultFP = Object.assign(Object.create(null), inputBaseline);   // 最初の1回だけ＝既定値
+    }
+    /* ---------- 「目安のまま」の判定（2026-09-06追加） ----------
+       入力済みマークと同じ sectionFingerprint を使う。既定値のまま・一度も変えていないセクションを
+       「目安のまま」とみなす。画面に出ていないセクション（賃貸のときの団信など）は数えない。 */
+    const EST_SECTION_LABEL = { family:'ご家族', home:'住まい', living:'毎月の生活費', events:'ライフイベント',
+      save:'貯蓄・運用', pension:'年金', dansin:'団信', insurance:'加入中の生命保険', kaigo:'介護' };
+    function estPending(){
+      if(!defaultFP) return [];
+      return INPUT_SECTIONS.filter(function(k){
+        if(!visibleAcc(k)) return false;
+        return defaultFP[k] !== undefined && sectionFingerprint(k) === defaultFP[k];
+      });
+    }
+    function renderEstBanner(){
+      const host = $('est-banner'); if(!host) return;
+      const pend = estPending();
+      if(!pend.length){ host.innerHTML = ''; return; }
+      const cust = document.body.classList.contains('customer-mode');
+      host.innerHTML = '<div class="est-band">'
+        + '<div class="est-band-h"><i class="fa-solid fa-triangle-exclamation"></i>'
+        + '<span>この結果には、まだ<b>一般的な目安のままの入力が' + pend.length + '件</b>あります。'
+        + 'ここを実際の数字に直すほど、結果は正確になります。</span></div>'
+        + '<div class="est-chips">' + pend.map(function(k){
+            return '<button type="button" class="est-chip" data-est="' + k + '">' + esc(EST_SECTION_LABEL[k] || k) + 'を入力する</button>';
+          }).join('') + '</div>'
+        + '<div class="est-band-n">※ 目安の金額は<b>一般的な目安</b>として置いているもので、統計にもとづく確定した見込みではありません。'
+        + (cust ? '' : '<br>※ 担当者の方へ：目安のままの結果を根拠に、保障や運用のご提案へは進まないでください。')
+        + '</div></div>';
+      host.querySelectorAll('[data-est]').forEach(function(b){
+        b.addEventListener('click', function(){ switchView('input', b.dataset.est); });
+      });
+    }
+    /* ---------- 1分モード（2026-09-06追加） ----------
+       展示場の初回商談で、5項目だけ伺って概算を出す入口。
+       ・既定値は INITIAL_STATE（起動直後の状態）をそのまま使う＝既定値を直してもここが古くならない
+       ・現状＝いまのまま（賃貸）／将来＝一条工務店の家をご購入、の2プランを組む
+       ★出したあとは「お金（資産と収支）」へ行く。保障・運用の診断は既定で開かない
+         （目安のままの数字を根拠に、保障や運用の提案へ進める順路を作らないため） */
+    let qsHousehold = 'couple';
+    function quickState(kind){
+      if(!INITIAL_STATE) return null;
+      const mirai = (kind === 'mirai');
+      const st = JSON.parse(JSON.stringify(INITIAL_STATE));
+      const age = Math.max(num('qs-age', 35), 18);
+      st.household = qsHousehold;
+      st.fields['h-age'] = String(age);
+      st.fields['h-income'] = String(Math.max(num('qs-inc-h', 0), 0));
+      if(qsHousehold === 'couple'){
+        st.fields['w-age'] = String(Math.max(age - 2, 18));   // 目安（配偶者の年齢は伺っていない）
+        st.fields['w-income'] = String(Math.max(num('qs-inc-w', 0), 0));
+      }
+      const kids = (($('qs-kids') && $('qs-kids').value) || '').split(/[^0-9]+/)
+        .filter(function(x){ return x !== ''; }).map(function(x){ return Math.min(parseInt(x, 10) || 0, 30); }).slice(0, 6);
+      st.children = kids.map(function(a){
+        return { name:'', sei:'', age:String(a), k12:'public', highEd:'shiritsu_b', lodging:'home',
+                 gender:'boy', bEra:'seireki', bY:'', bM:'', bD:'' };
+      });
+      if(mirai){
+        st.house = 'buy';
+        st.htype = 'ichijo';
+        st.fields['house-price'] = String(Math.max(num('qs-price', 0), 0));
+        st.fields['buy-age'] = String(age);
+      }else{
+        st.house = 'rent';
+      }
+      return st;
+    }
+    function quickGo(){
+      const g = quickState('genjo'), m = quickState('mirai');
+      if(!g || !m){ alert('概算を用意できませんでした。ページを開き直してお試しください。'); return; }
+      applyPlans({ plans:{ active:'mirai', genjo:{ state:g, sum:null }, mirai:{ state:m, sum:null } } });
+      setCurrentSave(null);                      // 概算は「編集中の資料」にしない（上書き保存で潰さないため）
+      $('quick-modal').hidden = true;
+      switchView('result', 'assets');            // 保障・運用の診断は開かない
     }
     function refreshInputMarks(){
       if(!inputBaseline) return;
@@ -13459,6 +13622,17 @@
     }
     function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
+    // 1分モード（2026-09-06追加）
+    if($('btn-quick')) $('btn-quick').addEventListener('click', ()=>{ $('quick-modal').hidden = false; });
+    if($('quick-close')) $('quick-close').addEventListener('click', ()=>{ $('quick-modal').hidden = true; });
+    if($('quick-modal')) $('quick-modal').addEventListener('click', (e)=>{ if(e.target===$('quick-modal')) $('quick-modal').hidden = true; });
+    if($('qs-household-seg')) $('qs-household-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('[data-qsh]'); if(!b) return;
+      qsHousehold = b.dataset.qsh;
+      $('qs-household-seg').querySelectorAll('button').forEach(x=> x.classList.toggle('active', x === b));
+      $('qs-inc-w-field').classList.toggle('hidden', qsHousehold !== 'couple');
+    });
+    if($('quick-go')) $('quick-go').addEventListener('click', quickGo);
     if($('sample-show')) $('sample-show').addEventListener('click', ()=>{
       if(!confirm('画面の入力内容を、サンプル（田中太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
       if(!showSample()) return;

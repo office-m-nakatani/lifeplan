@@ -1277,7 +1277,9 @@
       padding:4px 0; font-size:.7rem; font-weight:800; color:var(--ink-soft); }
     .nxv-mx-yl span{ writing-mode:vertical-rl; letter-spacing:.04em; }
     .nxv-mx-yl .nxv-ax{ color:var(--ink); }
-    .nxv-mx-grid{ grid-area:1 / 2; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    /* align-items:start＝マスは中身の高さぴったりにする。
+       引き伸ばすと、件数の少ないマスが大きな空白の箱になって読みにくい。 */
+    .nxv-mx-grid{ grid-area:1 / 2; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:start; }
     .nxv-mx-xl{ grid-area:2 / 2; display:flex; justify-content:space-between; align-items:center;
       padding:0 4px; font-size:.7rem; font-weight:800; color:var(--ink-soft); }
     .nxv-mx-xl .nxv-ax{ color:var(--ink); }
@@ -1313,8 +1315,11 @@
       font-size:.74rem; line-height:1.7; color:var(--blue-deep); }
     .nxv-cell-f i{ margin-right:5px; }
 
-    /* --- 図2・図3：ラベル｜横棒｜件数 の3列リスト --- */
-    .nxv-rows{ display:grid; grid-template-columns:auto 1fr auto; gap:6px 10px; align-items:center; }
+    /* --- 図2・図3：「ラベル｜横棒｜件数」を1つの塊にして、2列に並べる ---
+       ★1行を画面幅いっぱいに伸ばすと、横棒が長くなりすぎて件数まで目が届かない。
+         2列にすると棒の長さが半分になり、件数がすぐ右隣に来る。 */
+    .nxv-rows{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:7px 26px; }
+    .nxv-row{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:9px; align-items:center; }
     .nxv-rl{ font-size:.76rem; color:var(--ink); white-space:nowrap; }
     .nxv-rb{ display:flex; height:16px; border-radius:8px; overflow:hidden; background:var(--bg-soft); }
     .nxv-rb span{ display:block; }
@@ -1335,8 +1340,12 @@
          軸のラベルは消しても意味が失われない */
       .nxv-mx{ grid-template-columns:1fr; }
       .nxv-mx-yl, .nxv-mx-xl{ display:none; }
-      .nxv-mx-grid{ grid-area:auto; grid-template-columns:1fr; }
-      .nxv-rows{ grid-template-columns:auto 1fr auto; gap:5px 7px; }
+      /* スマホは4象限を縦に積む。位置で順番を示せなくなるので、
+         番号どおり①→②→③→④に並べ替える（急ぐものが先頭に来るように） */
+      .nxv-mx-grid{ grid-area:auto; display:flex; flex-direction:column; }
+      .nxv-o1{ order:1; } .nxv-o2{ order:2; } .nxv-o3{ order:3; } .nxv-o4{ order:4; }
+      .nxv-rows{ grid-template-columns:1fr; gap:6px; }
+      .nxv-row{ gap:7px; }
       .nxv-rl{ font-size:.72rem; }
     }
 
@@ -11040,12 +11049,14 @@
          ★右上（重要だが急がない）は、締切がないぶん商談では後回しになりやすい。
            けれども、ここを地道に片づけた記録が次の面談での信頼になり、ご紹介につながる。
            だから見た目でも埋もれないようにし、説明の1行を必ず添える。 */
+      /* ★並び順＝グリッドの左上から。横軸は「左が急がない・右が急ぐ」（2026-09-06 ユーザー指示）。
+         番号は取りかかる順（①がいちばん急ぐ）なので、①は右上に来る。 */
       const NX_QUAD = [
-        { k:'hi_now',   cls:'is-1', no:'1', name:'いますぐ動く',        sub:'重要 × 急ぐ' },
         { k:'hi_later', cls:'is-2', no:'2', name:'じっくり積み上げる',  sub:'重要 × 急がない',
           foot:'締切がないぶん後回しになりがちですが、<b>長い目で見て、信頼とご紹介につながるのはここ</b>です。次の面談までに1つでも進めておくと、話が積み上がります。' },
-        { k:'lo_now',   cls:'',     no:'3', name:'手早く片づける',      sub:'ふつう × 急ぐ' },
-        { k:'lo_later', cls:'',     no:'4', name:'折を見て',            sub:'ふつう × 急がない' }
+        { k:'hi_now',   cls:'is-1', no:'1', name:'いますぐ動く',        sub:'重要 × 急ぐ' },
+        { k:'lo_later', cls:'',     no:'4', name:'折を見て',            sub:'ふつう × 急がない' },
+        { k:'lo_now',   cls:'',     no:'3', name:'手早く片づける',      sub:'ふつう × 急ぐ' }
       ];
 
       function nxVizHTML(res){
@@ -11066,7 +11077,7 @@
         });
         const cells = NX_QUAD.map(function(o){
           const list = q[o.k];
-          return '<div class="nxv-cell ' + o.cls + '">'
+          return '<div class="nxv-cell nxv-o' + o.no + ' ' + o.cls + '">'
             + '<div class="nxv-cell-h">'
             +   '<span class="nxv-no">' + o.no + '</span>'
             +   '<span class="nxv-cell-t">' + o.name + '<small>' + o.sub + '</small></span>'
@@ -11081,10 +11092,10 @@
           + '<div class="nxv-mx">'
           +   '<div class="nxv-mx-yl"><span class="nxv-ax">▲ 重要度が高い</span><span>ふつう</span></div>'
           +   '<div class="nxv-mx-grid">' + cells + '</div>'
-          +   '<div class="nxv-mx-xl"><span class="nxv-ax">◀ 急ぐ</span><span>急がない ▶</span></div>'
+          +   '<div class="nxv-mx-xl"><span>◀ 急がない</span><span class="nxv-ax">急ぐ ▶</span></div>'
           + '</div>'
-          + '<p class="nxv-note">縦は<b>重要度</b>（上ほど家計への効きが大きい）、横は<b>スピード感</b>（左ほど早く動きたい）です。'
-          + '<b>①</b>から手をつけ、<b>②</b>を次の面談までに少しずつ進めるのが基本の順番です。</p>'
+          + '<p class="nxv-note">縦は<b>重要度</b>（上ほど家計への効きが大きい）、横は<b>スピード感</b>（<b>右ほど急ぐ</b>）です。'
+          + '右上の<b>①</b>から手をつけ、左上の<b>②</b>を次の面談までに少しずつ進めるのが基本の順番です。</p>'
           + '</div>';
 
         /* --- 図2：いつまでに（期限ごとの件数） ---
@@ -11105,12 +11116,14 @@
           + '<div class="nxv-rows">' + dues.map(function(d){
               const tot = d.cust + d.staff;
               const w = Math.max(Math.round(tot / maxDue * 100), 6);
-              return '<div class="nxv-rl">' + esc(d.due) + '</div>'
-                + '<div class="nxv-rb" style="width:' + w + '%;">'
+              return '<div class="nxv-row">'
+                + '<span class="nxv-rl">' + esc(d.due) + '</span>'
+                + '<span class="nxv-rb" style="width:' + w + '%;">'
                 +   (d.cust ? '<span class="nxv-c-cust" style="flex:' + d.cust + ';"></span>' : '')
                 +   (d.staff ? '<span class="nxv-c-staff" style="flex:' + d.staff + ';"></span>' : '')
-                + '</div>'
-                + '<div class="nxv-rn">' + tot + '件</div>';
+                + '</span>'
+                + '<span class="nxv-rn">' + tot + '件</span>'
+                + '</div>';
             }).join('') + '</div>'
           + '<div class="nxv-legend">'
           +   '<span><i class="nxv-sw nxv-c-cust"></i> お客様にお願いすること</span>'
@@ -11129,9 +11142,11 @@
           + '<div class="nxv-h"><i class="fa-solid fa-diagram-project"></i> どこから出てきた話か</div>'
           + '<div class="nxv-rows">' + srcKeys.map(function(k){
               const w = Math.max(Math.round(bySrc[k] / maxSrc * 100), 6);
-              return '<div class="nxv-rl">' + esc(NX_SRC_LABEL[k]) + '</div>'
-                + '<div class="nxv-rb" style="width:' + w + '%;"><span class="nxv-c-' + k + '" style="flex:1;"></span></div>'
-                + '<div class="nxv-rn">' + bySrc[k] + '件</div>';
+              return '<div class="nxv-row">'
+                + '<span class="nxv-rl">' + esc(NX_SRC_LABEL[k]) + '</span>'
+                + '<span class="nxv-rb" style="width:' + w + '%;"><span class="nxv-c-' + k + '" style="flex:1;"></span></span>'
+                + '<span class="nxv-rn">' + bySrc[k] + '件</span>'
+                + '</div>';
             }).join('') + '</div>'
           + '<p class="nxv-note">合計' + items.length + '件。「お話から」は、録音した会話に出てきた話題から拾ったものです。'
           + 'この図には、下の一覧で「そのほかに確認しておきたいこと」に畳まれている分も含めています。</p>'

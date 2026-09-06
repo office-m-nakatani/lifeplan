@@ -324,6 +324,7 @@
     body.customer-mode #btn-save{ display:none !important; }
     body.customer-mode #btn-share-top{ display:none !important; }   /* 共有リンクを作るのは担当者だけ */
     body.customer-mode #btn-quick{ display:none !important; }       /* 1分モードは担当者の入口（お客様の画面では出さない） */
+    body.customer-mode #btn-route{ display:none !important; }       /* 商談の順路も担当者の入口 */
     /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
     .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
       font-size:.78rem; text-decoration:underline; cursor:pointer; }
@@ -1332,6 +1333,49 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 商談の順路（2026-09-06追加） ---------- */
+    /* ★表示を絞るのは「誤操作の防止」であって法的な保護ではない。
+         body のクラスは DevTools で外せる。だからモードの中に
+         「このモードでも保険の内容説明はできません」を消せない位置で固定表示する。
+       ★ホワイトリスト方式：順路モードに入ったら data-hoken-only を既定で隠し、
+         保障の順路のときだけ出す。新しく足した保険まわりの表示にこの属性を付けておけば、
+         何もしなくても自動で隠れる。 */
+    body.route-mode:not(.route-hoken) [data-hoken-only]{ display:none !important; }
+    /* 検討メモ（保険会社名・商品類型の覚え書き）とAI相談チャットは、
+       保障の順路でも出さない。商談中は画面がお客様の側を向いているため。 */
+    body.route-mode #nx-plan-wrap, body.route-mode #chat-card,
+    body.route-mode #nav-result button[data-nav-result="chat"],
+    /* 右下の「AIに相談」の浮きボタンは、帯の固定文言（保険の内容説明はできません）に
+       かぶって読めなくする。順路の間は出さない（チャット自体も隠しているので入口も閉じる） */
+    body.route-mode #chat-fab{ display:none !important; }
+    body.route-mode{ padding-bottom:150px; }   /* 帯のぶん本文の下に余白 */
+    #rt-band{ position:fixed; left:0; right:0; bottom:0; z-index:60; padding:9px 14px 11px;
+      background:#1f3328; color:#fff; box-shadow:0 -3px 14px rgba(0,0,0,.18); }
+    #rt-band .rt-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:1100px; margin:0 auto; }
+    #rt-band .rt-step{ font-size:.74rem; font-weight:800; opacity:.85; white-space:nowrap; }
+    #rt-band .rt-say{ flex:1 1 260px; min-width:0; font-size:.86rem; line-height:1.6; font-weight:700; }
+    #rt-band .rt-ask{ flex:1 1 260px; min-width:0; font-size:.8rem; line-height:1.6; opacity:.9; }
+    #rt-band .rt-fix{ max-width:1100px; margin:6px auto 0; font-size:.72rem; opacity:.85; line-height:1.5; }
+    #rt-band button{ min-height:38px; padding:7px 13px; border-radius:9px; border:1.5px solid rgba(255,255,255,.45);
+      background:transparent; color:#fff; font-family:inherit; font-size:.8rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+    #rt-band button.rt-go{ background:#fff; color:#1f3328; border-color:#fff; }
+    @media (max-width:640px){ #rt-band .rt-ask{ flex-basis:100%; } body.route-mode{ padding-bottom:200px; } }
+    /* お客様の画面・共有リンク・PDF・印刷では帯を出さない */
+    body.customer-mode #rt-band, body.pdf-mode #rt-band{ display:none !important; }
+    @media print{ #rt-band{ display:none !important; } }
+    /* 1枚サマリー（画面には出さず、画像化のためだけに置く） */
+    #rt-sheet{ position:absolute; left:-99999px; top:0; width:794px; padding:34px 40px;
+      background:#fff; color:#1f3328; font-family:'Noto Sans JP',sans-serif; }
+    #rt-sheet h2{ font-size:20px; margin:0 0 4px; }
+    #rt-sheet .rs-sub{ font-size:11px; color:#5b6b7d; margin-bottom:14px; }
+    #rt-sheet table{ width:100%; border-collapse:collapse; margin-bottom:12px; }
+    #rt-sheet th, #rt-sheet td{ border:1px solid #d9e7de; padding:7px 9px; font-size:12.5px; text-align:left; }
+    #rt-sheet th{ background:#f2f7f4; width:34%; }
+    #rt-sheet .rs-line{ border-bottom:1px solid #c9d6cf; height:26px; margin:0 0 8px; }
+    #rt-sheet .rs-h3{ font-size:13px; font-weight:800; margin:14px 0 6px; }
+    #rt-sheet .rs-note{ font-size:10.5px; color:#5b6b7d; line-height:1.65; margin-top:10px;
+      border-top:1px solid #d9e7de; padding-top:8px; }
+
     /* ---------- 必要保障額と生命保険の重ね描き（2026-09-06追加） ---------- */
     .nd-scroll{ overflow-x:auto; }
     .nd-chart{ position:relative; height:300px; min-width:520px; }
@@ -1759,6 +1803,10 @@
              仕様の置き場所は「サンプル読込の隣」だったが、サンプルは保存モーダルの中にあり、
              初回商談でいちばん早く押したいものが2階層奥になるため、操作バーの本線に出した。 -->
         <button class="btn btn-ghost btn-sm" id="btn-quick"><i class="fa-solid fa-bolt"></i> 1分で概算</button>
+        <!-- 商談の順路（2026-09-06追加）。Office-Mの担当者が使う機能として運用する。
+             社外の住宅担当者へ配布する判断は、業務委託契約での募集関連行為の範囲・
+             紹介料の設計・個人情報の取扱い・一条工務店の許諾の4点が整ってから別途行う。 -->
+        <button class="btn btn-ghost btn-sm" id="btn-route"><i class="fa-solid fa-route"></i> 商談の順路</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
@@ -1843,7 +1891,7 @@
         <button type="button" data-nav-result="assets"><i class="fa-solid fa-coins"></i> お金（資産と収支）</button>
         <button type="button" data-nav-result="compare"><i class="fa-solid fa-scale-unbalanced-flip"></i> 資産の比較</button>
         <button type="button" data-nav-result="ichijo"><i class="fa-solid fa-house-chimney-window"></i> 家（一条比較）</button>
-        <button type="button" data-nav-result="hoken"><i class="fa-solid fa-file-shield"></i> 万が一（保障）</button>
+        <button type="button" data-nav-result="hoken" data-hoken-only><i class="fa-solid fa-umbrella"></i> 万が一（保障）</button>
         <button type="button" data-nav-result="ai"><i class="fa-solid fa-robot"></i> AI診断</button>
         <button type="button" data-nav-result="cf"><i class="fa-solid fa-table-cells"></i> キャッシュフロー表</button>
         <button type="button" data-nav-result="chat"><i class="fa-solid fa-comments"></i> AIに相談する</button>
@@ -2953,7 +3001,7 @@
 
         <div class="view-wrap" data-view="hoken">
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
-        <div class="card" id="hoken-diff-card">
+        <div class="card" id="hoken-diff-card" data-hoken-only>
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
           <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
@@ -2993,7 +3041,7 @@
              ★重ねる保障の線は「生命保険」だけ。必要保障額は団信で消える残債を
                すでに差し引いた金額なので、団信を足した合計線と比べると団信を2回引くことになる。
              既定では閉じておき、開いたときにだけ計算する（遅延描画）。 -->
-        <div class="card" id="need-card">
+        <div class="card" id="need-card" data-hoken-only>
           <details id="need-details">
             <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-chart-area"></i> 必要保障額と、いまの生命保険（年齢ごと）</summary>
             <div id="need-body" style="margin-top:10px;"></div>
@@ -3002,7 +3050,7 @@
 
         <!-- 生きているが働けないとき（2026-09-06追加）。
              既定では閉じておき、開いたときにだけ計算する（カードを積むと375pxで縦に破綻するため）。 -->
-        <div class="card" id="dis-card">
+        <div class="card" id="dis-card" data-hoken-only>
           <details id="dis-details">
             <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-bed-pulse"></i> 生きているが働けないとき（毎月の収支）</summary>
             <div id="dis-body" style="margin-top:10px;"></div>
@@ -3115,6 +3163,24 @@
       </div>
     </div>
   </div>
+
+  <!-- ===================== 商談の順路（担当者用）===================== -->
+  <div class="modal-overlay" id="route-modal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="商談の順路">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-route"></i> 商談の順路</h3>
+        <button class="modal-close" id="route-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="qs-note">画面を順番に切り替えながらご説明するための機能です。下に<b>次にお伝えする一言</b>と<b>次に伺う質問</b>が出ます。<br>
+          <b>この順路の中でも、保険の内容のご説明はできません。</b>保険のご説明・お手続きは、生命保険募集人（Office-M）が行います。</p>
+        <div id="route-list"></div>
+        <p class="at-note" style="margin-top:12px;">※ 記録するのは「どの順路を使ったか」「どの画面を何回出したか」「相談導線を押したか」「この画面を商談で見せた、の1タップ」だけです。お客様を特定する情報は記録しません。お客様の画面（共有リンク）では記録しません。</p>
+      </div>
+    </div>
+  </div>
+  <div id="rt-band" class="no-print" hidden></div>
+  <div id="rt-sheet" aria-hidden="true"></div>
 
   <!-- ===================== 1分モード（初回商談用・5項目）===================== -->
   <div class="modal-overlay" id="quick-modal" hidden>
@@ -5182,6 +5248,197 @@
         $('ikou-first').value = JSON.stringify(o);
         renderIkouDiff(); scheduleDraftSave();
       });
+    }
+
+    /* 「次の一手」と「商談の順路の帯」が共通で使う、断定表現の検査。
+       ★もとは音声メモのIIFEの中に置いていたが、順路の帯の文言も同じ検査を通す必要がある。
+         同じ正規表現を2か所に書くと必ず片方だけ古くなるので、外へ出して1本にした。
+       保険業法300条1項2号（誤解させるおそれのある表示）に触れる言い回しを機械的に弾く。 */
+    const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
+
+    /* ---------- 商談の順路と、使われ方の記録（2026-09-06追加） ----------
+       画面を順番に出すだけの機能。描画は既存の switchView をそのまま呼ぶ。
+       ★帯の文言は静的な文字列だけで作り、NEXT_NG_RE / nextAssertSafe を必ず通す。
+         保険商品の説明台本は一切書かない（一条工務店の営業担当は保険募集人ではなく
+         募集関連行為従事者であり、具体的な保険商品の推奨・説明をすると
+         無登録募集の議論になる＝保険業法275条1項）。
+       ★表示を絞るのは誤操作の防止であって法的な保護ではない。
+         だから「このモードでも保険の内容説明はできません」を消せない位置に固定表示する。
+       ★記録は個人を特定しない範囲だけ。共有リンク・お客様モードでは記録しない。 */
+    const ROUTE_LOG_KEY = 'lifeplan_ichijo_route_log_v1';
+    const ROUTES = {
+      first: { label:'初回15分', hint:'いまの30年 → 建てたら → 一条にしたら', hoken:false, steps:[
+        { type:'result', view:'assets', say:'いまのご家計のままだと、100歳までのお金の動きはこの形になります。',
+          ask:'いまのお住まいの家賃は、駐車場代や共益費まで入れると月いくらでしょうか。' },
+        { type:'result', view:'ichijo', say:'建てた後に毎月かかる住居費を、いまの住居費と並べてご覧いただけます。',
+          ask:'毎月の住居費は、いくらまでなら無理なくお出しになれそうでしょうか。' },
+        { type:'result', view:'compare', say:'いまのままの場合と、建てた場合を並べると、差がどこで開くかが見えます。',
+          ask:'次にお会いするときまでに、ご確認いただけそうなことはありますか。' } ]},
+      money: { label:'資金計画', hint:'住まいの入力 → 月次の置換表 → 資産の動き', hoken:false, steps:[
+        { type:'input',  view:'family', say:'お借入れの金額・金利・年数を入れると、金利が上がった場合も同じ画面で並びます。',
+          ask:'金融機関のご予定や、金利のタイプはお決まりでしょうか。' },
+        { type:'result', view:'ichijo', say:'いまの住居費と、建てた後の住居費を毎月の金額で並べています。増える費目もそのまま出しています。',
+          ask:'固定資産税や修繕費まで含めた金額を見て、いかがでしょうか。' },
+        { type:'result', view:'assets', say:'その毎月の金額で、100歳までのお金の動きがこう変わります。',
+          ask:'ご不安に感じられるところは、どのあたりでしょうか。' } ]},
+      hoken: { label:'保障', hint:'必要保障額の重ね描き → 働けない期間', hoken:true, steps:[
+        { type:'result', view:'hoken', say:'万一のときに必要な金額と、いまの保障を年齢ごとに並べています。',
+          ask:'いまご加入の内容が分かる書類は、お手元にございますか。' },
+        { type:'result', view:'ai', say:'ご入力の数字から、気をつけたい点をまとめています。',
+          ask:'次にお会いするときまでに、ご用意いただけそうな資料はありますか。' } ]}
+    };
+    let routeKey = null, routeStep = 0;
+    function routeIsCustomer(){ return document.body.classList.contains('customer-mode'); }
+    function routeLog(kind, val){
+      if(routeIsCustomer()) return;   // お客様の画面・共有リンクでは記録しない
+      try{
+        let o; try{ o = JSON.parse(localStorage.getItem(ROUTE_LOG_KEY)||'{}'); }catch(e){ o = {}; }
+        o.routes = o.routes || {}; o.views = o.views || {};
+        if(kind==='route') o.routes[val] = (o.routes[val]||0) + 1;
+        if(kind==='view')  o.views[val]  = (o.views[val] ||0) + 1;
+        if(kind==='cta')   o.cta   = (o.cta   ||0) + 1;
+        if(kind==='shown') o.shown = (o.shown ||0) + 1;
+        o.updated = Date.now();
+        localStorage.setItem(ROUTE_LOG_KEY, JSON.stringify(o));
+      }catch(e){}
+    }
+    function routeReadLog(){
+      try{ return JSON.parse(localStorage.getItem(ROUTE_LOG_KEY)||'{}'); }catch(e){ return {}; }
+    }
+    // 意向シートの優先順位から、おすすめの順路を決める
+    function routeSuggest(){
+      let pr = [];
+      try{ pr = ikouSelected(); }catch(e){}
+      if(pr.indexOf('mannichi') === 0) return 'hoken';
+      if(pr.indexOf('hensai') === 0 || pr.indexOf('rougo') === 0 || pr.indexOf('kyoiku') === 0) return 'money';
+      return 'first';
+    }
+    function routeRenderList(){
+      const host = $('route-list'); if(!host) return;
+      const rec = routeSuggest();
+      host.innerHTML = Object.keys(ROUTES).map(function(k){
+        const r = ROUTES[k];
+        return '<button type="button" class="dx-toggle" data-route="' + k + '" style="margin-bottom:8px;">'
+          + '<b>' + esc(r.label) + '</b>' + (k===rec ? '（ご意向からのおすすめ）' : '')
+          + '<br><span style="font-weight:400; font-size:.78rem; color:var(--ink-soft);">' + esc(r.hint) + '</span></button>';
+      }).join('');
+      host.querySelectorAll('[data-route]').forEach(function(b){
+        b.addEventListener('click', function(){ routeStart(b.dataset.route); });
+      });
+    }
+    function routeStart(k){
+      if(!ROUTES[k]) return;
+      routeKey = k; routeStep = 0;
+      document.body.classList.add('route-mode');
+      document.body.classList.toggle('route-hoken', !!ROUTES[k].hoken);
+      $('route-modal').hidden = true;
+      routeLog('route', k);
+      routeGoto(0);
+    }
+    function routeEnd(){
+      routeKey = null; routeStep = 0;
+      document.body.classList.remove('route-mode', 'route-hoken');
+      const band = $('rt-band'); if(band) band.hidden = true;
+    }
+    function routeGoto(i){
+      const r = ROUTES[routeKey]; if(!r) return;
+      routeStep = Math.min(Math.max(i, 0), r.steps.length - 1);
+      const st = r.steps[routeStep];
+      try{ switchView(st.type, st.view); }catch(e){}
+      routeLog('view', st.type + ':' + st.view);
+      routeRenderBand();
+      window.scrollTo({ top:0 });
+    }
+    function routeRenderBand(){
+      const band = $('rt-band'); if(!band) return;
+      const r = ROUTES[routeKey];
+      if(!r || routeIsCustomer()){ band.hidden = true; return; }
+      const st = r.steps[routeStep];
+      /* 帯の文言は静的な文字列だが、あとから書き換えたときに素通りしないよう毎回検査する。
+         引っかかったら文言を出さず、無難な一言に落とす（黙って断定表現を出さない）。 */
+      let say = st.say, ask = st.ask;
+      try{
+        if(typeof NEXT_NG_RE !== 'undefined' && (NEXT_NG_RE.test(say) || NEXT_NG_RE.test(ask))){
+          say = 'この画面をご一緒にご覧ください。'; ask = 'ここまでで、気になる点はございますか。';
+        }
+      }catch(e){}
+      const last = (routeStep >= r.steps.length - 1);
+      band.hidden = false;
+      band.innerHTML =
+        '<div class="rt-row">'
+        + '<span class="rt-step">' + esc(r.label) + ' ' + (routeStep+1) + '/' + r.steps.length + '</span>'
+        + '<span class="rt-say">' + esc(say) + '</span>'
+        + '<span class="rt-ask"><i class="fa-solid fa-comment-dots"></i> ' + esc(ask) + '</span>'
+        + '<button type="button" id="rt-shown"><i class="fa-regular fa-eye"></i> 見せた</button>'
+        + (routeStep>0 ? '<button type="button" id="rt-prev">戻る</button>' : '')
+        + (last ? '<button type="button" class="rt-go" id="rt-sheet-btn"><i class="fa-solid fa-file-arrow-down"></i> 今日の1枚</button>'
+                : '<button type="button" class="rt-go" id="rt-next">次へ</button>')
+        + '<button type="button" id="rt-end">終わる</button>'
+        + '</div>'
+        + '<div class="rt-fix">この順路の中でも、<b>保険の内容のご説明はできません</b>。保険のご説明・お手続きは生命保険募集人（Office-M）が行います。</div>';
+      const on = function(id, fn){ const e = $(id); if(e) e.addEventListener('click', fn); };
+      on('rt-next', function(){ routeGoto(routeStep+1); });
+      on('rt-prev', function(){ routeGoto(routeStep-1); });
+      on('rt-end', routeEnd);
+      on('rt-shown', function(){
+        routeLog('shown');
+        const b = $('rt-shown'); if(!b) return;
+        const o = b.innerHTML; b.innerHTML = '<i class="fa-solid fa-check"></i> 記録しました';
+        setTimeout(function(){ const b2 = $('rt-shown'); if(b2) b2.innerHTML = o; }, 1500);
+      });
+      on('rt-sheet-btn', routeSheet);
+    }
+    /* 今日の1枚（A4縦1枚）。html2canvas は読込済み。1枚ものなので
+       canvas の1辺65,535px 上限には触れない。canvasIsBlank の検出は流用する。 */
+    async function routeSheet(){
+      const sheet = $('rt-sheet');
+      if(!sheet || typeof html2canvas === 'undefined' || !window.jspdf){ alert('準備中です。数秒おいて再度お試しください。'); return; }
+      const sum = (PLANS[PLANS.active] && PLANS[PLANS.active].sum) || [];
+      const at = function(age){ const r = sum.find(function(x){ return x.hAge === age; }); return r ? Math.round(r.net) : null; };
+      const endRow = sum.length ? sum[sum.length-1] : null;
+      const kids = readChildren();
+      const fam = isSingle()
+        ? esc(hNameH()) + '（' + num('h-age',35) + '歳）'
+        : esc(hNameH()) + '（' + num('h-age',35) + '歳）・' + esc(wNameH()) + '（' + num('w-age',33) + '歳）';
+      const kidTxt = kids.length ? kids.map(function(c){ return esc(c.name || 'お子さま') + ' ' + c.age + '歳'; }).join('・') : 'なし';
+      let loanTxt = '賃貸のまま（住居費 月' + (Math.round(rentMonthlyTotal()*10)/10) + '万円）';
+      if(houseType !== 'rent' && loanPrincipalBase() > 0){
+        const sc = buildLoanSchedule();
+        loanTxt = '借入 ' + fmt(loanPrincipalBase()) + '万円 ／ ' + num('loan-term',35) + '年 ／ '
+          + '毎月 約' + (Math.round(loanPaymentForYear(sc,0)/12*10)/10) + '万円（初年度・ボーナス払い含む）';
+      }
+      const d = new Date();
+      const line3 = '<div class="rs-line"></div><div class="rs-line"></div><div class="rs-line"></div>';
+      sheet.innerHTML =
+        '<h2>本日の確認シート</h2>'
+        + '<div class="rs-sub">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 作成／'
+        + (PLANS.active==='mirai' ? '将来プラン' : '現状プラン') + 'の内容</div>'
+        + '<table><tbody>'
+        + '<tr><th>ご家族</th><td>' + fam + '</td></tr>'
+        + '<tr><th>お子さま</th><td>' + kidTxt + '</td></tr>'
+        + '<tr><th>お住まい・お借入れ</th><td>' + loanTxt + '</td></tr>'
+        + '<tr><th>65歳時点の金融資産</th><td>' + (at(65)==null ? '—' : fmt(at(65)) + '万円') + '</td></tr>'
+        + '<tr><th>' + (endRow ? endRow.hAge : 100) + '歳時点の金融資産</th><td>' + (endRow ? fmt(Math.round(endRow.net)) + '万円' : '—') + '</td></tr>'
+        + '</tbody></table>'
+        + '<div class="rs-note" style="border:none; padding-top:0; margin-top:-6px;">上記の金額は、本日ご入力いただいた条件にもとづく<b>概算</b>です。前提が変われば結果も変わり、将来の成果を保証するものではありません。ご自宅の資産価値は含めていません。</div>'
+        + '<div class="rs-h3">本日決まったこと</div>' + line3
+        + '<div class="rs-h3">次回までの宿題</div>' + line3
+        + '<div class="rs-h3">次回の日付</div><div class="rs-line"></div>'
+        + '<div class="rs-note"><b>本サイトは一条工務店株式会社の公式サイト・提携サイトではありません。</b>'
+        + '作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。<br>'
+        + '税務の個別のご相談・税務代理は、連携する税理士がお受けします（税理士業務は税理士が行います）。</div>';
+      try{
+        const canvas = await html2canvas(sheet, { scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth:794 });
+        if(canvasIsBlank(canvas)) throw new Error('canvas blank');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p','mm','a4');
+        const pw = pdf.internal.pageSize.getWidth(), margin = 8, iw = pw - margin*2;
+        pdf.addImage(canvas.toDataURL('image/jpeg',0.92), 'JPEG', margin, margin, iw, canvas.height*iw/canvas.width);
+        const who = (currentSaveName || fullName('h-sei','h-name') || '').trim();
+        pdf.save(who ? '本日の確認シート_' + who + '.pdf' : '本日の確認シート.pdf');
+      }catch(e){
+        alert('1枚シートの作成に失敗しました。恐れ入りますが、もう一度お試しください。');
+      }finally{ sheet.innerHTML = ''; }
     }
 
     /* ---------- 必要保障額と生命保険の重ね描き（2026-09-06追加） ----------
@@ -10674,7 +10931,9 @@
           } }
       ];
       // ツールが自動生成する文にNG表現が混じっていないか、出力前に必ず通す
-      const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
+      /* ★NEXT_NG_RE はこのブロックの外（モジュール直下）へ移した。
+         商談の順路の帯の文言も同じ検査を通す必要があり、
+         同じ正規表現を2か所に書くと必ず片方だけ古くなるため。 */
       function nextAssertSafe(list){
         list.forEach(function(it){
           [it.title, it.basis].concat(it.tasks.map(function(t){ return t.text; })).forEach(function(s){
@@ -11808,6 +12067,12 @@
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
     if($('dis-details')) $('dis-details').addEventListener('toggle', ()=>{ renderDisability(); });
     if($('need-details')) $('need-details').addEventListener('toggle', ()=>{ renderNeedCard(); });
+    // 商談の順路
+    if($('btn-route')) $('btn-route').addEventListener('click', ()=>{ routeRenderList(); $('route-modal').hidden = false; });
+    if($('route-close')) $('route-close').addEventListener('click', ()=>{ $('route-modal').hidden = true; });
+    if($('route-modal')) $('route-modal').addEventListener('click', (e)=>{ if(e.target===$('route-modal')) $('route-modal').hidden = true; });
+    // 相談導線・予約ボタンの押下を記録（個人は特定しない・件数だけ）
+    if($('open-reserve')) $('open-reserve').addEventListener('click', ()=>{ if(typeof routeLog==='function') routeLog('cta'); });
     if($('rs-when-seg')) $('rs-when-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('[data-rswhen]'); if(!b) return;
       rsWhen = b.dataset.rswhen;
@@ -14350,6 +14615,9 @@
         c.lifeplans = c.lifeplans || [];
         const hit = c.lifeplans.find(l=> l && l.tool==='一条版' && l.acct===currentUser && l.name===name);
         if(hit) hit.t = Date.now(); else c.lifeplans.push({ tool:'一条版', file:'ichijo.html', acct:currentUser, name, t:Date.now() });
+        /* 商談の順路の使われ方（件数だけ）を、お客様の記録にではなくアカウント単位で持たせる。
+           お客様を特定する情報は入れない（どの順路を何回・どの画面を何回・導線の押下件数だけ）。 */
+        try{ if(typeof routeReadLog==='function') s.routeUsage = routeReadLog(); }catch(e){}
         c.updatedAt = Date.now();
         localStorage.setItem(key, JSON.stringify(s));
       }catch(e){}

@@ -1332,6 +1332,26 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 必要保障額と生命保険の重ね描き（2026-09-06追加） ---------- */
+    .nd-scroll{ overflow-x:auto; }
+    .nd-chart{ position:relative; height:300px; min-width:520px; }
+    .nd-range{ margin-top:8px; }
+    /* 下回っている期間・上回っている期間は同じ文字サイズ・同じ強さで並べる（片方だけ目立たせない） */
+    .nd-range div{ font-size:.82rem; line-height:1.75; color:var(--ink); }
+    .nd-lead{ display:block; margin-top:8px; font-size:.82rem; line-height:1.75; color:var(--ink); }
+    .nd-tblwrap{ overflow-x:auto; margin-top:14px; }
+    .nd-tbl{ width:100%; min-width:460px; border-collapse:collapse; font-size:.82rem; }
+    .nd-tbl th, .nd-tbl td{ padding:8px 10px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    .nd-tbl th{ background:var(--bg-soft); font-weight:800; }
+    .nd-tbl td{ font-variant-numeric:tabular-nums; }
+    /* 「消える／残る／増える」は色を使わず、同じ見た目のタグで区別する
+       （このツールは青＝プラス／赤＝マイナスで統一しており、
+         「保障が減る＝青＝良いこと」と読ませてしまうのを避けるため） */
+    .nd-tag{ display:inline-block; margin-left:5px; padding:1px 7px; border:1px solid var(--line);
+      border-radius:999px; background:var(--bg-soft); font-size:.72rem; font-weight:700; color:var(--ink-soft); }
+    .nd-note{ display:block; margin-top:10px; font-size:.78rem; color:var(--ink); line-height:1.75; }
+    .nd-cta{ margin-top:12px; }
+
     /* ---------- 働けない期間の収入の谷（2026-09-06追加） ---------- */
     .dis-sum{ display:flex; flex-wrap:wrap; gap:8px 20px; margin:10px 0; padding:10px 14px;
       background:var(--blue-pale); border:1.5px solid var(--blue-pale2); border-radius:var(--radius-sm); }
@@ -2964,6 +2984,19 @@
             <p class="hint" style="display:block; margin-top:8px;">この金額は、「加入中の保険」で入力した保険の死亡保障に<b>住宅ローンの団信（残債分）</b>を合計したものです。収入保障保険・満了のある保険・途中で解約する予定の終身保険も、<b>その年齢時点の保障額</b>で計算します。</p>
             <p class="hint" style="display:block; margin-top:8px;"><b>「団信（住宅ローン）の前提」</b>で見方を切り替えられます。<b>「返済を続ける」</b>＝実際のローン残高どおりに団信が毎月減っていきます（返済期間の終わりに0）。<b>「○歳で完済とみなす」</b>＝その年齢以降は団信を0として、繰上げ完済した場合に必要な保障を確認できます（既定の完済年齢は60歳・変更できます）。これは<b>死亡保障の見方の前提</b>で、「住まい」の実際のローン返済や家計の資金繰りは変わりません。</p>
             <p class="hint" style="display:block; margin-top:8px;">※ AI診断の必要保障額は<b>団信で返済がなくなる分をあらかじめ差し引いて</b>計算しています。必要保障額と比べるときは、この表の<b>「生命保険」の行（「加入中の保険」の合計と同じ数字）</b>でご確認ください。「途中で解約する予定」の終身保険の<b>解約返戻金は資産推移に自動計上していません</b>（金額は保険会社の試算書でご確認ください）。</p>
+          </details>
+        </div>
+
+        <!-- 必要保障額と、いまの生命保険（2026-09-06追加）。
+             必要保障額はこれまでAI診断の中に文章としてしか出ておらず、
+             「いつ・どれだけ足りないのか」が年齢の軸で見えなかった。
+             ★重ねる保障の線は「生命保険」だけ。必要保障額は団信で消える残債を
+               すでに差し引いた金額なので、団信を足した合計線と比べると団信を2回引くことになる。
+             既定では閉じておき、開いたときにだけ計算する（遅延描画）。 -->
+        <div class="card" id="need-card">
+          <details id="need-details">
+            <summary class="card-title" style="cursor:pointer; list-style:revert;"><i class="fa-solid fa-chart-area"></i> 必要保障額と、いまの生命保険（年齢ごと）</summary>
+            <div id="need-body" style="margin-top:10px;"></div>
           </details>
         </div>
 
@@ -5151,6 +5184,156 @@
       });
     }
 
+    /* ---------- 必要保障額と生命保険の重ね描き（2026-09-06追加） ----------
+       ★重ねるのは「生命保険」の線だけ。needAt が返す必要保障額は、団信で消える残債を
+         すでに差し引いた「団信控除後」の金額なので、生命保険＋団信の合計と比べると
+         団信を2回引くことになり、必要額が実態より小さく／保障が過剰に見える。
+         それは保障の減額へ誘導する図になるので、構造として作らない。
+         団信は同じグラフに薄い面の参考レイヤーとして別に描く。
+       ★使うのは rawNeed（加入中の保険を差し引く前）。need は不足額なので、
+         保障の線と重ねると加入中の保険を二重に差し引くことになる。
+       ★必要額の線は「表示中プランの前提」でしか出せない（needAt は生きているDOMを見る）。
+         凡例にその旨を明記する。
+       ★1回の描画で simulate を呼ぶ回数の上限＝1回（buildProfile のみ）。 */
+    let needChart = null;
+    function ndFmtRange(list, label, maxGap){
+      if(!list.length) return '<div>' + label + '：ありません</div>';
+      return '<div>' + label + '：' + list.map(function(r){ return r.a + '歳〜' + r.b + '歳'; }).join('、')
+        + '（いちばん差が大きいところで 約' + fmt(Math.round(maxGap)) + '万円）</div>';
+    }
+    function renderNeedCard(){
+      const host = $('need-body'), det = $('need-details');
+      if(!host || !det || !det.open) return;
+      if(isSingle()){
+        host.innerHTML = '<p class="hint" style="display:block;">扶養されているご家族がいないため、死亡保障の必要額の試算は行っていません。'
+          + '単身の方は、亡くなったときよりも<b>「生きているが働けない」期間</b>のほうが家計への影響が大きくなりがちです。</p>'
+          + '<div class="nd-cta"><button class="btn btn-ghost btn-sm" type="button" id="nd-goto-dis"><i class="fa-solid fa-bed-pulse"></i> 「生きているが働けないとき」を開く</button></div>';
+        const b = $('nd-goto-dis');
+        if(b) b.addEventListener('click', function(){
+          const d = $('dis-details'); if(!d) return;
+          d.open = true; d.dispatchEvent(new Event('toggle')); d.scrollIntoView({ block:'start' });
+        });
+        return;
+      }
+      const key = hkdMemberKey;
+      if(key !== 'h' && key !== 'w'){
+        host.innerHTML = '<p class="hint" style="display:block;">いま上の表で選ばれているのは<b>お子さま</b>です。'
+          + 'お子さまには必要保障額の試算を行いません。上の切替で' + esc(hNameH()) + '・' + esc(wNameH()) + 'のいずれかをお選びください。</p>';
+        return;
+      }
+      const sum = PLANS[PLANS.active] && PLANS[PLANS.active].sum;
+      if(!sum || !sum.length){ host.innerHTML = '<p class="hint" style="display:block;">計算の準備中です。入力内容を変えると表示されます。</p>'; return; }
+      const prof = buildProfile();
+      const lastAge = sum[sum.length-1].hAge;
+      const tMax = Math.max(Math.min(40, lastAge - prof.hAge), 1);
+      const curve = needCurve(prof, key, tMax);
+      // 団信の前提トグル（上の表と共通）。○歳で完済とみなす設定なら、その年齢から団信は0
+      const danPayoff = (typeof hkdDanMode==='function') && hkdDanMode()==='payoff';
+      const danAge = num('hkd-dan-age', 60);
+      const labels = [], needD = [], insD = [], dsD = [];
+      const offs = (typeof hkdAgeOffset==='function') ? hkdAgeOffset(key) : 0;
+      curve.forEach(function(pt){
+        const row = sum.find(function(r){ return r.hAge === pt.hAge; });
+        labels.push((pt.hAge + offs) + '歳');
+        needD.push(pt.rawNeed);
+        insD.push(row && row.ins && typeof row.ins[key]==='number' ? Math.round(row.ins[key]) : 0);
+        let ds = row && row.ds ? Math.round(row.ds[key] || 0) : 0;
+        if(danPayoff && row && row.hAge >= danAge) ds = 0;
+        dsD.push(ds);
+      });
+      // 下回っている期間・上回っている期間（同じ強さで両方書く）
+      const under = [], over = [];
+      let maxUnder = 0, maxOver = 0, cur = null;
+      for(let i=0; i<curve.length; i++){
+        const d = insD[i] - needD[i];
+        const kind = d < 0 ? 'u' : (d > 0 ? 'o' : null);
+        if(d < 0) maxUnder = Math.max(maxUnder, -d);
+        if(d > 0) maxOver = Math.max(maxOver, d);
+        const age = curve[i].hAge + offs;
+        if(!cur || cur.k !== kind){
+          if(cur && cur.k) (cur.k==='u' ? under : over).push({ a:cur.a, b:cur.b });
+          cur = { k:kind, a:age, b:age };
+        } else cur.b = age;
+      }
+      if(cur && cur.k) (cur.k==='u' ? under : over).push({ a:cur.a, b:cur.b });
+
+      const memberName = (key==='h') ? hNameH() : wNameH();
+      const survivorName = (key==='h') ? wNameH() : hNameH();
+      // 内訳（賃貸のまま／持ち家）。simulate は呼ばない（prof を使い回す）
+      const schedule = (houseType==='rent') ? null : buildLoanSchedule();
+      const rRent = needAt(prof, key, 0, { housingOverride:'rent', schedule:schedule });
+      const rBuy  = (houseType!=='rent') ? needAt(prof, key, 0, { housingOverride:'buy', schedule:schedule }) : null;
+      const yrs = rRent.yrs;
+      const man = function(v){ return fmt(Math.round(v)) + '万円'; };
+      const tag = function(x){ return '<span class="nd-tag">' + x + '</span>'; };
+      const buyCell = function(html){ return rBuy ? html : '—'; };
+      const tbl =
+        '<div class="nd-tblwrap"><table class="nd-tbl">'
+        + '<thead><tr><th>' + yrs + '年分の住まいの費用</th><th>賃貸のまま</th><th>持ち家（いまのご入力）</th></tr></thead><tbody>'
+        + '<tr><td>家賃・駐車場代・共益費</td><td>' + man(rentMonthlyTotal()*12*yrs) + '</td><td>' + buyCell('かかりません') + '</td></tr>'
+        + '<tr><td>団信で消える残債</td><td>—</td><td>' + buyCell(rBuy ? man(rBuy.loanErased) + tag('消える') : '') + '</td></tr>'
+        + '<tr><td>団信で消えない残債</td><td>—</td><td>' + buyCell(rBuy ? man(rBuy.loanRemain) + tag('残る') : '') + '</td></tr>'
+        + '<tr><td>固定資産税・都市計画税</td><td>—</td><td>' + buyCell(man(num('prop-tax',0)*yrs) + tag('増える')) + '</td></tr>'
+        + '<tr><td>修繕・管理費</td><td>—</td><td>' + buyCell(man(num('maint',0)*yrs) + tag('増える')) + '</td></tr>'
+        + '<tr><td>火災・地震保険料</td><td>—</td><td>' + buyCell('この必要保障額の計算には含めていません') + '</td></tr>'
+        + '<tr><td>遺された' + esc(survivorName) + 'が引っ越して住居費を下げられるか</td><td>できる</td><td>' + buyCell('持ち家では選びにくい') + '</td></tr>'
+        + '</tbody></table></div>'
+        + (rBuy ? '' : '<span class="nd-lead">※ いまは「賃貸のまま」の設定のため、持ち家側の金額は出していません。「住まい」で購入を選ぶと表示されます。</span>')
+        + ((rBuy && typeof loanType==='function' && loanType()==='pair')
+            ? '<span class="nd-lead">※ ペアローンのため、<b>団信で消えるのは' + esc(memberName) + 'の持分（'
+              + Math.round(loanShareOf(key)*100) + '％）だけです</b>。もう一方の持分の返済は残ります。</span>' : '');
+
+      host.innerHTML =
+        '<p class="hint" style="display:block;">' + esc(memberName) + 'に万一があった場合に必要な保障額（<b>必要保障額</b>）と、'
+        + 'いま' + esc(memberName) + 'に掛かっている<b>生命保険</b>の金額を、年齢ごとに並べたものです。'
+        + '必要保障額は<b>' + (PLANS.active==='mirai' ? '将来プラン' : '現状プラン') + 'の前提</b>で計算しています。</p>'
+        + '<div class="nd-scroll"><div class="nd-chart"><canvas id="needChart"></canvas></div></div>'
+        + '<span class="nd-lead"><b>必要保障額は、団信で消える住宅ローンの残債をあらかじめ差し引いた金額です。'
+        + 'そのためこの図では、団信を足さずに「生命保険」の線と比べています。</b>'
+        + '団信は参考として薄い面で重ねています。</span>'
+        + '<div class="nd-range">'
+        +   ndFmtRange(under, '生命保険が必要保障額を<b>下回っている期間</b>', maxUnder)
+        +   ndFmtRange(over, '生命保険が必要保障額を<b>上回っている期間</b>', maxOver)
+        + '</div>'
+        + tbl
+        + '<span class="nd-note">'
+        + '※ 必要保障額は<b>末子独立まで</b>（お子さまがいない場合は15年）の<b>生活費・教育費・住居費・整理資金のみ</b>を対象にした概算で、'
+        + '医療・就業不能・介護・その後の配偶者の生活費・相続の納税資金は含みません。<br>'
+        + '※ 遺族年金は加入記録次第の概算です。<b>2028年4月の遺族厚生年金の改正（子のない60歳未満は原則5年の有期給付、中高齢寡婦加算の段階的な縮小）は反映していません</b>。<br>'
+        + '※ 総資産にご自宅の資産価値は含めていません。<br>'
+        + '※ 必要保障額は前提が変わると増減します。上回っている・下回っているのどちらであっても、'
+        + '保障をどうするかは<b>ご意向を伺ったうえで</b>ご一緒に考えるものです。<br>'
+        + '※ この画面には保険会社名・商品名・保険料は出していません。'
+        + '</span>'
+        + '<div class="nd-cta"><button class="btn btn-primary btn-sm" type="button" id="nd-reserve"><i class="fa-solid fa-calendar-check"></i> 無料相談を予約する</button></div>';
+
+      const rb = $('nd-reserve');
+      if(rb) rb.addEventListener('click', function(){ const o = $('open-reserve'); if(o) o.click(); });
+
+      const cv = $('needChart');
+      if(!cv || typeof Chart === 'undefined') return;
+      if(needChart){ try{ needChart.destroy(); }catch(e){} needChart = null; }
+      needChart = new Chart(cv.getContext('2d'), {
+        type:'line',
+        data:{ labels:labels, datasets:[
+          { label:'必要保障額（' + (PLANS.active==='mirai' ? '将来' : '現状') + 'プランの前提）', data:needD,
+            borderColor:'#c9772f', borderWidth:2.5, borderDash:[6,4], pointRadius:0, tension:0, order:1 },
+          { label:'生命保険（' + esc(memberName) + '）', data:insD,
+            borderColor:'#2f7cb5', borderWidth:2.5, stepped:true, pointRadius:0, tension:0, order:1,
+            /* above＝生命保険が必要額を上回っている面（グレー）／below＝下回っている面（オレンジ）。
+               上回る側も下回る側と同じ濃さで塗る（片方だけ目立たせない） */
+            fill:{ target:0, above:'rgba(140,150,160,.20)', below:'rgba(224,162,59,.20)' } },
+          { label:'団信（参考）', data:dsD, borderColor:'rgba(63,157,122,.5)', borderWidth:1.5,
+            backgroundColor:'rgba(63,157,122,.10)', stepped:true, pointRadius:0, tension:0, fill:'origin', order:2 }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+          scales:{ y:{ beginAtZero:true, ticks:{ callback:function(v){ return v.toLocaleString()+'万'; }, font:{ size:10 } }, grid:{ color:'#eef3f8' } },
+                   x:{ grid:{ display:false }, ticks:{ maxTicksLimit:12, font:{ size:10 } } } },
+          plugins:{ legend:{ labels:{ usePointStyle:true, pointStyle:'line', font:{ size:11 } } },
+            tooltip:{ callbacks:{ label:function(c){ return c.dataset.label + '：' + (c.parsed.y==null ? '—' : c.parsed.y.toLocaleString()+'万円'); } } } } }
+      });
+    }
+
     /* ---------- 働けない期間の収入の谷（2026-09-06追加） ----------
        亡くなったときの保障は「万一のときの死亡保障額」で見られるが、
        「生きているけれど働けない」期間は、この試算のどこにも出ていなかった。
@@ -7147,6 +7330,7 @@
       if(typeof renderEstBanner==='function') renderEstBanner();   // 「目安のままの入力が◯件」の帯
       if(typeof renderRentSwap==='function') renderRentSwap();   // 今の住居費と建てた後の住居費（毎月）
       if(typeof renderDisability==='function') renderDisability();   // 生きているが働けないとき（開いているときだけ計算）
+      if(typeof renderNeedCard==='function') renderNeedCard();   // 必要保障額と生命保険の重ね描き（開いているときだけ計算）
       if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
@@ -7625,12 +7809,14 @@
       const b = e.target.closest('button'); if(!b) return;
       hkdMemberKey = b.dataset.hkdm;
       renderHokenDiffCard();
+      if(typeof renderNeedCard==='function') renderNeedCard();   // 誰の万一かが変わるので必要保障額も描き直す
     });
     if($('hkd-dan-seg')) $('hkd-dan-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
       [...$('hkd-dan-seg').children].forEach(x=> x.classList.toggle('active', x===b));
       const wrap = $('hkd-dan-age-wrap'); if(wrap) wrap.classList.toggle('hidden', b.dataset.hkddan!=='payoff');
       renderHokenDiffCard();
+      if(typeof renderNeedCard==='function') renderNeedCard();   // 団信の参考レイヤーもこの前提で描き直す
     });
     if($('hkd-dan-age')) $('hkd-dan-age').addEventListener('input', renderHokenDiffCard);
 
@@ -11621,6 +11807,7 @@
     $('add-income').addEventListener('click', ()=>{ incomeRow(50,'臨時収入',100); recompute(); });
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
     if($('dis-details')) $('dis-details').addEventListener('toggle', ()=>{ renderDisability(); });
+    if($('need-details')) $('need-details').addEventListener('toggle', ()=>{ renderNeedCard(); });
     if($('rs-when-seg')) $('rs-when-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('[data-rswhen]'); if(!b) return;
       rsWhen = b.dataset.rswhen;
@@ -11962,28 +12149,48 @@
       return { total:Math.round(t), kiso:Math.round(kiso), kosei:Math.round(kosei), kafu:Math.round(kafu) };
     }
 
-    /* どちらかに万一があったときの必要保障額。deceased='h'（夫死亡）|'w'（妻死亡）。単身はnull */
-    function survivorNeed(deceased){
-      if(isSingle()) return null;
-      const p = buildProfile();
+    /* ---------- 必要保障額の計算本体（2026-09-06に分解） ----------
+       t年後に万一があった場合の必要保障額を返す。t=0 は分解前の survivorNeed と同じ数字になる。
+       ★分解した理由：survivorNeed は内部で buildProfile()→simulate() を呼ぶため、
+         年次のカーブを描こうと t=0..40 でループすると simulate が41回走り、
+         それが年齢入力の input のたびに発火して375pxの実機で固まる。
+         buildProfile / 返済予定表は呼び出し側で1回だけ作り、ここへ渡す。
+       ★opts.housingOverride（'rent'|'buy'）で住居費の置き方だけを差し替えられる。
+         グローバルの houseType は simulate・PLANS・renderIchijoCompare が全部見ているので、
+         一時的に書き換える方法は取らない（表示が壊れた実績がある）。
+       ★opts.schedule に返済予定表を渡すと、ループのたびに組み直さない。 */
+    function needAt(p, deceased, t, opts){
+      opts = opts || {};
+      t = Math.max(Math.round(t || 0), 0);
       const survivorIsWife = (deceased==='h');
-      const surAge    = survivorIsWife ? p.wAge : p.hAge;
+      const surAge0   = survivorIsWife ? p.wAge : p.hAge;
+      const surAge    = surAge0 + t;
       const surNet    = survivorIsWife ? p.wNet : p.hNet;
       const surRetire = survivorIsWife ? num('w-retire',65) : num('h-retire',65);
+      // t年後のお子さまの年齢（独立年齢は変わらない）
+      const kidsAtT = p.eduByChild.map(x=> ({ c:x.c, age:x.c.age + t, indep:x.indep }));
       // 保障を見込む年数：子ありは末子独立まで、子なしは配偶者の生活を15年目安
-      const yrs = p.children.length ? Math.max(p.yearsToLastIndep, 1) : 15;
+      const yrs = p.children.length ? Math.max(Math.max.apply(null, kidsAtT.map(k=> Math.max(k.indep - k.age, 0))), 1) : 15;
       // ① 生活費（遺族の生活は現在の約7割）
       const living = p.living*12*0.7*yrs;
       // 妻死亡・幼い子ありは、家事育児の外注で負担増（末子が12歳になるまで 年30万目安）
-      const youngKidYears = p.children.length ? Math.max(...p.children.map(c=> Math.max(12-c.age,0)), 0) : 0;
+      const youngKidYears = p.children.length ? Math.max(Math.max.apply(null, kidsAtT.map(k=> Math.max(12-k.age,0))), 0) : 0;
       const childcare = (!survivorIsWife && youngKidYears>0) ? 30*Math.min(yrs, youngKidYears) : 0;
-      // ② 教育費（残り全額）
-      const edu = p.eduRemain;
+      // ② 教育費（t年後から独立までの残り全額）
+      let edu = 0;
+      kidsAtT.forEach(function(k){
+        for(let a=Math.max(k.age,0); a<k.indep; a++) edu += eduCostPerYear(a, k.c);
+      });
       // ③ 住居費：賃貸は家賃、持ち家は「亡くなった人の団信で消えない側」の残債＋遺族が住み続ける間の維持費
+      const houseMode = opts.housingOverride || (houseType==='rent' ? 'rent' : 'buy');
       let housing = 0, loanRemain = 0, loanErased = 0, loanBal = 0, upkeep = 0;
-      if(houseType==='rent'){ housing = num('rent',0)*12*yrs; }
+      if(houseMode==='rent'){ housing = rentMonthlyTotal()*12*yrs; }
       else {
-        loanBal = currentLoanBalance();
+        const hAge0 = num('h-age',35);
+        const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
+        const schedule = opts.schedule || buildLoanSchedule();
+        const yearsOwned = (hAge0 + t) - buyAge;
+        loanBal = (yearsOwned < 0) ? schedule.principal : loanBalanceAt(schedule, yearsOwned);   // t=0 は currentLoanBalance と同じ
         loanErased = loanBal * loanShareOf(deceased);   // 亡くなった人の団信で消える分
         loanRemain = loanBal - loanErased;              // 残る借入（遺族が返済を続ける）
         upkeep = (num('prop-tax',0) + num('maint',0)) * yrs;   // 固定資産税＋修繕費（遺族が家を維持する分）
@@ -11992,29 +12199,54 @@
       // ④ 葬儀・死亡整理資金（葬儀・墓・諸手続きの目安）
       const funeral = 250;
       const spend = living + childcare + edu + housing + funeral;
-      // ⑤ 遺族の資源：遺族年金（年次モデルの受給総額）＋遺族の勤労収入＋いまの資産
+      // ⑤ 遺族の資源：遺族年金（年次モデルの受給総額）＋遺族の勤労収入＋その時点の金融資産
       const dGross = deceased==='h' ? num('h-income',0) : num('w-income',0);
-      const izT = izokuTotal(deceased, p.children, surAge, dGross, yrs);
-      const iz = izokuPerYear(deceased, p.children, surAge, dGross);   // 初年度の内訳（表示用）
+      const kidsForIzoku = kidsAtT.map(function(k){ return { age:k.age }; });
+      const izT = izokuTotal(deceased, kidsForIzoku, surAge, dGross, yrs);
+      const iz = izokuYearAt(deceased, kidsForIzoku, surAge, dGross, 0);   // その年の内訳（表示用）
       const pension = izT.total;
       const workYears = Math.max(0, Math.min(yrs, surRetire - surAge));
       const income = surNet * workYears;
-      const cover = pension + income + p.assetsNow;
+      /* 金融資産：t=0 はいまの預貯金＋運用残高（分解前と同じ）。t年後は資産推移の値を充てる。
+         rows[i] は「hAge0+i 歳の年末」なので、t年後の手前は rows[t-1]。 */
+      const assets = (t<=0) ? p.assetsNow
+        : ((p.rows && p.rows.length) ? p.rows[Math.min(t-1, p.rows.length-1)].net : p.assetsNow);
+      const cover = pension + income + assets;
       // 必要保障額（公的保障・収入・資産を差し引いた本来の必要額）と、加入中の保険を差し引いた不足額を分けて持つ
       const rawNeed = Math.max(0, Math.round((spend - cover)/100)*100);          // 100万円単位に丸め
-      const insInfo = insCoverFor(deceased);                                     // 亡くなった方に掛かっている死亡保障
+      /* 加入中の保険は「いまの年齢の保障額」なので、t>0 では意味を持たない。
+         カーブで使うのは rawNeed だけ。need（不足額）を保障の線と重ねると ins を二重に引くことになる。 */
+      const insInfo = (t===0) ? insCoverFor(deceased) : { total:0, hasIncome:false, simple:false };
       const ins = insInfo.total;
       const need = Math.max(0, Math.round((spend - cover - ins)/100)*100);       // 追加で備える不足額
       const over = Math.max(0, ins - rawNeed);                                   // 必要額を上回っている分（見直し余地の目安）
-      return { deceased, survivorIsWife, need, rawNeed, ins, over,
+      return { deceased, survivorIsWife, need, rawNeed, ins, over, t, houseMode,
                insHasIncome: insInfo.hasIncome, insSimple: insInfo.simple, yrs,
                spend:Math.round(spend), living:Math.round(living+childcare), childcare:Math.round(childcare),
                edu:Math.round(edu), housing:Math.round(housing), upkeep:Math.round(upkeep), funeral,
                loanBal:Math.round(loanBal), loanErased:Math.round(loanErased), loanRemain:Math.round(loanRemain),
                pension:Math.round(pension), pensionYear:iz.total, pensionKiso:iz.kiso, pensionKosei:iz.kosei,
                pensionKafu:iz.kafu, pensionKafuTotal:izT.kafu,   // Kafu＝初年度の年額／KafuTotal＝期間中の累計（単位が違うので混ぜない）
-               income:Math.round(income), workYears, assets:p.assetsNow, cover:Math.round(cover),
+               income:Math.round(income), workYears, assets:Math.round(assets), cover:Math.round(cover),
                surNet, surAge, p };
+    }
+    /* どちらかに万一があったときの必要保障額（いま時点）。deceased='h'（夫死亡）|'w'（妻死亡）。単身はnull
+       ★分解前と同じ呼び出し方・同じ戻り値。AI診断・チャットの既存の呼び出しは無改修で通る。 */
+    function survivorNeed(deceased){
+      if(isSingle()) return null;
+      const p = buildProfile();
+      return needAt(p, deceased, 0, { schedule: (houseType==='rent' ? null : buildLoanSchedule()) });
+    }
+    /* 必要保障額の年次カーブ。simulate は buildProfile の1回だけ（呼び出し側で作った p を使い回す）。
+       1回の描画で simulate を呼ぶ回数の上限＝1回。 */
+    function needCurve(p, deceased, tMax, opts){
+      const o = Object.assign({ schedule: (houseType==='rent' ? null : buildLoanSchedule()) }, opts||{});
+      const arr = [];
+      for(let t=0; t<=tMax; t++){
+        const r = needAt(p, deceased, t, o);
+        arr.push({ t:t, hAge:p.hAge + t, rawNeed:r.rawNeed });
+      }
+      return arr;
     }
 
     /* 夫・妻それぞれの万一に対する必要保障。単身はnull */

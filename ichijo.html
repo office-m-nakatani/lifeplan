@@ -1328,6 +1328,34 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 団信の上乗せを円で見る（2026-09-06追加） ---------- */
+    .dx-wrap{ margin-top:10px; }
+    .dx-badge{ padding:9px 12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2);
+      border-radius:var(--radius-sm); }
+    .dx-badge-h{ display:flex; align-items:flex-start; gap:7px; font-size:.82rem; font-weight:800; color:var(--blue-deep); line-height:1.55; }
+    .dx-badge-h i{ flex:0 0 auto; margin-top:3px; }   /* 375pxで見出しが折り返しても、アイコンだけ独立行にならないように */
+    .dx-nums{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:6px; }
+    .dx-num{ font-size:.78rem; color:var(--ink-soft); }
+    .dx-num b{ display:block; font-size:1.02rem; color:var(--ink); }
+    .dx-note{ display:block; margin-top:6px; font-size:.74rem; color:var(--ink-soft); line-height:1.65; }
+    .dx-toggle{ margin-top:8px; min-height:44px; padding:9px 14px; width:100%;
+      background:#fff; border:1.5px solid var(--line); border-radius:10px;
+      font-family:inherit; font-size:.83rem; font-weight:700; color:var(--blue-deep); cursor:pointer; text-align:left; }
+    .dx-toggle:hover{ background:var(--blue-pale); }
+    .dx-toggle[disabled]{ color:var(--ink-soft); cursor:default; background:var(--bg-soft); }
+    .dx-lead{ margin:10px 0 6px; padding:8px 12px; background:var(--warn-pale); border:1.5px solid var(--warn);
+      border-radius:var(--radius-sm); font-size:.8rem; font-weight:700; line-height:1.65; }
+    .dx-cols{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .dx-col{ padding:10px 12px; background:var(--bg-soft); border:1.5px solid var(--line); border-radius:10px; }
+    .dx-col-h{ font-size:.83rem; font-weight:800; color:var(--ink); padding-bottom:6px;
+      border-bottom:1.5px solid var(--line); margin-bottom:7px; }
+    .dx-sub{ font-size:.76rem; font-weight:800; color:var(--ink-soft); margin:6px 0 3px; }
+    .dx-col ul{ margin:0; padding-left:1.1em; }
+    .dx-col li{ font-size:.79rem; line-height:1.7; margin-bottom:4px; }
+    @media (max-width:640px){
+      .dx-cols{ grid-template-columns:1fr; }
+    }
+
     /* ---------- 次の一手 ---------- */
     .nx-group{ margin-bottom:10px; }
     .nx-group-h{ display:flex; align-items:center; gap:7px; font-size:.85rem; font-weight:800; color:var(--blue-deep); margin-bottom:5px; }
@@ -2411,6 +2439,10 @@
                   <div class="input-unit"><input type="number" id="dansin-extra" value="0" min="0" max="1" step="0.05"><span class="u">％</span></div>
                   <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算し、「住まい」の毎月の返済額にも反映されます。</span>
                 </div>
+                <!-- 上乗せ金利を「円」に直して見せる欄（2026-09-06追加）。
+                     ％のままだと、いくら払っているのかが最後まで分からない。ここは金額の大小を論じる場所ではなく、
+                     同じ金額の使い道の違いを並べるだけの場所。優劣は書かない（保険業法300条1項6号） -->
+                <div class="dx-wrap hidden" id="dansin-cost"></div>
               </div>
             </div>
           </div>
@@ -4908,6 +4940,7 @@
         if(i >= 0) sel.splice(i, 1); else sel.push(k);
         $('ikou-priority').value = sel.join(',');
         renderIkouChips(); renderIkouSummary(); renderIkouDiff(); scheduleDraftSave();
+        if(typeof renderDansinCost==='function') renderDansinCost();   // 意向が入ると団信の2列表のロックが外れる
       });
       ['ikou-monthly','ikou-when','ikou-balance','ikou-note'].forEach(function(id){
         const el = $(id); if(!el) return;
@@ -4923,6 +4956,91 @@
         $('ikou-first').value = JSON.stringify(o);
         renderIkouDiff(); scheduleDraftSave();
       });
+    }
+
+    /* ---------- 団信の上乗せを円で見る（2026-09-06追加） ----------
+       商談では「がん団信は＋0.2%です」で終わってしまい、お客様は総額でいくら払うのかを知らないまま決めている。
+       ここは％を円に直して置くだけの欄。どちらが良いかは書かない（保険業法300条1項6号＝誤解させるおそれのある比較表示）。
+       実装として固定しているルール：
+        (1) 左右の「特徴」「留意点」を同数・同じ文字サイズにする（民間側にだけ有利な事実を並べない）
+        (2)「安い」「有利」「お得」「損」を使わない
+        (3) 生命保険料控除の軽減額は所得や他の契約で変わるため、金額を断定しない（限度額だけを制度の時点つきで書く）
+        (4) 意向シートで優先したいことを1つ以上選ぶまで、2列表は開かない（保険業法294条の2の順序）
+       保険会社名・商品名・保険料の試算は一切出さない（出すと294条の3の比較推奨の射程に入り、
+       証跡の保存体制が要る＝localStorage では満たせない）。 */
+    const SEIHO_KOJO_2026 = { general: 4, generalKid: 6, cap: 12 };   // 一般生命保険料控除（所得税）の限度額（万円）
+    let dxOpen = false;
+    function dansinExtraCost(){
+      const extra = num('dansin-extra', 0);
+      if(!(extra > 0)) return null;
+      if(houseType === 'rent' || loanPrincipalBase() <= 0) return null;
+      const withE = buildLoanSchedule();
+      const noE = buildLoanSchedule(null, { noDansin:true });
+      if(!withE.rows.length || !noE.rows.length) return null;
+      const sum = function(sc){ let t = 0; for(let i = 0; i < sc.rows.length; i++) t += sc.rows[i].payment; return t; };
+      const total = sum(withE) - sum(noE);
+      const first = (loanPaymentForYear(withE, 0) - loanPaymentForYear(noE, 0)) / 12;
+      const months = Math.max(withE.rows.length, 1);
+      const avg = total / months;
+      return { extra:extra, total:total, first:first, avg:avg, months:months };
+    }
+    function renderDansinCost(){
+      const host = $('dansin-cost'); if(!host) return;
+      const c = dansinExtraCost();
+      host.classList.toggle('hidden', !c);
+      if(!c) return;
+      const yen = function(man){ return fmt(Math.round(man * 10000 / 100) * 100); };   // 万円→円（100円単位）
+      const man1 = function(v){ return (Math.round(v * 10) / 10); };
+      const stepNote = (loanRateType() !== 'fixed')
+        ? '金利が段階的に上がる設定のときは、後の年ほど上乗せ分の金額も大きくなるため、毎月あたりは当初と全期間の平均の両方を出しています。' : '';
+      const gate = ikouSelected().length > 0;
+      const cols =
+        '<div class="dx-lead"><i class="fa-solid fa-circle-info"></i> どちらが良いかを示すものではなく、<b>同じ金額の使い道の違い</b>です。並び順にも意味はありません。</div>'
+        + '<div class="dx-cols">'
+        + '<div class="dx-col"><div class="dx-col-h">団信に上乗せする</div>'
+        +   '<div class="dx-sub">この形の特徴</div><ul>'
+        +   '<li>保障額は住宅ローンの残債に連動し、返済が進むにつれて減り、完済すると終わります。</li>'
+        +   '<li>団体で加入する仕組みのため、健康状態の告知が簡易な場合があります。</li>'
+        +   '<li>保険料は金利に含めて払うため、別に保険料を払う手続きは要りません。</li></ul>'
+        +   '<div class="dx-sub">留意点</div><ul>'
+        +   '<li>金利に含まれる形のため、生命保険料控除の対象にはなりません。</li>'
+        +   '<li>対象は死亡・高度障害のほか、特約で定める所定の状態に限られ、条件は金融機関・商品により異なります。</li></ul>'
+        + '</div>'
+        + '<div class="dx-col"><div class="dx-col-h">同じ金額を民間の保障に充てる</div>'
+        +   '<div class="dx-sub">この形の特徴</div><ul>'
+        +   '<li>保障額をご自身で決められ、住宅ローンを完済したあとも必要な期間だけ残せます。</li>'
+        +   '<li>契約内容により、生命保険料控除の対象になり得ます（一般生命保険料控除の枠。所得税の限度額は年'
+        +     SEIHO_KOJO_2026.general + '万円、2026年分に限り23歳未満の扶養親族がいる方は' + SEIHO_KOJO_2026.generalKid + '万円。3つの枠の合計限度額'
+        +     SEIHO_KOJO_2026.cap + '万円は据え置きです）。</li>'
+        +   '<li>住宅ローンを借り換えても、保障はそのまま続けられます。</li></ul>'
+        +   '<div class="dx-sub">留意点</div><ul>'
+        +   '<li>加入には健康状態の告知が必要で、健康状態によっては加入できないことがあります。</li>'
+        +   '<li>一般に、加入する年齢が上がるほど保険料も上がります。</li></ul>'
+        + '</div></div>'
+        + '<span class="dx-note">※ 生命保険料控除で軽くなる税額は、ご所得やほかにご加入の保険により変わるため、ここでは金額を出していません。制度は2026年分の内容です。<br>'
+        + '※ この欄には保険会社名・商品名・保険料の試算は載せていません。具体的なご提案は、ご意向を伺ったうえで別途行います。<br>'
+        + '※ 作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。</span>';
+      host.innerHTML =
+        '<div class="dx-badge">'
+        + '<div class="dx-badge-h"><i class="fa-solid fa-yen-sign"></i> この上乗せ（＋' + c.extra + '%）を金額に直すと</div>'
+        + '<div class="dx-nums">'
+        +   '<div class="dx-num">当初の毎月あたり<b>約' + yen(c.first) + '円</b></div>'
+        +   '<div class="dx-num">全期間の平均・毎月<b>約' + yen(c.avg) + '円</b></div>'
+        +   '<div class="dx-num">返済期間の合計<b>約' + man1(c.total) + '万円</b></div>'
+        + '</div>'
+        + '<span class="dx-note">いまのご入力条件（借入' + fmt(loanPrincipalBase()) + '万円・' + num('loan-term',35) + '年）で、上乗せ金利のある場合とない場合の返済総額を比べた<b>概算</b>です。'
+        + stepNote
+        + 'この上乗せは<b>ローン全体にかかる金利によるもので、おひとりずつの団信の対価に分けたものではありません</b>。'
+        + '実際の上乗せ幅・保障の条件は、お借入れ先の金融機関でご確認ください。</span>'
+        + '</div>'
+        + '<button type="button" class="dx-toggle" id="dx-toggle"' + (gate ? '' : ' disabled')
+        + '>' + (gate
+            ? '<i class="fa-solid fa-chevron-' + (dxOpen ? 'up' : 'down') + '"></i> 同じ金額の使い道を並べて見る（団信に上乗せする／民間の保障に充てる）'
+            : '<i class="fa-solid fa-lock"></i> この比較は、先に「はじめに伺うこと」でお客様のご意向（優先したいこと）を1つ以上お選びいただいてから開きます')
+        + '</button>'
+        + '<div id="dx-cols"' + (gate && dxOpen ? '' : ' class="hidden"') + '>' + cols + '</div>';
+      const btn = $('dx-toggle');
+      if(btn && gate) btn.addEventListener('click', function(){ dxOpen = !dxOpen; renderDansinCost(); });
     }
 
     const STRESS = { rateBump: 0, incomeCut: 0 };
@@ -4947,10 +5065,15 @@
       if(el) el.addEventListener('click', ()=>{ fn(); updateStressUI(); recompute(); });
     });
 
-    function getLoanRateSchedule(totalMonths){
+    /* opts.noDansin を渡すと、団信の上乗せ金利だけを外したスケジュールを返す（円換算の差額を出すため）。
+       ★ここを引数にしたのは、dansin-extra が STRESS.rateBump と合算されて全期間金利に乗るため。
+         「金利入力を一時的に0にして計算し直す」やり方だと、ストレステストを表示している最中に
+         stress の上乗せ分まで一緒に消えてしまい、差額が団信の対価とは別物になる。 */
+    function getLoanRateSchedule(totalMonths, opts){
       const type = loanRateType();
       // 金利への上乗せ：ストレステスト＋団信の上乗せ金利（がん団信・ワイド団信等）を全期間に適用
-      const bump = (STRESS.rateBump + num('dansin-extra',0))/100/12;
+      const dansin = (opts && opts.noDansin) ? 0 : num('dansin-extra',0);
+      const bump = (STRESS.rateBump + dansin)/100/12;
       const arr = [];
       if(type==='fixed'){
         const r = num('loan-rate',0)/100/12 + bump;
@@ -5036,13 +5159,13 @@
     }
     /* principalOverride を渡すと、その借入額でスケジュールを組む（頭金あり／なしの比較用）。
        渡さなければ従来どおり画面の「住宅ローン総額」を使う＝既存の呼び出しは影響を受けない。 */
-    function buildLoanSchedule(principalOverride){
+    function buildLoanSchedule(principalOverride, opts){
       const principal = Math.max(principalOverride!=null ? principalOverride : loanPrincipalBase(), 0);   // 借入額そのもの（頭金は別枠の現金。建物価格差を乗せる設定なら loanPrincipalBase が加算する）
       const term = num('loan-term',35);
       const totalMonths = Math.max(0, Math.round(term*12));
       const bonusPay = num('loan-bonus-pay',0);
       const repayType = loanRepayType();
-      const rateSchedule = getLoanRateSchedule(totalMonths);
+      const rateSchedule = getLoanRateSchedule(totalMonths, opts);
       if(principal<=0 || totalMonths<=0) return { rows:[], principal, totalMonths, rateSchedule };
 
       // ボーナス返済分の元金を、契約当初の金利をもとに按分（実際の住宅ローンと同じ考え方）
@@ -6538,6 +6661,7 @@
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
       if(typeof renderRateScenarios==='function') renderRateScenarios();   // 金利が上がった場合の表（切替なしで4行同時）
+      if(typeof renderDansinCost==='function') renderDansinCost();   // 団信の上乗せ金利を円に直した表示
       if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）

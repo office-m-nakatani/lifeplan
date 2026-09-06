@@ -1251,6 +1251,68 @@
     .mn-att input{ flex:1; min-width:0; min-height:44px; padding:9px 12px; border:1.5px solid var(--line);
       border-radius:9px; font-family:inherit; font-size:.85rem; }
 
+    /* ---------- 次の一手の見取り図（2026-09-03追加） ---------- */
+    .nxv-wrap{ margin-bottom:12px; padding:10px 12px; background:var(--bg-soft);
+      border:1.5px solid var(--line); border-radius:var(--radius-sm); }
+    .nxv-title{ display:flex; align-items:center; gap:7px; font-size:.86rem; font-weight:800;
+      color:var(--blue-deep); margin-bottom:8px; }
+    .nxv-block{ margin-bottom:12px; }
+    .nxv-block:last-child{ margin-bottom:0; }
+    .nxv-h{ display:flex; align-items:center; gap:6px; font-size:.79rem; font-weight:800; color:var(--ink); margin-bottom:5px; }
+    .nxv-note{ margin-top:5px; font-size:.72rem; color:var(--ink-soft); line-height:1.6; }
+    /* 図1：4象限 */
+    .nxv-matrix{ display:flex; gap:6px; }
+    .nxv-ylab{ display:flex; flex-direction:column; justify-content:space-around; flex:0 0 auto;
+      font-size:.66rem; color:var(--ink-soft); text-align:right; line-height:1.3; }
+    .nxv-cells{ flex:1 1 auto; display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .nxv-cell{ min-height:56px; padding:6px 8px; background:#fff; border:1.5px solid var(--line); border-radius:10px; }
+    .nxv-cell.is-a{ border-color:var(--blue); background:var(--blue-pale); }
+    .nxv-cell-h{ display:flex; align-items:center; gap:5px; font-size:.68rem; font-weight:800;
+      color:var(--ink-soft); margin-bottom:4px; }
+    .nxv-cell.is-a .nxv-cell-h{ color:var(--blue-deep); }
+    .nxv-cnt{ display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px;
+      padding:0 4px; border-radius:9px; background:var(--line); color:var(--ink); font-size:.64rem; }
+    .nxv-cell.is-a .nxv-cnt{ background:var(--blue); color:#fff; }
+    .nxv-none{ font-size:.7rem; color:var(--ink-soft); }
+    .nxv-chip{ display:inline-flex; align-items:center; gap:4px; max-width:100%; margin:2px 3px 2px 0;
+      padding:3px 8px; border-radius:999px; font-size:.7rem; line-height:1.4;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .nxv-chip i{ font-size:.62rem; opacity:.75; }
+    .nxv-cust{ background:var(--blue-pale2); color:var(--blue-deep); }
+    .nxv-staff{ background:var(--line); color:var(--ink); }
+    .nxv-xlab{ display:flex; justify-content:space-around; margin-top:3px; font-size:.66rem; color:var(--ink-soft); }
+    /* 図2：期限タイムライン */
+    .nxv-tl{ display:flex; align-items:flex-end; gap:8px; overflow-x:auto; padding-bottom:2px; }
+    .nxv-tl-col{ flex:0 0 auto; min-width:64px; text-align:center; }
+    .nxv-tl-bar{ display:flex; flex-direction:column-reverse; width:26px; margin:0 auto 3px;
+      border-radius:5px 5px 0 0; overflow:hidden; }
+    .nxv-seg{ display:block; }
+    .nxv-seg.nxv-cust{ background:var(--blue); }
+    .nxv-seg.nxv-staff{ background:var(--ink-soft); }
+    .nxv-tl-n{ font-size:.68rem; font-weight:800; color:var(--ink); }
+    .nxv-tl-d{ font-size:.66rem; color:var(--ink-soft); line-height:1.35; }
+    .nxv-legend{ display:flex; gap:14px; margin-top:5px; font-size:.68rem; color:var(--ink-soft); }
+    .nxv-cust-c{ color:var(--blue); }
+    .nxv-staff-c{ color:var(--ink-soft); }
+    /* 図3：出どころ */
+    .nxv-srcbar{ display:flex; height:14px; border-radius:7px; overflow:hidden; background:var(--line); }
+    .nxv-src-calc{ background:var(--blue); }
+    .nxv-src-plan{ background:var(--blue-pale2); }
+    .nxv-src-talk{ background:var(--yellow); }
+    .nxv-src-blank{ background:var(--ink-soft); }
+    .nxv-srclist{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:5px; font-size:.7rem; color:var(--ink); }
+    .nxv-srcitem{ display:inline-flex; align-items:center; gap:5px; }
+    .nxv-src-c-calc{ color:var(--blue); }
+    .nxv-src-c-plan{ color:var(--blue-pale2); }
+    .nxv-src-c-talk{ color:var(--yellow); }
+    .nxv-src-c-blank{ color:var(--ink-soft); }
+    @media(max-width:560px){
+      .nxv-cells{ grid-template-columns:1fr; }
+      .nxv-ylab{ display:none; }
+      .nxv-xlab{ display:none; }
+      .nxv-cell-h{ font-size:.7rem; }
+    }
+
     /* ---------- 意向シート（2026-08-29追加） ---------- */
     .ikou-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
     .ikou-chip{ display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:8px 14px;
@@ -9760,7 +9822,9 @@
             title:body.title, basis:body.basis, caution:body.caution || '',
             tasks:(body.tasks||[]).map(function(t){
               const days = nextDueDays(t.who, urgency);
-              return { who:t.who, text:t.text, due:nextDueLabel(days) };
+              // days も持たせる：図解（期限タイムライン）で並べ替えと位置決めに使う。
+              // 表示用の due は従来どおりの文字列で、コピー用テキストの体裁は変えない
+              return { who:t.who, text:t.text, due:nextDueLabel(days), days:days };
             }) });
         });
         return out;
@@ -9797,6 +9861,120 @@
           + '<span class="nx-due">' + esc(t.due) + '</span>'
           + '</label>';
       }
+      /* ---------- 次の一手の図解（2026-09-03 ユーザー指示） ----------
+         文字の一覧だけだと、商談の場で「何から手をつけるか」「いつまでか」が読み取れない。
+         ルールがすでに持っている impact（効きの大きさ）・urgency（急ぎ度）・期限・担当・出どころを、
+         そのまま3つの図にする。★新しい数字や前提は一切足さない（図は一覧の言い換えに徹する）。
+         ★絵文字は使わない（Font Awesome）。375pxで横スクロールが出ないよう縦積みに落とす。 */
+      const NX_CAT_LABEL = { hoken:'保障', housing:'住まい', edu:'教育', retire:'老後', invest:'運用',
+                             balance:'家計', tax:'税金', overall:'全体', plan:'プラン' };
+      const NX_SRC_LABEL = { calc:'試算から', plan:'現状と将来の差から', talk:'お話から', blank:'未入力から' };
+      const NX_SRC_ICON  = { calc:'fa-calculator', plan:'fa-scale-unbalanced-flip', talk:'fa-comments', blank:'fa-pen-to-square' };
+
+      function nxVizChip(it){
+        const who = it.tasks.some(function(t){ return t.who === 'cust'; }) ? 'cust' : 'staff';
+        return '<span class="nxv-chip nxv-' + who + '" title="' + esc(it.title) + '">'
+          + '<i class="fa-solid ' + (NX_SRC_ICON[it.src] || 'fa-circle') + '"></i>'
+          + esc(it.title) + '</span>';
+      }
+
+      function nxVizHTML(res){
+        /* 見取り図は main だけでなく rest（そのほかに確認しておきたいこと）も必ず含める。
+           ★rankNext は src の順（calc→plan→talk→blank）で並べて main を5件に絞るため、
+             音声メモから拾った talk 由来はほぼ必ず rest 側へ落ちる。main だけで図を描くと
+             「お話から出た宿題」が図から丸ごと消え、いちばん見せたいものが見えなくなる。 */
+        const items = (res.main || []).concat(res.fam || []).concat(res.rest || []);
+        if(!items.length) return '';
+
+        /* --- 図1：何から手をつけるか（効きの大きさ × 急ぎ度） ---
+           impact>=4 を「効きが大きい」、urgency>=4 を「急ぎ」として4象限に置く。
+           しきい値はルール側の 1〜5 をそのまま使い、図のために別の基準を作らない。 */
+        const q = { hi_now:[], hi_later:[], lo_now:[], lo_later:[] };
+        items.forEach(function(it){
+          const hi = (it.impact >= 4), now = (it.urgency >= 4);
+          q[(hi ? 'hi_' : 'lo_') + (now ? 'now' : 'later')].push(it);
+        });
+        const cell = function(list, cls, label){
+          return '<div class="nxv-cell ' + cls + '">'
+            + '<div class="nxv-cell-h">' + label + '<span class="nxv-cnt">' + list.length + '</span></div>'
+            + (list.length ? list.map(nxVizChip).join('') : '<span class="nxv-none">なし</span>')
+            + '</div>';
+        };
+        const matrix = '<div class="nxv-block">'
+          + '<div class="nxv-h"><i class="fa-solid fa-table-cells-large"></i> 何から手をつけるか</div>'
+          + '<div class="nxv-matrix">'
+          +   '<div class="nxv-ylab"><span>効きが<br>大きい</span><span>効きは<br>中くらい</span></div>'
+          +   '<div class="nxv-cells">'
+          +     cell(q.hi_now,   'is-a', '急ぎ × 効きが大きい')
+          +     cell(q.hi_later, 'is-b', '効きが大きい')
+          +     cell(q.lo_now,   'is-c', '急ぎ')
+          +     cell(q.lo_later, 'is-d', 'そのほか')
+          +   '</div>'
+          + '</div>'
+          + '<div class="nxv-xlab"><span>急ぎ</span><span>あとでよい</span></div>'
+          + '<p class="nxv-note">左上から順に片づけると、効きの大きいものを落とさずに進められます。</p>'
+          + '</div>';
+
+        /* --- 図2：いつまでに（期限のタイムライン） ---
+           タスクの期限（days）でまとめる。担当（お客様／当方）を色で分ける。 */
+        const byDue = {};
+        items.forEach(function(it){
+          (it.tasks || []).forEach(function(t){
+            const k = String(t.days);
+            if(!byDue[k]) byDue[k] = { days:t.days, due:t.due, cust:0, staff:0 };
+            byDue[k][t.who === 'cust' ? 'cust' : 'staff']++;
+          });
+        });
+        const dues = Object.keys(byDue).map(function(k){ return byDue[k]; })
+                       .sort(function(a, b){ return a.days - b.days; });
+        const maxN = dues.reduce(function(m, d){ return Math.max(m, d.cust + d.staff); }, 1);
+        const timeline = dues.length ? '<div class="nxv-block">'
+          + '<div class="nxv-h"><i class="fa-solid fa-timeline"></i> いつまでに</div>'
+          + '<div class="nxv-tl">' + dues.map(function(d){
+              const tot = d.cust + d.staff;
+              const h = Math.max(Math.round(tot / maxN * 46), 8);
+              return '<div class="nxv-tl-col">'
+                + '<div class="nxv-tl-bar" style="height:' + h + 'px;">'
+                +   (d.cust ? '<span class="nxv-seg nxv-cust" style="flex:' + d.cust + ';"></span>' : '')
+                +   (d.staff ? '<span class="nxv-seg nxv-staff" style="flex:' + d.staff + ';"></span>' : '')
+                + '</div>'
+                + '<div class="nxv-tl-n">' + tot + '件</div>'
+                + '<div class="nxv-tl-d">' + esc(d.due) + '</div>'
+                + '</div>';
+            }).join('') + '</div>'
+          + '<div class="nxv-legend">'
+          +   '<span><i class="fa-solid fa-square nxv-cust-c"></i> お客様</span>'
+          +   '<span><i class="fa-solid fa-square nxv-staff-c"></i> 担当（当方）</span>'
+          + '</div>'
+          + '<p class="nxv-note">期限は目安です。次回面談の日程に合わせて、各項目の日付欄で調整できます。</p>'
+          + '</div>' : '';
+
+        /* --- 図3：どこから出てきた話か（出どころの内訳） ---
+           音声メモ（お話から）が何件で、試算から何件かが一目で分かるようにする。 */
+        const bySrc = {};
+        items.forEach(function(it){ bySrc[it.src] = (bySrc[it.src] || 0) + 1; });
+        const srcKeys = ['calc', 'plan', 'talk', 'blank'].filter(function(k){ return bySrc[k]; });
+        const total = items.length;
+        const srcBlock = srcKeys.length ? '<div class="nxv-block">'
+          + '<div class="nxv-h"><i class="fa-solid fa-diagram-project"></i> どこから出てきた話か</div>'
+          + '<div class="nxv-srcbar">' + srcKeys.map(function(k){
+              return '<span class="nxv-src nxv-src-' + k + '" style="flex:' + bySrc[k] + ';" title="'
+                + esc(NX_SRC_LABEL[k]) + ' ' + bySrc[k] + '件"></span>';
+            }).join('') + '</div>'
+          + '<div class="nxv-srclist">' + srcKeys.map(function(k){
+              return '<span class="nxv-srcitem"><i class="fa-solid fa-square nxv-src-c-' + k + '"></i>'
+                + esc(NX_SRC_LABEL[k]) + ' <b>' + bySrc[k] + '</b>件</span>';
+            }).join('') + '</div>'
+          + '<p class="nxv-note">合計' + total + '件。「お話から」は、録音した会話に出てきた話題から拾ったものです。'
+            + 'この図には、下の一覧で「そのほかに確認しておきたいこと」に畳まれている分も含めています。</p>'
+          + '</div>' : '';
+
+        return '<div class="nxv-wrap">'
+          + '<div class="nxv-title"><i class="fa-solid fa-chart-simple"></i> 次の一手の見取り図</div>'
+          + matrix + timeline + srcBlock
+          + '</div>';
+      }
+
       function renderNextHTML(res){
         const pick = function(who){
           return res.main.map(function(it){
@@ -9822,7 +10000,8 @@
           ? '<details class="nx-more"><summary>そのほかに確認しておきたいこと（' + res.rest.length + '件）</summary>'
             + res.rest.map(function(it){ return it.tasks.map(function(t){ return nextItemHTML(it,t); }).join(''); }).join('')
             + '</details>' : '';
-        return (cust  ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-user"></i> お客様にお願いしたいこと</div>' + cust + '</div>' : '')
+        return nxVizHTML(res)
+             + (cust  ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-user"></i> お客様にお願いしたいこと</div>' + cust + '</div>' : '')
              + (staff ? '<div class="nx-group"><div class="nx-group-h"><i class="fa-solid fa-briefcase"></i> 担当（当方）が行うこと</div>' + staff + '</div>' : '')
              + famHtml + more + disc;
       }

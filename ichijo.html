@@ -1332,6 +1332,28 @@
     .ikou-band-b{ margin-top:4px; font-size:.85rem; line-height:1.7; color:var(--ink); }
     .ikou-band-n{ margin-top:4px; font-size:.74rem; color:var(--ink-soft); line-height:1.6; }
 
+    /* ---------- 今の住居費との月次置換表（2026-09-06追加） ---------- */
+    .rs-seg{ margin-bottom:10px; }
+    .rs-grid{ display:grid; grid-template-columns:1.5fr 1fr 1fr 1.1fr; gap:0;
+      border:1.5px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; }
+    .rs-h{ padding:8px 10px; background:var(--bg-soft); font-size:.78rem; font-weight:800;
+      color:var(--ink-soft); border-bottom:1.5px solid var(--line); }
+    .rs-lb, .rs-v, .rs-d{ padding:9px 10px; font-size:.84rem; border-bottom:1px solid var(--line); }
+    .rs-lb{ font-weight:700; }
+    .rs-v, .rs-d{ text-align:right; font-variant-numeric:tabular-nums; }
+    .rs-sub{ display:block; font-size:.72rem; font-weight:400; color:var(--ink-soft); line-height:1.5; }
+    /* 合計行。増える項目・減る項目とも同じ大きさで出す（片方だけ小さくしない） */
+    .rs-grid .rs-total{ background:var(--blue-pale); font-weight:800; border-bottom:none; }
+    .rs-note{ display:block; margin-top:8px; font-size:.78rem; color:var(--ink); line-height:1.75; }
+    .rs-legend{ margin-top:6px; font-size:.76rem; color:var(--ink-soft); }
+    @media (max-width:640px){
+      /* スマホは「項目名の行」＋「今／建てた後／増減の3列」の縦積みにする */
+      .rs-grid{ grid-template-columns:1fr 1fr 1fr; }
+      .rs-h:first-child{ display:none; }
+      .rs-lb{ grid-column:1 / -1; padding-bottom:2px; border-bottom:none; background:var(--bg-soft); }
+      .rs-v, .rs-d{ font-size:.82rem; }
+    }
+
     /* ---------- 1分モード／「目安のまま」の帯（2026-09-06追加） ---------- */
     .qs-note{ margin:0 0 12px; padding:9px 12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2);
       border-radius:var(--radius-sm); font-size:.8rem; line-height:1.7; color:var(--ink); }
@@ -1983,9 +2005,25 @@
 
             <!-- 賃貸／これから購入（購入までは家賃を払い続けるため、購入プランでもこの欄を出す） -->
             <div class="conditional" data-house-panel="rent buy">
-              <div class="field" style="max-width:260px;">
-                <label>家賃（管理費込み・月額）</label>
-                <div class="input-unit"><input type="number" id="rent" value="11" min="0" step="0.5"><span class="u">万円</span></div>
+              <!-- 賃貸の住居費。2026-09-06に駐車場代・共益費を追加した。
+                   既定は0なので、既存の保存データ・共有リンクの結果は1円も変わらない。
+                   ★生活費の「車維持費（駐車場代）」（#e-car）は持ち家でもかかる費目なので、
+                     そちらに含めている分をここへ二重に書かないよう、注意書きを近くに置く。 -->
+              <div class="grid3">
+                <div class="field">
+                  <label>家賃（管理費込み・月額）</label>
+                  <div class="input-unit"><input type="number" id="rent" value="11" min="0" step="0.5"><span class="u">万円</span></div>
+                </div>
+                <div class="field">
+                  <label>駐車場代（月額）</label>
+                  <div class="input-unit"><input type="number" id="rent-parking" value="0" min="0" step="0.5"><span class="u">万円</span></div>
+                  <span class="hint">賃貸で別途お支払いの分。生活費の「車維持費（駐車場代）」に含めている場合は<b>0のまま</b>にしてください</span>
+                </div>
+                <div class="field">
+                  <label>共益費・町内会費など（月額）</label>
+                  <div class="input-unit"><input type="number" id="rent-kyoueki" value="0" min="0" step="0.5"><span class="u">万円</span></div>
+                  <span class="hint">家賃に含まれている場合は0のまま</span>
+                </div>
               </div>
               <!-- 「これから購入」のとき、家賃をいつまで払い、いつからローンになるかを明示する -->
               <div class="note" id="house-timeline" style="display:none; margin-top:10px;">
@@ -2759,6 +2797,22 @@
           <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「一条の家で試す」を押すと、<b>一般住宅と一条工務店の家のランニングコストの差</b>がここに表示されます。</p>
           <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> 一条の家で試す（1クリックで比較）</button>
         </div>
+        <!-- 今の住居費との月次置換表（2026-09-06追加）。
+             「毎月いくらになるのか」は商談でいちばん先に聞かれるのに、これまでは
+             資産推移のグラフからしか読み取れなかった。増える項目（固定資産税・保険・修繕）は
+             減る項目と同じ文字サイズで必ず出す（畳まない）＝仕様上の必須要件。 -->
+        <div class="card" id="rentswap-card">
+          <div class="card-title"><i class="fa-solid fa-right-left"></i> 今の住居費と、建てた後の住居費（毎月）</div>
+          <div class="ic-level rs-seg">
+            <span class="ic-level-label">時点：</span>
+            <div class="seg" id="rs-when-seg">
+              <button type="button" data-rswhen="now" class="active">入居直後</button>
+              <button type="button" data-rswhen="after">完済後</button>
+            </div>
+          </div>
+          <div id="rentswap-body"></div>
+        </div>
+
         <div class="card" id="ichijo-compare-card">
           <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> 一般住宅 と 一条工務店の家（ランニングコスト比較）</div>
           <p class="ic-lead">高性能住宅の価値を<b>数字で見える化</b>します。建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数値は一条の平均搭載量（12kW）など<b>一般的な水準</b>を前提にしています。</p>
@@ -5040,6 +5094,136 @@
       });
     }
 
+    /* ---------- 今の住居費との月次置換表（2026-09-06追加） ----------
+       いまの賃貸の住居費と、建てた後に毎月かかる住居費を1枚に並べる。
+       ★本体（simulate）と同じ入力・同じ式から作る。表だけの独自計算はしない。
+       ★時点は「入居直後」「完済後」の2つだけ。simulate は新築住宅の固定資産税の減額特例
+         （一般3年度分・認定長期優良5年度分、建物分2分の1）をモデル化していないため、
+         「減額が切れた後」の金額を出すと、同じ画面のキャッシュフロー表と食い違う。
+         金額は出さず、注記で制度の存在だけを伝える。
+       ★賃貸の更新料も simulate が持っていないので、表からも外して注記に留める。
+       ★物価上昇は掛けない（今の物価で見た金額）。simulate は inflF を掛けるが、
+         「毎月いくらか」を今の感覚で見るための表なので、その旨を注記に書く。
+       ★増える項目は減る項目と同じ文字サイズ・同じ強さで出す。畳まない。 */
+    let rsWhen = 'now';
+    /* 支出の増減の色：家計にとって良い方向（支出が減る）を青、悪い方向（増える）を赤にする。
+       diffHTML は「金額が増える＝青」の規約なので、支出の表ではそのまま使えない。 */
+    function rsDiffHTML(d){
+      const v = Math.round(d * 10) / 10;
+      if(!isFinite(v) || v === 0) return '<span style="color:var(--ink-soft);">±0</span>';
+      return v > 0 ? '<span class="diff-minus">＋' + v + '万円</span>'
+                   : '<span class="diff-plus">−' + (Math.abs(v)) + '万円</span>';
+    }
+    function rsRow(label, sub, now, aft){
+      const f = function(v){
+        if(v === null) return '—';
+        const r = Math.round(v * 10) / 10;
+        return (r < 0 ? '−' + Math.abs(r) : String(r)) + '万円';   // 売電の差し引きは全角の−で出す
+      };
+      return '<div class="rs-lb">' + esc(label) + (sub ? '<span class="rs-sub">' + esc(sub) + '</span>' : '') + '</div>'
+        + '<div class="rs-v">' + f(now) + '</div>'
+        + '<div class="rs-v">' + f(aft) + '</div>'
+        + '<div class="rs-d">' + rsDiffHTML((aft || 0) - (now || 0)) + '</div>';
+    }
+    function renderRentSwap(){
+      const card = $('rentswap-card'), host = $('rentswap-body');
+      if(!card || !host) return;
+      /* 「今」＝現状プランの内容。将来プランを見ているときも、現状プランの家賃・光熱費で比べる。
+         ★画面の入力欄をそのまま読むと、将来プラン（購入）の側では家賃欄が使われないまま
+           前の値や既定値が残っており、「今」の列が実際のお住まいと違う金額になる。 */
+      let nowF = null, nowHouse = houseType;
+      try{
+        if(PLANS.active === 'mirai' && PLANS.genjo.state){
+          nowF = PLANS.genjo.state.fields || null;
+          nowHouse = PLANS.genjo.state.house || nowHouse;
+        }
+      }catch(e){}
+      const gNow = function(id, d){
+        if(nowF && nowF[id] !== undefined && nowF[id] !== '') return parseFloat(nowF[id]) || 0;
+        return num(id, d);
+      };
+      const hasLoan = (houseType !== 'rent') && loanPrincipalBase() > 0;
+      const nowIsRent = (nowHouse === 'rent');
+      card.classList.toggle('hidden', !hasLoan);
+      if(!hasLoan) return;
+      if(!nowIsRent){
+        // 現状プランも持ち家のときは「賃貸と比べる表」にならないので、金額は出さない
+        host.innerHTML = '<p class="hint" style="display:block;">現状プランの住まいが<b>「賃貸のまま」</b>のときに、'
+          + '今の住居費と建てた後の住居費を並べた表がここに出ます。'
+          + '（いまは現状プランも持ち家の設定になっています。「現状プラン」タブの「住まい」でご確認ください）</p>';
+        return;
+      }
+
+      const term = num('loan-term', 35);
+      const sc = buildLoanSchedule();
+      const after = (rsWhen === 'after');
+      const simpleExp = (typeof isSimpleExpMode === 'function') && isSimpleExpMode();
+      // ── 今（賃貸）──
+      const nowRent = gNow('rent', 0), nowPark = gNow('rent-parking', 0), nowKyo = gNow('rent-kyoueki', 0);
+      const utilNow = simpleExp ? 0 : (gNow('e-elec', 0) + gNow('e-gas', 0) + gNow('e-water', 0));
+      // ── 建てた後 ──
+      const loanM = after ? 0 : loanPaymentForYear(sc, 0) / 12;
+      const taxM  = num('prop-tax', 0) / 12;
+      const maintM = num('maint', 0) / 12;
+      const kFire = num('kasai-fire', 0), kQuake = num('kasai-quake', 0);
+      const qRate = (kasaiQuakeMode() === 'applied') ? 1
+        : ((typeof ichijoQuakeDiscount === 'function') ? ichijoQuakeDiscount() : 1);
+      const cyc = kasaiCycle();
+      const kasaiM = (kFire + kQuake * qRate) / (cyc * 12);   // simulate は cyc 年ごとに総額を一括計上。月あたりに直した金額
+      const zehOn = $('zeh-on') ? $('zeh-on').checked : false;
+      const zehSave = zehOn ? num('zeh-save', 0) : 0;
+      /* 光熱費そのものは simulate では建てた後も変わらない（生活費のまま）。
+         太陽光の自家消費・高断熱による削減は zehSave として別に差し引かれる。
+         表もその形にそろえる＝行を分ける（本体と同じ式にするため）。 */
+      const saveM = zehSave / 12;
+      /* 売電。simulate と同じ経路（ichijoZehSellFactor があればその係数、無ければ10年満額→4割）。
+         完済後は経過年＝返済期間とみなす。35年ローンなら30年目以降＝設備寿命とみなし0になる。 */
+      let sellM = 0;
+      if(zehOn){
+        const yo = after ? term : 0;
+        const zf = (typeof ichijoZehSellFactor === 'function') ? ichijoZehSellFactor(yo) : null;
+        let sellY = 0;
+        if(zf != null) sellY = num('zeh-sell', 0) * zf;
+        else if(yo < 10) sellY = num('zeh-sell', 0);
+        else if(yo < 30) sellY = num('zeh-sell', 0) * 0.4;
+        sellM = sellY / 12;
+      }
+      const nowTotal = nowRent + nowPark + nowKyo + utilNow;
+      const aftTotal = loanM + taxM + maintM + kasaiM + utilNow - saveM - sellM;
+
+      let rows = '';
+      rows += rsRow('家賃 / 住宅ローンの返済', after ? '完済後は返済がありません' : 'ボーナス払いを含む初年度の月あたり', nowRent, loanM);
+      rows += rsRow('駐車場代', '賃貸で別途お支払いの分', nowPark, 0);
+      rows += rsRow('共益費・町内会費など', '', nowKyo, 0);
+      rows += rsRow('固定資産税', '年額を12で割った金額', 0, taxM);
+      rows += rsRow('修繕・管理', '年額を12で割った金額', 0, maintM);
+      rows += rsRow('火災・地震保険', cyc + '年ごとの総額を月あたりに直した金額', 0, kasaiM);
+      if(!simpleExp) rows += rsRow('光熱費（電気・ガス・水道）', '建てた後も同じ金額で見込んでいます', utilNow, utilNow);
+      if(zehOn && saveM > 0) rows += rsRow('光熱費の削減（差し引き）', '太陽光の自家消費と高断熱による削減', 0, -saveM);
+      if(zehOn) rows += rsRow('売電収入（差し引き）', after ? '完済後の時点。売電単価は年度により変わります' : '初年度の売電収入', 0, -sellM);
+      rows += '<div class="rs-lb rs-total">合計（月）</div>'
+        + '<div class="rs-v rs-total">' + (Math.round(nowTotal * 10) / 10) + '万円</div>'
+        + '<div class="rs-v rs-total">' + (Math.round(aftTotal * 10) / 10) + '万円</div>'
+        + '<div class="rs-d rs-total">' + rsDiffHTML(aftTotal - nowTotal) + '</div>';
+
+      host.innerHTML =
+        '<div class="rs-grid">'
+        + '<div class="rs-h">項目</div><div class="rs-h">今（賃貸）</div>'
+        + '<div class="rs-h">建てた後' + (after ? '（完済後）' : '（入居直後）') + '</div><div class="rs-h">増減</div>'
+        + rows + '</div>'
+        + '<div class="rs-legend"><span class="diff-minus">赤＝支出が増える</span> ／ <span class="diff-plus">青＝支出が減る</span></div>'
+        + '<span class="rs-note">'
+        + '※ いずれも<b>今の物価で見た金額</b>です（物価上昇は反映していません。資産推移のグラフ・キャッシュフロー表には反映しています）。<br>'
+        + '※ 固定資産税は概算であり、減額特例・評価額により変わります。個別のご判断は税理士にご確認ください。<br>'
+        + '※ 新築住宅の固定資産税には、一般で3年度分・認定長期優良住宅で5年度分、建物分が2分の1に減額される制度があります。その終了時にこの表の固定資産税は上がりますが、<b>本試算はこの減額を織り込んでいません</b>。<br>'
+        + '※ 光熱費・売電は地域・使用量・日射により大きく変わる概算です。<b>売電単価は年度により変わります</b>。<br>'
+        + '※ 賃貸の更新料は本試算に含めていません。<br>'
+        + '※ 火災・地震保険は' + cyc + '年ごとにまとめてお支払いになるため、実際には毎月出ていく費用ではありません。ここでは比べやすいように月あたりに直しています。'
+        + (simpleExp ? '<br>※「毎月の生活費」を<b>まとめて入力</b>にされているため、光熱費の行は出していません（項目ごとの入力に切り替えると表示されます）。' : '')
+        + '<br>※「今」の列は<b>現状プラン</b>の家賃・駐車場代・共益費・光熱費です。'
+        + '</span>';
+    }
+
     /* ---------- 団信の上乗せを円で見る（2026-09-06追加） ----------
        商談では「がん団信は＋0.2%です」で終わってしまい、お客様は総額でいくら払うのかを知らないまま決めている。
        ここは％を円に直して置くだけの欄。どちらが良いかは書かない（保険業法300条1項6号＝誤解させるおそれのある比較表示）。
@@ -5294,6 +5478,13 @@
       if(idx<0) return schedule.principal;
       if(idx>=schedule.rows.length) return 0;
       return schedule.rows[idx].balance;
+    }
+    /* 賃貸の住居費（月額・万円）。家賃＋駐車場代＋共益費。
+       ★この関数を simulate・AI診断・チャット診断のすべてで使う。
+         置換表にだけ駐車場代・共益費を足すと、同じ画面の資産推移・キャッシュフロー表と
+         数字が食い違い、しかも持ち家を有利に見せる方向にズレる（仕様上の必須要件）。 */
+    function rentMonthlyTotal(){
+      return num('rent',0) + num('rent-parking',0) + num('rent-kyoueki',0);
     }
     // 購入からyearsOwned年目（0始まり）の年間返済額（ボーナス払い込み・万円）
     function loanPaymentForYear(schedule, yearsOwned){
@@ -6179,7 +6370,7 @@
       const incomeEvents = readIncomeEvents();
 
       // 住居
-      const rent = num('rent',0);
+      const rent = rentMonthlyTotal();   // 家賃＋駐車場代＋共益費（月額）
       const buyAge = (houseType==='owned') ? num('owned-age',hAge0) : num('buy-age',hAge0);
       const price = loanPrincipalBase(), down = num('down',0);   // price＝借入額（建物価格差を乗せる設定なら、その分を含む）
       const loanTerm = num('loan-term',35);
@@ -6745,6 +6936,7 @@
       if(typeof renderRateScenarios==='function') renderRateScenarios();   // 金利が上がった場合の表（切替なしで4行同時）
       if(typeof renderDansinCost==='function') renderDansinCost();   // 団信の上乗せ金利を円に直した表示
       if(typeof renderEstBanner==='function') renderEstBanner();   // 「目安のままの入力が◯件」の帯
+      if(typeof renderRentSwap==='function') renderRentSwap();   // 今の住居費と建てた後の住居費（毎月）
       if(typeof renderIkouChips==='function'){ renderIkouChips(); renderIkouSummary(); renderIkouDiff(); }   // 意向シート（保存データの読込後もここで追従する）
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
@@ -7740,12 +7932,12 @@
 
       /* ── 住まい・ローン ── */
       if(houseType==='rent'){
-        const rent=num('rent',0); const yrsAll=Math.max(p.endAge-p.hAge,0);
+        const rent=rentMonthlyTotal(); const yrsAll=Math.max(p.endAge-p.hAge,0);
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
-          sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
+          sum:`いまは賃貸（住居費 月${fmt(rent)}万円）。${p.endAge}歳までの住居費の総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
                 `「住まい」で「これから購入」に切り替えると、購入した場合との比較ができます。「一条工務店の家（高性能）」を選ぶと、30年のランニングコスト差も表示されます。` /* 【一条フック】誘導文に一条明記 */],
-          concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
+          concern:[`生涯の住居費 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
         const down=num('down',0);
@@ -11218,6 +11410,12 @@
     $('add-event').addEventListener('click', ()=>{ eventRow(45,'車の買い替え',200); recompute(); });
     $('add-income').addEventListener('click', ()=>{ incomeRow(50,'臨時収入',100); recompute(); });
     $('add-expense').addEventListener('click', ()=>{ expenseRow('',1); recompute(); });
+    if($('rs-when-seg')) $('rs-when-seg').addEventListener('click', (e)=>{
+      const b = e.target.closest('[data-rswhen]'); if(!b) return;
+      rsWhen = b.dataset.rswhen;
+      $('rs-when-seg').querySelectorAll('button').forEach(x=> x.classList.toggle('active', x===b));
+      renderRentSwap();
+    });
     if($('kasai-cycle-seg')) $('kasai-cycle-seg').addEventListener('click', (e)=>{
       const b = e.target.closest('button'); if(!b) return;
       setKasaiCycle(b.dataset.kcycle);
@@ -11825,10 +12023,10 @@
       jutaku(){
         const p = buildProfile();
         if(houseType==='rent'){
-          const rent = num('rent',0);
+          const rent = rentMonthlyTotal();
           const yrsAll = Math.max(p.endAge - p.hAge, 0);
-          return diagBox([ famFact(p), `住まい：賃貸（家賃 月<b>${fmt(rent)}万円</b>）`, `${p.endAge}歳までの家賃総額：約<b>${fmt(rent*12*yrsAll)}万円</b>` ],
-            'warn', `診断：生涯の家賃負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
+          return diagBox([ famFact(p), `住まい：賃貸（住居費 月<b>${fmt(rent)}万円</b>）`, `${p.endAge}歳までの住居費の総額：約<b>${fmt(rent*12*yrsAll)}万円</b>` ],
+            'warn', `診断：生涯の住居費の負担は <b>約${fmt(rent*12*yrsAll)}万円</b> になる見込みです。`,
             `上の「住まい」で「これから買う」に切り替えると、購入した場合のローン返済・維持費・住宅ローン控除まで自動計算され、賃貸と比較できます。`);
         }
         const down = num('down',0);

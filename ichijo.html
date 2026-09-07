@@ -1474,15 +1474,45 @@
        師匠に相談する画面。お客様には見せない（customer-mode／PDF／印刷で丸ごと消す）。
        入力欄は #input-panel の外に置く＝保存データ・共有リンクには一切乗らない。 */
     #mentor-modal .modal{ width:min(1000px,96vw); height:min(92vh, 900px); }
-    #mentor-modal .modal-body{ display:flex; flex-direction:column; gap:10px; padding:14px 18px 16px; }
+    /* ★flex:1 1 auto が無いと、.modal は縦フレックスなのに本文だけ中身の高さで止まり、
+       モーダルの下半分が空いたまま会話が min-height（300px）まで潰れる。外さないこと */
+    #mentor-modal .modal-body{ display:flex; flex-direction:column; gap:10px; padding:14px 18px 16px; flex:1 1 auto; min-height:0; }
     /* 会話が長くなると、その高さが基準になって上の行（顔・上長・段階）まで潰れ、文字が切れていた。
        伸び縮みするのは会話の欄だけにする（flex-basis を0にして、余りを全部もらう） */
     #mentor-modal .modal-body > *{ flex:0 0 auto; }
-    #mentor-modal .modal-body > .mt-log{ flex:1 1 0; }
+    #mentor-modal .modal-body > .mt-log,
+    #mentor-modal .modal-body > .mt-stagewrap{ flex:1 1 0; }
+    /* 会話の横に上長を常設する（2026-09-07・ユーザー指摘「文章が長くなると師匠の顔が見えなくなる」）。
+       会話だけがスクロールし、右の顔は動かない。狭い画面では隠して、上の行の顔（大きめ）に任せる。
+       ★ここを1列に戻すと、また顔が流れて見えなくなる */
+    /* ★min-height はこの枠が持つ（会話の欄ではなく）。会話に min-height を残すと、
+       引き出しを開いて枠が縮んだときに会話だけが枠から溢れて、相談のきっかけの行に重なる */
+    .mt-stagewrap{ display:flex; gap:14px; min-height:300px; align-items:stretch; }
+    .mt-stagewrap > .mt-log{ flex:1 1 auto; min-width:0; min-height:0; }
+    /* ★高さは会話の欄と同じだけ（align-self:stretch）。引き出しを開くと会話は300pxまで縮むので、
+       中身の合計はそれを超えないこと（顔140＋名前＋所属2行＋様子＋余白 ≒ 271px）。
+       顔を大きくするなら overflow:hidden で切れる。きっかけの行に被らせないための歯止め */
+    .mt-side{ flex:0 0 186px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+      padding:14px 10px 16px; border:1.5px solid var(--line); border-radius:14px; background:#f4f8f5;
+      align-self:stretch; overflow:hidden; }
+    .mt-side-art{ width:140px; height:140px; flex:0 0 auto; border-radius:50%; overflow:hidden; background:#eef4f0;
+      border:2px solid #d9e3dc; box-shadow:0 3px 10px rgba(31,51,40,.12); transition:box-shadow .2s, border-color .2s; }
+    .mt-side-art svg{ width:100%; height:100%; display:block; }
+    .mt-side-name{ font-weight:800; font-size:.98rem; color:#1f3328; letter-spacing:.03em; }
+    .mt-side-sub{ font-size:.72rem; color:var(--ink-soft); text-align:center; line-height:1.5; }
+    .mt-side-mood{ margin-top:2px; padding:5px 12px; border-radius:999px; background:#fff; border:1px solid #d9e3dc;
+      font-size:.74rem; font-weight:700; color:#1f3328; text-align:center; }
+    /* 様子は大きさではなく、まわりの輪で見せる（大きくすると、きっかけの行に被る） */
+    .mt-side-art.mt-mood-talk{ border-color:#3f9d7a; box-shadow:0 0 0 4px rgba(63,157,122,.18); }
+    .mt-side-art.mt-mood-listen{ border-color:#7fa8c0; box-shadow:0 0 0 4px rgba(127,168,192,.2); }
+    .mt-side-art.mt-mood-kick{ border-color:#d8a13a; box-shadow:0 0 0 5px rgba(216,161,58,.24); }
+    .mt-side-art.mt-mood-praise{ border-color:#7fc0a3; box-shadow:0 0 0 5px rgba(127,192,163,.24); }
+    @media (max-width:960px){ .mt-side{ display:none; } }
     .mt-top{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
     .mt-top select{ min-height:40px; padding:6px 10px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.86rem; background:#fff; }
     .mt-badge{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; background:#1f3328; color:#fff; font-size:.72rem; font-weight:800; }
-    .mt-log{ flex:1 1 auto; min-height:220px; max-height:none; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:10px; }
+    /* min-height は「引き出しを開いたときに会話が確保する高さ」でもある。下げないこと */
+    .mt-log{ flex:1 1 auto; min-height:300px; max-height:none; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:10px; }
     /* 上長の顔（イラスト）。相談の相手が見えていた方が話しかけやすい、というユーザー指摘で追加。
        返事の横（chat-ava）と、上の行（mt-face）に同じ絵を出す。絵文字は使わずインラインSVG。 */
     .mt-ava{ width:38px; height:38px; border-radius:12px; background:#eef4f0; border:1.5px solid #d9e3dc; overflow:hidden; padding:0; }
@@ -1535,7 +1565,7 @@
       .mt-mood-talk .mt-hand, .mt-mood-kick .mt-hand{ animation:mtHand .5s ease-in-out infinite alternate; }
       .mt-mood-praise .mt-hand{ animation:mtHand .9s ease-in-out infinite alternate; }
       .mt-mood-listen svg{ animation:mtNod 2s ease-in-out infinite; }
-      .mt-face svg .mt-lid, .mt-head-art svg .mt-lid{ animation:mtBlink 6s infinite; }
+      .mt-face svg .mt-lid, .mt-head-art svg .mt-lid, .mt-side-art svg .mt-lid{ animation:mtBlink 6s infinite; }
     }
     @keyframes mtMouth{ from{ transform:scaleY(.18); } to{ transform:scaleY(1); } }
     @keyframes mtHand{ from{ transform:translateY(0) rotate(0deg); } to{ transform:translateY(-1.4px) rotate(-7deg); } }
@@ -1556,8 +1586,13 @@
     .mt-tools[hidden]{ display:none; }
     .mt-tools select{ min-height:38px; padding:6px 10px; border:1.5px solid var(--line); border-radius:10px; font-family:inherit; font-size:.84rem; background:#fff; }
     .mt-tools .mt-stagebox{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    /* 引き出し（人物設定・今月の数字・自分で点検）は、開いても会話を押し出さないように中で送る */
-    #mentor-modal .mt-panel{ max-height:46vh; overflow:auto; }
+    /* 引き出し（人物設定・今月の数字・自分で点検）は、開いても会話を押し出さないように中で送る。
+       ★2026-09-07：それでも会話が min-height の220pxまで潰れていた（ユーザー指摘）。
+       modal-body > * が flex:0 0 auto なので、パネルだけが場所を取り、縮むのは会話のほうだった。
+       パネルを縮む側（flex:0 1 auto）にして、上限も下げる。中でスクロールするので中身は全部読める。
+       ここを 0 0 auto に戻すと、また会話が潰れる。 */
+    #mentor-modal .mt-panel{ max-height:34vh; overflow:auto; }
+    #mentor-modal .modal-body > .mt-panel{ flex:0 1 auto; min-height:132px; }
     .mt-stage-badge{ display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#eaf1ec; color:#1f3328; font-size:.72rem; font-weight:700; }
     .mt-bub .mt-tot{ list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
     .mt-bub .mt-tot li{ margin:0; padding:7px 10px; border-left:3px solid #c9d8ce; background:#fff; border-radius:0 10px 10px 0; }
@@ -1616,7 +1651,13 @@
       /* スマホは全画面（オーバーレイの余白も外して端まで使う） */
       #mentor-modal{ padding:0; }
       #mentor-modal .modal{ width:100vw; height:100dvh; max-height:none; border-radius:0; }
-      .mt-log{ min-height:160px; }
+      .mt-log{ min-height:240px; }
+      .mt-stagewrap{ min-height:240px; }
+      #mentor-modal .mt-panel{ max-height:38vh; }
+      #mentor-modal .modal-body > .mt-panel{ min-height:120px; }
+      /* 横の顔は入らないので、上の行（貼り付いている）の顔を大きくして、いつでも見えるようにする */
+      .mt-face{ width:54px; height:54px; }
+      .mt-face svg{ width:100%; height:100%; }
       /* 相談ボタン12個を縦に積むと画面の大半を食うので、横スクロールの1列にする */
       .mt-quick{ flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
       .mt-quick .chat-chip{ flex:0 0 auto; white-space:nowrap; }
@@ -3788,7 +3829,17 @@
           <div class="mt-kpi-out" id="mtk-out"></div>
         </div>
 
-        <div class="chat-log mt-log" id="mt-log"></div>
+        <!-- 会話と、その横の上長。会話が長くなると上の行の小さい顔が見えなくなる、というユーザー指摘で
+             横に大きい顔を置いた（2026-09-07）。狭い画面では隠れて、上の行の顔だけになる -->
+        <div class="mt-stagewrap">
+          <div class="chat-log mt-log" id="mt-log"></div>
+          <aside class="mt-side" id="mt-side">
+            <div class="mt-side-art" id="mt-side-art" aria-hidden="true"></div>
+            <div class="mt-side-name" id="mt-side-name">師匠</div>
+            <div class="mt-side-sub" id="mt-side-sub"></div>
+            <div class="mt-side-mood" id="mt-side-mood"></div>
+          </aside>
+        </div>
         <div class="mt-quick" id="mt-quick"></div>
         <div class="mt-input">
           <textarea id="mt-text" rows="1" placeholder="相談を書く（例：今月あと3件足りない。紹介が出ない。）"></textarea>
@@ -6056,20 +6107,38 @@
       try{ tone = mtTone(mtP()); }catch(e){}
       return '<span class="chat-ava mt-ava">' + mtFaceSVG(tone) + '</span>';
     }
-    /* 上の行の顔と名乗り。上長を切り替えたら描き直す */
+    /* いまの様子を言葉にする（横の顔の下に出す）。口調で言い方を変える */
+    const MT_MOOD_WORD = {
+      shisho: { idle:'聞いてやる。話せ', talk:'話しとる', listen:'聞いとる', kick:'喝を入れとる', praise:'認めとる' },
+      zsedai: { idle:'いつでもどうぞ', talk:'話しています', listen:'聞いています', kick:'ここは締めます', praise:'いいですね！' }
+    };
+    /* 上の行の顔と名乗り。上長を切り替えたら描き直す。
+       ★顔は3か所（上の行・単独ページの帯・会話の横）。増やしたらここに足すこと */
     function mtRenderFace(){
       const el = $('mt-face');
       const P = mtP() || {};
-      const svg = mtFaceSVG(mtTone(P), mtMood);
+      const tone = mtTone(P);
+      const svg = mtFaceSVG(tone, mtMood);
       const art = $('mt-head-art');   /* 単独ページの帯にも同じ絵と表情を出す */
       if(art){ art.className = 'mt-head-art mt-mood-' + mtMood; art.innerHTML = svg; }
+      const co = String(P.company || '').replace(/[（(][^）)]*[）)]/g, '').trim();
+      const sub = co + (co ? '／' : '') + (P.style === 'zsedai' ? '褒め伸ばし' : '体育会系');
+      /* 会話の横の大きい顔（広い画面だけ。会話が長くなっても、ここは流れない） */
+      const side = $('mt-side-art');
+      if(side){
+        side.className = 'mt-side-art mt-mood-' + mtMood;
+        side.innerHTML = svg;
+        const sn = $('mt-side-name'), ss = $('mt-side-sub'), sm = $('mt-side-mood');
+        if(sn) sn.textContent = P.name || '師匠';
+        if(ss) ss.textContent = sub;
+        if(sm) sm.textContent = (MT_MOOD_WORD[tone] || MT_MOOD_WORD.shisho)[mtMood] || '';
+      }
       if(!el) return;
       el.className = 'mt-face mt-mood-' + mtMood;
       el.innerHTML = svg;
       const n = $('mt-who-name'), s = $('mt-who-sub');
       if(n) n.textContent = P.name || '師匠';
-      const co = String(P.company || '').replace(/[（(][^）)]*[）)]/g, '').trim();
-      if(s) s.textContent = co + (co ? '／' : '') + (P.style === 'zsedai' ? '褒め伸ばし' : '体育会系');
+      if(s) s.textContent = sub;
     }
     function mtStage(){ return MT_STAGES.filter(function(s){ return s.id === MT.stage; })[0] || MT_STAGES[0]; }
     /* 定型文（MT_TEXTS）を口調別に1つ。配列なら使い回しを避けて選ぶ */
@@ -6942,6 +7011,23 @@
     }
 
     /* ---------- 画面 ---------- */
+    /* 引き出し（人物設定・今月の数字・自分で点検）は一度にひとつだけ開く。
+       開いたら設定の行も畳む。3つ同時に開くと会話の欄が潰れる（ユーザー指摘・2026-09-07）。
+       チャットから「自分で点検」と打ったときも同じ道を通すので、ここに置いてある（IIFEの外） */
+    const MT_DRAWERS = [['mt-set-btn', 'mt-settings'], ['mt-kpi-btn', 'mt-kpi'], ['mt-self-btn', 'mt-self']];
+    function mtShut(exceptPanelId){
+      MT_DRAWERS.forEach(function(d){
+        if(d[1] === exceptPanelId) return;
+        const bb = $(d[0]), pp = $(d[1]);
+        if(pp) pp.hidden = true;
+        if(bb) bb.setAttribute('aria-expanded', 'false');
+      });
+    }
+    function mtToolsShut(){
+      const tl = $('mt-tools'), tb = $('mt-more');
+      if(tl) tl.hidden = true;
+      if(tb) tb.setAttribute('aria-expanded', 'false');
+    }
     const MT_QUICK = [
       { q:'朝の3問', i:'fa-mug-hot' }, { q:'夕方の3問', i:'fa-moon' }, { q:'自分で点検', i:'fa-list-check' },
       { q:'今月の数字が足りない', i:'fa-chart-line' }, { q:'紹介が出ない', i:'fa-people-arrows' }, { q:'単価が上がらない', i:'fa-yen-sign' },
@@ -7036,7 +7122,7 @@
         else if(/^(話の進め方|心理の型|話し方の型|進め方の型)/.test(q.trim())){ mtPend = null; html = mtPsyPick(P); }
         else if(/^(自分で点検|点検|セルフチェック)。?$/.test(q.trim())){
           // 点検はパネルで答える。開くだけにして、チャットには案内を出す
-          const pnl = $('mt-self'); if(pnl){ pnl.hidden = false; const btn = $('mt-self-btn'); if(btn) btn.setAttribute('aria-expanded', 'true'); pnl.scrollIntoView({ block:'nearest' }); }
+          const pnl = $('mt-self'); if(pnl){ mtShut('mt-self'); mtToolsShut(); pnl.hidden = false; const btn = $('mt-self-btn'); if(btn) btn.setAttribute('aria-expanded', 'true'); pnl.scrollIntoView({ block:'nearest' }); }
           html = mtFill(mtPick(MT_OPENERS[mtTone(P)]), P) + '上の「自分で点検」の10問に、はい／いいえで答えて「点検する」を押す。感想は要らん、事実だけ。';
         }
         else {
@@ -7115,7 +7201,13 @@
       if($('mt-persona')) $('mt-persona').addEventListener('change', function(){ MT.active = $('mt-persona').value; mtPend = null; mtSave(); mtRenderFace(); mtFillSettings(); mtFillKpi(); mtRenderLog(); });
       const tog = function(btnId, panelId){
         const b = $(btnId), p = $(panelId); if(!b || !p) return;
-        b.addEventListener('click', function(){ p.hidden = !p.hidden; b.setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); if(!p.hidden) p.scrollIntoView({ block:'nearest' }); });
+        b.addEventListener('click', function(){
+          const open = p.hidden;
+          if(open){ mtShut(panelId); if(panelId !== 'mt-tools') mtToolsShut(); }
+          p.hidden = !open;
+          b.setAttribute('aria-expanded', p.hidden ? 'false' : 'true');
+          if(!p.hidden) p.scrollIntoView({ block:'nearest' });
+        });
       };
       tog('mt-set-btn', 'mt-settings'); tog('mt-kpi-btn', 'mt-kpi'); tog('mt-more', 'mt-tools');
       mtVoiceInit();
@@ -7155,8 +7247,10 @@
       });
       if($('mt-self-btn')) $('mt-self-btn').addEventListener('click', function(){
         const pnl = $('mt-self'); if(!pnl) return;
-        pnl.hidden = !pnl.hidden; this.setAttribute('aria-expanded', pnl.hidden ? 'false' : 'true');
-        if(!pnl.hidden){ ['mt-settings','mt-kpi'].forEach(function(id){ const p = $(id); if(p) p.hidden = true; }); }
+        const open = pnl.hidden;
+        if(open){ mtShut('mt-self'); mtToolsShut(); }
+        pnl.hidden = !open; this.setAttribute('aria-expanded', pnl.hidden ? 'false' : 'true');
+        if(!pnl.hidden) pnl.scrollIntoView({ block:'nearest' });
       });
       if($('mts2-run')) $('mts2-run').addEventListener('click', mtSelfRun);
       if($('mts2-clear')) $('mts2-clear').addEventListener('click', function(){ MT_SELF_Q.forEach(function(_, i){ const el = $('mtsq-' + i); if(el) el.checked = false; }); });

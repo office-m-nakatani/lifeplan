@@ -66,6 +66,24 @@
       --bad:          #d97b7b;   /* 要対策（やわらかい赤） */
       --bad-pale:     #fbeaea;
 
+      /* 図表の色分け（2026-09-07 ユーザー指示）。
+         画面の骨格は一条グリーンのままにして、図の中だけ意味ごとに色を変える。
+         緑と薄い緑だけだと、4つのマスも横棒の内訳も見分けがつかなかった。
+         ★意味は固定：赤＝急ぐ／青＝じっくり（信頼・紹介）／黄＝手早く／紫＝折を見て。
+           棒は 青＝お客様／橙＝当方。ほかの図でこの色に別の意味を持たせない。 */
+      --dg-red:       #cf5b46;   /* ① いますぐ動く（重要×急ぐ） */
+      --dg-red-pale:  #fdeeea;
+      --dg-blue:      #3f7cb8;   /* ② じっくり積み上げる（重要×急がない） */
+      --dg-blue-pale: #e9f1f9;
+      --dg-blue-deep: #2f5d8c;
+      --dg-amber:     #d99a2b;   /* ③ 手早く片づける（ふつう×急ぐ） */
+      --dg-amber-pale:#fdf4e0;
+      --dg-violet:    #7f66ae;   /* ④ 折を見て（ふつう×急がない） */
+      --dg-violet-pale:#f1edf8;
+      --dg-teal:      #2f9089;   /* 出どころ：試算から */
+      --dg-orange:    #e08a3c;   /* 当方でお調べすること／お話から */
+      --dg-gray:      #8b98a2;   /* 未入力から */
+
       --radius:       18px;
       --radius-sm:    12px;
       --shadow:       0 8px 24px rgba(44,122,82,.10);
@@ -323,7 +341,7 @@
     /* お客様モードでは、担当者専用の操作（アカウント保存・共有リンク作成）を隠す */
     body.customer-mode #btn-save{ display:none !important; }
     body.customer-mode #btn-share-top{ display:none !important; }   /* 共有リンクを作るのは担当者だけ */
-    body.customer-mode #btn-quick{ display:none !important; }       /* 1分モードは担当者の入口（お客様の画面では出さない） */
+    body.customer-mode #btn-quick{ display:none !important; }       /* 1分モードは担当者の入口（お客様の画面では出さない。保存モーダルの中にある） */
     body.customer-mode #btn-next{ display:none !important; }        /* 次の一手も担当者の入口 */
     /* 担当者の方はこちら（お客様モードを解除して保存機能を出す）：目立たせない文字リンク */
     .cust-advisor-link{ background:none; border:none; padding:4px 2px; color:var(--ink-soft); font-family:inherit;
@@ -1283,35 +1301,45 @@
       padding:0 4px; font-size:.7rem; font-weight:800; color:var(--ink-soft); }
     .nxv-mx-xl .nxv-ax{ color:var(--ink); }
     .nxv-cell{ padding:9px 11px; background:#fff; border:1.5px solid var(--line); border-radius:12px; }
-    /* ①いますぐ＝急ぎの合図（アンバー）／②じっくり＝伸ばす合図（グリーン） */
-    .nxv-cell.is-1{ border-color:var(--warn); background:var(--warn-pale); }
-    .nxv-cell.is-2{ border-color:var(--blue); background:var(--blue-pale); }
+    /* 4つのマスは色で見分ける（2026-09-07）。①赤＝急ぐ／②青＝じっくり／③黄＝手早く／④紫＝折を見て。
+       左の色帯を付けて、面の色が薄くても並べたときに区別がつくようにする。 */
+    .nxv-cell{ border-left-width:5px; }
+    .nxv-cell.is-1{ border-color:var(--dg-red);    border-left-color:var(--dg-red);    background:var(--dg-red-pale); }
+    .nxv-cell.is-2{ border-color:var(--dg-blue);   border-left-color:var(--dg-blue);   background:var(--dg-blue-pale); }
+    .nxv-cell.is-3{ border-color:var(--dg-amber);  border-left-color:var(--dg-amber);  background:var(--dg-amber-pale); }
+    .nxv-cell.is-4{ border-color:var(--dg-violet); border-left-color:var(--dg-violet); background:var(--dg-violet-pale); }
     .nxv-cell-h{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
     .nxv-no{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
       width:21px; height:21px; border-radius:50%; background:var(--ink-soft); color:#fff;
       font-size:.72rem; font-weight:800; }
-    .nxv-cell.is-1 .nxv-no{ background:#b8801f; }
-    .nxv-cell.is-2 .nxv-no{ background:var(--blue-deep); }
+    .nxv-cell.is-1 .nxv-no{ background:var(--dg-red); }
+    .nxv-cell.is-2 .nxv-no{ background:var(--dg-blue-deep); }
+    .nxv-cell.is-3 .nxv-no{ background:#b8801f; }
+    .nxv-cell.is-4 .nxv-no{ background:var(--dg-violet); }
     .nxv-cell-t{ flex:1 1 auto; min-width:0; font-size:.82rem; font-weight:800; color:var(--ink); line-height:1.35; }
     .nxv-cell-t small{ display:block; font-size:.68rem; font-weight:700; color:var(--ink-soft); }
     .nxv-cnt{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
       min-width:30px; height:22px; padding:0 7px; border-radius:11px;
       background:var(--bg-soft); border:1px solid var(--line);
       font-size:.72rem; font-weight:800; color:var(--ink); }
-    .nxv-cell.is-1 .nxv-cnt{ background:#fff; border-color:var(--warn); color:#8a6212; }
-    .nxv-cell.is-2 .nxv-cnt{ background:#fff; border-color:var(--blue); color:var(--blue-deep); }
+    .nxv-cell.is-1 .nxv-cnt{ background:#fff; border-color:var(--dg-red);    color:var(--dg-red); }
+    .nxv-cell.is-2 .nxv-cnt{ background:#fff; border-color:var(--dg-blue);   color:var(--dg-blue-deep); }
+    .nxv-cell.is-3 .nxv-cnt{ background:#fff; border-color:var(--dg-amber);  color:#8a6212; }
+    .nxv-cell.is-4 .nxv-cnt{ background:#fff; border-color:var(--dg-violet); color:var(--dg-violet); }
     .nxv-none{ font-size:.74rem; color:var(--ink-soft); }
     .nxv-chip{ display:flex; align-items:flex-start; gap:6px; margin:0 0 5px;
       padding:5px 9px; border-radius:9px; background:var(--bg-soft); border:1px solid var(--line);
       font-size:.76rem; line-height:1.55; color:var(--ink); }
-    .nxv-cell.is-1 .nxv-chip, .nxv-cell.is-2 .nxv-chip{ background:#fff; }
+    .nxv-cell.is-1 .nxv-chip, .nxv-cell.is-2 .nxv-chip,
+    .nxv-cell.is-3 .nxv-chip, .nxv-cell.is-4 .nxv-chip{ background:#fff; }
     .nxv-chip i{ flex:0 0 auto; margin-top:3px; font-size:.66rem; color:var(--ink-soft); }
+    /* 誰がやるかの札。図2の横棒と同じ色（青＝お客様／橙＝当方）にして、図をまたいでも同じ意味に見えるようにする */
     .nxv-chip .nxv-who{ flex:0 0 auto; margin-left:auto; padding:1px 6px; border-radius:999px;
-      background:var(--line); font-size:.66rem; font-weight:700; color:var(--ink-soft); white-space:nowrap; }
-    .nxv-chip .nxv-who.is-cust{ background:var(--blue-pale2); color:var(--blue-deep); }
+      background:#fbeedf; font-size:.66rem; font-weight:700; color:#a4611b; white-space:nowrap; }
+    .nxv-chip .nxv-who.is-cust{ background:var(--dg-blue-pale); color:var(--dg-blue-deep); }
     /* 右上（重要だが急がない）に添える1行。ここが埋もれると、長い目で見た価値が伝わらない */
-    .nxv-cell-f{ margin-top:7px; padding-top:7px; border-top:1px dashed var(--blue-pale2);
-      font-size:.74rem; line-height:1.7; color:var(--blue-deep); }
+    .nxv-cell-f{ margin-top:7px; padding-top:7px; border-top:1px dashed var(--dg-blue);
+      font-size:.74rem; line-height:1.7; color:var(--dg-blue-deep); }
     .nxv-cell-f i{ margin-right:5px; }
 
     /* --- 図2・図3：「ラベル｜横棒｜件数」を1つの塊にして、2列に並べる ---
@@ -1324,12 +1352,14 @@
     .nxv-rb span{ display:block; }
     .nxv-rn{ font-size:.78rem; font-weight:800; color:var(--ink); white-space:nowrap;
       font-variant-numeric:tabular-nums; }
-    .nxv-c-cust{ background:var(--blue); }
-    .nxv-c-staff{ background:var(--ink-soft); }
-    .nxv-c-calc{ background:var(--blue); }
-    .nxv-c-plan{ background:var(--blue-pale2); }
-    .nxv-c-talk{ background:var(--yellow); }
-    .nxv-c-blank{ background:var(--ink-soft); }
+    /* 図2：誰がやるか（青＝お客様／橙＝当方）。灰色どうしだと内訳が読めなかった */
+    .nxv-c-cust{ background:var(--dg-blue); }
+    .nxv-c-staff{ background:var(--dg-orange); }
+    /* 図3：出どころ（4つとも別の色。薄い緑と緑では並べても差が分からなかった） */
+    .nxv-c-calc{ background:var(--dg-teal); }
+    .nxv-c-plan{ background:var(--dg-violet); }
+    .nxv-c-talk{ background:var(--dg-orange); }
+    .nxv-c-blank{ background:var(--dg-gray); }
     .nxv-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:8px; font-size:.74rem; color:var(--ink-soft); }
     .nxv-legend span{ display:inline-flex; align-items:center; gap:6px; }
     .nxv-sw{ display:inline-block; width:12px; height:12px; border-radius:3px; }
@@ -1474,6 +1504,10 @@
        師匠に相談する画面。お客様には見せない（customer-mode／PDF／印刷で丸ごと消す）。
        入力欄は #input-panel の外に置く＝保存データ・共有リンクには一切乗らない。 */
     #mentor-modal .modal{ width:min(1000px,96vw); height:min(92vh, 900px); }
+    /* 画面いっぱい（2026-09-07 ユーザー指示）。会話・引き出しが一度に見えるようにするための切替。
+       選んだ状態は端末に覚えさせる（毎回押し直さない） */
+    #mentor-modal.is-full{ padding:0; }
+    #mentor-modal.is-full .modal{ width:100vw; height:100dvh; max-height:none; border-radius:0; }
     /* ★flex:1 1 auto が無いと、.modal は縦フレックスなのに本文だけ中身の高さで止まり、
        モーダルの下半分が空いたまま会話が min-height（300px）まで潰れる。外さないこと */
     #mentor-modal .modal-body{ display:flex; flex-direction:column; gap:10px; padding:14px 18px 16px; flex:1 1 auto; min-height:0; }
@@ -1726,6 +1760,7 @@
     @media (max-width:640px){
       /* スマホは全画面（オーバーレイの余白も外して端まで使う） */
       #mentor-modal{ padding:0; }
+      #mt-full{ display:none; }   /* この幅ではもともと画面いっぱい */
       #mentor-modal .modal{ width:100vw; height:100dvh; max-height:none; border-radius:0; }
       .mt-log{ min-height:240px; }
       .mt-stagewrap{ min-height:240px; }
@@ -2068,10 +2103,6 @@
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
-        <!-- 1分モード（2026-09-06追加）。展示場の初回商談で、5項目だけ伺って概算を出すための入口。
-             仕様の置き場所は「サンプル読込の隣」だったが、サンプルは保存モーダルの中にあり、
-             初回商談でいちばん早く押したいものが2階層奥になるため、操作バーの本線に出した。 -->
-        <button class="btn btn-ghost btn-sm" id="btn-quick"><i class="fa-solid fa-bolt"></i> 1分で概算</button>
         <!-- 次の一手（2026-09-06：もと「商談の順路」の位置）。
              次の一手は音声メモの4つ目のタブの中にあり、録音を使わない担当者には
              存在が見えなかった（音声メモを開く→展開→タブ→作る、の4手が必要だった）。
@@ -3443,6 +3474,17 @@
           <button class="btn btn-ghost btn-sm" id="sample-show" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> 表示する</button>
         </div>
 
+        <!-- 1分で概算（2026-09-07 ユーザー指示で操作バーからここへ移動）。
+             初回商談の入口だが毎回は使わないので、操作バーの本線ではなく保存・読込の中の道具にする。
+             idは btn-quick のまま＝既存の配線と、お客様モードでの非表示がそのまま効く。 -->
+        <div class="sample-box">
+          <div>
+            <b>1分で概算</b>
+            <span>5項目だけ伺って、いったん概算を出します（ほかは目安のまま）</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-quick" type="button"><i class="fa-solid fa-bolt"></i> 始める</button>
+        </div>
+
         <!-- ログイン -->
         <div id="save-login">
           <p class="lock-msg">保存・読込にはログインが必要です。営業担当者ごとにアカウントを作成できます。</p>
@@ -3821,6 +3863,7 @@
           <span class="mt-bar-r">
             <button type="button" class="btn btn-ghost btn-sm" id="mt-play"><i class="fa-solid fa-play"></i> 再生</button>
             <button type="button" class="btn btn-ghost btn-sm" id="mt-say" aria-pressed="false"><i class="fa-solid fa-volume-high"></i> 自動で読み上げ</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="mt-full" aria-pressed="false" title="画面いっぱいに表示する"><i class="fa-solid fa-expand"></i> 画面いっぱい</button>
             <button type="button" class="btn btn-ghost btn-sm" id="mt-more" aria-expanded="false"><i class="fa-solid fa-gear"></i> 設定</button>
           </span>
         </div>
@@ -7653,10 +7696,22 @@
       const qk = $('mt-quick');
       if(qk && !qk.innerHTML) qk.innerHTML = MT_QUICK.map(function(c){ return '<button type="button" class="chat-chip" data-mtq="' + esc(c.q) + '"><i class="fa-solid ' + c.i + '"></i> ' + esc(c.q) + '</button>'; }).join('');
       const m = $('mentor-modal'); if(m) m.hidden = false;
+      mtApplyFull();
       document.body.style.overflow = 'hidden';
       setTimeout(function(){ const t = $('mt-text'); if(t) t.focus(); }, 50);
     }
     function mtClose(){ const m = $('mentor-modal'); if(m) m.hidden = true; document.body.style.overflow = ''; }
+    /* 画面いっぱいの切替。狭い画面（640px以下）はもともと全画面なので、ボタン自体を出さない */
+    function mtApplyFull(){
+      const m = $('mentor-modal'), b = $('mt-full'); if(!m) return;
+      const on = !!MT.full;
+      m.classList.toggle('is-full', on);
+      if(b){
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.innerHTML = on ? '<i class="fa-solid fa-compress"></i> 元の大きさ' : '<i class="fa-solid fa-expand"></i> 画面いっぱい';
+        b.title = on ? '元の大きさに戻す' : '画面いっぱいに表示する';
+      }
+    }
     (function mtWire(){
       if(!$('mentor-modal')) return;
       if($('btn-mentor')) $('btn-mentor').addEventListener('click', mtOpen);
@@ -7683,6 +7738,7 @@
         });
       };
       tog('mt-set-btn', 'mt-settings'); tog('mt-kpi-btn', 'mt-kpi'); tog('mt-more', 'mt-tools');
+      if($('mt-full')) $('mt-full').addEventListener('click', function(){ MT.full = !MT.full; mtSave(); mtApplyFull(); });
       /* 引き出しの見出しにある閉じるボタン（設定の行が畳まれていても閉じられるように） */
       MT_DRAWERS.forEach(function(d){
         const pp = $(d[1]); if(!pp) return;
@@ -13375,8 +13431,8 @@
         { k:'hi_later', cls:'is-2', no:'2', name:'じっくり積み上げる',  sub:'重要 × 急がない',
           foot:'締切がないぶん後回しになりがちですが、<b>長い目で見て、信頼とご紹介につながるのはここ</b>です。次の面談までに1つでも進めておくと、話が積み上がります。' },
         { k:'hi_now',   cls:'is-1', no:'1', name:'いますぐ動く',        sub:'重要 × 急ぐ' },
-        { k:'lo_later', cls:'',     no:'4', name:'折を見て',            sub:'ふつう × 急がない' },
-        { k:'lo_now',   cls:'',     no:'3', name:'手早く片づける',      sub:'ふつう × 急ぐ' }
+        { k:'lo_later', cls:'is-4', no:'4', name:'折を見て',            sub:'ふつう × 急がない' },
+        { k:'lo_now',   cls:'is-3', no:'3', name:'手早く片づける',      sub:'ふつう × 急ぐ' }
       ];
 
       function nxVizHTML(res){
@@ -13467,6 +13523,9 @@
                 + '<span class="nxv-rb" style="width:' + w + '%;"><span class="nxv-c-' + k + '" style="flex:1;"></span></span>'
                 + '<span class="nxv-rn">' + bySrc[k] + '件</span>'
                 + '</div>';
+            }).join('') + '</div>'
+          + '<div class="nxv-legend">' + srcKeys.map(function(k){
+              return '<span><i class="nxv-sw nxv-c-' + k + '"></i> ' + esc(NX_SRC_LABEL[k]) + '</span>';
             }).join('') + '</div>'
           + '<p class="nxv-note">合計' + items.length + '件。「お話から」は、録音した会話に出てきた話題から拾ったものです。'
           + 'この図には、下の一覧で「そのほかに確認しておきたいこと」に畳まれている分も含めています。</p>'
@@ -16936,7 +16995,11 @@
     function refreshSaveModal(){ showSaveView(currentUser ? 'panel' : 'login'); }
     $('btn-save').addEventListener('click', ()=>{ saveModal.hidden=false; refreshSaveModal(); });
     // 1分モード（2026-09-06追加）
-    if($('btn-quick')) $('btn-quick').addEventListener('click', ()=>{ $('quick-modal').hidden = false; });
+    /* 保存・読込モーダルの中から開くので、重ねずに親を閉じてから出す */
+    if($('btn-quick')) $('btn-quick').addEventListener('click', ()=>{
+      if($('save-modal')) $('save-modal').hidden = true;
+      $('quick-modal').hidden = false;
+    });
     if($('quick-close')) $('quick-close').addEventListener('click', ()=>{ $('quick-modal').hidden = true; });
     if($('quick-modal')) $('quick-modal').addEventListener('click', (e)=>{ if(e.target===$('quick-modal')) $('quick-modal').hidden = true; });
     if($('qs-household-seg')) $('qs-household-seg').addEventListener('click', (e)=>{

@@ -443,6 +443,12 @@
       color:var(--bad); cursor:pointer; font-size:.95rem; display:grid; place-items:center;
     }
     .btn-del:hover{ background:var(--bad-pale); border-color:var(--bad); }
+    /* 保存名の変更（削除と同じ大きさの正方形アイコンボタン。色だけ中立に） */
+    .btn-rename{
+      width:38px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
+      color:var(--ink-soft); cursor:pointer; font-size:.95rem; display:grid; place-items:center;
+    }
+    .btn-rename:hover{ background:var(--blue-pale); border-color:var(--blue); color:var(--blue-deep); }
     .btn-add{
       margin-top:12px; width:100%; padding:11px; border:1.5px dashed var(--blue-pale2); background:var(--blue-pale);
       color:var(--blue-deep); border-radius:12px; font-family:inherit; font-weight:700; cursor:pointer; font-size:.9rem;
@@ -17991,12 +17997,44 @@
         const d = new Date(saves[n].t||0);
         const ds = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;
         const safe = n.replace(/"/g,'&quot;');
-        return `<div class="save-item"><span class="si-name">${n}</span><span class="si-date">${ds}</span>
+        return `<div class="save-item"><span class="si-name">${esc(n)}</span><span class="si-date">${ds}</span>
           <button class="btn btn-ghost btn-sm" data-load="${safe}"><i class="fa-solid fa-folder-open"></i> 読込</button>
+          <button class="btn-rename" data-rename="${safe}" title="名前を変更"><i class="fa-solid fa-pen"></i></button>
           <button class="btn-del" data-del="${safe}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
       }).join('');
       list.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{ const name=b.dataset.load; const st=getSaves()[name]; if(st){ applyPlans(st); setCurrentSave(name); $('save-modal').hidden=true; } }));
+      list.querySelectorAll('[data-rename]').forEach(b=> b.addEventListener('click', ()=>{ renameSave(b.dataset.rename); }));
       list.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ if(confirm(`「${b.dataset.del}」を削除しますか？`)){ const o=getSaves(); delete o[b.dataset.del]; putSaves(o); if(currentSaveName===b.dataset.del) setCurrentSave(null); renderSaveList(); } }));
+    }
+
+    // 保存名の変更（2026-09-10追加）。復元（取り込み）で「様①」のような仮の名前が付いた
+    // データを、あとから正式なお客様名に直せるようにする。
+    // ★キー（お客様名）自体を書き替える＝保存はその名前の下に作り直し、古い名前は消す。
+    //   顧客管理（CRM・omcrm）は「名前が一致するかどうか」だけで紐づけているため、
+    //   ここで変えないとCRM側だけ古い名前のまま残り、別人の資料に見えてしまう。
+    function renameSave(oldName){
+      const newName = (prompt('新しい保存名（お客様名など）を入力してください。', oldName) || '').trim();
+      if(!newName || newName === oldName) return;
+      const o = getSaves();
+      if(!(oldName in o)) return;
+      if(newName in o){ alert(`「${newName}」は既に使われています。別の名前にしてください。`); return; }
+      o[newName] = o[oldName];
+      delete o[oldName];
+      if(!putSaves(o)) return;
+      if(currentSaveName === oldName) setCurrentSave(newName);
+      try{
+        const key = 'omcrm_v1__' + currentUser;
+        const s = JSON.parse(localStorage.getItem(key)||'{"customers":{}}');
+        if(s.customers){
+          Object.values(s.customers).forEach(c=>{
+            if(!c) return;
+            if(c.name === oldName) c.name = newName;
+            (c.lifeplans||[]).forEach(l=>{ if(l && l.tool==='一条版' && l.acct===currentUser && l.name===oldName) l.name = newName; });
+          });
+          localStorage.setItem(key, JSON.stringify(s));
+        }
+      }catch(e){}
+      renderSaveList();
     }
 
     // 「編集中の資料」を設定し、上書きボタンの表示を切り替える

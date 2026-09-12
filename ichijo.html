@@ -1781,6 +1781,13 @@
     @container (max-width:600px){ .mt-bub .mt-manga-3{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
     @container (max-width:440px){ .mt-bub .mt-manga, .mt-bub .mt-manga-2, .mt-bub .mt-manga-3, .mt-bub .mt-manga-4, .mt-bub .mt-manga-5{ grid-template-columns:1fr; } }
     @media (max-width:520px){
+      /* ★2026-09-12（携帯）：返事は吹き出しを画面いっぱいに使う。顔は吹き出しの「上」に置く。
+         横に並べると顔38px＋隙間8pxで1行が46px（画面の12%）短くなっていた（実測 吹き出し274px／画面390px）。
+         ★顔は消さないこと（ユーザー指示「師匠のアイコンは残して欲しい。会話の中にあってもいい」）。
+         ★user の吹き出し（右寄せ）は今までどおり横並びのまま（.bot だけに当てている） */
+      .chat-msg.bot{ flex-direction:column; align-items:stretch; gap:3px; }
+      .chat-msg.bot .chat-ava{ margin-left:2px; }
+      .chat-msg.bot .chat-bubble{ max-width:100%; }
       /* ★2026-09-12：スマホでも段差は残す（見出し1.1・これだけは1.1・吹き出し1.04・本文1.0） */
       .chat-bubble.mt-bub{ font-size:1rem; line-height:1.8; }
       .mt-bub .mt-h{ font-size:1.1rem; margin:20px 0 8px; gap:9px; }
@@ -1862,6 +1869,20 @@
       animation-play-state:paused; }
     @keyframes mtQuickFlow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
     @media (prefers-reduced-motion: reduce){ .mt-quick-track{ animation:none; } }
+    /* ★2026-09-12（携帯）：ユーザー指示「携帯でもチャットを画面最大に」。
+       携帯では流すのをやめて、指で横に送る1行にする。理由は2つ。
+         ①流れる帯は押そうとした瞬間に動くので、狭い画面では押しにくい
+         ②2周ぶん並べた帯は 12,874px（実測）の1枚になり、携帯では帯ごと描かれないことがある
+           （実機のスクリーンショットで、ここが空白のまま縦の場所だけ取っていた）
+       2周目（.mt-quick-dup）は隠す。流さないので継ぎ目を隠す必要が無くなる。
+       ★641px以上は今までどおり流す（2026-09-11 のユーザー指示「流れるように」はそのまま） */
+    @media (max-width:520px){
+      .mt-quick-flow{ overflow-x:auto; -webkit-overflow-scrolling:touch; -webkit-mask-image:none; mask-image:none; }
+      .mt-quick-track{ animation:none; }
+      .mt-quick-track > .mt-quick-dup{ display:none; }
+      /* ★チップの高さ（min-height:44px）は詰めないこと。指で押す的の大きさなので、
+         ここを縮めて縦を稼ぐと押し間違いが増える。縦は余白と上の帯で稼いでいる */
+    }
     .mt-quick .chat-chip{ border-color:#c9d8ce; background:#eef4f0; color:#1f3328; flex:0 0 auto; white-space:nowrap; }
     .mt-quick-all{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
     .mt-quick-all[hidden]{ display:none !important; }
@@ -4174,9 +4195,9 @@
           <span class="mt-streak" id="mt-streak" hidden aria-live="polite"></span>
           <span class="mt-bar-r">
             <button type="button" class="btn btn-ghost btn-sm" id="mt-play"><i class="fa-solid fa-play"></i> 再生</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="mt-say" aria-pressed="false"><i class="fa-solid fa-volume-high"></i> 自動で読み上げ</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="mt-say" aria-pressed="false" aria-label="返事を自動で読み上げる"><i class="fa-solid fa-volume-high"></i> 自動で読み上げ</button>
             <button type="button" class="btn btn-ghost btn-sm" id="mt-full" aria-pressed="false" title="画面いっぱいに表示する"><i class="fa-solid fa-expand"></i> 画面いっぱい</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="mt-more" aria-expanded="false"><i class="fa-solid fa-gear"></i> 設定</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="mt-more" aria-expanded="false" aria-label="設定"><i class="fa-solid fa-gear"></i> 設定</button>
           </span>
         </div>
         <!-- 設定（押したときだけ出る）。上長の切り替え・道具・段階はここに入れた -->
@@ -9754,11 +9775,14 @@
       const sq = $('mt-self-qs'); if(sq && !sq.innerHTML) sq.innerHTML = mtSelfPanelHTML();
       const qkTrack = $('mt-quick-track');
       if(qkTrack && !qkTrack.innerHTML){
-        const mtQuickChip = function(c){ return '<button type="button" class="chat-chip" data-mtq="' + esc(c.q) + '"><i class="fa-solid ' + c.i + '"></i> ' + esc(c.q) + '</button>'; };
-        /* 流すのは保険中心（MT_QUICK）だけ。継ぎ目なくループさせるため同じ並びを2周ぶん置く */
-        qkTrack.innerHTML = MT_QUICK.map(mtQuickChip).join('') + MT_QUICK.map(mtQuickChip).join('');
+        const mtQuickChip = function(c, dup){ return '<button type="button" class="chat-chip' + (dup ? ' mt-quick-dup' : '') + '" data-mtq="' + esc(c.q) + '"><i class="fa-solid ' + c.i + '"></i> ' + esc(c.q) + '</button>'; };
+        /* 流すのは保険中心（MT_QUICK）だけ。継ぎ目なくループさせるため同じ並びを2周ぶん置く。
+           ★2周目には mt-quick-dup を付ける（携帯では流すのをやめて横に送る形にするので、2周目を隠す）。
+           ★.map(mtQuickChip) と直接渡さないこと。第2引数に添字が入って、2つ目以降が全部 dup 扱いになる */
+        qkTrack.innerHTML = MT_QUICK.map(function(c){ return mtQuickChip(c); }).join('')
+          + MT_QUICK.map(function(c){ return mtQuickChip(c, true); }).join('');
         const qkAll = $('mt-quick-all');
-        if(qkAll) qkAll.innerHTML = MT_QUICK.concat(MT_QUICK_LIFE).map(mtQuickChip).join('');
+        if(qkAll) qkAll.innerHTML = MT_QUICK.concat(MT_QUICK_LIFE).map(function(c){ return mtQuickChip(c); }).join('');
       }
       const m = $('mentor-modal'); if(m) m.hidden = false;
       mtApplyFull();

@@ -1627,7 +1627,7 @@
       background:#eef4f0; border:2px solid #cfdad3; }
     .mt-bub .mt-say-art svg{ width:100%; height:100%; display:block; }
     .mt-bub .mt-say-body{ flex:1 1 auto; min-width:0; }
-    .mt-bub .mt-say-lab{ display:block; margin:0 0 4px 6px; font-size:.8rem; font-weight:800; color:#57685c; letter-spacing:.1em; }
+    .mt-bub .mt-say-lab{ display:block; margin:0 0 4px 6px; font-size:.82rem; font-weight:800; color:#4f5f58; letter-spacing:.1em; }
     .mt-bub .mt-quote{ position:relative; display:block; margin:6px 0 0; padding:12px 18px; border:2px solid #1f3328; border-radius:18px;
       background:#fff; font-size:1.12rem; font-weight:800; line-height:1.7; color:#1f3328; }
     .mt-bub .mt-say .mt-quote{ margin:0; }
@@ -1675,7 +1675,7 @@
     /* ★2026-09-12：図の枠は琥珀をやめて墨の薄い色に（色に役割を持たせるため。琥珀は「今日動くこと」の橙と紛れる） */
     .mt-bub .mt-fig{ display:block; margin:10px 0 4px; padding:10px 12px 11px;
       border:1px solid #d9e3dc; border-radius:12px; background:#fbfcfb; }
-    .mt-bub .mt-fig-cap{ display:block; font-size:.88rem; font-weight:800; color:#4f5f58;
+    .mt-bub .mt-fig-cap{ display:block; font-size:.92rem; font-weight:800; color:#2f3a35;
       letter-spacing:.06em; margin-bottom:8px; }
     .mt-bub .mt-fig-row{ display:flex; flex-wrap:wrap; align-items:stretch; gap:8px 10px; }
     .mt-bub .mt-fig-box{ position:relative; display:flex; flex-direction:column; align-items:flex-start;
@@ -1705,6 +1705,9 @@
     .mt-bub .mt-key > b{ display:table; font-size:.8rem; color:#fff; background:#d9534f; border-radius:999px;
       padding:2px 12px; letter-spacing:.12em; margin:0 0 7px; line-height:1.6; }
     .chat-msg.bot .chat-bubble .mt-key > b{ color:#fff; }
+    /* ★2026-09-12（デザイン見直し）：仕事でいうと・差になるのは＝一段小さい赤（1.1rem・800・細い枠）。
+       これだけは（1.22rem・900・太い枠）と同じ大きさで並ぶと、赤の塊が2つになって「一番」が消える */
+    .mt-bub .mt-key.mt-key-so{ font-size:1.1rem; font-weight:800; border-width:1.5px; border-left-width:7px; background:#fff8f7; padding:10px 16px 11px; }
     /* 並べるだけの小さい札（今日の見方・あなたの段階・入り口の候補）。箱を4つ並べるより背が低い */
     .mt-bub .mt-chips{ display:flex; flex-wrap:wrap; gap:6px 8px; }
     .mt-bub .mt-chip{ display:inline-flex; flex-direction:column; min-width:0; max-width:100%; padding:6px 12px;
@@ -1716,31 +1719,43 @@
     /* ★列数は画面幅ではなく「吹き出しの幅」で決める（コンテナクエリ）。ライフプランのモーダル（638px）や
        心理の型の枠の中（狭い）でも、4コマが細長くならない。対応していないブラウザは下の @media が効く */
     .mt-bub .mt-mangawrap{ display:block; container-type:inline-size; }
-    .mt-bub .mt-manga{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin:10px 0 4px; padding:9px;
-      border:2px solid #4a5a52; border-radius:10px; background:#fff; }
+    /* ★2026-09-12（デザイン見直し）：枠を3重（外枠2px・コマ1.5px・吹き出し1.5px、全部が墨）に描いていて、線が競っていた。
+       濃い線は吹き出しだけに残し、外枠は淡い地＋薄い線、コマは白地＋中くらいの線にする。線の濃さ＝読む順 */
+    .mt-bub .mt-manga{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin:10px 0 4px; padding:8px;
+      border:1.5px solid #c9d3ce; border-radius:12px; background:#f3f6f4; }
     .mt-bub .mt-manga-2{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .mt-bub .mt-manga-3{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
     .mt-bub .mt-manga-5{ grid-template-columns:repeat(5, minmax(0, 1fr)); }
+    /* 質問と答え（例え話）は上下に積む。答えが質問の真下に来る（横に並べると答えの側が7割空いていた） */
+    .mt-bub .mt-manga-qa{ grid-template-columns:1fr; }
     .mt-bub .mt-manga > .mt-fig-cap{ grid-column:1 / -1; margin-bottom:0; }
-    .mt-bub .mt-koma{ position:relative; display:flex; flex-direction:column; gap:6px; min-width:0; padding:9px 9px 10px;
-      border:1.5px solid #2f3a35; border-radius:6px; background:#fffdf8; }
+    .mt-bub .mt-koma{ position:relative; display:flex; flex-direction:column; gap:6px; min-width:0; padding:9px 10px 10px;
+      border:1.5px solid #9aa8a0; border-radius:10px; background:#fff; }
+    .mt-bub .mt-koma-key{ border-color:#e3a19d; }
     .mt-bub .mt-koma-n{ position:absolute; left:-1.5px; top:-1.5px; display:inline-flex; align-items:center; justify-content:center;
-      width:26px; height:26px; border-radius:6px 0 8px 0; background:#2f3a35; color:#fff; font-size:.84rem; font-weight:800; }
-    .mt-bub .mt-koma-lab{ display:block; margin-left:30px; min-height:20px; font-size:.86rem; font-weight:800; color:#4f5f58; letter-spacing:.06em; }
+      width:26px; height:26px; border-radius:9px 0 9px 0; background:#2f3a35; color:#fff; font-size:.86rem; font-weight:900;
+      font-family:"Segoe UI",Arial,Helvetica,sans-serif; letter-spacing:.02em; }
+    .mt-bub .mt-koma-lab{ display:block; margin-left:30px; min-height:20px; font-size:.9rem; font-weight:800; color:#2f3a35; letter-spacing:.06em; }
     .mt-bub .mt-koma-body{ display:flex; gap:8px; align-items:flex-start; min-width:0; }
     .mt-bub .mt-koma-fig{ flex:0 0 54px; display:flex; flex-direction:column; align-items:center; gap:2px; }
     .mt-bub .mt-koma-art{ display:block; width:54px; height:54px; border-radius:50%; overflow:hidden; background:#eef4f0; border:1.5px solid #cfdad3; }
     .mt-bub .mt-koma-art svg{ width:100%; height:100%; display:block; }
-    .mt-bub .mt-koma-who{ display:block; font-size:.66rem; color:#7b8b83; white-space:nowrap; }
-    .mt-bub .mt-koma-say{ position:relative; flex:1 1 auto; min-width:0; padding:8px 12px; border:1.5px solid #4a5a52; border-radius:12px;
+    .mt-bub .mt-koma-who{ display:block; font-size:.7rem; color:#6f7f77; white-space:nowrap; }
+    .mt-bub .mt-koma-say{ position:relative; flex:1 1 auto; min-width:0; padding:9px 13px; border:1.5px solid #2f3a35; border-radius:12px;
       background:#fff; font-size:1.02rem; line-height:1.65; color:#1f2b26; }
-    .mt-bub .mt-koma-say::before{ content:''; position:absolute; left:-9px; top:16px; border-top:6px solid transparent; border-bottom:6px solid transparent; border-right:9px solid #4a5a52; }
+    .mt-bub .mt-koma-say::before{ content:''; position:absolute; left:-9px; top:16px; border-top:6px solid transparent; border-bottom:6px solid transparent; border-right:9px solid #2f3a35; }
     .mt-bub .mt-koma-say::after{ content:''; position:absolute; left:-6px; top:17px; border-top:5px solid transparent; border-bottom:5px solid transparent; border-right:7px solid #fff; }
-    /* 問いかけの文（例え話の「何でだと思う？」）は吹き出しの中で色を変える */
-    .mt-bub .mt-koma-say .mt-tatoe-q{ display:block; margin-top:4px; font-weight:800; color:#8a5c10; }
+    /* 問いかけの文（例え話の「何でだと思う？」）。★色は本文と同じ（琥珀は「今日動くこと」の橙と紛れる）。太さで立てる */
+    .mt-bub .mt-koma-say .mt-tatoe-q{ display:block; margin-top:6px; font-weight:900; color:inherit; }
+    /* 答えのコマ（例え話のA）は一段大きい。絵と吹き出しの高さをそろえて、下に空きが出ないようにする */
+    .mt-bub .mt-manga-qa .mt-koma-say.mt-tatoe-a{ font-size:1.14rem; }
+    .mt-bub .mt-manga-qa .mt-koma-body{ align-items:center; }
+    .mt-bub .mt-manga-qa .mt-koma-say::before{ top:50%; margin-top:-6px; }
+    .mt-bub .mt-manga-qa .mt-koma-say::after{ top:50%; margin-top:-5px; }
+    .mt-bub .mt-manga-qa .mt-koma-say .mt-tatoe-q{ margin-top:4px; }
     /* 考えている吹き出し（点線） */
     .mt-bub .mt-koma-think .mt-koma-say{ border-style:dashed; border-radius:18px; background:#fbfdfc; }
-    .mt-bub .mt-koma-think .mt-koma-say::before{ border-right-color:#4a5a52; }
+    .mt-bub .mt-koma-think .mt-koma-say::before{ border-right-color:#2f3a35; }
     /* ★要のコマは赤（一番伝えたいこと） */
     .mt-bub .mt-koma-key .mt-koma-say{ border-color:#d9534f; background:#fff5f4; color:#b2231f; font-weight:800; }
     .mt-bub .mt-koma-key .mt-koma-say::before{ border-right-color:#d9534f; }
@@ -1784,18 +1799,23 @@
       /* スマホは1列。コマを詰めて背を低くする（絵40px・台詞は少し小さく） */
       .mt-bub .mt-manga, .mt-bub .mt-manga-2, .mt-bub .mt-manga-3, .mt-bub .mt-manga-4, .mt-bub .mt-manga-5{ grid-template-columns:1fr; gap:6px; padding:6px; }
       /* ★絵は上の行に小さく（30px）、吹き出しは横いっぱいに。絵を横に置くと文字の列が細くなって行数が倍になる */
+      .mt-bub .mt-key.mt-key-so{ font-size:1.02rem; padding:9px 12px 10px; border-left-width:6px; }
       .mt-bub .mt-koma{ padding:6px 8px 8px; gap:3px; }
-      .mt-bub .mt-koma-lab{ min-height:0; font-size:.72rem; }
+      .mt-bub .mt-koma-lab{ min-height:0; font-size:.8rem; }
       .mt-bub .mt-koma-body{ flex-wrap:wrap; gap:6px 5px; }
       .mt-bub .mt-koma-fig{ flex:0 0 auto; flex-direction:row; align-items:center; gap:5px; }
       .mt-bub .mt-koma-art{ width:30px; height:30px; }
       .mt-bub .mt-koma-who{ font-size:.66rem; }
       .mt-bub .mt-koma-say{ flex:1 1 100%; font-size:.98rem; padding:7px 10px; line-height:1.6; }
-      .mt-bub .mt-koma-say::before{ left:12px; top:-9px; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:9px solid #4a5a52; border-top:0; }
+      .mt-bub .mt-koma-say::before{ left:12px; top:-9px; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:9px solid #2f3a35; border-top:0; }
       .mt-bub .mt-koma-say::after{ left:14px; top:-6px; border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:7px solid #fff; border-top:0; }
       .mt-bub .mt-koma-key .mt-koma-say::before{ border-bottom-color:#d9534f; border-right-color:transparent; }
       .mt-bub .mt-koma-key .mt-koma-say::after{ border-bottom-color:#fff5f4; border-right-color:transparent; }
-      .mt-bub .mt-koma-think .mt-koma-say::before{ border-bottom-color:#4a5a52; border-right-color:transparent; }
+      .mt-bub .mt-koma-think .mt-koma-say::before{ border-bottom-color:#2f3a35; border-right-color:transparent; }
+      .mt-bub .mt-manga-qa .mt-koma-say.mt-tatoe-a{ font-size:1.06rem; }
+      /* ★スマホは絵が上の行なので、Q／Aの吹き出しのしっぽも上向きに戻す（上の「50%」の指定が詳細度で勝つため） */
+      .mt-bub .mt-manga-qa .mt-koma-say::before{ top:-9px; margin-top:0; }
+      .mt-bub .mt-manga-qa .mt-koma-say::after{ top:-6px; margin-top:0; }
     }
     /* 逆算の図（上から下へ細くなる棒） */
     .mt-bub .mt-fig-bar{ display:flex; align-items:center; gap:9px; margin-top:6px; font-size:.78rem; }
@@ -1836,7 +1856,8 @@
     .mt-quick-flow{ overflow:hidden;
       -webkit-mask-image:linear-gradient(90deg,transparent,#000 20px,#000 calc(100% - 20px),transparent);
       mask-image:linear-gradient(90deg,transparent,#000 20px,#000 calc(100% - 20px),transparent); }
-    .mt-quick-track{ display:flex; gap:6px; width:max-content; padding:2px 1px; animation:mtQuickFlow 46s linear infinite; }
+    /* 72s＝ひと回りの時間（2026-09-12・ユーザー指示「スクロールはもう少しスピードを落として」。46s から。★これより速くしないこと） */
+    .mt-quick-track{ display:flex; gap:6px; width:max-content; padding:2px 1px; animation:mtQuickFlow 72s linear infinite; }
     .mt-quick.mt-quick-hold .mt-quick-track, .mt-quick:hover .mt-quick-track, .mt-quick:focus-within .mt-quick-track{
       animation-play-state:paused; }
     @keyframes mtQuickFlow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
@@ -1992,7 +2013,8 @@
     .mt-bub .mt-tot{ list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
     .mt-bub .mt-tot li{ margin:0; padding:7px 10px; border-left:3px solid #c9d8ce; background:#fff; border-radius:0 10px 10px 0; }
     .mt-bub .mt-tot li b{ display:block; font-size:.86rem; color:#1f3328; margin-bottom:2px; }
-    .mt-bub .mt-tot li.mt-step-key{ border-left-color:#3f9d7a; background:#f2f9f5; }
+    /* ★2026-09-12：要の段（逃げ道・引き）は、上の4コマの赤いコマと同じ印＝赤い左線だけ。地色を塗ると赤の塊が増える */
+    .mt-bub .mt-tot li.mt-step-key{ border-left:4px solid #d9534f; background:#fff; }
     .mt-bub .mt-lock{ margin-top:6px; }
     .mt-bub .mt-lock summary{ cursor:pointer; font-size:.9rem; font-weight:700; color:#57685c; }
     /* ★2026-09-12：言ってはいけない＝青（守り）。赤は「これだけは」だけに残す */
@@ -2008,7 +2030,8 @@
     .mt-bub .mt-below{ font-weight:700; color:#1f3328; }
     /* ファイナンシャルプランナーの目（2026-09-06。★2026-09-10 に「FP1級の目／税理士の目」から改称）：知識の欄・問い返しの4択・一問 */
     .mt-bub .mt-fp{ list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
-    .mt-bub .mt-fp li.mt-fpt{ margin:0; padding:8px 10px; border-left:3px solid #b9924a; background:#fbf7ee; border-radius:0 10px 10px 0; }
+    /* ★2026-09-12：地色は白（琥珀の地は「今日動くこと」の橙と紛れる）。まとまりは薄い枠＋左線で持つ */
+    .mt-bub .mt-fp li.mt-fpt{ margin:0; padding:8px 12px; border:1px solid #dfe6e2; border-left:3px solid #b9924a; background:#fff; border-radius:0 10px 10px 0; }
     .mt-bub .mt-fpt > b{ display:block; font-size:1rem; color:#5a4310; }
     .mt-bub .mt-fpk{ display:block; margin-top:6px; font-size:.86rem; font-weight:700; color:#5a4310; }
     .mt-bub .mt-fpchk{ margin:2px 0 0 18px; padding:0; }
@@ -2032,7 +2055,8 @@
     .mt-bub .mt-ask.mt-ask-done .mt-opt.mt-opt-picked{ opacity:1; border-color:#1f3328; background:#eef5f0; font-weight:700; }
     /* 心理の型（こう話を進めてみては）。運びを番号つきで見せ、やってはいけない使い方を必ず添える */
     .mt-bub .mt-psy{ list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
-    .mt-bub .mt-psy li.mt-psyt{ margin:0; padding:8px 10px; border-left:3px solid #3f9d7a; background:#f2f9f5; border-radius:0 10px 10px 0; }
+    /* ★2026-09-12：地色は白。中に4コマと青の「やってはいけない」が入るので、外側まで塗ると色が重なって読みにくい */
+    .mt-bub .mt-psy li.mt-psyt{ margin:0; padding:8px 12px; border:1px solid #dfe6e2; border-left:3px solid #3f9d7a; background:#fff; border-radius:0 10px 10px 0; }
     .mt-bub .mt-psyt > b{ display:block; font-size:1.04rem; color:#1f3328; }
     .mt-bub .mt-psysteps{ margin:6px 0 0 20px; padding:0; }
     .mt-bub .mt-psysteps li{ margin:4px 0; }
@@ -7105,8 +7129,9 @@
         const who = String(p.who || 'eigyo-idle');
         const w = who.split('-')[0], mood = who.split('-')[1] || 'idle';
         const artCls = (w === 'shisho' || w === 'zsedai') ? (' mt-art-' + mood) : '';
+        /* n＝コマの札の文字。省くと通し番号。例え話は Q／A（2026-09-12） */
         h += '<span class="mt-koma' + (p.key ? ' mt-koma-key' : '') + (p.think ? ' mt-koma-think' : '') + '">'
-          + '<b class="mt-koma-n">' + (i + 1) + '</b>'
+          + '<b class="mt-koma-n">' + esc(String(p.n || (i + 1))) + '</b>'
           + '<span class="mt-koma-lab">' + esc(p.lab || '') + '</span>'
           + '<span class="mt-koma-body">'
           + '<span class="mt-koma-fig"><span class="mt-koma-art' + artCls + '" data-mtart="' + esc(who) + '"></span>'
@@ -7125,10 +7150,11 @@
         + a.map(function(x){ return '<span class="mt-chip' + (x.key ? ' mt-chip-key' : '') + '">' + (x.b ? '<b>' + esc(mtClip(x.b, 18)) + '</b>' : '') + esc(mtClip(x.t || '', 30)) + '</span>'; }).join('')
         + '</span></span>';
     }
-    /* 赤い一行。★1つの返事に2〜3か所まで（「これだけは」＋例え話の「仕事でいうと」）。増やすと要が消える */
-    function mtKeyHTML(text, label){
+    /* 赤い一行。★1つの返事に2〜3か所まで（「これだけは」＋例え話の「仕事でいうと」）。増やすと要が消える。
+       cls='mt-key-so' ＝ 一段小さい赤（仕事でいうと・差になるのは）。赤の主役は「これだけは」だけ（2026-09-12） */
+    function mtKeyHTML(text, label, cls){
       if(!text) return '';
-      return '<span class="mt-key">' + (label ? '<b>' + esc(label) + '</b>' : '') + esc(text) + '</span>';
+      return '<span class="mt-key' + (cls ? ' ' + cls : '') + '">' + (label ? '<b>' + esc(label) + '</b>' : '') + esc(text) + '</span>';
     }
     /* 師匠の吹き出し（2026-09-12・ユーザー指示「今日のひとことなどは吹き出しを作って話しているように」）。
        顔（data-mtart）＋札（ラベル）＋台詞（.mt-quote）。台詞は本文より大きく太い。
@@ -7413,17 +7439,19 @@
       const lead = (tone === 'zsedai') ? '例え話を一つ。' : '例えるぞ。';
       const ask  = (tone === 'zsedai') ? 'なぜだと思いますか？' : '何でだと思う？';
       /* ★2026-09-11：例え話は2コマ漫画にした（ユーザー指示「四コマ二コマ漫画を入れるなど見やすさに特化」）。
-           1コマ目＝自分（？の顔）が場面を言い、問いかけ／2コマ目＝師匠が答えを言う（赤）。
+         ★2026-09-12：「質問と答え」に組み直した（ユーザー指示）。Q＝師匠が例えを出して問いかける／
+           A＝師匠が答えを言う（赤）。上下に積む（.mt-manga-qa＝1列）ので、答えが質問の真下に来る。
+           ★前の形は「自分」の顔に「例えるぞ。」を言わせていた（師匠の台詞なのに）。戻さないこと。
            そのあと「仕事でいうと」（暮らしの相談なら「暮らしでいうと」）を赤い一行で置く。
-         ★前の形（帯＋3枚の図）は同じ文が二度出ていた。戻さないこと。
+           これは「これだけは」より一段小さい赤（.mt-key-so）——赤の主役は「これだけは」の1か所
          ★2コマ目の吹き出しに mt-tatoe-a を残してある（「今の一言を残す」がここを拾う）。
-           読み上げ（mtSpeakText）は .mt-manga-tatoe を見ている */
+           読み上げ（mtSpeakText）は .mt-manga-tatoe の1コマ目→2コマ目を読む */
       return '<span class="mt-h">例えると</span>'
         + mtFigManga('', [
-            { who:'jibun-hatena', lab:'場面', say:lead + x.q, q:ask, think:true, max:96 },
-            { who:mtArtMe('talk'), lab:'答え', say:x.a, key:true, cls:'mt-tatoe-a', max:40 }
-          ], { cls:'mt-manga-tatoe' })
-        + mtKeyHTML(x.so, life ? '暮らしでいうと' : '仕事でいうと');
+            { who:mtArtMe('talk'),   n:'Q', lab:'質問', say:lead + x.q, q:ask, max:96 },
+            { who:mtArtMe('praise'), n:'A', lab:'答え', say:x.a, key:true, cls:'mt-tatoe-a', max:40 }
+          ], { cls:'mt-manga-tatoe mt-manga-qa' })
+        + mtKeyHTML(x.so, life ? '暮らしでいうと' : '仕事でいうと', 'mt-key-so');
     }
     /* いまの表情。話す・聞く・喝・褒める・少し怒る、で顔と手が変わる */
     let mtMood = 'idle', mtMoodTmr = 0;
@@ -8256,7 +8284,7 @@
         { who:'eigyo-idle', lab:'まず聞く', say:x.ask, max:60 },
         { who:'eigyo-egao', lab:'渡す一言', say:x.line, key:true, max:60 }
       ], { max:60 })
-        + mtKeyHTML(x.brand, '差になるのは');
+        + mtKeyHTML(x.brand, '差になるのは', 'mt-key-so');
       if(full){
         const es = x.essence || [];
         h += '<span class="mt-h">伝える中身</span><ul>'

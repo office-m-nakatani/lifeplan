@@ -19607,10 +19607,16 @@
        サンプルはこれに差分を重ねて作るので、既定値を変えてもサンプルが古いままにならない。
        ドラフトの復元はバナーを押したときだけ走るので、この時点は必ず既定値 */
     try{ INITIAL_STATE = collectState(); }catch(e){}
+    /* ★2026-09-12修正：captureInputBaseline()（＝defaultFPの確定）は、最初のrecompute()より前に置く。
+       もとは recompute() の後だったため、起動直後の1回目の描画は defaultFP=null のまま
+       renderEstBanner() が走り「目安のまま」の帯が常に空で出ていた（本来は全項目が対象のはず）。
+       帯が更新されるのは次にどこか1項目を編集してrecompute()が再度走った瞬間になり、
+       その編集した項目は消えるのに、それまで隠れていた他の項目が急に何件も現れる＝
+       「入力しても未入力の表示が消えない（むしろ増える）」ように見える不具合の原因だった。 */
+    captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
     try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
-    captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
 
     // ② プラン比較の初期化：読み込み時は「現状プラン」から
     PLANS.genjo.state = collectState();

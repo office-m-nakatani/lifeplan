@@ -1698,8 +1698,12 @@
     .mt-bub .mt-fig-box > .mt-fig-sub{ display:block; font-size:.8rem; color:#66756e; margin-top:3px; }
     /* ★青＝守り・安心の箱（「最悪でも」。2026-09-12 ユーザー指示「最悪でもは青文字に」） */
     .mt-bub .mt-fig-safe{ border-color:#2f7fb0; background:#eaf3fb; color:#1b4f7c; font-weight:800; }
-    .mt-bub .mt-fig-safe > b{ color:#fff; background:#2f7fb0; }
-    .chat-msg.bot .chat-bubble .mt-fig-safe > b{ color:#fff; }
+    .mt-bub .mt-fig-safe > b{ color:#fff; background:#1b5e8a; }
+    /* ★★札の文字色は「.mt-fig-box > b」と同じ強さでは勝てない（下の方に書いてあるほうが後勝ちする）。
+       だから .mt-fig-box を重ねて強さを上げてある。ここを .mt-fig-safe だけに戻すと、
+       「最悪でも」が青地に墨（単独ページ）／青地に琥珀（ここ）で出て読めなくなる（2026-09-13 ユーザー指摘）。
+       ★地の青も #2f7fb0 から #1b5e8a に濃くした（白抜きの見え方が 4.4 → 7.0 になる） */
+    .chat-msg.bot .chat-bubble .mt-fig-box.mt-fig-safe > b{ color:#fff; }
     /* 矢印は絵文字ではなく、CSSの三角で描く */
     .mt-bub .mt-fig-arrow .mt-fig-box + .mt-fig-box::before{ content:''; position:absolute;
       left:-8px; top:50%; margin-top:-4px; width:0; height:0;

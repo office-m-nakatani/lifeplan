@@ -1527,7 +1527,8 @@
        ★ここを1列に戻すと、また顔が流れて見えなくなる */
     /* ★min-height はこの枠が持つ（会話の欄ではなく）。会話に min-height を残すと、
        引き出しを開いて枠が縮んだときに会話だけが枠から溢れて、相談のきっかけの行に重なる */
-    .mt-stagewrap{ display:flex; gap:14px; min-height:300px; align-items:stretch; }
+    /* ★2026-09-12：顔の列と会話の隙間は 14→10px（ユーザー指示「幅を極限まで」） */
+    .mt-stagewrap{ display:flex; gap:10px; min-height:300px; align-items:stretch; }
     .mt-stagewrap > .mt-log{ flex:1 1 auto; min-width:0; min-height:0; }
     /* ★高さは会話の欄と同じだけ（align-self:stretch）。引き出しを開くと会話は300pxまで縮むので、
        中身の合計はそれを超えないこと（顔140＋名前＋所属2行＋様子＋余白 ≒ 271px）。
@@ -1564,6 +1565,15 @@
        返事の横（chat-ava）と、上の行（mt-face）に同じ絵を出す。絵文字は使わずインラインSVG。 */
     .mt-ava{ width:38px; height:38px; border-radius:12px; background:#eef4f0; border:1.5px solid #d9e3dc; overflow:hidden; padding:0; }
     .mt-ava svg{ width:100%; height:100%; display:block; }
+    /* ★2026-09-12（ユーザー指示「せんぱいの上に師匠のアイコンをのせて、チャットの文章の有効の幅と
+       高さを極限まで大きく」）：返事の顔は吹き出しの「上」に置く。★全ての幅で。
+       横に並べると顔38px＋隙間8pxで、1行がいつも46px短くなっていた（実測 吹き出し947px／幅1301px）。
+       ★顔は消さないこと（2026-09-12 の指示「師匠のアイコンは残して欲しい。会話の中にあってもいい」）。
+       ★user の吹き出し（右寄せ）は横並びのまま。`.bot` だけに当てているので触らないこと。
+       ★もとは @media (max-width:520px) の中だけの指定だった。媒体条件に戻さないこと */
+    .chat-msg.bot{ flex-direction:column; align-items:stretch; gap:4px; }
+    .chat-msg.bot .chat-ava{ margin-left:2px; }
+    .chat-msg.bot .chat-bubble{ max-width:100%; }
     .mt-face{ display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; flex:0 0 auto;
       border-radius:50%; overflow:hidden; background:#eef4f0; border:1.5px solid #d9e3dc; }
     .mt-face svg{ width:100%; height:100%; display:block; }
@@ -1783,11 +1793,9 @@
     @media (max-width:520px){
       /* ★2026-09-12（携帯）：返事は吹き出しを画面いっぱいに使う。顔は吹き出しの「上」に置く。
          横に並べると顔38px＋隙間8pxで1行が46px（画面の12%）短くなっていた（実測 吹き出し274px／画面390px）。
-         ★顔は消さないこと（ユーザー指示「師匠のアイコンは残して欲しい。会話の中にあってもいい」）。
-         ★user の吹き出し（右寄せ）は今までどおり横並びのまま（.bot だけに当てている） */
-      .chat-msg.bot{ flex-direction:column; align-items:stretch; gap:3px; }
-      .chat-msg.bot .chat-ava{ margin-left:2px; }
-      .chat-msg.bot .chat-bubble{ max-width:100%; }
+         ★この3行は同日に「全ての幅で」へ格上げした（`.mt-ava` の下）。ここは隙間を詰めるぶんだけ。
+         ★顔は消さないこと（ユーザー指示「師匠のアイコンは残して欲しい。会話の中にあってもいい」） */
+      .chat-msg.bot{ gap:3px; }
       /* ★2026-09-12：スマホでも段差は残す（見出し1.1・これだけは1.1・吹き出し1.04・本文1.0） */
       .chat-bubble.mt-bub{ font-size:1rem; line-height:1.8; }
       .mt-bub .mt-h{ font-size:1.1rem; margin:20px 0 8px; gap:9px; }

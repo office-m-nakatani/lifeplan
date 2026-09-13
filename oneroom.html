@@ -678,7 +678,9 @@
     .modal-overlay[hidden]{ display:none; }
     .modal{ background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,.25); width:min(1100px,96vw); max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
     .modal.modal-sm{ width:min(560px,96vw); }
+/* == LPSLIDE-A-BEGIN == */
     .modal.modal-mid{ width:min(780px,96vw); }
+    /* == LPSLIDE-A-END == */
     .modal-head{ display:flex; align-items:center; gap:10px; padding:15px 20px; border-bottom:1px solid var(--line); background:linear-gradient(120deg,#eaf4fc,#fdf6dc); }
     .modal-head h3{ font-size:1.05rem; display:flex; align-items:center; gap:9px; flex:1; }
     .modal-head h3 i{ color:var(--blue); }
@@ -1232,6 +1234,7 @@
     .vc-pane[hidden]{ display:none; }
     .vc-tools{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0 2px; }
     .vc-tools .btn{ min-height:44px; }
+/* == LPSLIDE-B-BEGIN == */
     /* 概要 → スライドの行（2026-09-13）。上の行＝概要そのものの操作、この行＝スライドにする操作。
        薄い地と左の細い線で「別の段」だと分かるようにする（同じ行に7個並べると迷う） */
     .mn-slide-row{ margin-top:6px; padding:6px 10px 6px 12px; border-left:3px solid var(--blue);
@@ -1240,6 +1243,11 @@
     .mn-slide-lab i{ color:var(--blue); }
     /* Gemini Notebook（旧 NotebookLM）へ送る前の確認。外部へ出る唯一の道なので、
        注意書きは畳まない・小さくしない */
+    .nlm-pick{ background:#f6f9fc; border:1px solid var(--line); border-radius:12px; padding:4px 12px; margin-top:10px; }
+    .nlm-pick-lab{ font-size:.8rem; font-weight:800; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px; }
+    .nlm-pick-lab i{ color:var(--blue); }
+    .nlm-pdf-note{ font-size:.84rem; line-height:1.8; background:#f6f9fc; border-left:3px solid var(--blue);
+      border-radius:0 10px 10px 0; padding:10px 13px; margin:2px 0 10px; }
     .nlm-old{ font-size:.7rem; font-weight:700; color:var(--ink-soft); background:#eef3f7;
       border-radius:999px; padding:2px 9px; margin-left:8px; white-space:nowrap; }
     .nlm-warn{ border:2px solid #e8b84b; background:#fffaec; border-radius:12px; padding:12px 14px; }
@@ -1256,6 +1264,7 @@
     .nlm-go .btn{ min-height:52px; font-size:1rem; padding:0 22px; }
     .nlm-steps{ margin:14px 0 10px; padding-left:1.35em; }
     .nlm-steps li{ font-size:.86rem; line-height:1.8; margin-bottom:5px; }
+    /* == LPSLIDE-B-END == */
     .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
       font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
     .vc-auto input{ width:22px; height:22px; accent-color:var(--blue); }
@@ -3291,6 +3300,7 @@
           <button type="button" class="btn btn-ghost btn-sm" id="mn-big"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> 大きく開く</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
         </div>
+<!-- == LPSLIDE-C-BEGIN == -->
         <!-- 概要 → スライド（2026-09-13 ユーザー指示「概要作成後に Gemini Notebook に送ってパワポを
              自動作成できるように。ボタンひとつでそのままリンクしてパワポ作成できるように」）。
              ★行を分けてある：上の行は「概要そのものを扱う道具」、この行は「スライドにする道具」。
@@ -3300,6 +3310,7 @@
           <button type="button" class="btn btn-primary btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
         </div>
+        <!-- == LPSLIDE-C-END == -->
         <div id="mn-out"></div>
       </div>
 
@@ -3346,14 +3357,16 @@
         <div class="vc-tools">
           <button type="button" class="btn btn-ghost btn-sm" id="mn-copy2"><i class="fa-solid fa-copy"></i> コピー</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-dl2"><i class="fa-solid fa-download"></i> .txtで保存</button>
+<!-- == LPSLIDE-D1-BEGIN == -->
           <button type="button" class="btn btn-primary btn-sm" id="mn-nlm2"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx2"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+          <!-- == LPSLIDE-D1-END == -->
         </div>
         <div id="mn-out-big"></div>
       </div>
     </div>
   </div>
-
+<!-- == LPSLIDE-D2-BEGIN == -->
   <!-- ===================== 概要 → Gemini Notebook（スライド／パワポ）=====================
        ★★2026-07-16 に NotebookLM から「Gemini Notebook」へ改称（ユーザー指摘）。画面の名前も行き先も新しいほうに揃えてある。
        ★Gemini Notebook には「文章を渡して開く」URLが無い（公開APIも無い。APIがあるのは
@@ -3374,10 +3387,19 @@
           <p><b>ここから先は、下の本文が Google（Gemini Notebook）へ渡ります。</b>このツールに入力した内容は、ふだんお使いの端末から出ません。スライドを作ってもらうあいだだけ、中身を向こうに預けることになります。<b>お客様のお名前や個別の数字が入るときは、お客様の同意をいただいてからお使いください。</b></p>
           <p>担当者用の「提案の検討メモ」は<b>入っていません</b>。この欄に見えているものが、渡るものの全てです。直接書き直してから送れます。</p>
         </div>
+        <!-- ★何を渡すかを選べる（2026-09-13）。録音していない日は「面談の概要」が空になるが、
+             入力と試算のまとめ・次の一手だけでも送れる -->
+        <div class="vc-tools nlm-pick">
+          <span class="nlm-pick-lab"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> 入れるもの</span>
+          <label class="vc-auto"><input type="checkbox" id="nlm-inc-mn" checked> 面談の概要</label>
+          <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力と試算のまとめ</label>
+          <label class="vc-auto"><input type="checkbox" id="nlm-inc-nx" checked> 次の一手</label>
+        </div>
         <div class="vc-tools">
           <label class="vc-auto"><input type="checkbox" id="nlm-anon" checked> お名前を伏せる（◯◯様 → お客様）</label>
           <button type="button" class="btn btn-ghost btn-sm" id="nlm-prompt"><i class="fa-solid fa-copy"></i> スライドの指示文をコピー</button>
           <button type="button" class="btn btn-ghost btn-sm" id="nlm-md"><i class="fa-solid fa-download"></i> .mdで保存</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nlm-pdf"><i class="fa-regular fa-file-pdf"></i> PDFも作る</button>
         </div>
         <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="Gemini Notebookへ渡す本文"></textarea>
         <div class="nlm-go">
@@ -3389,16 +3411,12 @@
           <li>読み込めたら<b>「スライド」</b>を押します。指示を入れる欄には、上の<b>「スライドの指示文」</b>を貼ると、言い回しと注記の扱いが揃います。</li>
           <li>できたスライドの<b>その他メニュー（…）から「PowerPoint（.pptx）をダウンロード」</b>を選ぶと、パワポとして保存できます。</li>
         </ol>
+        <p class="nlm-pdf-note"><b>グラフや表まで読ませたいときは、PDFも一緒に。</b>上の<b>「PDFも作る」</b>で資料を保存し、Gemini Notebook の<b>「ソースを追加」→「ファイルをアップロード」</b>から足してください。文字（この欄の本文）とPDFの両方をソースにすると、資産の推移やキャッシュフロー表まで見たうえでスライドを作ってくれます。</p>
         <p class="hint" style="display:block;">※ Gemini Notebook から出したパワポは、<b>文字をそのまま打ち直すのが難しい形</b>で入っています。文字を直したいときは<b>「パワポで保存」</b>をお使いください（この端末の中だけで作られ、どこにも送信されません）。<br>※ スライドとパワポ書き出しは Gemini Notebook 側の機能です。使えるかどうかは Google のご提供状況によります。</p>
       </div>
     </div>
   </div>
-
-        </div>
-        <div id="mn-out-big"></div>
-      </div>
-    </div>
-  </div>
+  <!-- == LPSLIDE-D2-END == -->
 
   <!-- ============================= FOOTER ============================= -->
   <footer class="foot">
@@ -10154,7 +10172,7 @@
           setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
         }catch(e){ setStatus('保存できませんでした。コピーをお使いください'); }
       }
-
+/* == LPSLIDE-E-BEGIN == */
       /* ============================================================
          概要 → スライド（2026-09-13 ユーザー指示）
          「概要作成後に Gemini Notebook に送ってパワポを自動作成できるように。
@@ -10198,6 +10216,7 @@
         '【言葉】',
         '・一文を短く。専門用語は使わず、どうしても要るときは同じ枚の中で言い換える。',
         '・金額・年齢・年数は、ソースに書いてあるものだけを使う。足したり丸めたりしない。',
+        '・「ご入力の内容と、試算のまとめ」の数字は前提が変わると変わるもの。断定せず、幅のある言い方にする。',
         '・断定的な有利不利の比較は書かない。将来の運用成果・受取額は約束しない。',
         '・特定の保険商品・金融商品をすすめる書き方にしない。',
         '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。不安であおらない。',
@@ -10222,7 +10241,8 @@
                   .sort(function(a,b){ return b.length - a.length; });   // 長い語から先に消す
       }
       /* 「皆様」「奥様」などは名前ではないので残す */
-      const MN_ANON_KEEP = /^(?:お客|皆|奥|ご主人|旦那|担当|御社|貴社|各|神|仏)/;
+      /* ★「お子さま」を「お客様」に変えてしまった前科あり（2026-09-13 実測）。呼び名の語はここで守る */
+      const MN_ANON_KEEP = /^(?:お客|皆|奥|ご主人|旦那|担当|御社|貴社|各|神|仏|お子|お孫|お母|お父|お嬢|お婆|お爺|おばあ|おじい|親御|皆)/;
       function mnAnon(t){
         mnNames().forEach(function(n){ t = t.split(n).join('\uE000'); });
         /* 名字と名前が空白で並ぶときだけ、まとめて１つの「お客様」にする。
@@ -10257,6 +10277,102 @@
       }
       /* 次の一手のうち「お客様にお渡しできる側」だけ。担当のTODO・検討メモは載せない
          （nextToText の既定と同じ切り方にそろえてある） */
+      /* ご入力の内容と、試算のまとめ（2026-09-13 ユーザー指示
+         「次の一手に関しては音声データだけでなく、入力された情報をもとに作成して、
+           それらを Gemini Notebook に情報としてのプロンプトやPDFデータを共有できるように」）。
+
+         ★実測して分かったこと：「次の一手」は**もともと入力と試算から作っている**。
+           30の型のうち 25（calc18・blank4・plan3）が入力と試算、talk5 だけが文字起こし由来。
+           録音ゼロでも5件出る。足りなかったのは次の2つで、ここで埋める。
+             ①概要（＝録音）が無いと Gemini Notebook へ送れなかった
+             ②入力した内容そのものが、送るものに入っていなかった
+         ★★議事録（概要）には試算値を混ぜない（2026-08-18 ユーザー指示
+           「概要には面談で話したことだけを書く」）。だから**別の節として立て**、
+           見出しで出どころが分かるようにしてある。概要の中に数字を差し込まないこと。
+         ★どれか1つが取れなくても全体を落とさない（push の中で try/catch する）。
+           入力の途中・プランの切り替え中など、取れない瞬間がある */
+      function mnFactsSecs(){
+        const secs = [];
+        let cur = null;
+        const sec = function(t){ cur = { title:t, items:[] }; secs.push(cur); };
+        const push = function(fn){ try{ const t = fn(); if(t) cur.items.push(t); }catch(e){} };
+        let c = null; try{ c = buildNextContext(); }catch(e){ c = null; }
+
+        sec('ご家族とお住まい');
+        push(function(){
+          return isSingle() ? 'ご家族：' + hNameH() + '（' + num('h-age',35) + '歳）'
+                            : 'ご家族：' + hNameH() + '（' + num('h-age',35) + '歳）・'
+                              + wNameH() + '（' + num('w-age',33) + '歳）';
+        });
+        push(function(){
+          const k = readChildren();
+          return 'お子さま：' + (k.length
+            ? k.map(function(x){ return (x.name || 'お子さま') + ' ' + x.age + '歳'; }).join('・')
+            : 'いらっしゃいません');
+        });
+        push(function(){
+          if(houseType === 'rent' || loanPrincipalBase() <= 0)
+            return 'お住まい：賃貸（住居費 月 ' + (Math.round(rentMonthlyTotal()*10)/10) + '万円）';
+          const sc = buildLoanSchedule();
+          return 'お住まい：借入 ' + fmt(loanPrincipalBase()) + '万円／' + num('loan-term',35) + '年／'
+               + '毎月 約' + (Math.round(loanPaymentForYear(sc,0)/12*10)/10) + '万円（初年度・ボーナス払いを含む）';
+        });
+        push(function(){ return (c && c.p) ? '毎月の生活費：約 ' + fmt(Math.round(c.p.living)) + '万円' : ''; });
+
+        sec('いまの備え');
+        push(function(){
+          if(!c) return '';
+          if(c.ins && c.ins.length) return '加入中の保険：' + c.ins.length + '件を入力済み';
+          if(c.insFlat > 0) return '加入中の保険：毎月の保険料の合計だけを入力（内訳は未入力）';
+          return '加入中の保険：未入力';
+        });
+        push(function(){
+          const d = nextInvDelta();
+          return d ? '毎月の積立：現状プランから ' + (d > 0 ? '＋' : '−') + Math.abs(d) + '万円（将来プラン）' : '';
+        });
+
+        sec('試算の結果（' + (PLANS.active === 'mirai' ? '将来プラン' : '現状プラン') + '）');
+        const rows = function(){ return (PLANS[PLANS.active] && PLANS[PLANS.active].sum) || []; };
+        // マイナスは「不足 約◯万円」と書く（「約 -8,363万円」は読みにくく、記号が落ちると逆の意味になる）
+        const yen = function(v){ v = Math.round(v); return v < 0 ? '不足 約' + fmt(-v) + '万円' : '約 ' + fmt(v) + '万円'; };
+        push(function(){
+          const r = rows().filter(function(x){ return x.hAge === 65; })[0];
+          return r ? '65歳の時点の金融資産：' + yen(r.net) : '';
+        });
+        push(function(){
+          const a = rows(), e = a[a.length - 1];
+          return e ? e.hAge + '歳の時点の金融資産：' + yen(e.net) : '';
+        });
+        push(function(){
+          return (c && c.p && c.p.depletion)
+            ? '資金が足りなくなる見込みの時期：' + c.p.depletion.hAge + '歳ごろ（' + c.p.depletion.year + '年）' : '';
+        });
+        push(function(){
+          if(!c || !c.n) return '';
+          const a = [];
+          if(c.n.h && c.n.h.rawNeed > 0) a.push(hNameH() + ' 約' + fmt(Math.round(c.n.h.rawNeed)) + '万円');
+          if(c.n.w && c.n.w.rawNeed > 0) a.push(wNameH() + ' 約' + fmt(Math.round(c.n.w.rawNeed)) + '万円');
+          return a.length ? '必要保障額（いまの保障を差し引く前）：' + a.join('／') : '';
+        });
+        return secs.filter(function(x){ return x.items.length; });
+      }
+      function mnFactsMD(){
+        const g = mnFactsSecs(); if(!g.length) return '';
+        const L = ['## ご入力の内容と、試算のまとめ'];
+        g.forEach(function(x){
+          L.push('', '### ' + x.title);
+          x.items.forEach(function(t){ L.push('- ' + t); });
+        });
+        return L.join('\n');
+      }
+      // 概要が無いときの1行目（日付・ご出席・次回）
+      function mnMetaLine(){
+        try{
+          const m = mnMeta([]);
+          return m.dateLabel + (m.attendees ? '　ご出席：' + m.attendees : '')
+                             + (m.next ? '　次回：' + m.next : '');
+        }catch(e){ return ''; }
+      }
       function mnNextItems(){
         // まだ作っていなければここで作る（「次の一手」を押し忘れても宿題の枚が空にならない。
         // nxCopy と同じやり方。中で失敗しても nxLast は null のままなので、下で空になるだけ）
@@ -10272,20 +10388,60 @@
         return out;
       }
       // Gemini Notebook に読ませる本文（Markdown＝見出しの段が伝わるので、章立てのまま組んでくれる）
-      function mnSlideMD(anon){
-        const o = mnOutline(); if(!o) return '';
-        const L = ['# ' + MN_SLIDE_TITLE];
-        if(o.meta) L.push('', o.meta);
-        o.secs.forEach(function(s, i){
-          L.push('', '## ' + (i+1) + '. ' + s.title);
-          s.items.forEach(function(x){ L.push('- ' + x); });
+      /* ★文字（Gemini Notebookへ渡す本文）とパワポの中身を、同じ元から作る。
+         別々に組むと、チェックを外したのに片方だけ残る、といったずれが必ず起きる */
+      function mnDeck(inc){
+        inc = inc || nlmInc();
+        const o = mnOutline();
+        const d = { meta: (o && o.meta) ? o.meta : mnMetaLine(), secs: [] };
+        if(inc.mn && o) o.secs.forEach(function(x){ d.secs.push({ title:x.title, items:x.items.slice() }); });
+        if(inc.fx) mnFactsSecs().forEach(function(x){
+          d.secs.push({ title:'ご入力と試算：' + x.title, items:x.items.slice() });
         });
-        const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
-        if(nx.length || nd){
-          L.push('', '## 次の一手（次回までの宿題）');
-          if(nd) L.push('- 次回面談：' + nd);
-          nx.forEach(function(x){ L.push('- ' + x); });
+        if(inc.nx){
+          const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
+          if(nx.length || nd)
+            d.secs.push({ title:'次の一手（次回までの宿題）',
+                          items:(nd ? ['次回面談：' + nd] : []).concat(nx) });
         }
+        return d;
+      }
+      // 何を入れるか（パネルのチェック。パネルを開く前は3つとも入っている扱い）
+      function nlmInc(){
+        const on = function(id){ const e = $(id); return e ? !!e.checked : true; };
+        return { mn: on('nlm-inc-mn'), nx: on('nlm-inc-nx'), fx: on('nlm-inc-fx') };
+      }
+      /* ★録音が無くても送れるようにしてある（2026-09-13）。
+         概要が無ければ、入力と試算のまとめと次の一手だけで組む。
+         ★節の順は 概要 → 入力と試算 → 次の一手。事実を置いてから動くことへ、の順 */
+      function mnSlideMD(anon, inc){
+        inc = inc || nlmInc();
+        const o = mnOutline();
+        const L = ['# ' + MN_SLIDE_TITLE];
+        let body = 0;
+        const head = (o && o.meta) ? o.meta : mnMetaLine();
+        if(head) L.push('', head);
+        if(inc.mn && o){
+          o.secs.forEach(function(s, i){
+            L.push('', '## ' + (i+1) + '. ' + s.title);
+            s.items.forEach(function(x){ L.push('- ' + x); });
+            body++;
+          });
+        }
+        if(inc.fx){
+          const f = mnFactsMD();
+          if(f){ L.push('', f); body++; }
+        }
+        if(inc.nx){
+          const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
+          if(nx.length || nd){
+            L.push('', '## 次の一手（次回までの宿題）');
+            if(nd) L.push('- 次回面談：' + nd);
+            nx.forEach(function(x){ L.push('- ' + x); });
+            body++;
+          }
+        }
+        if(!body) return '';
         L.push('', '## ご確認いただきたい点');
         MN_NOTES.forEach(function(n){ L.push('- ' + n); });
         const t = L.join('\n');
@@ -10314,7 +10470,7 @@
       function nlmSkip(){ try{ return localStorage.getItem(NLM_SKIP_KEY) === '1'; }catch(e){ return false; } }
       function nlmOpen(){
         const md = mnSlideMD(true);
-        if(!md){ alert('先に「概要を作る」を押してください。'); return; }
+        if(!md){ alert('送れる中身がまだありません。概要を作るか、入力欄をご記入ください。'); return; }
         if(nlmSkip()){ nlmSend(md); return; }          // 2回目からは確認なしで1タップ
         const ta = $('nlm-text'); if(ta) ta.value = md;
         if($('nlm-anon')) $('nlm-anon').checked = true;
@@ -10365,8 +10521,8 @@
             lineSpacingMultiple:1.35, valign:'top', fit:'shrink' });
       }
       function mnPptx(){
-        const o = mnOutline();
-        if(!o){ alert('先に「概要を作る」を押してください。'); return; }
+        const o = mnDeck();
+        if(!o.secs.length){ alert('作れる中身がまだありません。概要を作るか、入力欄をご記入ください。'); return; }
         const btns = [$('mn-pptx'), $('mn-pptx2')].filter(Boolean);
         const back = btns.map(function(b){ return b.innerHTML; });
         btns.forEach(function(b){ b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 作成中'; });
@@ -10400,16 +10556,6 @@
               ppBullets(sl, g, 16);
             });
           });
-          // 次の一手
-          const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
-          if(nx.length || nd){
-            const rows = (nd ? ['次回面談：' + nd] : []).concat(nx);
-            ppChunk(rows, 6).forEach(function(g, gi){
-              const sl = p.addSlide();
-              ppHead(sl, '次の一手（次回までの宿題）' + (gi ? '（つづき）' : ''));
-              ppBullets(sl, g, 15);
-            });
-          }
           /* ご確認いただきたい点。★この注記は資料の一部。枚数が増えても省かない
              （試算であること・商品の推奨ではないこと・手数料を受け取ることの明示） */
           ppChunk(MN_NOTES, 2).forEach(function(g, gi){
@@ -10427,6 +10573,7 @@
             alert('パワポの作成に使う部品を読み込めませんでした。\n通信できる場所で、もう一度お試しください。\n（急ぐときは「Gemini Notebookで作る」か「.txtで保存」をお使いください）');
           });
       }
+      /* == LPSLIDE-E-END == */
       function mnRun(){
         const box = $('mn-out'); if(!box) return;
         if($('mn-doc')){
@@ -11164,6 +11311,7 @@
       if($('mn-copy2')) $('mn-copy2').addEventListener('click', mnCopy);
       if($('mn-dl'))    $('mn-dl').addEventListener('click', mnDownload);
       if($('mn-dl2'))   $('mn-dl2').addEventListener('click', mnDownload);
+/* == LPSLIDE-F-BEGIN == */
       /* 概要 → スライド（2026-09-13）。概要タブと「大きく開く」の両方から同じ動きにする */
       if($('mn-nlm'))   $('mn-nlm').addEventListener('click', nlmOpen);
       if($('mn-nlm2'))  $('mn-nlm2').addEventListener('click', nlmOpen);
@@ -11172,13 +11320,34 @@
       function nlmClose(){ if($('nlm-modal')) $('nlm-modal').hidden = true; }
       if($('nlm-close')) $('nlm-close').addEventListener('click', nlmClose);
       if($('nlm-modal')) $('nlm-modal').addEventListener('click', function(e){ if(e.target === $('nlm-modal')) nlmClose(); });
-      // 「お名前を伏せる」を切り替えたら、その場で本文を作り直す（手直しは作り直しで消えるので確認を取る）
-      if($('nlm-anon')) $('nlm-anon').addEventListener('change', function(){
-        const ta = $('nlm-text'); if(!ta) return;
-        const next = mnSlideMD(this.checked);
-        if(ta.value && ta.value !== mnSlideMD(!this.checked)
-           && !confirm('この欄に入れた手直しは消えます。作り直しますか？')){ this.checked = !this.checked; return; }
-        ta.value = next;
+      /* チェックを切り替えたら、その場で本文を作り直す。
+         ★手直しは作り直しで消えるので、消える手直しがあるときだけ確認を取る
+           （消えるものが無いのに毎回聞くと、チェックが押しづらくなる） */
+      function nlmRebuild(el, undo){
+        const ta = $('nlm-text'); if(!ta) return true;
+        let before = '';
+        try{ undo(); before = mnSlideMD($('nlm-anon') ? $('nlm-anon').checked : true); undo(); }catch(e){}
+        if(ta.value && before && ta.value !== before
+           && !confirm('この欄に入れた手直しは消えます。作り直しますか？')){ undo(); return false; }
+        ta.value = mnSlideMD($('nlm-anon') ? $('nlm-anon').checked : true);
+        return true;
+      }
+      ['nlm-anon','nlm-inc-mn','nlm-inc-fx','nlm-inc-nx'].forEach(function(id){
+        if(!$(id)) return;
+        $(id).addEventListener('change', function(){
+          const me = this;
+          nlmRebuild(me, function(){ me.checked = !me.checked; });
+        });
+      });
+      /* PDF は既にある「PDF作成」を借りる（グラフとキャッシュフロー表が入る。
+         Gemini Notebook はPDFをソースにできるので、文字と2本立てで渡せる）。
+         ★パネルは先に閉じる。開いたままだと画面の写し取りに影響しうる */
+      if($('nlm-pdf')) $('nlm-pdf').addEventListener('click', function(){
+        const b = $('btn-send');
+        if(!b){ alert('PDFを作るボタンが見つかりませんでした。画面上の「PDF作成」をお使いください。'); return; }
+        if($('nlm-modal')) $('nlm-modal').hidden = true;
+        setStatus('PDFを作っています。保存できたら Gemini Notebook へアップロードしてください');
+        b.click();
       });
       if($('nlm-prompt')) $('nlm-prompt').addEventListener('click', function(){
         if(navigator.clipboard && navigator.clipboard.writeText){
@@ -11200,6 +11369,7 @@
         nlmSend(txt);
         nlmClose();
       });
+      /* == LPSLIDE-F-END == */
       if($('nx-build')) $('nx-build').addEventListener('click', nxRun);
       if($('nx-copy'))  $('nx-copy').addEventListener('click', ()=>{
         if(!nxLast){ alert('先に「次の一手を作る」を押してください。'); return; }
@@ -11546,8 +11716,10 @@
       });
       document.addEventListener('keydown', (e)=>{
         if(e.key!=='Escape' || panel.hidden) return;
+/* == LPSLIDE-G-BEGIN == */
         // Gemini Notebookの確認はいちばん手前に出るので、先に閉じる（後ろの議事録モーダルより優先）
         if($('nlm-modal') && !$('nlm-modal').hidden){ $('nlm-modal').hidden = true; return; }
+        /* == LPSLIDE-G-END == */
         if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }
         panel.hidden = true; vcSyncDockH();   // 全画面なので Esc は閉じる
       });

@@ -1278,6 +1278,24 @@
     .nlm-go .btn{ min-height:52px; font-size:1rem; padding:0 22px; }
     .nlm-steps{ margin:14px 0 10px; padding-left:1.35em; }
     .nlm-steps li{ font-size:.86rem; line-height:1.8; margin-bottom:5px; }
+    /* まとめる範囲（2026-09-14 ユーザー指示「現状のものだけで概要を作るか、将来も含めた概要にするのかも
+       選択できるように」）。初回の商談は現状の整理まで、次回に運用のご提案を足す——という進め方に合わせる */
+    .mn-range{ background:#f8fbfe; }
+    /* この行だけ番号を持たない（①②③は「する仕事」。範囲は仕事ではなく設定）。
+       番号の丸のぶんだけ字下げして、下の3行と頭をそろえる */
+    .mn-range .mn-step-t{ padding-left:36px; flex-basis:154px; }
+    .mn-rg{ border:1px solid var(--line); background:#fff; color:var(--ink-soft); font-weight:700; }
+    .mn-rg.is-on{ background:var(--blue-deep); border-color:var(--blue-deep); color:#fff; }
+    .mn-range-n{ flex:1 1 100%; font-size:.78rem; line-height:1.7; color:var(--ink-soft); }
+    /* ご入力から作った概要の1行目。発言から作った概要と取り違えないための出どころ表示。
+       ★この段があるかどうかで「入力から作った概要」と判別している（mnDocIsFacts）。消さないこと */
+    .mn-src{ font-size:.82rem; line-height:1.8; color:var(--ink-soft); background:#f2f8fd;
+      border-left:3px solid var(--blue); border-radius:0 10px 10px 0; padding:8px 12px; margin:4px 0 10px; }
+    .mn-src i{ color:var(--blue); margin-right:5px; }
+    .mn-src b{ color:var(--ink); }
+    .mn-src span{ display:block; font-size:.76rem; margin-top:2px; }
+    .nlm-fx-note{ font-size:.74rem; font-weight:700; color:var(--ink-soft); background:#eef3f7;
+      border-radius:999px; padding:2px 9px; white-space:nowrap; }
     /* == LPSLIDE-B-END == */
     .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
       font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
@@ -3333,7 +3351,17 @@
              見た目はお客様目線、使い方は営業マン目線」）。①概要 ②スライド ③お客様へ、を1つの帯にした。
              ★上の行（コピー／.txt／大きく開く／1つ前）は概要そのものの道具。ここは商談のあとの本線 -->
         <div class="mn-after" id="mn-after">
-          <div class="mn-after-h"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> 商談のあとの流れ <small>録音が無くても、ご入力と試算から作れます</small></div>
+          <div class="mn-after-h"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> 商談のあとの流れ <small>ご入力と試算だけで作れます（録音はあれば使う、くらいで大丈夫です）</small></div>
+          <!-- まとめる範囲（2026-09-14 ユーザー指示「現状のものだけで概要を作るか、将来も含めた概要にするのかも
+               選択できるように」）。初回は現状の整理まで、次回に運用のご提案を足す進め方に合わせている -->
+          <div class="mn-step mn-range">
+            <span class="mn-step-t">まとめる範囲</span>
+            <span class="mn-step-b">
+              <button type="button" class="btn btn-sm mn-rg is-on" id="mn-range-now" aria-pressed="true">現状だけ</button>
+              <button type="button" class="btn btn-sm mn-rg" id="mn-range-mirai" aria-pressed="false">将来も含める</button>
+              <span class="mn-range-n" id="mn-range-note">現状プランの数字だけをまとめます。運用のご提案はまだ入りません。</span>
+            </span>
+          </div>
           <div class="mn-step">
             <span class="mn-step-no">1</span><span class="mn-step-t">概要を作る</span>
             <span class="mn-step-b">
@@ -3438,7 +3466,7 @@
         <div class="vc-tools nlm-pick">
           <span class="nlm-pick-lab"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> 入れるもの</span>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-mn" checked> 面談の概要</label>
-          <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力・試算・AIの分析</label>
+          <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力・試算・AIの分析</label><span class="nlm-fx-note" id="nlm-fx-note" hidden>概要に入っています</span>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-nx" checked> 次の一手</label>
         </div>
         <div class="vc-tools">
@@ -10154,7 +10182,7 @@
            + (m.attendees ? '　ご出席：' + esc(m.attendees) : '')
            + (m.next ? '　次回：' + esc(m.next) : '') + '</p>';
         if(model.tooShort){
-          h += '<p class="mn-item mn-empty">文字起こしが短いため、概要は作成していません。録音するか、下の欄に打ち込んでから「概要を作る」を押してください。</p>';
+          h += mnFactsDocHTML();   /* 録音が無い（短い）ときは、ご入力と試算から概要を作る（2026-09-14） */
         } else if(model.noTheme){
           h += '<h4 class="mn-h">1. 本日のお話（自動でのテーマ分けができませんでした）</h4>';
           // 生ログをそのまま出す唯一の経路。スコアリングを通らないので、ここでNG表現・商品名を落とす
@@ -10174,7 +10202,7 @@
         }
         h += '</div>';
         // 注記は contenteditable の外に置く＝手直ししても消えない
-        h += '<div class="mn-notes">' + MN_NOTES.map(function(n){ return '<p>※ ' + esc(n) + '</p>'; }).join('') + '</div>';
+        h += '<div class="mn-notes">' + mnNotesForHTML(h).map(function(n){ return '<p>※ ' + esc(n) + '</p>'; }).join('') + '</div>';
         h += '<details class="mn-raw"><summary><i class="fa-solid fa-list-ul"></i> 発言メモ（文字起こし全文 ' + model.rawLines.length + '行）</summary>'
            + model.rawLines.map(function(r){ return '<p><span class="mn-t">' + esc(r.time) + '</span>' + esc(r.x) + '</p>'; }).join('')
            + '</details>';
@@ -10187,7 +10215,7 @@
         let body = doc ? doc.innerText.replace(/\n{3,}/g,'\n\n').trim() : '';
         if(!body) return '';
         const nx = (nxLast ? nextToText(nxLast, '次の一手') : '');
-        return body + (nx ? '\n\n' + nx : '') + '\n\n―――\n' + MN_NOTES.map(function(n){ return '※ ' + n; }).join('\n');
+        return body + (nx ? '\n\n' + nx : '') + '\n\n―――\n' + mnNotes().map(function(n){ return '※ ' + n; }).join('\n');
       }
       function mnCopy(){
         const txt = mnText();
@@ -10240,23 +10268,36 @@
       const MN_SLIDE_TITLE = 'ライフプランのご報告';
       /* Gemini Notebook のスライド生成に貼る指示文。言い回しの線（急かさない・断定的な有利不利を書かない・
          数字を足さない）は、向こうで作らせる文章にもそのまま効かせる */
+      /* ★2026-09-14 ユーザー指示「入力データから見た数値的なこと、AI診断でのこと、明るいプロンプトを
+           作成して、不安を煽ることはないように」。読み終えたときに前を向ける組み立てにしてある。
+         ★数字そのものは動かさない（明るくするのは言い回しと並べ方であって、事実ではない）。
+         ★ソースに「今と将来の数字」が無い回（現状だけでまとめた回）に、将来の話を足させないこと */
       const NLM_PROMPT = [
         'あなたは、言いたいことを1枚に絞って伝えるプレゼンテーションの設計者です。',
-        'このソースは、担当者がお客様との面談でうかがった内容をまとめたものです。',
-        'これを、お客様にお見せする報告スライドにしてください。',
+        'このソースは、担当者がお客様のご家庭のことをうかがい、ツールで試算した内容です。',
+        'これを、お客様がご自宅で見返すための報告スライドにしてください。',
         '',
         '【誰に】金融の専門知識をお持ちでない一般のお客様。中学生が読んでも分かる言葉で。',
+        '【この資料の役目】お客様が「わが家のいまが分かった」「これなら進められそう」と思えるようにすること。',
         '【感情の流れ】理解 → 納得 → 安心 → 興味。この順に並べてください。',
         '',
         '【組み立て】',
         '・1枚で言うことは1つだけ。見出しは体言止めで短く。',
         '・章の並びは、ソースの見出しの順のままにしてください。',
+        '・はじめの1枚は「今日、分かったこと」。数字ではなく、整理がついたことを置いてください。',
         '・箇条書きを並べず、関係が目で分かる図にしてください（並ぶ・分かれる・積み上がる・時間で進む）。',
         '・最後に「ご確認いただきたい点」の全文を、省かずに1〜2枚へ載せてください。',
         '',
+        '【明るく書く（ここが要です）】',
+        '・すでにできていること・続けられていることを、先に置いてください。',
+        '・数字は変えずに、言い方を落ち着いた事実にしてください。見出しに「不足」「破綻」「危険」「このままでは」を使わない。',
+        '・気をつけたい点は、必ず「打てる手がある」と対にして同じ枚に置いてください。手が無い話だけの枚を作らない。',
+        '・試算は前提が変われば変わるもの、という前向きな含みで書いてください（決まった未来としては書かない）。',
+        '・読み手を責める書き方（遅い・足りない・やっていない）にしない。',
+        '',
         '【見た目】',
         '・白を地にして、余白を広くとる。文字は最小限にし、読ませるのではなく見て分かる形に。',
-        '・色は紺・灰・黒を基調に。強調は1枚につき1か所だけ。',
+        '・色は紺・灰・黒を基調に。強調は1枚につき1か所だけ。赤は使わない。',
         '・書体は全体で統一し、視線が左上から右下へ自然に流れる置き方にする。',
         '',
         '【言葉】',
@@ -10264,10 +10305,11 @@
         '・金額・年齢・年数は、ソースに書いてあるものだけを使う。足したり丸めたりしない。',
         '・「ご入力・試算・AIの分析のまとめ」の数字は前提が変わると変わるもの。断定せず、幅のある言い方にする。',
         '・AIの分析は、安心できる点と気をつけたい点を必ず両方載せる。片方だけにしない。',
+        '・ソースに「今と将来の数字」が無いときは、今回は現状の整理までです。将来の見通しやご提案を推測で足さないでください。',
         '・断定的な有利不利の比較は書かない。将来の運用成果・受取額は約束しない。',
         '・特定の保険商品・金融商品をすすめる書き方にしない。',
         '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。不安であおらない。',
-        '・「その場で決めていただく必要はありません」という姿勢で締める。'
+        '・最後の1枚は、次に一緒に考えることを2〜3行で。「その場で決めていただく必要はありません」と明記して締める。'
       ].join('\n');
 
       /* お名前を伏せるために「お名前らしい語」を集める。
@@ -10315,6 +10357,8 @@
           if(!t) return;
           if(el.tagName === 'H4'){ cur = { title: t.replace(/^\d+[.．]\s*/, ''), items: [] }; o.secs.push(cur); return; }
           if(el.classList && el.classList.contains('mn-meta')){ o.meta = t; return; }
+          // 出どころの1行（ご入力から作った概要の頭）は、資料の中身ではないので章に入れない
+          if(el.classList && el.classList.contains('mn-src')) return;
           const body = t.replace(/^[・\s]+/, '');
           if(!body) return;
           if(!cur){ cur = { title: '本日のお話', items: [] }; o.secs.push(cur); }
@@ -10344,9 +10388,41 @@
           .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
           .replace(/\s+/g,' ').trim();
       }
+      /* まとめる範囲（2026-09-14 ユーザー指示「基本的には商談の際は現状のところだけ作成し、
+         次回の商談の時に金融資産などをどう運用していくかを営業マンが追加してお客様に提示します。
+         現状のものだけで概要を作るか、将来も含めた概要にするのかも選択できるように」）。
+         ★既定は「現状だけ」。初回の商談で将来プランのご提案まで資料に載らないようにするため。
+         ★端末に覚えさせる（担当者ごとの進め方は毎回同じことが多い） */
+      const MN_RANGE_KEY = 'lifeplan_mn_range_v1';
+      let mnRangeV = null;
+      function mnRange(){
+        if(mnRangeV) return mnRangeV;
+        try{ mnRangeV = (localStorage.getItem(MN_RANGE_KEY) === 'mirai') ? 'mirai' : 'now'; }
+        catch(e){ mnRangeV = 'now'; }
+        return mnRangeV;
+      }
+      function mnSetRange(v){
+        mnRangeV = (v === 'mirai') ? 'mirai' : 'now';
+        try{ localStorage.setItem(MN_RANGE_KEY, mnRangeV); }catch(e){}
+        const on = (mnRangeV === 'mirai');
+        [['mn-range-now', !on], ['mn-range-mirai', on]].forEach(function(p){
+          const b = $(p[0]); if(!b) return;
+          b.classList.toggle('is-on', p[1]); b.setAttribute('aria-pressed', p[1] ? 'true' : 'false');
+        });
+        const n = $('mn-range-note');
+        if(n) n.textContent = on
+          ? '現状に加えて、将来プランとの差（今と将来の数字）まで入ります。運用のご提案を足す回はこちら。'
+          : '現状プランの数字だけをまとめます。運用のご提案はまだ入りません。';
+      }
       function mnFactsSecs(){
         const secs = [];
         let cur = null;
+        const scope = mnRange();
+        const hasSum = function(k){ const p = PLANS[k]; return !!(p && p.sum && p.sum.length); };
+        // 「将来も含める」でも将来プランが無ければ現状で書く（見出しと中身が食い違わないように）
+        const planKey = (scope === 'mirai' && hasSum('mirai')) ? 'mirai'
+                      : (hasSum('genjo') ? 'genjo' : PLANS.active);
+        const withMirai = (scope === 'mirai');
         const sec = function(t){ cur = { title:t, items:[] }; secs.push(cur); };
         const push = function(fn){ try{ const t = fn(); if(t) cur.items.push(t); }catch(e){} };
         let c = null; try{ c = buildNextContext(); }catch(e){ c = null; }
@@ -10390,12 +10466,13 @@
           return '加入中の保険：未入力';
         });
         push(function(){
+          if(!withMirai) return '';   // 「現状だけ」の回に、将来プランの積立を載せない
           const d = nextInvDelta();
           return d ? '毎月の積立：現状プランから ' + (d > 0 ? '＋' : '−') + Math.abs(d) + '万円（将来プラン）' : '';
         });
 
-        sec('試算の結果（' + (PLANS.active === 'mirai' ? '将来プラン' : '現状プラン') + '）');
-        const rows = function(){ return (PLANS[PLANS.active] && PLANS[PLANS.active].sum) || []; };
+        sec('試算の結果（' + (planKey === 'mirai' ? '将来プラン' : '現状プラン') + '）');
+        const rows = function(){ return (PLANS[planKey] && PLANS[planKey].sum) || []; };
         // マイナスは「不足 約◯万円」と書く（「約 -8,363万円」は読みにくく、記号が落ちると逆の意味になる）
         const yen = function(v){ v = Math.round(v); return v < 0 ? '不足 約' + fmt(-v) + '万円' : '約 ' + fmt(v) + '万円'; };
         push(function(){
@@ -10406,9 +10483,19 @@
           const a = rows(), e = a[a.length - 1];
           return e ? e.hAge + '歳の時点の金融資産：' + yen(e.net) : '';
         });
+        /* ★言い方は落ち着いた事実に（2026-09-14 ユーザー指示「不安を煽ることはないように」）。
+           数字は動かさない。動かすのは言い回しだけ＝「打ち手を入れる前の数字」だと分かる形にする */
+        // 試算の行は西暦を持たないので、ご主人の年齢の差から出す（画面に出すためだけの計算）
+        const yearOf = function(d){
+          if(!d) return '';
+          if(d.year) return '（' + d.year + '年）';
+          try{ return '（' + (new Date().getFullYear() + (d.hAge - num('h-age',35))) + '年）'; }catch(e){ return ''; }
+        };
         push(function(){
-          return (c && c.p && c.p.depletion)
-            ? '資金が足りなくなる見込みの時期：' + c.p.depletion.hAge + '歳ごろ（' + c.p.depletion.year + '年）' : '';
+          const st = sumStats(rows());
+          const d = (st && st.dep) || (c && c.p && c.p.depletion) || null;
+          return d ? '金融資産が底をつく見込みの時期：' + d.hAge + '歳ごろ' + yearOf(d)
+                   + '（いまの前提のまま、打ち手を入れなかった場合の目安です）' : '';
         });
         push(function(){
           if(!c || !c.n) return '';
@@ -10422,10 +10509,11 @@
            （2026-09-13 ユーザー指示「収入、今と将来の数字」） */
         sec('今と将来の数字（現状プランと将来プラン）');
         (function(){
+          if(!withMirai) return;   // 「現状だけ」の回は、この節ごと出さない
           const g = PLANS.genjo && PLANS.genjo.sum, m = PLANS.mirai && PLANS.mirai.sum;
           if(!g || !m || g === m || !g.length || !m.length) return;
           const at = function(sum, age){ const r = sum.filter(function(x){ return x.hAge === age; })[0]; return r ? r.net : null; };
-          const when = function(d){ return d ? d.hAge + '歳ごろ' + (d.year ? '（' + d.year + '年）' : '') : '見込みなし'; };
+          const when = function(d){ return d ? d.hAge + '歳ごろ' + yearOf(d) : '見込みなし'; };
           push(function(){ const a = at(g,65), b = at(m,65); return (a!=null && b!=null) ? '65歳の時点の金融資産：現状 ' + yen(a) + ' → 将来 ' + yen(b) : ''; });
           push(function(){ const a = g[g.length-1], b = m[m.length-1]; return a.hAge + '歳の時点の金融資産：現状 ' + yen(a.net) + ' → 将来 ' + yen(b.net); });
           push(function(){ return '資金が足りなくなる見込み：現状 ' + when(sumStats(g).dep) + ' → 将来 ' + when(sumStats(m).dep); });
@@ -10454,6 +10542,46 @@
         })();
         return secs.filter(function(x){ return x.items.length; });
       }
+      /* ★録音が無い（または短い）ときの「概要」＝ご入力と試算から作る（2026-09-14 ユーザー指示
+           「音声入力をしていないと概要が作れない。音声は録音できないこともあるので、あくまで
+             サブ機能として考えてください。入力データから見た数値的なこと、AI診断でのこと」）。
+         ★発言から作った概要と取り違えないよう、出どころの1行（.mn-src）を必ず頭に置く。
+           この段の有無で「ご入力から作った概要」と判別している（mnDocIsFacts）。
+         ★これで議事録（発言）と入力の数字が同じ紙に混ざることはない——録音がある回は
+           これまでどおり発言だけの概要になり、この関数は呼ばれない */
+      function mnFactsDocHTML(){
+        let f = [];
+        try{ f = mnFactsSecs(); }catch(e){ f = []; }
+        if(!f.length) return '<p class="mn-item mn-empty">まとめられる中身がまだありません。'
+          + '入力欄をご記入いただくか、録音するか、下の欄に打ち込んでから「概要を作る」を押してください。</p>';
+        let h = '<p class="mn-src"><i class="fa-solid fa-keyboard" aria-hidden="true"></i>'
+              + 'ご入力いただいた内容と試算から、<b>'
+              + (mnRange() === 'mirai' ? 'いまと、これからの見通し' : 'いまの状況') + '</b>をまとめました。'
+              + '<span>（面談中のご発言ではありません。録音があるときは、お話しになった内容から作ります）</span></p>';
+        f.forEach(function(sec, i){
+          h += '<h4 class="mn-h">' + (i+1) + '. ' + esc(sec.title) + '</h4>';
+          sec.items.forEach(function(t){ h += '<p class="mn-item"><span class="mn-b">・</span>' + mnHi(t) + '</p>'; });
+        });
+        return h;
+      }
+      // いま画面に出ている概要が「ご入力から作ったもの」か（＝下の節と中身が重なるか）
+      function mnDocIsFacts(){
+        const d = $('mn-doc');
+        return !!(d && d.querySelector('.mn-src'));
+      }
+      /* ★注記の1本目・2本目は「何から作ったか」で替える（2026-09-14）。
+         録音していない回に「録音の文字起こしから作成した下書きです」と書くのは事実と違う
+         （お客様にお渡しする紙に載る文なので、ここは必ず合わせる）。
+         ★3本目から下（募集文書の線・約款の確認・作成者と手数料・保存の扱い）は、
+           どちらの経路でも同じ。本数を減らさない・短くしないこと */
+      const MN_NOTES_FACTS = [
+        'この資料は、担当者がご入力いただいた内容と、ツールの試算から機械的にまとめた下書きです。面談中のご発言そのものではありません。内容に相違がある場合は担当者までお知らせください。',
+        '本文の金額・年齢・年数は、ご入力いただいた前提にもとづく試算です。税制・物価・運用環境の変化により実際とは異なります。将来の運用成果・受取額を保証するものではありません。'
+      ];
+      function mnNotesOf(isFacts){ return isFacts ? MN_NOTES_FACTS.concat(MN_NOTES.slice(2)) : MN_NOTES; }
+      function mnNotes(){ return mnNotesOf(mnDocIsFacts()); }
+      // 画面に出す前は #mn-doc がまだ DOM に無いので、組み立て中のHTMLから見分ける
+      function mnNotesForHTML(h){ return mnNotesOf(/class="mn-src"/.test(String(h || ''))); }
       function mnFactsMD(){
         const g = mnFactsSecs(); if(!g.length) return '';
         const L = ['## ご入力・試算・AIの分析のまとめ'];
@@ -10492,8 +10620,10 @@
         inc = inc || nlmInc();
         const o = mnOutline();
         const d = { meta: (o && o.meta) ? o.meta : mnMetaLine(), secs: [] };
+        // 概要そのものがご入力から作られている回は、下の節と中身が丸ごと重なるので足さない
+        const dup = mnDocIsFacts() && inc.mn && !!o;
         if(inc.mn && o) o.secs.forEach(function(x){ d.secs.push({ title:x.title, items:x.items.slice() }); });
-        if(inc.fx) mnFactsSecs().forEach(function(x){
+        if(inc.fx && !dup) mnFactsSecs().forEach(function(x){
           d.secs.push({ title:'ご入力と試算：' + x.title, items:x.items.slice() });
         });
         if(inc.nx){
@@ -10526,7 +10656,8 @@
             body++;
           });
         }
-        if(inc.fx){
+        // 概要がご入力から作られている回は、同じ中身を2度書かない
+        if(inc.fx && !(mnDocIsFacts() && inc.mn && o)){
           const f = mnFactsMD();
           if(f){ L.push('', f); body++; }
         }
@@ -10541,7 +10672,7 @@
         }
         if(!body) return '';
         L.push('', '## ご確認いただきたい点');
-        MN_NOTES.forEach(function(n){ L.push('- ' + n); });
+        mnNotes().forEach(function(n){ L.push('- ' + n); });
         const t = L.join('\n');
         return anon ? mnAnon(t) : t;
       }
@@ -10566,10 +10697,19 @@
       const NLM_URL = 'https://notebook.google.com/';
       const NLM_SKIP_KEY = 'lifeplan_nlm_skipconfirm_v1';
       function nlmSkip(){ try{ return localStorage.getItem(NLM_SKIP_KEY) === '1'; }catch(e){ return false; } }
+      /* 概要がご入力から作られている回は、「ご入力・試算・AIの分析」が概要の中に入っている。
+         本文側は mnDeck／mnSlideMD で重複を落としてあるので、画面でもそれが分かるようにする */
+      function nlmSyncPick(){
+        const mn = $('nlm-inc-mn');
+        const dup = mnDocIsFacts() && (mn ? mn.checked : true);
+        if($('nlm-inc-fx')) $('nlm-inc-fx').disabled = dup;
+        if($('nlm-fx-note')) $('nlm-fx-note').hidden = !dup;
+      }
       function nlmOpen(){
         const md = mnSlideMD(true);
-        if(!md){ alert('送れる中身がまだありません。概要を作るか、入力欄をご記入ください。'); return; }
+        if(!md){ alert('送れる中身がまだありません。「概要を作る」を押すか、入力欄をご記入ください。'); return; }
         if(nlmSkip()){ nlmSend(md); return; }          // 2回目からは確認なしで1タップ
+        nlmSyncPick();
         const ta = $('nlm-text'); if(ta) ta.value = md;
         if($('nlm-anon')) $('nlm-anon').checked = true;
         if($('nlm-skip')) $('nlm-skip').checked = false;
@@ -10643,7 +10783,7 @@
 
           // 目次（章が2つ以上あるときだけ）
           if(o.secs.length > 1){
-            s = p.addSlide(); ppHead(s, '本日お話ししたこと');
+            s = p.addSlide(); ppHead(s, mnDocIsFacts() ? '本日の内容' : '本日お話ししたこと');
             ppBullets(s, o.secs.map(function(x, i){ return (i+1) + '. ' + x.title; }), 17);
           }
           // 各章（1枚6項目まで。あふれたら「つづき」で次の枚へ）
@@ -10656,7 +10796,7 @@
           });
           /* ご確認いただきたい点。★この注記は資料の一部。枚数が増えても省かない
              （試算であること・商品の推奨ではないこと・手数料を受け取ることの明示） */
-          ppChunk(MN_NOTES, 2).forEach(function(g, gi){
+          ppChunk(mnNotes(), 2).forEach(function(g, gi){
             const sl = p.addSlide();
             sl.addShape('rect', { x:0, y:0, w:10, h:5.625, fill:{ color:PP_TINT } });
             ppHead(sl, 'ご確認いただきたい点' + (gi ? '（つづき）' : ''));
@@ -11448,8 +11588,22 @@
         $(id).addEventListener('change', function(){
           const me = this;
           nlmRebuild(me, function(){ me.checked = !me.checked; });
+          nlmSyncPick();
         });
       });
+      /* まとめる範囲（現状だけ／将来も含める）。押しただけでは作り直さない
+         ——手直しした概要が消えてしまうため。押し直すのは担当者の判断にする */
+      [['mn-range-now','now'], ['mn-range-mirai','mirai']].forEach(function(p){
+        if(!$(p[0])) return;
+        $(p[0]).addEventListener('click', function(){
+          const before = mnRange();
+          mnSetRange(p[1]);
+          if(before !== mnRange())
+            setStatus($('mn-doc') ? '範囲を変えました。「概要を作る」を押すと、この範囲で作り直せます'
+                                  : '範囲を変えました');
+        });
+      });
+      mnSetRange(mnRange());
       /* PDF は既にある「PDF作成」を借りる（グラフとキャッシュフロー表が入る。
          Gemini Notebook はPDFをソースにできるので、文字と2本立てで渡せる）。
          ★パネルは先に閉じる。開いたままだと画面の写し取りに影響しうる */

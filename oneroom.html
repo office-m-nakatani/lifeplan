@@ -678,6 +678,7 @@
     .modal-overlay[hidden]{ display:none; }
     .modal{ background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,.25); width:min(1100px,96vw); max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
     .modal.modal-sm{ width:min(560px,96vw); }
+    .modal.modal-mid{ width:min(780px,96vw); }
     .modal-head{ display:flex; align-items:center; gap:10px; padding:15px 20px; border-bottom:1px solid var(--line); background:linear-gradient(120deg,#eaf4fc,#fdf6dc); }
     .modal-head h3{ font-size:1.05rem; display:flex; align-items:center; gap:9px; flex:1; }
     .modal-head h3 i{ color:var(--blue); }
@@ -1231,6 +1232,27 @@
     .vc-pane[hidden]{ display:none; }
     .vc-tools{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0 2px; }
     .vc-tools .btn{ min-height:44px; }
+    /* 概要 → スライドの行（2026-09-13）。上の行＝概要そのものの操作、この行＝スライドにする操作。
+       薄い地と左の細い線で「別の段」だと分かるようにする（同じ行に7個並べると迷う） */
+    .mn-slide-row{ margin-top:6px; padding:6px 10px 6px 12px; border-left:3px solid var(--blue);
+      background:#f2f8fd; border-radius:0 10px 10px 0; }
+    .mn-slide-lab{ font-size:.8rem; font-weight:800; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px; }
+    .mn-slide-lab i{ color:var(--blue); }
+    /* NotebookLMへ送る前の確認（外部へ出る唯一の道なので、注意書きは畳まない・小さくしない） */
+    .nlm-warn{ border:2px solid #e8b84b; background:#fffaec; border-radius:12px; padding:12px 14px; }
+    .nlm-warn p{ font-size:.88rem; line-height:1.75; margin:0; }
+    .nlm-warn p + p{ margin-top:7px; }
+    .nlm-text{ width:100%; min-height:210px; margin-top:4px; padding:12px 13px; border:1px solid var(--line);
+      border-radius:12px; font-size:.86rem; line-height:1.8; font-family:inherit; color:var(--ink);
+      background:#fcfdfe; resize:vertical; }
+    /* ★大ボタンは画面の下に貼り付ける。注意書きを削らずに読ませたいが、携帯だと注意書きだけで
+       1画面ぶん使い、本題のボタンがはるか下に行ってしまう（390px で実測）。
+       貼り付けておけば、読みながらいつでも押せる。★注意書きを短くして解決しないこと */
+    .nlm-go{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;
+      position:sticky; bottom:0; z-index:2; background:#fff; padding:12px 0 6px; border-top:1px solid var(--line); }
+    .nlm-go .btn{ min-height:52px; font-size:1rem; padding:0 22px; }
+    .nlm-steps{ margin:14px 0 10px; padding-left:1.35em; }
+    .nlm-steps li{ font-size:.86rem; line-height:1.8; margin-bottom:5px; }
     .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
       font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
     .vc-auto input{ width:22px; height:22px; accent-color:var(--blue); }
@@ -3266,6 +3288,15 @@
           <button type="button" class="btn btn-ghost btn-sm" id="mn-big"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> 大きく開く</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
         </div>
+        <!-- 概要 → スライド（2026-09-13 ユーザー指示「概要作成後に NotebookLM に送ってパワポを
+             自動作成できるように。ボタンひとつでそのままリンクしてパワポ作成できるように」）。
+             ★行を分けてある：上の行は「概要そのものを扱う道具」、この行は「スライドにする道具」。
+               同じ行に混ぜると7個並んで、どれが概要の操作か分からなくなる -->
+        <div class="vc-tools mn-slide-row">
+          <span class="mn-slide-lab"><i class="fa-solid fa-arrow-turn-down" aria-hidden="true"></i> スライドにする</span>
+          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> NotebookLMで作る</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+        </div>
         <div id="mn-out"></div>
       </div>
 
@@ -3312,6 +3343,53 @@
         <div class="vc-tools">
           <button type="button" class="btn btn-ghost btn-sm" id="mn-copy2"><i class="fa-solid fa-copy"></i> コピー</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-dl2"><i class="fa-solid fa-download"></i> .txtで保存</button>
+          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm2"><i class="fa-solid fa-arrow-up-right-from-square"></i> NotebookLMで作る</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx2"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+        </div>
+        <div id="mn-out-big"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 概要 → NotebookLM（スライド／パワポ）=====================
+       ★NotebookLM には「文章を渡して開く」URLが無い（公開APIも無い。APIがあるのは
+         Gemini Notebook Enterprise ＝ Google Cloud 側だけで、notebooklm.google.com には無い）。
+         だからボタン1つでできるのは「整えて・コピーして・向こうを開く」まで。
+         貼り付けとスライド生成は人の手になる（下の3手に書いてある）。
+       ★★ここはこのツールで唯一「入力した中身が端末の外へ出る」道。
+         売りは「入力はこの端末から出ない」なので、何が渡るのかを必ず見せてから開く。
+         担当者用の「提案の検討メモ」はこの経路に一切載せない。 -->
+  <div class="modal-overlay no-print" id="nlm-modal" hidden>
+    <div class="modal modal-mid" role="dialog" aria-modal="true" aria-labelledby="nlm-title">
+      <div class="modal-head">
+        <h3 id="nlm-title"><i class="fa-regular fa-file-powerpoint"></i> NotebookLMでスライドを作る</h3>
+        <button class="modal-close" id="nlm-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="nlm-warn">
+          <p><b>ここから先は、下の本文が Google（NotebookLM）へ渡ります。</b>このツールに入力した内容は、ふだんお使いの端末から出ません。スライドを作ってもらうあいだだけ、中身を向こうに預けることになります。<b>お客様のお名前や個別の数字が入るときは、お客様の同意をいただいてからお使いください。</b></p>
+          <p>担当者用の「提案の検討メモ」は<b>入っていません</b>。この欄に見えているものが、渡るものの全てです。直接書き直してから送れます。</p>
+        </div>
+        <div class="vc-tools">
+          <label class="vc-auto"><input type="checkbox" id="nlm-anon" checked> お名前を伏せる（◯◯様 → お客様）</label>
+          <button type="button" class="btn btn-ghost btn-sm" id="nlm-prompt"><i class="fa-solid fa-copy"></i> スライドの指示文をコピー</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="nlm-md"><i class="fa-solid fa-download"></i> .mdで保存</button>
+        </div>
+        <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="NotebookLMへ渡す本文"></textarea>
+        <div class="nlm-go">
+          <button type="button" class="btn btn-primary" id="nlm-go"><i class="fa-solid fa-arrow-up-right-from-square"></i> コピーして NotebookLM を開く</button>
+          <label class="vc-auto"><input type="checkbox" id="nlm-skip"> 次からはこの画面を出さずに開く</label>
+        </div>
+        <ol class="nlm-steps">
+          <li>開いた画面で<b>「ソースを追加」→「コピーしたテキスト」</b>を選び、そのまま貼り付けます（本文はコピー済みです）。</li>
+          <li>読み込めたら<b>「スライド」</b>を押します。指示を入れる欄には、上の<b>「スライドの指示文」</b>を貼ると、言い回しと注記の扱いが揃います。</li>
+          <li>できたスライドの<b>「…」から「PowerPoint（.pptx）をダウンロード」</b>を選ぶと、パワポとして保存できます。</li>
+        </ol>
+        <p class="hint" style="display:block;">※ NotebookLM のスライドは<b>1枚の絵として貼られる</b>ため、パワポ側で文字を直せません。文字を直したいときは<b>「パワポで保存」</b>をお使いください（この端末の中だけで作られ、どこにも送信されません）。<br>※ スライドとパワポ書き出しは NotebookLM 側の機能です。使えるかどうかは Google のご提供状況によります。</p>
+      </div>
+    </div>
+  </div>
+
         </div>
         <div id="mn-out-big"></div>
       </div>
@@ -10072,6 +10150,257 @@
           setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
         }catch(e){ setStatus('保存できませんでした。コピーをお使いください'); }
       }
+
+      /* ============================================================
+         概要 → スライド（2026-09-13 ユーザー指示）
+         「概要作成後に NotebookLM に送ってパワポを自動作成できるように。
+           ボタンひとつでそのままリンクしてパワポ作成できるように」
+
+         ★NotebookLM には「文章を渡して開く」URLが無く、公開APIも無い
+           （API は Gemini Notebook Enterprise ＝ Google Cloud 側だけ。
+             notebooklm.google.com には無い。非公式SDKはブラウザの認証を借りる作りなので
+             費用ゼロ・バックエンド無しのこのツールでは使えない）。
+           だからボタン1つで行けるのは
+             ①スライド用に整える ②クリップボードへ ③.md を用意 ④NotebookLMを開く
+           まで。向こうで「貼り付け」と「スライド」を押すのは人の手になる。
+         ★そのぶん「押したその場でパワポができる」道も用意した（mnPptx）。
+           NotebookLM のスライドは1枚の絵として貼られるので文字が直せない。直したい人はこちら。
+         ★★外部へ出る唯一の道なので、送る前に中身を必ず見せる（nlm-modal）。
+           社内用の「提案の検討メモ」は、この経路のどこにも載せない。
+         ============================================================ */
+      const MN_SLIDE_TITLE = 'ライフプランのご報告';
+      /* NotebookLM のスライド生成に貼る指示文。言い回しの線（急かさない・断定的な有利不利を書かない・
+         数字を足さない）は、向こうで作らせる文章にもそのまま効かせる */
+      const NLM_PROMPT = [
+        'このソースから、お客様にお見せするライフプランのご報告スライドを作ってください。',
+        '・1枚につき言いたいことは1つ。見出しは短く、体言止めで。',
+        '・章の並びは、ソースの見出しの順のままにしてください。',
+        '・金額・年齢・年数は、ソースに書いてあるものだけを使ってください。足したり丸めたりしないでください。',
+        '・最後に「ご確認いただきたい点」の全文を、そのまま1〜2枚に載せてください。省かないでください。',
+        '・特定の保険商品・金融商品をすすめる書き方にはしないでください。有利・不利の断定もしないでください。',
+        '・急かす言葉（今すぐ・今だけ・手遅れ）は使わないでください。落ち着いた配色でお願いします。'
+      ].join('\n');
+
+      /* お名前を伏せるために「お名前らしい語」を集める。
+         ★1文字の名字は取らない（「森」「林」が普通の言葉の中で置き換わってしまう）。
+           取りこぼしは下の「◯◯様」の丸めが拾う。
+         ★ご出席欄は「担当」の前までしか見ない。担当者ご自身のお名前まで「お客様」に変えると、
+           誰が作った資料か分からなくなる（作成者として名前が残るのは当然のこと） */
+      function mnNames(){
+        const out = [];
+        const push = function(v){ v = String(v||'').trim(); if(v.length >= 2 && v.length <= 12) out.push(v); };
+        ['h-sei','h-name','w-sei','w-name'].forEach(function(id){ if($(id)) push($(id).value); });
+        Array.prototype.forEach.call(document.querySelectorAll('.ch-sei, .ch-name'), function(el){ push(el.value); });
+        const att = (($('mn-attendees') && $('mn-attendees').value) || '').split(/担当/)[0];
+        att.split(/[\s　、,，／\/・]+/).forEach(function(v){
+          push(String(v).replace(/(?:様|さま|さん|君|くん|ちゃん|ご夫妻|ご家族|ご一家|ご本人)+$/, ''));
+        });
+        return out.filter(function(v,i,a){ return a.indexOf(v)===i; })
+                  .sort(function(a,b){ return b.length - a.length; });   // 長い語から先に消す
+      }
+      /* 「皆様」「奥様」などは名前ではないので残す */
+      const MN_ANON_KEEP = /^(?:お客|皆|奥|ご主人|旦那|担当|御社|貴社|各|神|仏)/;
+      function mnAnon(t){
+        mnNames().forEach(function(n){ t = t.split(n).join('\uE000'); });
+        /* 名字と名前が空白で並ぶときだけ、まとめて１つの「お客様」にする。
+           ★空白を無条件に食べないこと（「お客様／担当 中谷」の区切りまで消えて、
+             ご出席と次回がつながって読めなくなった＝2026-09-13 に実測して直した） */
+        t = t.replace(/\uE000(?:[ 　]*\uE000)*(?:様|さま|さん|君|くん|ちゃん)?/g, 'お客様');
+        // 欄に入っていないお名前は「◯◯様」「◯◯さん」の形で拾う
+        t = t.replace(/([一-龥ぁ-んァ-ヶー]{1,5})(?:様|さま|さん)(?![ぁ-んー])/g, function(m, a){
+          return MN_ANON_KEEP.test(a) ? m : 'お客様';
+        });
+        return t.replace(/お客様(?:[ 　]*お客様)+/g, 'お客様');
+      }
+
+      /* 手直しした #mn-doc をそのまま読む（作り直さない＝担当者が直した言葉で資料になる）。
+         h4＝章、p＝箇条書き。contenteditable で足された div も箇条書きとして拾う */
+      function mnOutline(){
+        const doc = $('mn-doc');
+        if(!doc || doc.querySelector('.mn-empty')) return null;
+        const o = { meta:'', secs:[] };
+        let cur = null;
+        Array.prototype.forEach.call(doc.children, function(el){
+          const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
+          if(!t) return;
+          if(el.tagName === 'H4'){ cur = { title: t.replace(/^\d+[.．]\s*/, ''), items: [] }; o.secs.push(cur); return; }
+          if(el.classList && el.classList.contains('mn-meta')){ o.meta = t; return; }
+          const body = t.replace(/^[・\s]+/, '');
+          if(!body) return;
+          if(!cur){ cur = { title: '本日のお話', items: [] }; o.secs.push(cur); }
+          cur.items.push(body);
+        });
+        return o.secs.length ? o : null;
+      }
+      /* 次の一手のうち「お客様にお渡しできる側」だけ。担当のTODO・検討メモは載せない
+         （nextToText の既定と同じ切り方にそろえてある） */
+      function mnNextItems(){
+        // まだ作っていなければここで作る（「次の一手」を押し忘れても宿題の枚が空にならない。
+        // nxCopy と同じやり方。中で失敗しても nxLast は null のままなので、下で空になるだけ）
+        if(!nxLast){ try{ nxRun(); }catch(e){} }
+        if(!nxLast) return [];
+        const out = [], line = function(it, t){ return it.title + '（' + t.due + '）：' + t.text; };
+        (nxLast.main || []).forEach(function(it){
+          (it.tasks || []).forEach(function(t){ if(t.who === 'cust') out.push(line(it, t)); });
+        });
+        (nxLast.fam || []).forEach(function(it){
+          (it.tasks || []).forEach(function(t){ out.push(line(it, t)); });
+        });
+        return out;
+      }
+      // NotebookLM に読ませる本文（Markdown＝見出しの段が伝わるので、章立てのまま組んでくれる）
+      function mnSlideMD(anon){
+        const o = mnOutline(); if(!o) return '';
+        const L = ['# ' + MN_SLIDE_TITLE];
+        if(o.meta) L.push('', o.meta);
+        o.secs.forEach(function(s, i){
+          L.push('', '## ' + (i+1) + '. ' + s.title);
+          s.items.forEach(function(x){ L.push('- ' + x); });
+        });
+        const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
+        if(nx.length || nd){
+          L.push('', '## 次の一手（次回までの宿題）');
+          if(nd) L.push('- 次回面談：' + nd);
+          nx.forEach(function(x){ L.push('- ' + x); });
+        }
+        L.push('', '## ご確認いただきたい点');
+        MN_NOTES.forEach(function(n){ L.push('- ' + n); });
+        const t = L.join('\n');
+        return anon ? mnAnon(t) : t;
+      }
+      function mnStamp(){
+        const d = new Date();
+        return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+      }
+      function mnSaveBlob(name, blob){
+        try{
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = name;
+          document.body.appendChild(a); a.click();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          return true;
+        }catch(e){ return false; }
+      }
+
+      /* ---------- NotebookLM へ送る ---------- */
+      const NLM_URL = 'https://notebooklm.google.com/';
+      const NLM_SKIP_KEY = 'lifeplan_nlm_skipconfirm_v1';
+      function nlmSkip(){ try{ return localStorage.getItem(NLM_SKIP_KEY) === '1'; }catch(e){ return false; } }
+      function nlmOpen(){
+        const md = mnSlideMD(true);
+        if(!md){ alert('先に「概要を作る」を押してください。'); return; }
+        if(nlmSkip()){ nlmSend(md); return; }          // 2回目からは確認なしで1タップ
+        const ta = $('nlm-text'); if(ta) ta.value = md;
+        if($('nlm-anon')) $('nlm-anon').checked = true;
+        if($('nlm-skip')) $('nlm-skip').checked = false;
+        if($('nlm-modal')) $('nlm-modal').hidden = false;
+      }
+      /* クリップボードへ入れてから開く。★どちらも「押した流れ」の中でやる
+         （待ってから書くと、ブラウザが人の操作と見なさずコピーを断る） */
+      function nlmSend(txt){
+        const go = function(){
+          try{ window.open(NLM_URL, '_blank', 'noopener'); }
+          catch(e){ location.href = NLM_URL; }
+          setStatus('本文をコピーしました。NotebookLMで貼り付けてください');
+        };
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(go, function(){ mnCopyFallback(txt, '本文'); go(); });
+        } else { mnCopyFallback(txt, '本文'); go(); }
+      }
+
+      /* ---------- そのままパワポにする（この端末の中だけで作る） ---------- */
+      /* ★押したときだけ読み込む（約460KB）。ふだんの表示は1バイトも重くしない。
+         ★出どころは jsDelivr ＝ Chart.js と同じ先。npm の版をそのまま出すので
+           「その版がホストに無い」で黙って壊れることがない（cdnjs は版がある保証が無い） */
+      const PPTX_SRC = 'https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js';
+      let pptxLoad = null;
+      function pptxLib(){
+        if(window.PptxGenJS) return Promise.resolve(window.PptxGenJS);
+        if(pptxLoad) return pptxLoad;
+        pptxLoad = new Promise(function(res, rej){
+          const s = document.createElement('script');
+          s.src = PPTX_SRC; s.async = true;
+          s.onload = function(){ window.PptxGenJS ? res(window.PptxGenJS) : rej(new Error('lib')); };
+          s.onerror = function(){ pptxLoad = null; rej(new Error('net')); };
+          document.head.appendChild(s);
+        });
+        return pptxLoad;
+      }
+      // 画面と同じ色づかい（紺の見出し・薄墨の本文・水色の罫）。赤は使わない＝増減の意味と混ざるため
+      const PP_F = 'Meiryo', PP_INK = '1F3B57', PP_SOFT = '5B6B7D', PP_LINE = 'C9D6E2', PP_TINT = 'F2F8FD';
+      function ppChunk(a, n){ const o = []; for(let i=0; i<a.length; i+=n) o.push(a.slice(i, i+n)); return o; }
+      function ppHead(s, t){
+        s.addText(t, { x:0.55, y:0.42, w:9.0, h:0.62, fontFace:PP_F, fontSize:22, bold:true, color:PP_INK, valign:'middle' });
+        s.addShape('rect', { x:0.55, y:1.06, w:9.0, h:0.025, fill:{ color:PP_LINE } });
+      }
+      function ppBullets(s, items, size){
+        s.addText(items.map(function(x){ return { text:String(x), options:{ bullet:{ code:'2022' }, breakLine:true } }; }),
+          { x:0.7, y:1.32, w:8.7, h:3.7, fontFace:PP_F, fontSize:size, color:PP_INK,
+            lineSpacingMultiple:1.35, valign:'top', fit:'shrink' });
+      }
+      function mnPptx(){
+        const o = mnOutline();
+        if(!o){ alert('先に「概要を作る」を押してください。'); return; }
+        const btns = [$('mn-pptx'), $('mn-pptx2')].filter(Boolean);
+        const back = btns.map(function(b){ return b.innerHTML; });
+        btns.forEach(function(b){ b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 作成中'; });
+        const done = function(msg){
+          btns.forEach(function(b, i){ b.disabled = false; b.innerHTML = back[i]; });
+          if(msg) setStatus(msg);
+        };
+        pptxLib().then(function(P){
+          const p = new P();
+          p.layout = 'LAYOUT_16x9';                  // 10 × 5.625 インチ
+          p.author = 'Office-M'; p.company = 'Office-M'; p.title = MN_SLIDE_TITLE;
+
+          // 表紙
+          let s = p.addSlide();
+          s.addShape('rect', { x:0, y:0, w:10, h:0.16, fill:{ color:PP_INK } });
+          s.addText(MN_SLIDE_TITLE, { x:0.8, y:1.72, w:8.4, h:0.9, fontFace:PP_F, fontSize:34, bold:true, color:PP_INK });
+          if(o.meta) s.addText(o.meta, { x:0.8, y:2.68, w:8.4, h:0.5, fontFace:PP_F, fontSize:14, color:PP_SOFT });
+          s.addText('作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）',
+            { x:0.8, y:4.62, w:8.4, h:0.4, fontFace:PP_F, fontSize:11, color:PP_SOFT });
+
+          // 目次（章が2つ以上あるときだけ）
+          if(o.secs.length > 1){
+            s = p.addSlide(); ppHead(s, '本日お話ししたこと');
+            ppBullets(s, o.secs.map(function(x, i){ return (i+1) + '. ' + x.title; }), 17);
+          }
+          // 各章（1枚6項目まで。あふれたら「つづき」で次の枚へ）
+          o.secs.forEach(function(sec, i){
+            ppChunk(sec.items, 6).forEach(function(g, gi){
+              const sl = p.addSlide();
+              ppHead(sl, (i+1) + '. ' + sec.title + (gi ? '（つづき）' : ''));
+              ppBullets(sl, g, 16);
+            });
+          });
+          // 次の一手
+          const nx = mnNextItems(), nd = ($('mn-next-date') && $('mn-next-date').value.trim()) || '';
+          if(nx.length || nd){
+            const rows = (nd ? ['次回面談：' + nd] : []).concat(nx);
+            ppChunk(rows, 6).forEach(function(g, gi){
+              const sl = p.addSlide();
+              ppHead(sl, '次の一手（次回までの宿題）' + (gi ? '（つづき）' : ''));
+              ppBullets(sl, g, 15);
+            });
+          }
+          /* ご確認いただきたい点。★この注記は資料の一部。枚数が増えても省かない
+             （試算であること・商品の推奨ではないこと・手数料を受け取ることの明示） */
+          ppChunk(MN_NOTES, 2).forEach(function(g, gi){
+            const sl = p.addSlide();
+            sl.addShape('rect', { x:0, y:0, w:10, h:5.625, fill:{ color:PP_TINT } });
+            ppHead(sl, 'ご確認いただきたい点' + (gi ? '（つづき）' : ''));
+            sl.addText(g.map(function(x){ return { text:'※ ' + x, options:{ breakLine:true } }; }),
+              { x:0.7, y:1.32, w:8.7, h:3.8, fontFace:PP_F, fontSize:11.5, color:PP_SOFT,
+                lineSpacingMultiple:1.4, valign:'top', fit:'shrink' });
+          });
+          return p.writeFile({ fileName: MN_SLIDE_TITLE + '_' + mnStamp() + '.pptx' });
+        }).then(function(){ done('パワポを保存しました'); })
+          .catch(function(){
+            done('');
+            alert('パワポの作成に使う部品を読み込めませんでした。\n通信できる場所で、もう一度お試しください。\n（急ぐときは「NotebookLMで作る」か「.txtで保存」をお使いください）');
+          });
+      }
       function mnRun(){
         const box = $('mn-out'); if(!box) return;
         if($('mn-doc')){
@@ -10809,6 +11138,42 @@
       if($('mn-copy2')) $('mn-copy2').addEventListener('click', mnCopy);
       if($('mn-dl'))    $('mn-dl').addEventListener('click', mnDownload);
       if($('mn-dl2'))   $('mn-dl2').addEventListener('click', mnDownload);
+      /* 概要 → スライド（2026-09-13）。概要タブと「大きく開く」の両方から同じ動きにする */
+      if($('mn-nlm'))   $('mn-nlm').addEventListener('click', nlmOpen);
+      if($('mn-nlm2'))  $('mn-nlm2').addEventListener('click', nlmOpen);
+      if($('mn-pptx'))  $('mn-pptx').addEventListener('click', mnPptx);
+      if($('mn-pptx2')) $('mn-pptx2').addEventListener('click', mnPptx);
+      function nlmClose(){ if($('nlm-modal')) $('nlm-modal').hidden = true; }
+      if($('nlm-close')) $('nlm-close').addEventListener('click', nlmClose);
+      if($('nlm-modal')) $('nlm-modal').addEventListener('click', function(e){ if(e.target === $('nlm-modal')) nlmClose(); });
+      // 「お名前を伏せる」を切り替えたら、その場で本文を作り直す（手直しは作り直しで消えるので確認を取る）
+      if($('nlm-anon')) $('nlm-anon').addEventListener('change', function(){
+        const ta = $('nlm-text'); if(!ta) return;
+        const next = mnSlideMD(this.checked);
+        if(ta.value && ta.value !== mnSlideMD(!this.checked)
+           && !confirm('この欄に入れた手直しは消えます。作り直しますか？')){ this.checked = !this.checked; return; }
+        ta.value = next;
+      });
+      if($('nlm-prompt')) $('nlm-prompt').addEventListener('click', function(){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(NLM_PROMPT).then(function(){ setStatus('指示文をコピーしました'); },
+                                                         function(){ mnCopyFallback(NLM_PROMPT, '指示文'); });
+        } else mnCopyFallback(NLM_PROMPT, '指示文');
+      });
+      if($('nlm-md')) $('nlm-md').addEventListener('click', function(){
+        const txt = ($('nlm-text') && $('nlm-text').value) || '';
+        if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
+        const ok = mnSaveBlob(MN_SLIDE_TITLE + '_' + mnStamp() + '.md',
+                              new Blob([ '﻿' + txt ], { type:'text/markdown;charset=utf-8' }));
+        setStatus(ok ? '.md で保存しました' : '保存できませんでした。コピーをお使いください');
+      });
+      if($('nlm-go')) $('nlm-go').addEventListener('click', function(){
+        const txt = ($('nlm-text') && $('nlm-text').value) || '';
+        if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
+        if($('nlm-skip') && $('nlm-skip').checked){ try{ localStorage.setItem(NLM_SKIP_KEY, '1'); }catch(e){} }
+        nlmSend(txt);
+        nlmClose();
+      });
       if($('nx-build')) $('nx-build').addEventListener('click', nxRun);
       if($('nx-copy'))  $('nx-copy').addEventListener('click', ()=>{
         if(!nxLast){ alert('先に「次の一手を作る」を押してください。'); return; }
@@ -11155,6 +11520,8 @@
       });
       document.addEventListener('keydown', (e)=>{
         if(e.key!=='Escape' || panel.hidden) return;
+        // NotebookLMの確認はいちばん手前に出るので、先に閉じる（後ろの議事録モーダルより優先）
+        if($('nlm-modal') && !$('nlm-modal').hidden){ $('nlm-modal').hidden = true; return; }
         if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }
         panel.hidden = true; vcSyncDockH();   // 全画面なので Esc は閉じる
       });

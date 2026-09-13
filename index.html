@@ -1236,7 +1236,10 @@
       background:#f2f8fd; border-radius:0 10px 10px 0; }
     .mn-slide-lab{ font-size:.8rem; font-weight:800; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px; }
     .mn-slide-lab i{ color:var(--blue); }
-    /* NotebookLMへ送る前の確認（外部へ出る唯一の道なので、注意書きは畳まない・小さくしない） */
+    /* Gemini Notebook（旧 NotebookLM）へ送る前の確認。外部へ出る唯一の道なので、
+       注意書きは畳まない・小さくしない */
+    .nlm-old{ font-size:.7rem; font-weight:700; color:var(--ink-soft); background:#eef3f7;
+      border-radius:999px; padding:2px 9px; margin-left:8px; white-space:nowrap; }
     .nlm-warn{ border:2px solid #e8b84b; background:#fffaec; border-radius:12px; padding:12px 14px; }
     .nlm-warn p{ font-size:.88rem; line-height:1.75; margin:0; }
     .nlm-warn p + p{ margin-top:7px; }
@@ -3555,13 +3558,13 @@
           <button type="button" class="btn btn-ghost btn-sm" id="mn-big"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> 大きく開く</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
         </div>
-        <!-- 概要 → スライド（2026-09-13 ユーザー指示「概要作成後に NotebookLM に送ってパワポを
+        <!-- 概要 → スライド（2026-09-13 ユーザー指示「概要作成後に Gemini Notebook に送ってパワポを
              自動作成できるように。ボタンひとつでそのままリンクしてパワポ作成できるように」）。
              ★行を分けてある：上の行は「概要そのものを扱う道具」、この行は「スライドにする道具」。
                同じ行に混ぜると7個並んで、どれが概要の操作か分からなくなる -->
         <div class="vc-tools mn-slide-row">
           <span class="mn-slide-lab"><i class="fa-solid fa-arrow-turn-down" aria-hidden="true"></i> スライドにする</span>
-          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> NotebookLMで作る</button>
+          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
         </div>
         <div id="mn-out"></div>
@@ -3617,7 +3620,7 @@
         <div class="vc-tools">
           <button type="button" class="btn btn-ghost btn-sm" id="mn-copy2"><i class="fa-solid fa-copy"></i> コピー</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-dl2"><i class="fa-solid fa-download"></i> .txtで保存</button>
-          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm2"><i class="fa-solid fa-arrow-up-right-from-square"></i> NotebookLMで作る</button>
+          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm2"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx2"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
         </div>
         <div id="mn-out-big"></div>
@@ -3625,9 +3628,10 @@
     </div>
   </div>
 
-  <!-- ===================== 概要 → NotebookLM（スライド／パワポ）=====================
-       ★NotebookLM には「文章を渡して開く」URLが無い（公開APIも無い。APIがあるのは
-         Gemini Notebook Enterprise ＝ Google Cloud 側だけで、notebooklm.google.com には無い）。
+  <!-- ===================== 概要 → Gemini Notebook（スライド／パワポ）=====================
+       ★★2026-07-16 に NotebookLM から「Gemini Notebook」へ改称（ユーザー指摘）。画面の名前も行き先も新しいほうに揃えてある。
+       ★Gemini Notebook には「文章を渡して開く」URLが無い（公開APIも無い。APIがあるのは
+         Gemini Notebook Enterprise ＝ Google Cloud 側だけで、一般の notebook.google.com には無い）。
          だからボタン1つでできるのは「整えて・コピーして・向こうを開く」まで。
          貼り付けとスライド生成は人の手になる（下の3手に書いてある）。
        ★★ここはこのツールで唯一「入力した中身が端末の外へ出る」道。
@@ -3636,12 +3640,12 @@
   <div class="modal-overlay no-print" id="nlm-modal" hidden>
     <div class="modal modal-mid" role="dialog" aria-modal="true" aria-labelledby="nlm-title">
       <div class="modal-head">
-        <h3 id="nlm-title"><i class="fa-regular fa-file-powerpoint"></i> NotebookLMでスライドを作る</h3>
+        <h3 id="nlm-title"><i class="fa-regular fa-file-powerpoint"></i> Gemini Notebookでスライドを作る<span class="nlm-old">旧 NotebookLM</span></h3>
         <button class="modal-close" id="nlm-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
         <div class="nlm-warn">
-          <p><b>ここから先は、下の本文が Google（NotebookLM）へ渡ります。</b>このツールに入力した内容は、ふだんお使いの端末から出ません。スライドを作ってもらうあいだだけ、中身を向こうに預けることになります。<b>お客様のお名前や個別の数字が入るときは、お客様の同意をいただいてからお使いください。</b></p>
+          <p><b>ここから先は、下の本文が Google（Gemini Notebook）へ渡ります。</b>このツールに入力した内容は、ふだんお使いの端末から出ません。スライドを作ってもらうあいだだけ、中身を向こうに預けることになります。<b>お客様のお名前や個別の数字が入るときは、お客様の同意をいただいてからお使いください。</b></p>
           <p>担当者用の「提案の検討メモ」は<b>入っていません</b>。この欄に見えているものが、渡るものの全てです。直接書き直してから送れます。</p>
         </div>
         <div class="vc-tools">
@@ -3649,17 +3653,17 @@
           <button type="button" class="btn btn-ghost btn-sm" id="nlm-prompt"><i class="fa-solid fa-copy"></i> スライドの指示文をコピー</button>
           <button type="button" class="btn btn-ghost btn-sm" id="nlm-md"><i class="fa-solid fa-download"></i> .mdで保存</button>
         </div>
-        <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="NotebookLMへ渡す本文"></textarea>
+        <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="Gemini Notebookへ渡す本文"></textarea>
         <div class="nlm-go">
-          <button type="button" class="btn btn-primary" id="nlm-go"><i class="fa-solid fa-arrow-up-right-from-square"></i> コピーして NotebookLM を開く</button>
+          <button type="button" class="btn btn-primary" id="nlm-go"><i class="fa-solid fa-arrow-up-right-from-square"></i> コピーして Gemini Notebook を開く</button>
           <label class="vc-auto"><input type="checkbox" id="nlm-skip"> 次からはこの画面を出さずに開く</label>
         </div>
         <ol class="nlm-steps">
           <li>開いた画面で<b>「ソースを追加」→「コピーしたテキスト」</b>を選び、そのまま貼り付けます（本文はコピー済みです）。</li>
           <li>読み込めたら<b>「スライド」</b>を押します。指示を入れる欄には、上の<b>「スライドの指示文」</b>を貼ると、言い回しと注記の扱いが揃います。</li>
-          <li>できたスライドの<b>「…」から「PowerPoint（.pptx）をダウンロード」</b>を選ぶと、パワポとして保存できます。</li>
+          <li>できたスライドの<b>その他メニュー（…）から「PowerPoint（.pptx）をダウンロード」</b>を選ぶと、パワポとして保存できます。</li>
         </ol>
-        <p class="hint" style="display:block;">※ NotebookLM のスライドは<b>1枚の絵として貼られる</b>ため、パワポ側で文字を直せません。文字を直したいときは<b>「パワポで保存」</b>をお使いください（この端末の中だけで作られ、どこにも送信されません）。<br>※ スライドとパワポ書き出しは NotebookLM 側の機能です。使えるかどうかは Google のご提供状況によります。</p>
+        <p class="hint" style="display:block;">※ Gemini Notebook から出したパワポは、<b>文字をそのまま打ち直すのが難しい形</b>で入っています。文字を直したいときは<b>「パワポで保存」</b>をお使いください（この端末の中だけで作られ、どこにも送信されません）。<br>※ スライドとパワポ書き出しは Gemini Notebook 側の機能です。使えるかどうかは Google のご提供状況によります。</p>
       </div>
     </div>
   </div>
@@ -9740,32 +9744,51 @@
 
       /* ============================================================
          概要 → スライド（2026-09-13 ユーザー指示）
-         「概要作成後に NotebookLM に送ってパワポを自動作成できるように。
+         「概要作成後に Gemini Notebook に送ってパワポを自動作成できるように。
            ボタンひとつでそのままリンクしてパワポ作成できるように」
 
-         ★NotebookLM には「文章を渡して開く」URLが無く、公開APIも無い
+         ★★2026-07-16 に「Gemini Notebook」へ改称。画面の言葉も行き先も新しいほうに揃えてある。
+         ★Gemini Notebook には「文章を渡して開く」URLが無く、公開APIも無い
            （API は Gemini Notebook Enterprise ＝ Google Cloud 側だけ。
-             notebooklm.google.com には無い。非公式SDKはブラウザの認証を借りる作りなので
+             一般の notebook.google.com には無い。非公式SDKはブラウザの認証を借りる作りなので
              費用ゼロ・バックエンド無しのこのツールでは使えない）。
            だからボタン1つで行けるのは
-             ①スライド用に整える ②クリップボードへ ③.md を用意 ④NotebookLMを開く
+             ①スライド用に整える ②クリップボードへ ③.md を用意 ④Gemini Notebookを開く
            まで。向こうで「貼り付け」と「スライド」を押すのは人の手になる。
          ★そのぶん「押したその場でパワポができる」道も用意した（mnPptx）。
-           NotebookLM のスライドは1枚の絵として貼られるので文字が直せない。直したい人はこちら。
+           Gemini Notebook のパワポは文字を打ち直しにくい形で入る。直したい人はこちら。
          ★★外部へ出る唯一の道なので、送る前に中身を必ず見せる（nlm-modal）。
            社内用の「提案の検討メモ」は、この経路のどこにも載せない。
          ============================================================ */
       const MN_SLIDE_TITLE = 'ライフプランのご報告';
-      /* NotebookLM のスライド生成に貼る指示文。言い回しの線（急かさない・断定的な有利不利を書かない・
+      /* Gemini Notebook のスライド生成に貼る指示文。言い回しの線（急かさない・断定的な有利不利を書かない・
          数字を足さない）は、向こうで作らせる文章にもそのまま効かせる */
       const NLM_PROMPT = [
-        'このソースから、お客様にお見せするライフプランのご報告スライドを作ってください。',
-        '・1枚につき言いたいことは1つ。見出しは短く、体言止めで。',
+        'あなたは、言いたいことを1枚に絞って伝えるプレゼンテーションの設計者です。',
+        'このソースは、担当者がお客様との面談でうかがった内容をまとめたものです。',
+        'これを、お客様にお見せする報告スライドにしてください。',
+        '',
+        '【誰に】金融の専門知識をお持ちでない一般のお客様。中学生が読んでも分かる言葉で。',
+        '【感情の流れ】理解 → 納得 → 安心 → 興味。この順に並べてください。',
+        '',
+        '【組み立て】',
+        '・1枚で言うことは1つだけ。見出しは体言止めで短く。',
         '・章の並びは、ソースの見出しの順のままにしてください。',
-        '・金額・年齢・年数は、ソースに書いてあるものだけを使ってください。足したり丸めたりしないでください。',
-        '・最後に「ご確認いただきたい点」の全文を、そのまま1〜2枚に載せてください。省かないでください。',
-        '・特定の保険商品・金融商品をすすめる書き方にはしないでください。有利・不利の断定もしないでください。',
-        '・急かす言葉（今すぐ・今だけ・手遅れ）は使わないでください。落ち着いた配色でお願いします。'
+        '・箇条書きを並べず、関係が目で分かる図にしてください（並ぶ・分かれる・積み上がる・時間で進む）。',
+        '・最後に「ご確認いただきたい点」の全文を、省かずに1〜2枚へ載せてください。',
+        '',
+        '【見た目】',
+        '・白を地にして、余白を広くとる。文字は最小限にし、読ませるのではなく見て分かる形に。',
+        '・色は紺・灰・黒を基調に。強調は1枚につき1か所だけ。',
+        '・書体は全体で統一し、視線が左上から右下へ自然に流れる置き方にする。',
+        '',
+        '【言葉】',
+        '・一文を短く。専門用語は使わず、どうしても要るときは同じ枚の中で言い換える。',
+        '・金額・年齢・年数は、ソースに書いてあるものだけを使う。足したり丸めたりしない。',
+        '・断定的な有利不利の比較は書かない。将来の運用成果・受取額は約束しない。',
+        '・特定の保険商品・金融商品をすすめる書き方にしない。',
+        '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。不安であおらない。',
+        '・「その場で決めていただく必要はありません」という姿勢で締める。'
       ].join('\n');
 
       /* お名前を伏せるために「お名前らしい語」を集める。
@@ -9835,7 +9858,7 @@
         });
         return out;
       }
-      // NotebookLM に読ませる本文（Markdown＝見出しの段が伝わるので、章立てのまま組んでくれる）
+      // Gemini Notebook に読ませる本文（Markdown＝見出しの段が伝わるので、章立てのまま組んでくれる）
       function mnSlideMD(anon){
         const o = mnOutline(); if(!o) return '';
         const L = ['# ' + MN_SLIDE_TITLE];
@@ -9869,8 +9892,11 @@
         }catch(e){ return false; }
       }
 
-      /* ---------- NotebookLM へ送る ---------- */
-      const NLM_URL = 'https://notebooklm.google.com/';
+      /* ---------- Gemini Notebook へ送る ---------- */
+      /* ★2026-07-16 に NotebookLM から「Gemini Notebook」へ改称され、行き先も notebook.google.com に
+         変わった（ユーザー指摘）。旧 notebooklm.google.com からは転送されるが、新しいほうを直に開く。
+         ★id・関数名の nlm は旧称の名残。見えないところなので触っていない */
+      const NLM_URL = 'https://notebook.google.com/';
       const NLM_SKIP_KEY = 'lifeplan_nlm_skipconfirm_v1';
       function nlmSkip(){ try{ return localStorage.getItem(NLM_SKIP_KEY) === '1'; }catch(e){ return false; } }
       function nlmOpen(){
@@ -9888,7 +9914,7 @@
         const go = function(){
           try{ window.open(NLM_URL, '_blank', 'noopener'); }
           catch(e){ location.href = NLM_URL; }
-          setStatus('本文をコピーしました。NotebookLMで貼り付けてください');
+          setStatus('本文をコピーしました。Gemini Notebookで貼り付けてください');
         };
         if(navigator.clipboard && navigator.clipboard.writeText){
           navigator.clipboard.writeText(txt).then(go, function(){ mnCopyFallback(txt, '本文'); go(); });
@@ -9985,7 +10011,7 @@
         }).then(function(){ done('パワポを保存しました'); })
           .catch(function(){
             done('');
-            alert('パワポの作成に使う部品を読み込めませんでした。\n通信できる場所で、もう一度お試しください。\n（急ぐときは「NotebookLMで作る」か「.txtで保存」をお使いください）');
+            alert('パワポの作成に使う部品を読み込めませんでした。\n通信できる場所で、もう一度お試しください。\n（急ぐときは「Gemini Notebookで作る」か「.txtで保存」をお使いください）');
           });
       }
       function mnRun(){
@@ -11622,7 +11648,7 @@
       });
       document.addEventListener('keydown', (e)=>{
         if(e.key!=='Escape' || panel.hidden) return;
-        // NotebookLMの確認はいちばん手前に出るので、先に閉じる（後ろの議事録モーダルより優先）
+        // Gemini Notebookの確認はいちばん手前に出るので、先に閉じる（後ろの議事録モーダルより優先）
         if($('nlm-modal') && !$('nlm-modal').hidden){ $('nlm-modal').hidden = true; return; }
         if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }
         panel.hidden = true; vcSyncDockH();   // 全画面なので Esc は閉じる

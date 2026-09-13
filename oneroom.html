@@ -1241,6 +1241,20 @@
       background:#f2f8fd; border-radius:0 10px 10px 0; }
     .mn-slide-lab{ font-size:.8rem; font-weight:800; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px; }
     .mn-slide-lab i{ color:var(--blue); }
+    /* 商談のあとの帯（2026-09-13）。番号→何をするか→ボタン、の3列。携帯では縦に積む */
+    .mn-after{ margin-top:8px; border:1px solid var(--line); border-radius:14px; background:#fff; overflow:hidden; }
+    .mn-after-h{ display:flex; align-items:center; gap:8px; padding:9px 14px; font-size:.9rem; font-weight:800;
+      color:var(--blue-deep); background:#f2f8fd; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+    .mn-after-h i{ color:var(--blue); }
+    .mn-after-h small{ font-size:.76rem; font-weight:600; color:var(--ink-soft); }
+    .mn-step{ display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+    .mn-step:last-child{ border-bottom:none; }
+    .mn-step-no{ flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:var(--blue-deep); color:#fff;
+      font-weight:800; font-size:.86rem; display:inline-flex; align-items:center; justify-content:center; }
+    .mn-step-t{ flex:0 0 118px; font-size:.88rem; font-weight:800; color:var(--ink); }
+    .mn-step-b{ flex:1 1 auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .mn-step-b .btn{ min-height:44px; }
+    @media (max-width:520px){ .mn-step-t{ flex:1 1 auto; } .mn-step-b{ flex-basis:100%; padding-left:36px; } }
     /* Gemini Notebook（旧 NotebookLM）へ送る前の確認。外部へ出る唯一の道なので、
        注意書きは畳まない・小さくしない */
     .nlm-pick{ background:#f6f9fc; border:1px solid var(--line); border-radius:12px; padding:4px 12px; margin-top:10px; }
@@ -1335,6 +1349,18 @@
     .nx-disclaimer{ margin:8px 0 0; padding:8px 10px; background:var(--warn-pale); border:1px solid var(--yellow-soft);
       border-radius:10px; font-size:.75rem; color:#7a5c0f; line-height:1.65; break-inside:avoid; }
     .nx-empty{ font-size:.85rem; color:var(--ink-soft); }
+    /* 2026-09-13 次の一手を読みやすく（ユーザー指示「正直に見にくい」）：
+       ・項目は白いカードにして見出しを1行目に立てる（前は見出しと本文が1行に続いていた）
+       ・見取り図（4象限＋棒2本）は畳む。開いたままだと1画面を占めて一覧が沈む
+       ・担当者用のボタンは灰色の段に分ける */
+    .nx-item{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+    .nx-lead{ display:block; font-size:.93rem; margin-bottom:2px; }
+    .nx-txt{ font-size:.86rem; }
+    .nx-viz-fold{ margin:12px 0 4px; }
+    .nx-viz-fold > summary{ cursor:pointer; min-height:44px; display:flex; align-items:center; gap:8px;
+      font-weight:800; color:var(--blue-deep); font-size:.88rem; }
+    .nx-viz-fold[open] > summary{ margin-bottom:8px; }
+    .nx-staff-row{ margin-top:2px; padding:4px 10px 4px 12px; border-left:3px solid #9aa8b5; background:#f4f6f8; border-radius:0 10px 10px 0; }
 
     /* ---------- 提案の検討メモ（担当者専用）----------
        商品名と営業観点を含む社内メモ。誤ってお客様に見える事故を防ぐため、
@@ -1739,6 +1765,8 @@
       </div>
       <div class="hero-actions-top no-print">
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
+        <!-- 商談のあと（2026-09-13）。概要タブの「①概要 ②スライド ③お客様へ」の帯へ直行する -->
+        <button class="btn btn-ghost btn-sm" id="btn-after"><i class="fa-solid fa-flag-checkered"></i> 商談のあと</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
@@ -3301,14 +3329,32 @@
           <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
         </div>
 <!-- == LPSLIDE-C-BEGIN == -->
-        <!-- 概要 → スライド（2026-09-13 ユーザー指示「概要作成後に Gemini Notebook に送ってパワポを
-             自動作成できるように。ボタンひとつでそのままリンクしてパワポ作成できるように」）。
-             ★行を分けてある：上の行は「概要そのものを扱う道具」、この行は「スライドにする道具」。
-               同じ行に混ぜると7個並んで、どれが概要の操作か分からなくなる -->
-        <div class="vc-tools mn-slide-row">
-          <span class="mn-slide-lab"><i class="fa-solid fa-arrow-turn-down" aria-hidden="true"></i> スライドにする</span>
-          <button type="button" class="btn btn-primary btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+        <!-- 商談のあと（2026-09-13 ユーザー指示「商談後は概要をもとにパワポを作成し、お客様に振り返りツールとして送る流れ。
+             見た目はお客様目線、使い方は営業マン目線」）。①概要 ②スライド ③お客様へ、を1つの帯にした。
+             ★上の行（コピー／.txt／大きく開く／1つ前）は概要そのものの道具。ここは商談のあとの本線 -->
+        <div class="mn-after" id="mn-after">
+          <div class="mn-after-h"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> 商談のあとの流れ <small>録音が無くても、ご入力と試算から作れます</small></div>
+          <div class="mn-step">
+            <span class="mn-step-no">1</span><span class="mn-step-t">概要を作る</span>
+            <span class="mn-step-b">
+              <button type="button" class="btn btn-primary btn-sm" id="mn-build2"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="mn-next2"><i class="fa-solid fa-list-check"></i> 次の一手を見る</button>
+            </span>
+          </div>
+          <div class="mn-step">
+            <span class="mn-step-no">2</span><span class="mn-step-t">スライドにする</span>
+            <span class="mn-step-b">
+              <button type="button" class="btn btn-primary btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
+            </span>
+          </div>
+          <div class="mn-step">
+            <span class="mn-step-no">3</span><span class="mn-step-t">お客様へ送る</span>
+            <span class="mn-step-b">
+              <button type="button" class="btn btn-primary btn-sm" id="mn-share"><i class="fa-solid fa-share-nodes"></i> 共有リンクを作る</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="mn-pdf"><i class="fa-regular fa-file-pdf"></i> PDFを作る</button>
+            </span>
+          </div>
         </div>
         <!-- == LPSLIDE-C-END == -->
         <div id="mn-out"></div>
@@ -3392,7 +3438,7 @@
         <div class="vc-tools nlm-pick">
           <span class="nlm-pick-lab"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> 入れるもの</span>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-mn" checked> 面談の概要</label>
-          <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力と試算のまとめ</label>
+          <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力・試算・AIの分析</label>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-nx" checked> 次の一手</label>
         </div>
         <div class="vc-tools">
@@ -10216,7 +10262,8 @@
         '【言葉】',
         '・一文を短く。専門用語は使わず、どうしても要るときは同じ枚の中で言い換える。',
         '・金額・年齢・年数は、ソースに書いてあるものだけを使う。足したり丸めたりしない。',
-        '・「ご入力の内容と、試算のまとめ」の数字は前提が変わると変わるもの。断定せず、幅のある言い方にする。',
+        '・「ご入力・試算・AIの分析のまとめ」の数字は前提が変わると変わるもの。断定せず、幅のある言い方にする。',
+        '・AIの分析は、安心できる点と気をつけたい点を必ず両方載せる。片方だけにしない。',
         '・断定的な有利不利の比較は書かない。将来の運用成果・受取額は約束しない。',
         '・特定の保険商品・金融商品をすすめる書き方にしない。',
         '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。不安であおらない。',
@@ -10291,6 +10338,12 @@
            見出しで出どころが分かるようにしてある。概要の中に数字を差し込まないこと。
          ★どれか1つが取れなくても全体を落とさない（push の中で try/catch する）。
            入力の途中・プランの切り替え中など、取れない瞬間がある */
+      // AI診断の文はHTMLなので、文字だけにする（<b>や&amp;を落とす）
+      function mnPlain(h){
+        return String(h||'').replace(/<br\s*\/?>/gi,' ').replace(/<[^>]+>/g,'')
+          .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+          .replace(/\s+/g,' ').trim();
+      }
       function mnFactsSecs(){
         const secs = [];
         let cur = null;
@@ -10303,6 +10356,16 @@
           return isSingle() ? 'ご家族：' + hNameH() + '（' + num('h-age',35) + '歳）'
                             : 'ご家族：' + hNameH() + '（' + num('h-age',35) + '歳）・'
                               + wNameH() + '（' + num('w-age',33) + '歳）';
+        });
+        push(function(){
+          const hi = num('h-income',0), wi = isSingle() ? 0 : num('w-income',0);
+          if(!hi && !wi) return '';
+          const one = function(n, g){
+            let t = n + ' 年収 ' + fmt(g) + '万円';
+            try{ t += '（手取りの目安 約' + fmt(Math.round(grossToNet(g))) + '万円）'; }catch(e){}
+            return t;
+          };
+          return '収入：' + [hi ? one(hNameH(), hi) : '', wi ? one(wNameH(), wi) : ''].filter(Boolean).join('／');
         });
         push(function(){
           const k = readChildren();
@@ -10354,11 +10417,46 @@
           if(c.n.w && c.n.w.rawNeed > 0) a.push(wNameH() + ' 約' + fmt(Math.round(c.n.w.rawNeed)) + '万円');
           return a.length ? '必要保障額（いまの保障を差し引く前）：' + a.join('／') : '';
         });
+
+        /* 今と将来（現状プランと将来プランの差）。将来プランが無い・現状と同じなら節ごと出さない
+           （2026-09-13 ユーザー指示「収入、今と将来の数字」） */
+        sec('今と将来の数字（現状プランと将来プラン）');
+        (function(){
+          const g = PLANS.genjo && PLANS.genjo.sum, m = PLANS.mirai && PLANS.mirai.sum;
+          if(!g || !m || g === m || !g.length || !m.length) return;
+          const at = function(sum, age){ const r = sum.filter(function(x){ return x.hAge === age; })[0]; return r ? r.net : null; };
+          const when = function(d){ return d ? d.hAge + '歳ごろ' + (d.year ? '（' + d.year + '年）' : '') : '見込みなし'; };
+          push(function(){ const a = at(g,65), b = at(m,65); return (a!=null && b!=null) ? '65歳の時点の金融資産：現状 ' + yen(a) + ' → 将来 ' + yen(b) : ''; });
+          push(function(){ const a = g[g.length-1], b = m[m.length-1]; return a.hAge + '歳の時点の金融資産：現状 ' + yen(a.net) + ' → 将来 ' + yen(b.net); });
+          push(function(){ return '資金が足りなくなる見込み：現状 ' + when(sumStats(g).dep) + ' → 将来 ' + when(sumStats(m).dep); });
+          push(function(){
+            const tot = function(st){ return ((st && st.investments) || []).reduce(function(a,v){ return a + (parseFloat(v.monthly)||0); }, 0); };
+            const a = Math.round(tot(PLANS.genjo.state)*10)/10, b = Math.round(tot(PLANS.mirai.state)*10)/10;
+            return (a !== b) ? '毎月の積立：現状 ' + a + '万円 → 将来 ' + b + '万円' : '';
+          });
+        })();
+
+        /* AIの分析（結果画面のAI診断＝lastAdviceCats。結果を一度描いたあとに入る）。
+           ★安心できる点と気をつけたい点は必ず両方（片方だけ見せない＝CLAUDE.md の線） */
+        sec('AIの分析（ファイナンシャルプランナーの目）');
+        (function(){
+          const cats = (typeof lastAdviceCats !== 'undefined' && lastAdviceCats) || null;
+          if(!cats || !cats.length) return;
+          const o = cats[0];
+          push(function(){ return o.sumTitle ? '全体の見方：' + mnPlain(o.sumTitle) : ''; });
+          push(function(){ return o.sum ? mnPlain(o.sum) : ''; });
+          (o.good || []).slice(0,3).forEach(function(t){ push(function(){ return '安心できる点：' + mnPlain(t); }); });
+          (o.concern || []).slice(0,3).forEach(function(t){ push(function(){ return '気をつけたい点：' + mnPlain(t); }); });
+          push(function(){
+            const parts = cats.slice(1).map(function(c){ return c.tone ? c.label + '＝' + (CAT_FLAG[c.tone] || '') : ''; }).filter(Boolean);
+            return parts.length ? '分野ごとの見方：' + parts.join('／') : '';
+          });
+        })();
         return secs.filter(function(x){ return x.items.length; });
       }
       function mnFactsMD(){
         const g = mnFactsSecs(); if(!g.length) return '';
-        const L = ['## ご入力の内容と、試算のまとめ'];
+        const L = ['## ご入力・試算・AIの分析のまとめ'];
         g.forEach(function(x){
           L.push('', '### ' + x.title);
           x.items.forEach(function(t){ L.push('- ' + t); });
@@ -11314,6 +11412,19 @@
 /* == LPSLIDE-F-BEGIN == */
       /* 概要 → スライド（2026-09-13）。概要タブと「大きく開く」の両方から同じ動きにする */
       if($('mn-nlm'))   $('mn-nlm').addEventListener('click', nlmOpen);
+      /* 商談のあとの帯（2026-09-13）。①は上の「概要を作る」と同じ動き、③は既にある共有とPDFを借りる */
+      if($('mn-build2')) $('mn-build2').addEventListener('click', mnRun);
+      if($('mn-next2'))  $('mn-next2').addEventListener('click', ()=>{ vcSetTab('next'); if(!nxLast) nxRun(); vcSyncDockH(); });
+      if($('mn-share'))  $('mn-share').addEventListener('click', ()=>{
+        if(typeof openShareModal === 'function') openShareModal();
+        else if($('btn-share-top')) $('btn-share-top').click();
+      });
+      if($('mn-pdf'))    $('mn-pdf').addEventListener('click', ()=>{
+        const b = $('btn-send');
+        if(!b){ alert('PDFを作るボタンが見つかりませんでした。画面上の「PDF作成」をお使いください。'); return; }
+        setStatus('PDFを作っています');
+        b.click();
+      });
       if($('mn-nlm2'))  $('mn-nlm2').addEventListener('click', nlmOpen);
       if($('mn-pptx'))  $('mn-pptx').addEventListener('click', mnPptx);
       if($('mn-pptx2')) $('mn-pptx2').addEventListener('click', mnPptx);
@@ -11708,6 +11819,14 @@
         panel.hidden = false;
         vcSetMode('open');   // 全画面で開く（ユーザー指示 2026-08-18）
         renderVcMemos(); vcSyncDockH(); vcCapFollow();
+      });
+      /* 商談のあと（2026-09-13）：概要タブを開いて「①概要 ②スライド ③お客様へ」の帯まで送る */
+      if($('btn-after')) $('btn-after').addEventListener('click', ()=>{
+        panel.hidden = false;
+        vcSetMode('open');
+        vcSetTab('minutes');
+        vcSyncDockH();
+        const a = $('mn-after'); if(a && a.scrollIntoView) setTimeout(()=> a.scrollIntoView({ block:'nearest' }), 80);
       });
       $('vc-close').addEventListener('click', ()=>{
         vcStopRec();

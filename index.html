@@ -615,6 +615,29 @@
     .hero-inner{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
     .hero-text{ flex:1 1 360px; min-width:0; }
     .hero-actions-top{ display:flex; flex-wrap:wrap; gap:10px; flex:0 1 auto; }
+    /* 営業サポート（次の一手・商談のあと・AI師匠 を1つにまとめた入口） */
+    .sales-menu{ position:relative; }
+    .sm-toggle .sm-chev{ font-size:.7em; margin-left:2px; transition:transform .15s; }
+    .sm-toggle[aria-expanded="true"]{ background:var(--blue-pale); border-color:var(--blue); }
+    .sm-toggle[aria-expanded="true"] .sm-chev{ transform:rotate(180deg); }
+    .sm-pop{ position:absolute; top:calc(100% + 8px); left:0; z-index:130; background:#fff;
+             border:1.5px solid var(--blue-pale2); border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.14);
+             padding:8px; width:340px; max-width:calc(100vw - 32px); }
+    .sm-head{ font-size:.74rem; color:var(--ink-soft); padding:4px 10px 8px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+    .sm-item{ display:flex; gap:10px; align-items:flex-start; width:100%; text-align:left; background:none; border:0;
+              border-radius:10px; padding:9px 10px; cursor:pointer; font-family:inherit; color:var(--ink); }
+    .sm-item:hover, .sm-item:focus-visible{ background:var(--blue-pale); outline:none; }
+    .sm-item + .sm-item{ margin-top:2px; }
+    .sm-step{ flex:0 0 26px; height:26px; border-radius:50%; background:var(--blue-deep); color:#fff;
+              font-weight:800; font-size:.8rem; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+    .sm-body{ min-width:0; }
+    .sm-body b{ display:block; font-size:.92rem; }
+    .sm-body b i{ width:1.2em; text-align:center; color:var(--blue-deep); }
+    .sm-body small{ display:block; font-size:.75rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; text-wrap:pretty; }
+    body.customer-mode #sales-menu, .pdf-mode #sales-menu{ display:none !important; }
+    @media print{ #sales-menu{ display:none !important; } }
+    /* スマホ幅：ボタンが行の途中にあると右へはみ出す（375pxで実測）ため、画面幅いっぱいの固定配置にする。縦位置はJSでボタンの真下に置く */
+    @media(max-width:560px){ .sm-pop{ position:fixed; left:12px; right:12px; width:auto; max-width:none; } }
 
     .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-soft); padding:18px 18px; }
     .card-title{ font-size:1.22rem; font-weight:800; display:flex; align-items:center; gap:10px; margin:-2px -2px 14px; padding-bottom:11px; border-bottom:2px solid var(--blue-pale2); }
@@ -2132,16 +2155,29 @@
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
-        <!-- 次の一手（2026-09-07追加）。音声メモの4つ目のタブの中にあり、録音を使わない担当者には
-             存在が見えなかった（音声メモを開く→展開→タブ→作る、の4手が必要だった）。
-             商談の締めでいちばん押したいものなので、操作バーの本線に出して1手にする。 -->
-        <button class="btn btn-ghost btn-sm" id="btn-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
-        <!-- 商談のあと（2026-09-13 ユーザー指示「商談後は概要をもとにパワポを作成し、お客様に振り返りツールとして送る流れ」）。
-             概要タブの「①概要 ②スライド ③お客様へ」の帯へ直行する -->
-        <button class="btn btn-ghost btn-sm" id="btn-after"><i class="fa-solid fa-flag-checkered"></i> 商談のあと</button>
-        <!-- AI師匠（2026-09-07追加）。担当者が自分の数字・販路・マネジメントを相談する社内用の画面。
-             お客様の画面（customer-mode）・PDF・印刷では出さない。 -->
-        <button class="btn btn-ghost btn-sm" id="btn-mentor"><i class="fa-solid fa-user-tie"></i> AI師匠</button>
+        <!-- 営業サポート（2026-09-14 ユーザー指示「営業操作項目のようなタイトルを作り、次の一手・AI師匠・商談のあとを中に格納してすっきり」）。
+             3つとも担当者専用の入口で、商談の流れに沿って上から順に使う。ボタンの id は据え置き（既存のハンドラがそのまま効く）。
+             お客様の画面（customer-mode）・PDF・印刷では出さない -->
+        <div class="sales-menu" id="sales-menu">
+          <button type="button" class="btn btn-ghost btn-sm sm-toggle" id="sales-menu-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sales-menu-pop">
+            <i class="fa-solid fa-briefcase"></i> 営業サポート <i class="fa-solid fa-chevron-down sm-chev" aria-hidden="true"></i>
+          </button>
+          <div class="sm-pop" id="sales-menu-pop" role="menu" hidden>
+            <div class="sm-head">商談の流れに沿って、上から順にお使いください</div>
+            <button type="button" class="sm-item" id="btn-next" role="menuitem">
+              <span class="sm-step">1</span>
+              <span class="sm-body"><b><i class="fa-solid fa-list-check"></i> 次の一手</b><small>商談の締めに。この家庭の数字から「次に何を提案するか」を出します</small></span>
+            </button>
+            <button type="button" class="sm-item" id="btn-after" role="menuitem">
+              <span class="sm-step">2</span>
+              <span class="sm-body"><b><i class="fa-solid fa-flag-checkered"></i> 商談のあと</b><small>商談が終わったら。概要をまとめ → スライドを作り → お客様へ送ります</small></span>
+            </button>
+            <button type="button" class="sm-item" id="btn-mentor" role="menuitem">
+              <span class="sm-step">3</span>
+              <span class="sm-body"><b><i class="fa-solid fa-user-tie"></i> AI師匠</b><small>自分の振り返りに。切り返し・数字・販路のことを社内用の師匠に相談します</small></span>
+            </button>
+          </div>
+        </div>
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
         <!-- 共有は面談の締めの主動線なのに、入口が保存モーダルの奥にしか無かった（検証役検出）。
              ここから直接開けるようにする（ログインは不要＝共有はサーバーを使わない） -->
@@ -17801,6 +17837,23 @@
     PLANS.genjo.state = collectState();
     updatePlanTabs();
     initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
+
+    /* 営業サポートのメニュー開閉。項目のボタン（btn-next / btn-after / btn-mentor）の中身は既存のまま */
+    (function(){
+      var btn=document.getElementById('sales-menu-btn'), pop=document.getElementById('sales-menu-pop');
+      if(!btn || !pop) return;
+      var narrow=function(){ return window.matchMedia('(max-width:560px)').matches; };
+      function setOpen(v){
+        pop.hidden=!v; btn.setAttribute('aria-expanded', v?'true':'false');
+        // スマホ幅は position:fixed なので、開くたびにボタンの真下へ置き直す
+        pop.style.top = (v && narrow()) ? (btn.getBoundingClientRect().bottom + 8) + 'px' : '';
+      }
+      window.addEventListener('scroll', function(){ if(!pop.hidden && narrow()) setOpen(false); }, { passive:true });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(pop.hidden); });
+      pop.addEventListener('click', function(e){ if(e.target.closest('.sm-item')) setOpen(false); });
+      document.addEventListener('click', function(e){ if(!pop.hidden && !e.target.closest('#sales-menu')) setOpen(false); });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !pop.hidden){ setOpen(false); btn.focus(); } });
+    })();
 
     /* ============================================================
        体験版リンク（?trial=任意の文字列）

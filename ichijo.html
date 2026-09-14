@@ -5445,8 +5445,8 @@
               <option value="off"${waiver==='off'?' selected':''}>付けない</option>
             </select>
           </div>
-          <div class="field hidden" data-iv="load"><label>保険関係費</label><div class="input-unit"><input type="number" class="iv-load" value="${load}" min="10" max="45" step="0.5" placeholder="自動"><span class="u">％</span></div></div>
-          <div class="field hidden" data-iv="fee"><label>運用関係費</label><div class="input-unit"><input type="number" class="iv-fee" value="${fee}" min="0" max="3" step="0.1" placeholder="0"><span class="u">％</span></div></div>
+          <div class="field hidden" data-iv="load"><label>保険関係費</label><div class="input-unit"><input type="number" class="iv-load" value="${load}" min="10" max="45" step="0.5" title="保険料から差し引かれ、特別勘定に入らない分。満期年齢から一般的な水準を入れています（変更できます）"><span class="u">％</span></div></div>
+          <div class="field hidden" data-iv="fee"><label>運用関係費</label><div class="input-unit"><input type="number" class="iv-fee" value="${fee}" min="0" max="3" step="0.1" title="設計書の例示利回りには運用関係費がすでに織り込まれています。二重に引かないよう、通常は0のままにしてください"><span class="u">％</span></div></div>
         </div>
         <div class="hg-note hidden"></div>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
@@ -5464,10 +5464,29 @@
         // 変額は例示の上限を6％に合わせる（設計書の例示は -3／0／3／6％。高い率を打ち込ませない）
         div.querySelector('.iv-ret').max = hg ? 6 : 15;
         if(hg && parseFloat(div.querySelector('.iv-ret').value) > 6) div.querySelector('.iv-ret').value = 3;
+        if(hg){
+          const li = div.querySelector('.iv-load'), fi = div.querySelector('.iv-fee');
+          if(li.dataset.auto === '1' || li.value === '')
+            li.value = (HENGAKU.defaultLoad(parseInt(div.querySelector('.iv-end').value)||65) * 100).toFixed(1);
+          if(fi.value === '') fi.value = '0.0';
+        }
         nameInp.placeholder = hg
           ? '用途のメモ（保険会社名・商品名は入れないでください）'
           : (INV_LABEL[typeSel.value] || '商品名') + '（名前を付けられます）';
       };
+      /* 保険関係費は「自動」の空欄ではなく、満期年齢から決まる一般的な水準を実数で入れておく。
+         手で書き換えたらその値を尊重し、満期を変えても上書きしない（dataset.auto で見分ける）。
+         運用関係費は0が既定＝設計書の例示利回りに織り込み済みで、重ねて引くと二重控除になる */
+      const loadInp = div.querySelector('.iv-load'), feeInp = div.querySelector('.iv-fee');
+      const endInp  = div.querySelector('.iv-end');
+      const defLoad = ()=> (HENGAKU.defaultLoad(parseInt(endInp.value)||65) * 100).toFixed(1);
+      loadInp.dataset.auto = (load==='' || load==null || String(load)===defLoad()) ? '1' : '0';
+      const syncLoad = ()=>{
+        if(typeSel.value !== 'hengaku' || loadInp.dataset.auto !== '1') return;
+        loadInp.value = defLoad();
+      };
+      loadInp.addEventListener('input', ()=>{ loadInp.dataset.auto = '0'; });
+      endInp.addEventListener('input', syncLoad);
       updateFields();
       typeSel.addEventListener('change', ()=>{ updateFields(); recompute(); });
       // typeSel は上の change で recompute する。ここに含めると1操作で2回走る（ins-row と同じ除外）
@@ -5519,7 +5538,7 @@
           + `／保険関係費 保険料の${(p.load*100).toFixed(1)}％`
           + `／保障のための費用は年齢・性別で毎年変わります`
           + `／解約控除は払込10年未満`
-          + `<br>満期保険金・解約返戻金に最低保証はありません。想定運用実績は運用関係費を差し引いたあとの率として計算しています。`
+          + `<br>満期保険金・解約返戻金に最低保証はありません。<b>想定運用実績</b>は、設計書の例示利回りと同じく<b>運用関係費を差し引いたあとの率</b>として計算しています（「運用関係費」の欄は二重控除を避けるため<b>通常0のまま</b>で構いません。総額表示の利回りを入れるときだけ使ってください）。`
           + `<span class="hg-staff">　※担当者の方へ：一般的な水準で置いた費用の仮定による概算で、保険会社の設計書ではありません。正式な金額は設計書でご確認ください。</span>`;
       });
     }

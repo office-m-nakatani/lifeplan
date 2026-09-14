@@ -473,6 +473,14 @@
     }
     .income-row > .field.ev-age-field{ position:relative; }
     .ir-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
+    /* 変額保険の行に出す前提の注記。行の下に小さく1ブロック（幅を食わない） */
+    .hg-note{ margin-top:10px; padding:8px 11px; border:1px solid var(--blue-pale2); border-radius:9px;
+              background:var(--blue-pale); font-size:.74rem; line-height:1.7; color:var(--ink-soft); }
+    .hg-note b{ color:var(--blue-deep); }
+    .hg-detail{ margin-top:18px; padding-top:16px; border-top:2px solid var(--blue-pale2); }
+    /* 担当者向けの但し書きは、お客様の画面・PDF・印刷では出さない */
+    body.customer-mode .hg-staff, .pdf-mode .hg-staff{ display:none !important; }
+    @media print{ .hg-staff{ display:none !important; } }
     @media(min-width:620px){ .ir-grid{ grid-template-columns:repeat(3,1fr); } }
 
     /* お子さまの行（年齢＋小〜高＋進学先＋通学形態＋相場） */
@@ -2298,7 +2306,7 @@
               <button class="btn-add" id="add-invest" type="button"><i class="fa-solid fa-plus"></i> 運用商品を追加</button>
               <div class="note">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>まとまった資金</strong>＝今ある運用残高や一括投資額、<strong>毎月の積立</strong>＝つみたて額です。種類で「その他」を選ぶと商品名を自由に入力できます。商品ごとに利回りを変えられます。</span>
+                <span><strong>まとまった資金</strong>＝今ある運用残高や一括投資額、<strong>毎月の積立</strong>＝つみたて額です。名前はどの種類でも付けられます。商品ごとに利回りを変えられます。<br>種類で<b>変額保険</b>を選ぶと、保険関係費・保障のための費用・解約控除を考慮した<b>解約返戻金の概算</b>に切り替わります（「詳細を見る」に推移表が出ます）。<b>保険会社名・商品名は入力しないでください</b>（印刷・共有リンクにそのまま残ります）。</span>
               </div>
             </div>
             <div class="note">
@@ -3507,7 +3515,7 @@
           <li><b>児童手当</b>：2024年10月拡充後の制度（3歳未満1.5万円/月・3歳〜高校生年代1万円/月・第3子以降3万円/月・所得制限なし）を、お子さまの年齢に応じて収入に自動計上します（第3子の数え方は22歳までのお子さまを年長から数える簡易判定。誕生月による年度末判定は簡略化しています）。</li>
           <li><b>遺族年金</b>：ご家族構成と<b>亡くなった方の年収</b>から年ごとに概算します。遺族基礎年金＝18歳以下のお子さまがいる年だけ（基礎83万円＋子加算：第1・2子 各24万円・第3子以降 各8万円）、遺族厚生年金＝年収×約10.3%（みなし300月・報酬比例の3/4）を、妻は65歳まで（死亡時に子がなく30歳未満の妻は5年間）、夫は死亡時55歳以上のみ60歳から計上、中高齢寡婦加算（40〜64歳・年約63万円）も織り込みます。必要保障額には<b>葬儀・死亡整理資金250万円</b>と持ち家の場合の<b>維持費（固定資産税＋修繕費）</b>も含めます。2028年4月改正（子のない60歳未満は5年有期化）は未反映です。実際の受給額は加入記録により変わります。</li>
           <li><b>教育費</b>：文部科学省等の公表平均をもとに、進路プラン別に自動計上します。</li>
-          <li><b>総資産の範囲</b>：グラフ・表の「総資産」は<b>預貯金＋運用資産</b>の合計で、<b>ご自宅の資産価値（土地・建物）・退職金見込み・保険の解約返戻金は含めていません</b>。持ち家プランはローン返済で住まいという資産を積み上げているため、賃貸プランとの総資産比較では実際より不利に見えます。売却・住み替えまで考える場合は面談で個別に補正します。</li>
+          <li><b>総資産の範囲</b>：グラフ・表の「総資産」は<b>預貯金＋運用資産</b>の合計で、<b>ご自宅の資産価値（土地・建物）・退職金見込みは含めていません</b>（運用商品として<b>変額保険</b>を追加した場合のみ、その解約返戻金の概算を運用資産に含めます）。持ち家プランはローン返済で住まいという資産を積み上げているため、賃貸プランとの総資産比較では実際より不利に見えます。売却・住み替えまで考える場合は面談で個別に補正します。</li>
           <li><b>物価上昇（インフレ）</b>：ご入力の率を、<b>生活費・家賃・教育費・ライフイベントの支出・住宅の維持費（固定資産税＋修繕）・火災地震保険・ZEHの光熱費削減</b>に適用します（いずれも<b>今日を起点</b>。これらの欄は「今の相場」でご入力ください）。資産の「実質価値」の表示にも使用します。<br>一方、<b>退職金・臨時収入・住宅ローンの返済額は物価では伸ばしません</b>。退職金と臨時収入は<b>受け取る時点の金額</b>としてそのまま計上します（大卒定年退職者の退職金は1997年の約2,871万円から実際に減少してきており、物価どおりに増える前提を置かないほうが安全側のためです）。ローン返済は契約で金額が決まっているため名目のままが正しい計算です。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。<b>団信の上乗せ金利</b>（がん団信等）を入力した場合は全期間の金利に加算します。「もしもの検証（ストレステスト）」は<b>表示のみの一時的な前提</b>で、保存されません（<b>実際の金利・収入の変動がその範囲に収まることを示すものではありません</b>）。</li>
@@ -3517,6 +3525,7 @@
           <li><b>ワンルームマンション投資</b>：家賃収入から必要経費（賃貸管理手数料・管理費＋修繕積立金・固定資産税等・ローンの利息部分・減価償却費・購入初年度の諸費用）を差し引いて<b>不動産所得</b>を求め、赤字は給与所得と<b>損益通算</b>したときの税額差を還付として計上しています。<b>土地等の取得に要した負債の利子に対応する部分は損益通算できない</b>ため（租税特別措置法41条の4）、建物割合から土地分の利息を割り出して除外しています。還付の時期は実際には確定申告後（所得税は翌年、住民税は翌年度）ですが、分かりやすさを優先して同じ年に計上しています。退職後は損益通算する給与がないため還付は見込まず、黒字には概算20%を課税しています。売却時は譲渡所得税（所有5年超＝約20.315%／5年以下＝約39.63%）と仲介手数料（売却価格の4%目安）を差し引いた手取りを計上します。<b>入退去ごとの原状回復費・広告料、大規模修繕の一時金、賃貸管理会社の変更、税制改正の影響は含んでいません。</b></li>
           <li><b>不動産投資のリスク</b>：<b>空室・家賃下落・金利上昇・修繕積立金の値上げ・不動産価格の下落（売却損）・災害・入居者トラブル</b>などがあり、投資元本が保証されるものではありません。節税効果はお客様の所得・家族構成・他の所得の状況によって変わり、<b>減価償却費の計上が終われば税務上の赤字は消え、黒字になれば逆に納税</b>になります（デッドクロス）。ワンルームは1室単位のため入居率は0%か100%となり、空室中も返済・管理費・固定資産税の支払いは続きます。売却は株式のようにすぐ現金化できず、残債が売却価格を上回る場合は自己資金での精算が必要です。本ツールは意思決定を助けるための試算であり、<b>購入の勧誘や税務・投資助言を目的とするものではありません</b>。</li>
           <li><b>火災保険・地震保険の記載</b>は制度の一般的な説明であり、特定の損害保険商品の募集・推奨を目的とするものではありません。損害保険の詳細は取扱代理店・保険会社にご確認ください。税制・社会保険の記載も概要であり、<b>詳細は最新の制度をご確認ください</b>。</li>
+          <li><b>変額保険の概算</b>：保険関係費・保障のための費用（危険保険料）・解約控除は、<b>一般的な水準にもとづく仮置き</b>で、特定の保険会社・商品の数値ではありません（実在する設計書をもとに較正した概算です）。運用実績は年-3％・0％・3％・6％で推移したと仮定した4通りの例示で、<b>この4つのいずれかになると決まっているものではなく、下回ることも上回ることもあります</b>。死亡保険金には最低保証がありますが、<b>解約返戻金・満期保険金には最低保証がないのが一般的</b>で、特に<b>払込10年未満の解約は払込額を下回ります</b>。本ツールは保険会社の設計書ではないため、正式な金額は<b>契約概要・注意喚起情報・ご契約のしおり／約款</b>でご確認ください。</li>
           <li><b>制度・知識の最終更新：2026年8月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。前提は年1回の見直しを想定しています。</li>
         </ul>
       </details>
@@ -3779,7 +3788,8 @@
     })();
 
     /* 運用商品の種類ごとの色（項目別テーブルで色分け） */
-    const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a', other:'#5b6b7d' };
+    const INVEST_COLOR = { nisa:'#2f8a6e', ideco:'#4f63a8', fund:'#7a52a8', insurance:'#c2729a',
+                           wholelife:'#7a8b52', hengaku:'#b5762f', other:'#5b6b7d' };   /* wholelife は未定義で '#333' に落ちていた（サンプル表示で発動）*/
 
     /* ---------- 教育費データ（万円） ----------
        小〜高は公立/私立で年額。高校卒業後は進学先別の学費（年額×年数）に、
@@ -4260,8 +4270,126 @@
     /* 運用商品の種類 → 既定の名前。名前を空欄にしたときはこれが表・グラフ・診断に出る。
        ★計算そのものは種類で変わらない（積立額・利回り・期間だけで決まる）＝ラベル用 */
     const INV_LABEL = { nisa:'NISA', ideco:'iDeCo', fund:'投資信託・株式',
-                        insurance:'貯蓄型保険', wholelife:'一時払い終身保険', other:'その他' };
-    function investRow(type='nisa', name='', lump=0, monthly=3, ret=3.0, endAge=65, startAge, after='continue'){
+                        insurance:'貯蓄型保険', wholelife:'一時払い終身保険',
+                        hengaku:'変額保険', other:'その他' };
+    /* ============================================================
+       変額保険（有期型）のざっくり概算エンジン
+       ------------------------------------------------------------
+       ★これは保険会社の設計書ではない。実在する設計書8本
+         （年齢22〜46歳・男女・月5千〜5万円・65歳／80歳満了、
+          いずれも保険料建・全期払）から費用の構造を逆算して較正した概算。
+         全4シナリオ・全経過年で照合したときの誤差は中央値1.4％・9割が5％以内。
+
+       しくみ（設計書の記載と実データの逆算から）
+         ① 保険料から「保険関係費」を引いた残りが特別勘定に入る
+            …設計書「各運用実績は特別勘定にかかわるもので、保険料全体に
+              対するものではありません」＝保険料の全額は運用に回らない
+         ② 特別勘定は入力した運用実績で回る
+            …設計書「諸費用控除後の数値を表示しています」＝
+              入力する率は運用関係費を引いたあとの率。ここから重ねて引くと二重控除になる
+         ③ 毎年「保障のための費用（危険保険料）」が積立金から引かれる
+            …設計書「死亡保障などに必要な費用は積立金から定期的に控除します」
+            ★重要：この費用は「基本保険金額 − 予定利率3％で積んだ場合の積立金」に
+              かかる。実際の運用成績では変わらない（設計書の4シナリオで
+              控除額がほぼ同額であることから確認：41歳時で24,634／24,748／25,904円）
+         ④ 解約時、払込10年未満なら「解約控除」が引かれる
+            …設計書「10年未満で解約された場合は解約控除がかかる」
+              「早期に解約された場合は…解約払戻金はまったくない場合もあります」
+         ⑤ 基本保険金額（死亡保険金の最低保証）＝予定利率3％で積んだときの満期額
+            …設計書8本すべてで「3％の満期保険金額＝基本保険金額」が完全一致
+       金額の単位は呼び出し側に合わせる（全部1次式なので万円で渡せば万円で返る）
+       ============================================================ */
+    const HENGAKU = {
+      /* 保障のための費用の率（年齢・性別）。設計書の逆算値。標準生命表よりやや低い */
+      QAGE: [30, 40, 50, 60, 70, 80],
+      QM:   [0.00063, 0.00076, 0.00205, 0.00459, 0.00936, 0.02775],
+      QF:   [0.00017, 0.00079, 0.00156, 0.00274, 0.00433, 0.01185],
+      /* 解約控除の形（1年目＝1.0、10年目＝0）。年払保険料 × 加入年齢で決まる倍率 × この形 */
+      SURR_SHAPE: [1.00, 0.87, 0.75, 0.62, 0.50, 0.38, 0.26, 0.14, 0.04, 0.00],
+      /* 保険関係費の既定値。設計書の逆算では65歳満了≒29%・80歳満了≒34%だった。
+         同じ満期でも商品・会社で±2%程度ばらつくため、画面で調整できるようにしてある */
+      defaultLoad(matAge){
+        return Math.min(0.40, Math.max(0.22, 0.29 + (matAge - 65) * 0.05 / 15));
+      },
+      q(age, sex){
+        const T = (sex === 'f') ? HENGAKU.QF : HENGAKU.QM, A = HENGAKU.QAGE, L = A.length - 1;
+        if(age <= A[0]) return T[0];
+        if(age >= A[L]) return T[L] * Math.pow(1.09, age - A[L]);   /* 80歳超は外挿 */
+        for(let i=1; i<=L; i++){
+          if(age <= A[i]){ const f = (age - A[i-1]) / (A[i] - A[i-1]); return T[i-1]*(1-f) + T[i]*f; }
+        }
+        return T[L];
+      },
+      /* 1年分：月払保険料を毎月くり入れながら運用する */
+      grow(A, pmNet, r){
+        const i = Math.pow(1 + r, 1/12) - 1;
+        for(let m=0; m<12; m++) A = (A + pmNet) * (1 + i);
+        return A;
+      },
+      /* 予定利率3％の基準経路（＝保障のための費用を決めるものさし） */
+      refPath(pm, age0, sex, yrs, load, base){
+        let A = 0; const out = [];
+        for(let t=1; t<=yrs; t++){
+          A = HENGAKU.grow(A, pm*(1-load), 0.03);
+          A -= Math.max(0, base - A) * HENGAKU.q(age0+t-1, sex);
+          out.push(A);
+        }
+        return out;
+      },
+      /* 基本保険金額＝3％基準経路の満期額。自分自身に依存するので反復で解く */
+      solveBase(pm, age0, sex, yrs, load){
+        let b = pm * 12 * yrs * 1.2;
+        for(let k=0; k<200; k++){
+          const nb = HENGAKU.refPath(pm, age0, sex, yrs, load, b)[yrs-1];
+          if(Math.abs(nb - b) < Math.max(1e-6, b*1e-9)) return nb;
+          b = b*0.35 + nb*0.65;
+        }
+        return b;
+      },
+      surrender(pm, t, age0){
+        if(t > 10 || t < 1) return 0;
+        // 1年目の控除は年払保険料の0.42〜0.62倍。加入年齢が若いほど大きい（設計書8本の実測）
+        const scale = Math.min(0.62, Math.max(0.42, 0.62 - Math.max(0, age0-30)*0.011));
+        return pm * 12 * scale * HENGAKU.SURR_SHAPE[t-1];
+      },
+      /* 本体。o = {premium(月・万円), age, sex:'m'|'f', matAge, rate(小数), load?, fundFee?, waiver?} */
+      project(o){
+        const pm = Math.max(0, o.premium || 0), age0 = o.age, sex = o.sex;
+        const yrs = Math.max(1, Math.min(70, (o.matAge|0) - age0));
+        /* 払込免除特約：較正に使った設計書9本は3大疾病払込免除つきなので、
+           既定（あり）が較正どおり。外すとその分だけ積立に回る額が増える方向に置く。
+           設計書は特約保険料を合計保険料に合算して表示するため単独では分離できず、
+           ここは一般的な水準を仮置きした推定値（画面の前提欄に明示している） */
+        const waiverAdj = (o.waiver === false) ? -HENGAKU.WAIVER_COST : 0;
+        const load = Math.min(0.45, Math.max(0.10,
+                      ((o.load != null) ? o.load : HENGAKU.defaultLoad(o.matAge)) + waiverAdj));
+        const base = HENGAKU.solveBase(pm, age0, sex, yrs, load);
+        const ref  = HENGAKU.refPath(pm, age0, sex, yrs, load, base);
+        const net  = (o.rate || 0) - (o.fundFee || 0);   /* 運用関係費を別に引きたいとき用。既定0＝二重控除しない */
+        let A = 0, coiCum = 0, loadCum = 0;
+        const rows = [];
+        for(let t=1; t<=yrs; t++){
+          A = HENGAKU.grow(A, pm*(1-load), net);
+          const coi = Math.max(0, base - ref[t-1]) * HENGAKU.q(age0+t-1, sex);
+          A = Math.max(0, A - coi);
+          coiCum += coi; loadCum += pm*12*load;
+          const sc = Math.min(A, HENGAKU.surrender(pm, t, age0));
+          rows.push({ t:t, age:age0+t, paid:pm*12*t, acct:A, cv:Math.max(0, A-sc),
+                      surr:sc, death:Math.max(base, A), coi:coi, coiCum:coiCum, loadCum:loadCum });
+        }
+        return { base:base, load:load, yrs:yrs, rows:rows };
+      },
+      /* 払込免除特約を外したときに積立へ回る分の仮置き（保険料に対する率） */
+      WAIVER_COST: 0.03,
+      /* 例示する運用実績。設計書の並びに合わせ、マイナスを先頭に置く（1本だけ見せない） */
+      SCENARIOS: [-0.03, 0, 0.03, 0.06]
+    };
+
+    /* 変額保険を選ぶと、同じ行の項目の意味が変わる（積立→保険料、積立終了→満期）。
+       ins-row の updateFields と同じやり方で、種類に応じて出す欄を入れ替える。
+       ★新しい引数は必ず末尾に足すこと。呼び出しは位置引数で4か所ある */
+    function investRow(type='nisa', name='', lump=0, monthly=3, ret=3.0, endAge=65, startAge, after='continue',
+                       sex='m', waiver='on', load='', fee=''){
       if(startAge==null || isNaN(startAge)) startAge = num('h-age',35);   // 既定＝現在の年齢（＝今から）
       const div = document.createElement('div');
       div.className = 'row-item invest-row';
@@ -4270,7 +4398,7 @@
         <div class="ir-head">
           <input type="checkbox" class="iv-on" checked title="このプランを計算に反映">
           <select class="iv-type">
-            ${o('nisa','NISA（つみたて・成長）')}${o('ideco','iDeCo')}${o('fund','投資信託・株式')}${o('insurance','貯蓄型保険・年金保険')}${o('wholelife','一時払い終身保険')}${o('other','その他（自由入力）')}
+            ${o('nisa','NISA（つみたて・成長）')}${o('ideco','iDeCo')}${o('fund','投資信託・株式')}${o('insurance','貯蓄型保険・年金保険')}${o('wholelife','一時払い終身保険')}${o('hengaku','変額保険（有期型）')}${o('other','その他（自由入力）')}
           </select>
           <!-- 名前はどの種類でも付けられる（2026-08-20 ユーザー指示）。
                以前は「その他」のときだけ入力できたため、ご夫婦で同じ商品を2本持つと
@@ -4279,26 +4407,76 @@
           <button class="btn-del" type="button" title="削除"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="ir-grid">
-          <div class="field"><label>まとまった資金</label><div class="input-unit"><input type="number" class="iv-lump" value="${lump}" min="0" step="10"><span class="u">万円</span></div></div>
-          <div class="field"><label>毎月の積立</label><div class="input-unit"><input type="number" class="iv-monthly" value="${monthly}" min="0" step="0.5"><span class="u">万円</span></div></div>
-          <div class="field"><label>想定利回り</label><div class="input-unit"><input type="number" class="iv-ret" value="${ret}" min="0" max="15" step="0.5"><span class="u">％</span></div></div>
-          <div class="field"><label>積立開始</label><div class="input-unit"><input type="number" class="iv-start" value="${startAge}" min="0" max="100"><span class="u">歳</span></div></div>
-          <div class="field"><label>積立終了</label><div class="input-unit"><input type="number" class="iv-end" value="${endAge}" min="30" max="100"><span class="u">歳</span></div></div>
-          <div class="field"><label>積立終了後</label>
+          <div class="field" data-iv="lump"><label>まとまった資金</label><div class="input-unit"><input type="number" class="iv-lump" value="${lump}" min="0" step="10"><span class="u">万円</span></div></div>
+          <div class="field" data-iv="monthly"><label class="iv-monthly-label">毎月の積立</label><div class="input-unit"><input type="number" class="iv-monthly" value="${monthly}" min="0" step="0.5"><span class="u">万円</span></div></div>
+          <div class="field" data-iv="ret"><label class="iv-ret-label">想定利回り</label><div class="input-unit"><input type="number" class="iv-ret" value="${ret}" min="0" max="15" step="0.5"><span class="u">％</span></div></div>
+          <div class="field" data-iv="start"><label class="iv-start-label">積立開始</label><div class="input-unit"><input type="number" class="iv-start" value="${startAge}" min="0" max="100"><span class="u">歳</span></div></div>
+          <div class="field" data-iv="end"><label class="iv-end-label">積立終了</label><div class="input-unit"><input type="number" class="iv-end" value="${endAge}" min="30" max="100"><span class="u">歳</span></div></div>
+          <div class="field" data-iv="after"><label>積立終了後</label>
             <select class="iv-after">
               <option value="continue"${after==='continue'?' selected':''}>運用を続ける</option>
               <option value="stop"${after==='stop'?' selected':''}>運用を止める</option>
               <option value="use"${after==='use'?' selected':''}>使う（取り崩す）</option>
             </select>
           </div>
-        </div>`;
+          <div class="field hidden" data-iv="sex"><label>被保険者</label>
+            <select class="iv-sex">
+              <option value="m"${sex!=='f'?' selected':''}>男性</option>
+              <option value="f"${sex==='f'?' selected':''}>女性</option>
+            </select>
+          </div>
+          <div class="field hidden" data-iv="waiver"><label>払込免除特約</label>
+            <select class="iv-waiver">
+              <option value="on"${waiver!=='off'?' selected':''}>付ける</option>
+              <option value="off"${waiver==='off'?' selected':''}>付けない</option>
+            </select>
+          </div>
+          <div class="field hidden" data-iv="load"><label>保険関係費</label><div class="input-unit"><input type="number" class="iv-load" value="${load}" min="10" max="45" step="0.5" title="保険料から差し引かれ、特別勘定に入らない分。満期年齢から一般的な水準を入れています（変更できます）"><span class="u">％</span></div></div>
+          <div class="field hidden" data-iv="fee"><label>運用関係費</label><div class="input-unit"><input type="number" class="iv-fee" value="${fee}" min="0" max="3" step="0.1" title="設計書の例示利回りには運用関係費がすでに織り込まれています。二重に引かないよう、通常は0のままにしてください"><span class="u">％</span></div></div>
+        </div>
+        <div class="hg-note hidden"></div>`;
       div.querySelector('.btn-del').addEventListener('click', ()=>{ div.remove(); recompute(); });
       const typeSel = div.querySelector('.iv-type'), nameInp = div.querySelector('.iv-name');
-      // 種類を変えたら、名前の欄の例示だけ差し替える（入力済みの名前は消さない）
-      typeSel.addEventListener('change', ()=>{
-        nameInp.placeholder = (INV_LABEL[typeSel.value] || '商品名') + '（名前を付けられます）';
-      });
-      div.querySelectorAll('input,select').forEach(el=> el.addEventListener('input', recompute));
+      const fld = (k)=> div.querySelector('[data-iv="'+k+'"]');
+      const updateFields = ()=>{
+        const hg = (typeSel.value === 'hengaku');
+        ['sex','waiver','load','fee'].forEach(k=> fld(k).classList.toggle('hidden', !hg));
+        ['lump','after'].forEach(k=> fld(k).classList.toggle('hidden', hg));
+        div.querySelector('.hg-note').classList.toggle('hidden', !hg);
+        div.querySelector('.iv-monthly-label').textContent = hg ? '毎月の保険料' : '毎月の積立';
+        div.querySelector('.iv-ret-label').textContent   = hg ? '想定運用実績' : '想定利回り';
+        div.querySelector('.iv-start-label').textContent = hg ? '加入年齢'     : '積立開始';
+        div.querySelector('.iv-end-label').textContent   = hg ? '満期（何歳）' : '積立終了';
+        // 変額は例示の上限を6％に合わせる（設計書の例示は -3／0／3／6％。高い率を打ち込ませない）
+        div.querySelector('.iv-ret').max = hg ? 6 : 15;
+        if(hg && parseFloat(div.querySelector('.iv-ret').value) > 6) div.querySelector('.iv-ret').value = 3;
+        if(hg){
+          const li = div.querySelector('.iv-load'), fi = div.querySelector('.iv-fee');
+          if(li.dataset.auto === '1' || li.value === '')
+            li.value = (HENGAKU.defaultLoad(parseInt(div.querySelector('.iv-end').value)||65) * 100).toFixed(1);
+          if(fi.value === '') fi.value = '0.0';
+        }
+        nameInp.placeholder = hg
+          ? '用途のメモ（保険会社名・商品名は入れないでください）'
+          : (INV_LABEL[typeSel.value] || '商品名') + '（名前を付けられます）';
+      };
+      /* 保険関係費は「自動」の空欄ではなく、満期年齢から決まる一般的な水準を実数で入れておく。
+         手で書き換えたらその値を尊重し、満期を変えても上書きしない（dataset.auto で見分ける）。
+         運用関係費は0が既定＝設計書の例示利回りに織り込み済みで、重ねて引くと二重控除になる */
+      const loadInp = div.querySelector('.iv-load'), feeInp = div.querySelector('.iv-fee');
+      const endInp  = div.querySelector('.iv-end');
+      const defLoad = ()=> (HENGAKU.defaultLoad(parseInt(endInp.value)||65) * 100).toFixed(1);
+      loadInp.dataset.auto = (load==='' || load==null || String(load)===defLoad()) ? '1' : '0';
+      const syncLoad = ()=>{
+        if(typeSel.value !== 'hengaku' || loadInp.dataset.auto !== '1') return;
+        loadInp.value = defLoad();
+      };
+      loadInp.addEventListener('input', ()=>{ loadInp.dataset.auto = '0'; });
+      endInp.addEventListener('input', syncLoad);
+      updateFields();
+      typeSel.addEventListener('change', ()=>{ updateFields(); recompute(); });
+      // typeSel は上の change で recompute する。ここに含めると1操作で2回走る（ins-row と同じ除外）
+      div.querySelectorAll('input,select').forEach(el=>{ if(el===typeSel) return; el.addEventListener('input', recompute); });
       $('invest-list').appendChild(div);
     }
     function readInvestments(){
@@ -4307,6 +4485,7 @@
         .map(r=>{
         const type = r.querySelector('.iv-type').value;
         const nm = (r.querySelector('.iv-name').value||'').trim();
+        const loadRaw = parseFloat(r.querySelector('.iv-load').value);
         return {
           type,
           // 名前を入れていればそれを、空欄なら種類の名前を使う（どの種類でも名前を付けられる）
@@ -4316,8 +4495,37 @@
           ret: parseFloat(r.querySelector('.iv-ret').value)||0,
           endAge: parseInt(r.querySelector('.iv-end').value)||65,
           start: parseInt(r.querySelector('.iv-start').value)||0,
-          after: r.querySelector('.iv-after').value
+          after: r.querySelector('.iv-after').value,
+          sex: r.querySelector('.iv-sex').value,
+          waiver: r.querySelector('.iv-waiver').value,
+          // 空欄＝自動（満期年齢から既定値を置く）。isFinite で「未入力」と 0 を区別する
+          load: isFinite(loadRaw) ? loadRaw/100 : null,
+          fee: (parseFloat(r.querySelector('.iv-fee').value)||0)/100
         };
+      });
+    }
+    /* 変額保険の行ごとに、算出した基本保険金額と前提を小さく出す（画面の横幅を食わない1ブロック） */
+    function renderHengakuNotes(){
+      const list = $('invest-list'); if(!list) return;
+      [...list.querySelectorAll('.invest-row')].forEach(row=>{
+        const note = row.querySelector('.hg-note');
+        if(!note || row.querySelector('.iv-type').value !== 'hengaku') return;
+        const pm  = parseFloat(row.querySelector('.iv-monthly').value)||0;
+        const a0  = parseInt(row.querySelector('.iv-start').value)||0;
+        const mat = parseInt(row.querySelector('.iv-end').value)||65;
+        const sex = row.querySelector('.iv-sex').value;
+        const lr  = parseFloat(row.querySelector('.iv-load').value);
+        const wv  = row.querySelector('.iv-waiver').value;
+        if(!(pm>0) || !(mat>a0)){ note.innerHTML = '<b>前提</b>：毎月の保険料と、加入年齢より後の満期年齢を入れてください。'; return; }
+        const p = HENGAKU.project({ premium:pm, age:a0, sex:sex, matAge:mat, rate:0.03,
+                                    load:(isFinite(lr)?lr/100:null), waiver:(wv!=='off') });
+        note.innerHTML =
+          `<b>基本保険金額（死亡保険金の最低保証）約${fmt(Math.round(p.base))}万円</b>`
+          + `／保険関係費 保険料の${(p.load*100).toFixed(1)}％`
+          + `／保障のための費用は年齢・性別で毎年変わります`
+          + `／解約控除は払込10年未満`
+          + `<br>満期保険金・解約返戻金に最低保証はありません。<b>想定運用実績</b>は、設計書の例示利回りと同じく<b>運用関係費を差し引いたあとの率</b>として計算しています（「運用関係費」の欄は二重控除を避けるため<b>通常0のまま</b>で構いません。総額表示の利回りを入れるときだけ使ってください）。`
+          + `<span class="hg-staff">　※担当者の方へ：一般的な水準で置いた費用の仮定による概算で、保険会社の設計書ではありません。正式な金額は設計書でご確認ください。</span>`;
       });
     }
 
@@ -6733,6 +6941,17 @@
       // 資産運用（複数商品）・年金
       let cash = ($('cash-on') && $('cash-on').checked) ? num('cash',0) : 0;
       const invs = readInvestments();
+      /* 変額保険は「積み立てた額×利回り」では出せない（保険関係費・保障のための費用・解約控除が効く）。
+         契約ごとに1回だけ推移表を作り、年ループではその年の解約返戻金を引くだけにする。
+         returnOverride（＝運用しなかった場合の比較）のときは運用実績0％で作り直す */
+      const hgProj = invs.map(v=>{
+        if(v.type !== 'hengaku' || !(v.monthly > 0) || !(v.endAge > v.start)) return null;
+        try{
+          return HENGAKU.project({ premium:v.monthly, age:v.start, sex:v.sex, matAge:v.endAge,
+                                   rate:(returnOverride!=null ? returnOverride : v.ret/100),
+                                   load:v.load, fundFee:v.fee, waiver:(v.waiver!=='off') });
+        }catch(e){ return null; }
+      });
       const balances = invs.map(v=> (v.start<=hAge0 ? v.lump : 0));   // 開始済みは初期＝まとまった資金、将来開始は0から
       const principalByItem = invs.map(v=> (v.start<=hAge0 ? v.lump : 0));   // 投じた元本（累計・運用益は含めない）
       const pensionAge = num('pension-age',65);
@@ -7024,6 +7243,32 @@
         let contribBudget = cash + income - expense - downThisYear;
         for(let i=0; i<invs.length; i++){
           const inv = invs[i];
+          /* ---- 変額保険：残高＝その年に解約したときの解約返戻金 ---- */
+          if(inv.type === 'hengaku' && hgProj[i]){
+            const hp = hgProj[i];
+            /* 保険料は契約上の支払いなので、NISA等と違って「払える範囲まで」で減らさない。
+               減らすと、推移表（全額払った前提で作っている）と払込累計が食い違う。
+               払えないほど家計が苦しい年は、既存の「預貯金が不足」の警告のほうで出る */
+            if(hAge>=inv.start && hAge<=inv.endAge){
+              const cAmt = inv.monthly*12;
+              contribution += cAmt; principalByItem[i] += cAmt; contribBudget -= cAmt;
+            }
+            const ti = hAge - inv.start + 1;               // 経過年数（1年目＝加入の翌年末）
+            const prevBal = balances[i];
+            if(ti >= 1){
+              const r = hp.rows[Math.min(ti, hp.rows.length) - 1];
+              balances[i] = (ti > hp.rows.length) ? prevBal : r.cv;   // 満期後はそのまま（下で預貯金へ移す）
+            }
+            // 運用益＝残高の増え分から今年払った保険料を除いたもの。費用で負になることもそのまま出す
+            investGainCum += (balances[i] - prevBal) - ((hAge>=inv.start && hAge<=inv.endAge) ? inv.monthly*12 : 0);
+            // 満期の翌年に満期保険金を預貯金へ移す（契約はそこで終わる）
+            if(hAge === inv.endAge+1 && balances[i] > 0){
+              cash += balances[i];
+              eventList.push({label: inv.name+'の満期', type:'family'});
+              balances[i] = 0; principalByItem[i] = 0;
+            }
+            continue;
+          }
           let ret = (returnOverride!=null) ? returnOverride : inv.ret/100;
           // 終了後「運用を止める」：終了年齢以降は利回り0（成長しない）
           if(inv.after==='stop' && hAge>=inv.endAge) ret = 0;
@@ -7217,7 +7462,8 @@
       // 楽観的すぎる想定利回り（5%超）への注意表示
       const retWarn = $('ret-warn');
       if(retWarn){
-        const maxRet = Math.max(0, ...readInvestments().map(iv=> iv.ret));
+        // 変額は設計書の例示（-3/0/3/6％）に合わせて6％まで入れられるため、この警告の対象外にする
+        const maxRet = Math.max(0, ...readInvestments().filter(iv=> iv.type!=='hengaku').map(iv=> iv.ret));
         if(maxRet > 5){
           retWarn.innerHTML = `<b>想定利回り ${maxRet}% は、長期の世界株式の平均（年5%前後）を上回る楽観的な想定です。</b> 将来の成果を保証するものではないため、控えめな利回りにした場合の結果もあわせてご確認ください。`;
           retWarn.style.display = '';
@@ -7291,6 +7537,7 @@
       drawAdvice(rows, {retireRow, peak, min, depletion, endRow, hRetire, benefit});
       drawTable(viewRows);
       drawAssetTable(rows);
+      try{ renderHengakuNotes(); }catch(e){}
       updateCfHorizonNote(rows, viewRows);
       planAfterRecompute(rows);
       if(typeof renderKasaiMerit==='function') renderKasaiMerit();   // 火災・地震保険の割引メリット表示
@@ -8246,7 +8493,10 @@
       const invs = p.invs;
       const totalMonthly = invs.reduce((a,v)=> a+v.monthly, 0);
       const totalLump    = invs.reduce((a,v)=> a+v.lump, 0);
-      const ben = fmt(Math.max(s.benefit||0, 0));
+      /* ★0で丸めない。変額保険は費用が重く「運用しないほうが手元に残る」結果になりうる。
+         それを『約0万円のプラス』と言い換えるのは不利益事実の隠蔽になる（保険業法300条1項）*/
+      const benRaw = Math.round(s.benefit||0);
+      const ben = fmt(Math.abs(benRaw));
       const surplus0 = Math.round(rows[0].income - rows[0].expense);
       const defense  = Math.round(p.living*6);
       const reserve6m = num('e-retire-living',24)*6;
@@ -8273,7 +8523,8 @@
       if(!p.depletion && p.cashShort) overCon.push(`運用を取り崩さない前提だと、<b>${p.cashShort.hAge}歳ごろに預貯金が不足</b>します。総額では足りていても、その年に使える現金が無ければ生活は回りません。<b>①その時期だけ運用の一部を取り崩す ②積立額を一時的に下げて手元を厚くする ③支出の山（教育費・住宅）と積立の時期をずらす</b>——このいずれかで谷を埋められないか、面談で確認しましょう。`);
       if(surplus0>=0) overGood.push(`毎年の家計は約 ${fmt(surplus0)}万円 の黒字です。この余力があるうちに<b>先取り貯蓄（給与天引き・自動積立）</b>の形にしておくと、意識しなくても資産が積み上がります。黒字は「余ったら貯める」より「先に取り分ける」ほうが確実に残ります。`);
       if(p.cashNow>=defense) overGood.push(`生活防衛資金（生活費6か月分＝約${fmt(defense)}万円）を預貯金で確保できています。病気・転職・災害など<b>収入が一時的に止まっても、資産を売らずに乗り切れる</b>状態です。ここが確保できていると、運用資産を相場の悪いときに取り崩さずに済みます。`);
-      if(totalMonthly>0) overGood.push(`月 ${fmt(totalMonthly)}万円 の積立を続けることで、運用がある場合とない場合で<b>退職時に約${ben}万円の差</b>が出る試算です。差の大半は元本ではなく<b>複利で増えた分</b>で、続けた年数がそのまま効いてきます。`);
+      if(totalMonthly>0 && benRaw>=0) overGood.push(`月 ${fmt(totalMonthly)}万円 の積立を続けることで、運用がある場合とない場合で<b>退職時に約${ben}万円の差</b>が出る試算です。差の大半は元本ではなく<b>複利で増えた分</b>で、続けた年数がそのまま効いてきます。`);
+      if(totalMonthly>0 && benRaw<0) overCon.push(`この前提では、運用した場合のほうが退職時の金融資産が <b>約${ben}万円 少ない</b>試算になっています。積立をやめずに預貯金で置いた場合を下回る、ということです。<b>費用が重い商品が含まれていないか</b>、想定した運用実績が低すぎないかを、内訳（「詳細を見る」）でご確認ください。`);
       if(p.depletion) overCon.push(`このままだと <b>${hNameH()}${p.depletion.hAge}歳（${p.depletion.year}年）ごろ</b> に金融資産が底をつく見込みです。対策は<b>①収入を増やす（就労期間を延ばす・働き方を変える） ②支出を減らす ③積立と運用で増やす ④年金の受け取り方を変える</b>の4つで、早く着手するほど1つあたりの負担は軽くなります。${Math.max(p.depletion.hAge - p.hAge, 0)}年先の話なので、いま動けば選択肢は十分あります。`);
       if(surplus0<0) overCon.push(`毎年 約${fmt(Math.abs(surplus0))}万円 の赤字です。取りかかる順番は<b>固定費（通信・保険・サブスク・住居）→ 変動費</b>。固定費は一度見直せば効果がずっと続くのに対し、食費などの変動費は我慢し続ける必要があり長続きしません。`);
       if(p.cashNow<defense) overCon.push(`生活防衛資金が目安（生活費6か月分＝約${fmt(defense)}万円）に届いていません（現在 ${fmt(p.cashNow)}万円・不足 約${fmt(defense-p.cashNow)}万円）。ここが薄いと、収入が止まったときに<b>相場が下がっている最中でも運用資産を売らざるを得ない</b>——いちばん避けたい取り崩し方になります。運用より先に、こちらを厚くするのが順番です。`);
@@ -8456,12 +8707,13 @@
 
       /* ── 資産運用 ── */
       {
-        const tone = (totalMonthly>0 && p.cashNow>=defense) ? 'ok' : 'warn';
+        const tone = (totalMonthly>0 && p.cashNow>=defense && benRaw>=0) ? 'ok' : 'warn';
         const sum = totalMonthly>0 || totalLump>0
-          ? `いまの運用は ${totalMonthly>0?`月${fmt(totalMonthly)}万円の積立`:''}${totalLump>0?`${totalMonthly>0?'＋':''}まとまった資金${fmt(totalLump)}万円`:''}。運用の効果は退職時で 約<b>${ben}万円</b> のプラスと試算されます。`
+          ? `いまの運用は ${totalMonthly>0?`月${fmt(totalMonthly)}万円の積立`:''}${totalLump>0?`${totalMonthly>0?'＋':''}まとまった資金${fmt(totalLump)}万円`:''}。運用の効果は退職時で 約<b>${ben}万円</b> の${benRaw<0?'<b>マイナス</b>':'プラス'}と試算されます。`
           : `いまは資産運用が <b>設定されていません</b>。預金だけではインフレで実質価値が目減りするおそれがあります。`;
         const good=[], con=[];
-        if(totalMonthly>0){ good.push(`運用あり・なしで退職時に 約${ben}万円 の差が出る試算です。この差の大半は積み立てた元本ではなく<b>運用益がさらに運用益を生む複利</b>の部分で、続けた年数が長いほど大きくなります。途中でやめないことが、利回りを上げることより効きます。`);
+        if(totalMonthly>0 && benRaw<0) con.push(`この前提では、運用あり・なしで退職時に 約${ben}万円 <b>少ない</b>結果になっています。費用の重い商品が含まれていないか、内訳をご確認ください。`);
+        if(totalMonthly>0 && benRaw>=0){ good.push(`運用あり・なしで退職時に 約${ben}万円 の差が出る試算です。この差の大半は積み立てた元本ではなく<b>運用益がさらに運用益を生む複利</b>の部分で、続けた年数が長いほど大きくなります。途中でやめないことが、利回りを上げることより効きます。`);
           good.push(`新NISAは運用益が<b>無期限で非課税</b>（つみたて投資枠120万円＋成長投資枠240万円／年・生涯1,800万円）。通常なら運用益に約20%かかる税金がかからないため、同じ利回りでも手元に残る額が変わります。売却した分の枠は翌年以降に復活するので、途中で使っても再利用できます。`); }
         if(p.cashNow>=defense) good.push(`生活防衛資金（約${fmt(defense)}万円）を確保したうえでの運用で、守りと攻めのバランスが取れています。この備えがあると、相場が下がっている最中に生活費のために売る——長期投資でいちばん避けたい取り崩し方を回避できます。`);
         if(p.cashNow<defense) con.push(`まず生活防衛資金（生活費6か月分＝約${fmt(defense)}万円）の確保を優先しましょう。手元の現金が薄いまま運用を増やすと、収入が止まったときに<b>相場が悪い時期でも売らざるを得ない</b>状況になりかねません。順番としては「守りを固めてから攻める」が安心です。`);
@@ -8921,6 +9173,112 @@
         <div class="etl-legend">縦に並ぶ数字は、その年の家族全員の年齢（夫・妻・子）です。お子さまが何歳のとき夫・妻が何歳かを、上から下に読めます。幼＝幼稚園／小＝小学校／中＝中学／高＝高校／大＝大学等。</div>`;
     }
 
+    /* ---------- 変額保険：解約返戻金の推移（概算）の明細 ----------
+       ★設計書と同じ4本立て（-3／0／3／6％）で必ず同時に出す。1本だけ見せない。
+         有利な数字と不利な数字を同じ表・同じ文字サイズに置く（打消しを畳まない） */
+    function hengakuDetailHtml(items){
+      const hg = (items||[]).filter(it=> it.type==='hengaku' && it.monthly>0 && it.endAge>it.start);
+      if(!hg.length) return '';
+      let out = '';
+      hg.forEach(it=>{
+        let P;
+        try{
+          P = HENGAKU.SCENARIOS.map(r=> HENGAKU.project({ premium:it.monthly, age:it.start, sex:it.sex,
+                matAge:it.endAge, rate:r, load:it.load, fundFee:it.fee, waiver:(it.waiver!=='off') }));
+        }catch(e){ return; }
+        const base = P[0], yrs = base.yrs;
+        // 出す年：最初の10年は毎年（解約控除が効く期間）、そのあとは5年きざみ＋満期
+        const years = [];
+        for(let t=1; t<=Math.min(10,yrs); t++) years.push(t);
+        for(let t=15; t<yrs; t+=5) years.push(t);
+        if(yrs>10 && years[years.length-1]!==yrs) years.push(yrs);
+        // 3％で払込累計を上回るのが何年目か（上回らないならその旨を出す）
+        const p3 = P[2];
+        let breakEven = 0;
+        for(let t=1; t<=yrs; t++){ if(p3.rows[t-1].cv >= p3.rows[t-1].paid){ breakEven = t; break; } }
+        const neg = P[0].rows[yrs-1].cv < P[0].rows[yrs-1].paid;
+        let body = '';
+        years.forEach(t=>{
+          const r0 = base.rows[t-1];
+          let cells = '';
+          P.forEach((p,ci)=>{
+            const r = p.rows[t-1], pct = r.paid>0 ? (r.cv/r.paid*100) : 0;
+            const under = pct < 100;
+            cells += `<td class="at-iv-cell"${under?' style="color:var(--bad)"':''}>${fmt(Math.round(r.cv))}`
+                   + ` <span class="pr-sub">(${pct.toFixed(0)}%)</span></td>`;
+          });
+          body += `<tr${t===yrs?' class="milestone"':''}><td class="evt">${t}年目（${r0.age}歳）</td>`
+                + `<td>${fmt(Math.round(r0.paid))}</td>${cells}</tr>`;
+        });
+        out += `
+          <div class="hg-detail">
+            <p class="at-note" style="font-weight:700;color:var(--blue-deep);margin-bottom:6px;">
+              <i class="fa-solid fa-file-invoice-dollar"></i> ${esc(it.name)}：解約返戻金の推移（概算）
+            </p>
+            <p class="at-note">
+              お払込みいただく保険料の<b>全額が運用にまわるわけではありません</b>。保険関係費（契約の維持にあてる費用）と、
+              万一の保障のための費用が差し引かれ、残った部分が特別勘定で運用されます。
+              保障のための費用は<b>ご年齢が上がるほど増えます</b>。
+            </p>
+            <details class="ic-fold" style="margin-bottom:10px;">
+              <summary>この試算で置いている前提（費用の仮定）</summary>
+              <div class="at-note" style="margin-top:6px;">
+                ・保険関係費：保険料の <b>${(base.load*100).toFixed(1)}％</b>（満期年齢から置いた既定値。行の「保険関係費」欄で変更できます）<br>
+                ・保障のための費用：<b>基本保険金額 − 予定利率3％で積んだ場合の積立金</b> に対し、ご年齢・性別に応じて毎年控除<br>
+                ・運用関係費：例示の運用実績は<b>運用関係費を差し引いたあとの率</b>として計算しています（二重に引いていません）<br>
+                ・解約控除：保険料払込<b>10年未満</b>の解約時に控除（早いほど大きく、1年目はほとんど戻りません）<br>
+                ・基本保険金額（死亡保険金の最低保証）：約 <b>${fmt(Math.round(base.base))}万円</b>（＝3％で積んだ場合の満期額）<br>
+                ・払込免除特約：<b>${it.waiver!=='off' ? '付ける' : '付けない'}</b>として計算
+                ${it.waiver==='off' ? '（付けない場合の費用差は一般的な水準による推定です）' : ''}<br>
+                ※ 特定の保険会社・商品の数値ではありません。実際の費用は商品・ご契約年齢・保険期間により異なります。
+              </div>
+            </details>
+            <p class="at-note">
+              特別勘定の運用実績が <b>年 -3％・0％・3％・6％</b> で推移したと仮定した4通りの試算です。
+              実際の運用実績は日々変動し、この4つのいずれかになると決まっているものではありません。
+              <b>これを下回ることも上回ることもあり、将来の解約返戻金を保証するものではありません。</b>
+              かっこ内は払込累計に対する割合で、<span style="color:var(--bad);font-weight:700">100％未満（赤字）は払込額を下回る</span>ことを表します。
+            </p>
+            <p class="at-note">
+              ${breakEven
+                ? `この試算の前提では、年3％で推移した場合に払込額を上回るのは <b>${breakEven}年目（${it.start+breakEven}歳ごろ）</b> からという計算結果です。<b>それより前に解約すると、お払込みいただいた金額を下回ります。</b>`
+                : `この試算の前提では、年3％で推移した場合でも <b>満期まで払込額を上回りません</b>。`}
+              ${neg ? '<br>年-3％で推移した場合は、<b>満期まで払込額を下回ったまま</b>という計算結果です。' : ''}
+            </p>
+            <div class="table-scroll" style="margin-bottom:12px;">
+              <table class="cf cf-summary">
+                <thead><tr>
+                  <th>経過（ご年齢）</th><th>払込累計</th>
+                  <th>-3％</th><th>0％</th><th>3％</th><th>6％</th>
+                </tr></thead>
+                <tbody>${body}</tbody>
+              </table>
+            </div>
+            <p class="at-note">
+              ※ この画面の NISA・iDeCo・投資信託は、<b>費用を差し引かない単純な複利で計算</b>しています
+              （実際には信託報酬などの費用がかかり、相場により元本を下回ることがあります）。
+              変額保険だけ費用を差し引いているため、<b>この画面の数字をそのまま「どちらが有利か」の比較には使えません。</b>
+              変額保険には、万一のときの<b>死亡保障</b>と、所定の状態になったとき以後の保険料をお払込みいただかずに積立が続く
+              <b>払込免除</b>という、運用商品にはない役割があります。解約返戻金の額だけで比べないでください。
+            </p>
+            <p class="at-note">
+              <b>【ご注意】この概算だけを根拠に、いまご契約中の保険を解約・減額しないでください。</b>
+              保障の減額・解約には、健康状態により再加入・増額ができない／保障に空白が生じる／貯蓄型は解約時に払込額を下回ることがある
+              などの注意点があります。保障は、AI診断「万が一の備え」の<b>必要保障額を下回らない範囲</b>でご検討ください。
+            </p>
+            <p class="at-note">
+              変額保険は、生命保険であると同時に<b>運用の実績によって解約返戻金・満期保険金が変わる商品</b>です
+              （死亡保険金には最低保証がありますが、<b>解約返戻金・満期保険金には最低保証がないのが一般的</b>です）。
+              上記は本日ご入力いただいた条件と<b>一般的な水準で置いた費用の仮定</b>にもとづく概算で、<b>保険会社の設計書ではありません</b>。
+              正式な金額は、保険会社の<b>設計書（契約概要・注意喚起情報・ご契約のしおり／約款）</b>でご確認ください。
+              <span class="hg-staff">　※担当者の方へ：変額保険の募集には変額保険販売資格と所属会社での商品取扱が必要です。この概算画面を根拠に商品のご提案へ進まないでください。</span>
+            </p>
+          </div>`;
+      });
+      return out;
+    }
+
+
     /* ---------- 貯蓄・運用の資産推移（項目別・数字の表）---------- */
     function drawAssetTable(rows){
       const items = readInvestments();
@@ -8959,7 +9317,7 @@
               </tr></thead>
               <tbody>${body}</tbody>
             </table>
-          </div>`;
+          </div>` + hengakuDetailHtml(items);
       } else {
         summary.innerHTML = `<p class="at-note">「貯蓄運用・年金」で運用商品（NISA・iDeCo・保険など）を追加すると、ここに項目ごとの内訳が表示されます。</p>`;
       }
@@ -12643,7 +13001,8 @@
         const defense = Math.round(p.living*6);                                          // 生活防衛資金（生活費6か月分）
         const noInv = simulate(0).rows;
         const nr = noInv.find(r=> r.hAge===p.hRetire) || noInv[noInv.length-1];
-        const ben = Math.max(0, Math.round(p.retireRow.net - nr.net));
+        // ★0で丸めない（変額保険の費用で負になりうる。負を「プラス」と言い換えない）
+        const ben = Math.round(p.retireRow.net - nr.net);
         const facts = [ famFact(p),
           `いまの運用：${totalMonthly>0 ? `月<b>${fmt(totalMonthly)}万円</b> 積立中（${p.invs.map(v=>esc(v.name)).join('・')}）` : '<b>なし</b>'}`,
           `年間の黒字余力：約<b>${fmt(surplus)}万円</b>（手取り−支出）`,
@@ -12660,8 +13019,12 @@
             `生活防衛資金は確保済みなので、黒字余力（年${fmt(surplus)}万円）の範囲で新NISAのつみたて投資から。上の「貯蓄運用・年金」に追加すると、このシミュレーションにすぐ反映されます。`);
         }
         return diagBox(facts, 'ok',
-          `診断：いまの積立を<b>続けてOK</b>です。運用効果は退職時で <b>約${fmt(ben)}万円</b> のプラスです。`,
-          `運用しなかった場合と比べ、${p.hRetire}歳時点で約${fmt(ben)}万円の差が生まれる試算です。相場が下がっても<b>やめずに続ける</b>ことが、長期投資の最大のコツです。`);
+          (ben>=0
+            ? `診断：いまの積立を<b>続けてOK</b>です。運用効果は退職時で <b>約${fmt(ben)}万円</b> のプラスです。`
+            : `診断：この前提では、運用した場合のほうが退職時の金融資産が <b>約${fmt(Math.abs(ben))}万円 少ない</b>試算です。`),
+          (ben>=0
+            ? `運用しなかった場合と比べ、${p.hRetire}歳時点で約${fmt(ben)}万円の差が生まれる試算です。相場が下がっても<b>やめずに続ける</b>ことが、長期投資の最大のコツです。`
+            : `運用しなかった場合（預貯金のまま）と比べて下回る、ということです。費用の重い商品が含まれていないか、想定した運用実績が低すぎないかを「詳細を見る」の内訳でご確認ください。`));
       },
 
       /* 教育費はいくら？ */
@@ -14240,7 +14603,9 @@
         events: [...eventsList.querySelectorAll('.event-row')].map(r=>({ age:r.querySelector('.ev-age').value, label:r.querySelector('.ev-label').value, amount:r.querySelector('.ev-amount').value, every:r.querySelector('.ev-every').value, until:r.querySelector('.ev-until')?.value })),
         incomeEvents: [...incomeEventsList.querySelectorAll('.income-row')].map(r=>({ age:r.querySelector('.ie-age').value, label:r.querySelector('.ie-label').value, amount:r.querySelector('.ie-amount').value })),
         expenses: [...$('custom-expenses').querySelectorAll('.expense-row')].map(r=>({ name:r.querySelector('.ex-name').value, amount:r.querySelector('.ex-amount').value, years:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-years').value)||0):0, start:(r.dataset.exMode==='years')?(parseInt(r.querySelector('.ex-start').value)||0):0 })),
-        investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked })),
+        investments: [...$('invest-list').querySelectorAll('.invest-row')].map(r=>({ type:r.querySelector('.iv-type').value, name:r.querySelector('.iv-name').value, lump:r.querySelector('.iv-lump').value, monthly:r.querySelector('.iv-monthly').value, ret:r.querySelector('.iv-ret').value, start:r.querySelector('.iv-start').value, end:r.querySelector('.iv-end').value, after:r.querySelector('.iv-after').value, on:r.querySelector('.iv-on').checked,
+          sex:r.querySelector('.iv-sex').value, waiver:r.querySelector('.iv-waiver').value,
+          load:r.querySelector('.iv-load').value, fee:r.querySelector('.iv-fee').value })),
         hokenMode: hokenMode(),
         insurances: [...$('ins-list').querySelectorAll('.ins-row')].map(r=>({ who:r.querySelector('.ins-who').value, type:r.querySelector('.ins-type').value, name:r.querySelector('.ins-name').value, amount:r.querySelector('.ins-amount').value, monthly:r.querySelector('.ins-monthly').value, end:r.querySelector('.ins-end').value, keep:(r.querySelector('.ins-keep')?.value)||'keep', on:r.querySelector('.iv-on').checked }))
       };
@@ -14282,7 +14647,8 @@
       (s.incomeEvents||[]).forEach(e=> incomeRow(parseInt(e.age)||0, e.label, parseFloat(e.amount)||0));
       (s.expenses||[]).forEach(x=> expenseRow(x.name, parseFloat(x.amount)||0, parseInt(x.years)||0, parseInt(x.start)||0));
       (s.investments||[]).forEach(it=>{
-        investRow(it.type, it.name, parseFloat(it.lump)||0, parseFloat(it.monthly)||0, parseFloat(it.ret)||0, parseInt(it.end)||65, (it.start!=null && it.start!=='') ? parseInt(it.start) : undefined, it.after||'continue');
+        investRow(it.type, it.name, parseFloat(it.lump)||0, parseFloat(it.monthly)||0, parseFloat(it.ret)||0, parseInt(it.end)||65, (it.start!=null && it.start!=='') ? parseInt(it.start) : undefined, it.after||'continue',
+                  it.sex||'m', it.waiver||'on', (it.load!=null ? it.load : ''), (it.fee!=null ? it.fee : ''));
         if(it.on===false){ const row=$('invest-list').lastElementChild; if(row) row.querySelector('.iv-on').checked=false; }
       });
       (s.insurances||[]).forEach(it=>{
@@ -15044,8 +15410,12 @@
     try{ INITIAL_STATE = collectState(); }catch(e){}
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
-    try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
+    /* ★captureInputBaseline()（＝defaultFPの確定）は、最初のrecompute()より前に置くこと。
+       逆にすると起動直後の1回目の描画は defaultFP=null のまま renderEstBanner() が走り、
+       「目安のまま」の帯が常に空で出る。次にどこか1項目を編集した瞬間に、それまで隠れていた
+       他の項目が一斉に現れるため「入力しても未入力の表示が消えない（むしろ増える）」ように見える */
     captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
+    try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
 
     // ② プラン比較の初期化：読み込み時は「現状プラン」から
     PLANS.genjo.state = collectState();

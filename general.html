@@ -499,6 +499,28 @@
     /* 担当者向けの但し書きは、お客様の画面・PDF・印刷では出さない */
     body.customer-mode .hg-staff, .pdf-mode .hg-staff{ display:none !important; }
     @media print{ .hg-staff{ display:none !important; } }
+
+    /* ====== 体験版（?trial=） ====== */
+    .trial-bar{ position:sticky; top:0; z-index:60; background:linear-gradient(90deg,#1f6f54,#2f8a6e);
+                color:#fff; padding:9px 14px; font-size:.84rem; line-height:1.6;
+                display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
+    .trial-bar b{ font-weight:800; }
+    .trial-bar .tb-tag{ background:rgba(255,255,255,.22); border-radius:999px; padding:2px 10px; font-weight:800; font-size:.78rem; }
+    .trial-bar .tb-left{ margin-left:auto; font-variant-numeric:tabular-nums; }
+    .trial-steps{ background:var(--blue-pale); border-bottom:1px solid var(--blue-pale2);
+                  padding:9px 14px; font-size:.79rem; color:var(--ink); line-height:1.7; }
+    .trial-steps ol{ margin:0; padding-left:1.25em; display:flex; flex-wrap:wrap; gap:2px 22px; }
+    .trial-steps li{ margin:0; }
+    .trial-steps b{ color:var(--blue-deep); }
+    /* 期限切れの覆い */
+    .trial-over{ position:fixed; inset:0; z-index:9999; background:rgba(248,250,249,.97);
+                 display:flex; align-items:center; justify-content:center; padding:24px; }
+    .trial-over .to-card{ background:#fff; border:1px solid var(--line); border-radius:16px;
+                          max-width:520px; padding:28px 26px; box-shadow:0 18px 50px rgba(0,0,0,.12); }
+    .trial-over h2{ font-size:1.15rem; margin:0 0 12px; color:var(--blue-deep); }
+    .trial-over p{ font-size:.9rem; line-height:1.85; color:var(--ink); margin:0 0 10px; }
+    .trial-over .to-sub{ font-size:.78rem; color:var(--ink-soft); }
+    @media print{ .trial-bar, .trial-steps, .trial-over{ display:none !important; } }
     @media(min-width:620px){ .ir-grid{ grid-template-columns:repeat(3,1fr); } }
 
     /* お子さまの行（年齢＋小〜高＋進学先＋通学形態＋相場） */
@@ -17768,13 +17790,87 @@
     try{ INITIAL_STATE = collectState(); }catch(e){}
     /* 初期化の再計算が例外で止まると、この下（プラン初期化・ドラフト復元・共有リンクの解錠）まで
        全部道連れになり白画面同然になる（検証役検出）。グラフCDN不達などで倒れても先へ進む */
-    try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
+    /* ★captureInputBaseline()（＝defaultFPの確定）は、最初のrecompute()より前に置くこと。
+       逆にすると起動直後の1回目の描画は defaultFP=null のまま renderEstBanner() が走り、
+       「目安のまま」の帯が常に空で出る。次にどこか1項目を編集した瞬間に、それまで隠れていた
+       他の項目が一斉に現れるため「入力しても未入力の表示が消えない（むしろ増える）」ように見える */
     captureInputBaseline();   // ここが「まだ何も入力していない」状態＝入力済み表示の基準
+    try{ recompute(); }catch(e){ if(window.console) console.error('[init] recompute失敗:', e); }
 
     // ② プラン比較の初期化：読み込み時は「現状プラン」から
     PLANS.genjo.state = collectState();
     updatePlanTabs();
     initDraftRestore();   // 自動保存ドラフトがあれば復元バナーを表示（共有リンク時は出さない）
+
+    /* ============================================================
+       体験版リンク（?trial=任意の文字列）
+       ・初めて開いた時刻をこの端末に記録し、そこから24時間だけ使える
+       ・開いた瞬間にサンプル（田中太郎様ご一家）を表示する
+       ・期限が切れたら画面を覆ってご案内を出す
+       ★この期限は、この端末のブラウザに時刻を書いているだけの簡易なもの。
+         別の端末・別のブラウザ・閲覧データを消した場合は、また24時間使えてしまう。
+         秘密を守る仕組みではなく「お試し期間の目安」として置いている。
+       ★?trial= の後ろの文字列ごとに期限を分けて数える（宛先ごとに別のリンクを配れる）
+       ============================================================ */
+    (function(){
+      var q = null;
+      try{ q = new URLSearchParams(location.search).get('trial'); }catch(e){ return; }
+      if(!q) return;
+      var HOURS = 24;
+      var KEY = 'lifeplan_trial_v1__' + String(q).slice(0, 40);
+      var now = Date.now(), t0 = null;
+      try{
+        t0 = parseInt(localStorage.getItem(KEY), 10);
+        if(!(t0 > 0)){ t0 = now; localStorage.setItem(KEY, String(t0)); }
+      }catch(e){ t0 = now; }                       // 保存できない設定でも、その場では使えるようにする
+      var leftMs = t0 + HOURS*3600*1000 - now;
+
+      if(leftMs <= 0){
+        var over = document.createElement('div');
+        over.className = 'trial-over';
+        over.innerHTML =
+          '<div class="to-card">'
+          + '<h2>体験版のご利用期間が終了しました</h2>'
+          + '<p>お試しいただき、ありがとうございました。<br>この体験版リンクは、最初に開いてから<b>24時間</b>でご利用期間が終わります。</p>'
+          + '<p>続けてお使いになりたい場合や、御社のお客様への実際のご提案でお使いになりたい場合は、'
+          + 'お手数ですが担当までご連絡ください。あらためてご案内いたします。</p>'
+          + '<p class="to-sub">株式会社Office-M（保険代理店業務を行うFP事務所・生命保険募集人）</p>'
+          + '</div>';
+        document.body.appendChild(over);
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+
+      document.body.classList.add('trial-mode');
+      // サンプルを表示する（体験版は、いきなり数字が入っている状態から始めていただく）
+      try{ showSample(); }catch(e){ if(window.console) console.error('[trial] サンプル表示に失敗:', e); }
+
+      var bar = document.createElement('div');
+      bar.className = 'trial-bar no-print';
+      bar.innerHTML = '<span class="tb-tag">体験版</span>'
+        + '<span><b>サンプル（田中太郎様ご一家）</b>を表示しています。数字はご自由に触っていただけます。</span>'
+        + '<span class="tb-left" id="trial-left"></span>';
+      var steps = document.createElement('div');
+      steps.className = 'trial-steps no-print';
+      steps.innerHTML = '<ol>'
+        + '<li><b>現状プラン</b>に、いまの家計を入れる</li>'
+        + '<li><b>将来プラン</b>で、住まい・保険・積立を変えてみる</li>'
+        + '<li><b>結果を見る</b>で、二つの差を確かめる</li>'
+        + '</ol>';
+      document.body.insertBefore(steps, document.body.firstChild);
+      document.body.insertBefore(bar, document.body.firstChild);
+
+      function tick(){
+        var ms = t0 + HOURS*3600*1000 - Date.now();
+        var el = document.getElementById('trial-left');
+        if(!el) return;
+        if(ms <= 0){ location.reload(); return; }   // 期限が来たら覆いを出すために読み直す
+        var h = Math.floor(ms/3600000), m = Math.floor(ms%3600000/60000);
+        el.innerHTML = 'ご利用期間：あと <b>' + (h>0 ? h+'時間'+m+'分' : m+'分') + '</b>';
+      }
+      tick();
+      setInterval(tick, 60000);
+    })();
 
     /* ============================================================
        お客様専用ページ（共有リンクで開いたとき）

@@ -1325,6 +1325,24 @@
     .mn-src span{ display:block; font-size:.76rem; margin-top:2px; }
     .nlm-fx-note{ font-size:.74rem; font-weight:700; color:var(--ink-soft); background:#eef3f7;
       border-radius:999px; padding:2px 9px; white-space:nowrap; }
+    /* ①テキストで保存 ②プロンプトを表示 の2枚（2026-09-14）。PCは横に2枚、720px以下は縦に積む */
+    #nlm-modal .modal{ width:min(940px,96vw); }
+    .modal-head .nlm-howto-btn{ flex:0 0 auto; margin-right:2px; }
+    .nlm-two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+    @media(max-width:720px){ .nlm-two{ grid-template-columns:1fr; } }
+    .nlm-card{ border:1.5px solid var(--blue-pale2); border-radius:14px; padding:12px 14px 10px; background:#fff; min-width:0; }
+    .nlm-card h4{ margin:0 0 6px; font-size:.98rem; display:flex; align-items:center; gap:8px; }
+    .nlm-no{ flex:0 0 26px; height:26px; border-radius:50%; background:var(--blue-deep); color:#fff; font-weight:800;
+             font-size:.8rem; display:inline-flex; align-items:center; justify-content:center; }
+    .nlm-card-p{ font-size:.82rem; line-height:1.7; color:var(--ink-soft); margin:0 0 8px; }
+    .nlm-card .nlm-text{ min-height:180px; margin-top:0; }
+    .nlm-prompt{ background:#f6f9fc; margin-top:8px !important; }
+    .nlm-card-b{ margin-top:6px; }
+    .nlm-go-note{ font-size:.82rem; color:var(--ink-soft); line-height:1.6; flex:1 1 240px; }
+    /* 使い方（動画） */
+    .nlm-video{ width:100%; aspect-ratio:16/10; background:#111; border-radius:12px; display:block; max-height:60vh; }
+    .nlm-howto-steps{ margin:14px 0 4px; padding-left:1.35em; }
+    .nlm-howto-steps li{ font-size:.88rem; line-height:1.8; margin-bottom:6px; }
     /* == LPSLIDE-B-END == */
     .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
       font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
@@ -4285,6 +4303,7 @@
             <span class="mn-step-b">
               <button type="button" class="btn btn-primary btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
               <button type="button" class="btn btn-ghost btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="mn-howto"><i class="fa-solid fa-circle-play"></i> 使い方</button>
             </span>
           </div>
           <div class="mn-step">
@@ -4379,6 +4398,7 @@
     <div class="modal modal-mid" role="dialog" aria-modal="true" aria-labelledby="nlm-title">
       <div class="modal-head">
         <h3 id="nlm-title"><i class="fa-regular fa-file-powerpoint"></i> Gemini Notebookでスライドを作る<span class="nlm-old">旧 NotebookLM</span></h3>
+        <button type="button" class="btn btn-ghost btn-sm nlm-howto-btn" id="nlm-howto"><i class="fa-solid fa-circle-play"></i> 使い方</button>
         <button class="modal-close" id="nlm-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
@@ -4393,25 +4413,76 @@
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-mn" checked> 面談の概要</label>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-fx" checked> ご入力・試算・AIの分析</label><span class="nlm-fx-note" id="nlm-fx-note" hidden>概要に入っています</span>
           <label class="vc-auto"><input type="checkbox" id="nlm-inc-nx" checked> 次の一手</label>
-        </div>
-        <div class="vc-tools">
           <label class="vc-auto"><input type="checkbox" id="nlm-anon" checked> お名前を伏せる（◯◯様 → お客様）</label>
-          <button type="button" class="btn btn-ghost btn-sm" id="nlm-prompt"><i class="fa-solid fa-copy"></i> スライドの指示文をコピー</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="nlm-md"><i class="fa-solid fa-download"></i> .mdで保存</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="nlm-pdf"><i class="fa-regular fa-file-pdf"></i> PDFも作る</button>
         </div>
-        <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="Gemini Notebookへ渡す本文"></textarea>
+        <!-- ★2026-09-14 ユーザー指示「テキストで保存と、Gemini Notebook に貼るプロンプトの表示の2種類を提示」。
+             Gemini Notebook に要るものは2つ＝①ソースにするファイル ②入力欄に貼る指示文。
+             1つの欄に混ぜていたのをやめ、①と②を並べて「何を・どこへ」を1つずつにした。
+             ★①の本文は直接書き直せる（渡るものの全て）。②は読むだけ（正本は NLM_PROMPT） -->
+        <div class="nlm-two">
+          <section class="nlm-card" aria-labelledby="nlm-c1">
+            <h4 id="nlm-c1"><span class="nlm-no">1</span> テキストで保存</h4>
+            <p class="nlm-card-p">Gemini Notebook の<b>「ソース」に入れるファイル</b>です。この欄が渡るものの全てで、直接書き直してから保存できます。</p>
+            <textarea id="nlm-text" class="nlm-text" spellcheck="false" aria-label="Gemini Notebookのソースにする本文"></textarea>
+            <div class="vc-tools nlm-card-b">
+              <button type="button" class="btn btn-primary btn-sm" id="nlm-txt"><i class="fa-solid fa-download"></i> テキストで保存</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="nlm-copy"><i class="fa-solid fa-copy"></i> 本文をコピー</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="nlm-pdf"><i class="fa-regular fa-file-pdf"></i> PDFも作る</button>
+            </div>
+          </section>
+          <section class="nlm-card" aria-labelledby="nlm-c2">
+            <h4 id="nlm-c2"><span class="nlm-no">2</span> プロンプトを表示</h4>
+            <p class="nlm-card-p">Gemini Notebook の<b>入力欄に貼る指示文</b>です。押すと全文が出ます。コピーして、向こうの入力欄に貼ってください。</p>
+            <button type="button" class="btn btn-primary btn-sm" id="nlm-prompt-show" aria-expanded="false" aria-controls="nlm-prompt-wrap"><i class="fa-solid fa-eye"></i> プロンプトを表示</button>
+            <div id="nlm-prompt-wrap" hidden>
+              <textarea id="nlm-prompt-text" class="nlm-text nlm-prompt" readonly spellcheck="false" aria-label="Gemini Notebookに貼るプロンプト"></textarea>
+              <div class="vc-tools nlm-card-b">
+                <button type="button" class="btn btn-primary btn-sm" id="nlm-prompt"><i class="fa-solid fa-copy"></i> プロンプトをコピー</button>
+              </div>
+            </div>
+          </section>
+        </div>
         <div class="nlm-go">
-          <button type="button" class="btn btn-primary" id="nlm-go"><i class="fa-solid fa-arrow-up-right-from-square"></i> コピーして Gemini Notebook を開く</button>
-          <label class="vc-auto"><input type="checkbox" id="nlm-skip"> 次からはこの画面を出さずに開く</label>
+          <button type="button" class="btn btn-primary" id="nlm-go"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebook を開く</button>
+          <span class="nlm-go-note">別のタブで開きます。①のファイルをソースに足し、②のプロンプトを入力欄に貼ってください。</span>
         </div>
         <ol class="nlm-steps">
-          <li>開いた画面で<b>「ソースを追加」→「コピーしたテキスト」</b>を選び、そのまま貼り付けます（本文はコピー済みです）。</li>
-          <li>読み込めたら<b>「スライド」</b>を押します。指示を入れる欄には、上の<b>「スライドの指示文」</b>を貼ると、言い回しと注記の扱いが揃います。</li>
-          <li>できたスライドの<b>その他メニュー（…）から「PowerPoint（.pptx）をダウンロード」</b>を選ぶと、パワポとして保存できます。</li>
+          <li><b>①「テキストで保存」</b>で、本文をテキストファイルとして保存します（ダウンロードの中に入ります）。</li>
+          <li><b>②「プロンプトを表示」→「プロンプトをコピー」</b>で、指示文をコピーします。</li>
+          <li><b>「Gemini Notebook を開く」</b>→ 新しいノートブック →<b>「ソースを追加」→「ファイルをアップロード」</b>で、①のファイルを選びます（本文をコピーした場合は「コピーしたテキスト」に貼っても同じです）。</li>
+          <li>読み込めたら、<b>入力欄に②の指示文を貼って送ります</b>。できた案を<b>「スライド」</b>で形にし、<b>その他メニュー（…）から「PowerPoint（.pptx）をダウンロード」</b>を選ぶとパワポとして保存できます。</li>
         </ol>
-        <p class="nlm-pdf-note"><b>グラフや表まで読ませたいときは、PDFも一緒に。</b>上の<b>「PDFも作る」</b>で資料を保存し、Gemini Notebook の<b>「ソースを追加」→「ファイルをアップロード」</b>から足してください。文字（この欄の本文）とPDFの両方をソースにすると、資産の推移やキャッシュフロー表まで見たうえでスライドを作ってくれます。</p>
+        <p class="nlm-pdf-note"><b>グラフや表まで読ませたいときは、PDFも一緒に。</b>①の<b>「PDFも作る」</b>で資料を保存し、Gemini Notebook の<b>「ソースを追加」→「ファイルをアップロード」</b>から足してください。文字（①の本文）とPDFの両方をソースにすると、資産の推移やキャッシュフロー表まで見たうえでスライドを作ってくれます。</p>
         <p class="hint" style="display:block;">※ Gemini Notebook から出したパワポは、<b>文字をそのまま打ち直すのが難しい形</b>で入っています。文字を直したいときは<b>「パワポで保存」</b>をお使いください（この端末の中だけで作られ、どこにも送信されません）。<br>※ スライドとパワポ書き出しは Gemini Notebook 側の機能です。使えるかどうかは Google のご提供状況によります。</p>
+      </div>
+    </div>
+  </div>
+  <!-- 使い方（2026-09-14 ユーザー指示「使い方が分からない人もいると思うので、使い方のボタンを作成し、
+       動画でどのように操作をしたらいいか作成して貼って」）。
+       ★動画は lifeplan の公開先に置き、絶対URLで指す（4ファイル＋控えのどこから開いても同じものが出る）。
+       ★Gemini Notebook 側の画面はこの環境から届かないので、動画の後半は文字の手順カード。
+         下の手順は動画が再生できない端末のための同じ内容 -->
+  <div class="modal-overlay no-print" id="nlm-howto-modal" hidden>
+    <div class="modal modal-mid" role="dialog" aria-modal="true" aria-labelledby="nlm-howto-title">
+      <div class="modal-head">
+        <h3 id="nlm-howto-title"><i class="fa-solid fa-circle-play"></i> 使い方：概要から Gemini Notebook でスライドを作る</h3>
+        <button class="modal-close" id="nlm-howto-close" aria-label="閉じる">&times;</button>
+      </div>
+      <div class="modal-body">
+        <video id="nlm-howto-video" class="nlm-video" controls playsinline preload="none"
+               poster="https://office-m-nakatani.github.io/lifeplan/howto-gemini-notebook.jpg">
+          <source src="https://office-m-nakatani.github.io/lifeplan/howto-gemini-notebook.mp4" type="video/mp4">
+          お使いのブラウザでは動画を再生できません。下の手順をご覧ください。
+        </video>
+        <ol class="nlm-howto-steps">
+          <li><b>営業サポート → 商談のあと</b>（上の帯に無い版は 音声メモ → ミーティング概要）を開き、<b>「概要を作る」</b>を押します。録音が無くても、ご入力と試算から作れます。</li>
+          <li><b>「Gemini Notebookで作る」</b>を押すと、この画面が開きます。</li>
+          <li><b>①「テキストで保存」</b>。Gemini Notebook に入れるファイルができます。</li>
+          <li><b>②「プロンプトを表示」→「プロンプトをコピー」</b>。</li>
+          <li><b>「Gemini Notebook を開く」</b>→ 新しいノートブック →<b>「ソースを追加」→「ファイルをアップロード」</b>で①のファイルを選びます。</li>
+          <li>入力欄に<b>②の指示文を貼って送る</b>と、スライドの案ができます。<b>「スライド」</b>で形にし、<b>その他メニュー（…）→「PowerPoint（.pptx）をダウンロード」</b>で保存できます。</li>
+        </ol>
+        <p class="hint" style="display:block;">※ お客様のお名前や個別の数字を渡すときは、お客様の同意をいただいてからお使いください。担当者用の「提案の検討メモ」は渡るものに入っていません。</p>
       </div>
     </div>
   </div>
@@ -15589,44 +15660,82 @@
            作成して、不安を煽ることはないように」。読み終えたときに前を向ける組み立てにしてある。
          ★数字そのものは動かさない（明るくするのは言い回しと並べ方であって、事実ではない）。
          ★ソースに「今と将来の数字」が無い回（現状だけでまとめた回）に、将来の話を足させないこと */
+      /* ★2026-09-14 ユーザー指定の指示文に差し替え（「プロンプトは下記でお願いします」）。
+         本文はユーザーの原文のまま（段落だけ整えた）。
+         ★末尾の【このツールからの補足】だけこちらで足してある——お客様にお渡しする紙になるので、
+           数字を足さない・断定的な有利不利の比較を書かない・特定商品をすすめない・注記を省かない、の線を
+           指示文の側にも持たせておく（保険業法300条1項の線）。**補足を外さないこと** */
       const NLM_PROMPT = [
-        'あなたは、言いたいことを1枚に絞って伝えるプレゼンテーションの設計者です。',
-        'このソースは、担当者がお客様のご家庭のことをうかがい、ツールで試算した内容です。',
-        'これを、お客様がご自宅で見返すための報告スライドにしてください。',
+        'あなたは世界トップクラスのプレゼンデザイナー兼、保険営業トップクラスのコンサルタントです。',
+        '「売り込み」ではなく、お客様が自然に理解し、安心感と信頼感を持てるPowerPointを作成してください。',
+        '対象は保険知識が少ない一般のお客様です。',
+        '中学生でも理解できるレベルで、難しい内容を直感的に理解できるようにしてください。',
         '',
-        '【誰に】金融の専門知識をお持ちでない一般のお客様。中学生が読んでも分かる言葉で。',
-        '【この資料の役目】お客様が「わが家のいまが分かった」「これなら進められそう」と思えるようにすること。',
-        '【感情の流れ】理解 → 納得 → 安心 → 興味。この順に並べてください。',
+        '【プレゼンの目的】',
+        '・マネーリテラシーの必要性を分かりやすく伝える',
+        '・不安を煽らない',
+        '・将来への安心感を感じてもらう',
+        '・営業感を出しすぎない',
+        '・「少し話を聞いてみたい」と思ってもらう',
         '',
-        '【組み立て】',
-        '・1枚で言うことは1つだけ。見出しは体言止めで短く。',
-        '・章の並びは、ソースの見出しの順のままにしてください。',
-        '・はじめの1枚は「今日、分かったこと」。数字ではなく、整理がついたことを置いてください。',
-        '・箇条書きを並べず、関係が目で分かる図にしてください（並ぶ・分かれる・積み上がる・時間で進む）。',
-        '・最後に「ご確認いただきたい点」の全文を、省かずに1〜2枚へ載せてください。',
+        '【デザインルール】',
+        '・Apple風の洗練されたデザイン',
+        '・白ベース',
+        '・余白を広く',
+        '・1スライド1メッセージ',
+        '・図解中心',
+        '・高級感',
+        '・青・グレー・黒を基調',
+        '・文字は最小限',
+        '・視線誘導を意識',
+        '・アイコンを効果的に使用',
+        '・統一感のあるフォント',
+        '・シンプルで知的な雰囲気',
         '',
-        '【明るく書く（ここが要です）】',
-        '・すでにできていること・続けられていることを、先に置いてください。',
-        '・数字は変えずに、言い方を落ち着いた事実にしてください。見出しに「不足」「破綻」「危険」「このままでは」を使わない。',
-        '・気をつけたい点は、必ず「打てる手がある」と対にして同じ枚に置いてください。手が無い話だけの枚を作らない。',
-        '・試算は前提が変われば変わるもの、という前向きな含みで書いてください（決まった未来としては書かない）。',
-        '・読み手を責める書き方（遅い・足りない・やっていない）にしない。',
+        '【文章ルール】',
+        '・中学生でも理解できる言葉',
+        '・専門用語を使わない',
+        '・一文を短く',
+        '・感情より理解を優先',
+        '・数字はシンプルに',
+        '・比較で分かりやすくする',
+        '・重要な言葉だけ強調',
         '',
-        '【見た目】',
-        '・白を地にして、余白を広くとる。文字は最小限にし、読ませるのではなく見て分かる形に。',
-        '・色は紺・灰・黒を基調に。強調は1枚につき1か所だけ。赤は使わない。',
-        '・書体は全体で統一し、視線が左上から右下へ自然に流れる置き方にする。',
+        '【禁止事項】',
+        '・文字の詰め込み',
+        '・古いデザイン',
+        '・営業色が強い表現',
+        '・不安を過度に煽る表現',
+        '・細かすぎる説明',
+        '・箇条書きだらけ',
+        '・安っぽいイラスト',
+        '・派手すぎる色',
         '',
-        '【言葉】',
-        '・一文を短く。専門用語は使わず、どうしても要るときは同じ枚の中で言い換える。',
+        '【スライド構成】',
+        '各スライドごとに',
+        '①タイトル',
+        '②メインメッセージ',
+        '③レイアウト構成',
+        '④使う写真や図解',
+        '⑤話す内容',
+        '⑥感情設計（安心・納得・興味など）',
+        'を提案してください。',
+        '',
+        '【重要】',
+        '「理解 → 納得 → 安心 → 興味」の順番で感情が流れる構成にしてください。',
+        '',
+        '【テーマ】',
+        'いろんな金融商品の種類と特徴と理解し、あなたにあった最適解を見つける',
+        '',
+        'スライドを見た瞬間に、「難しそう」ではなく「分かりやすそう」と感じるデザインにしてください。',
+        '',
+        '【このツールからの補足（お客様にお渡しする資料になるので、必ず守ってください）】',
         '・金額・年齢・年数は、ソースに書いてあるものだけを使う。足したり丸めたりしない。',
-        '・「ご入力・試算・AIの分析のまとめ」の数字は前提が変わると変わるもの。断定せず、幅のある言い方にする。',
-        '・AIの分析は、安心できる点と気をつけたい点を必ず両方載せる。片方だけにしない。',
-        '・ソースに「今と将来の数字」が無いときは、今回は現状の整理までです。将来の見通しやご提案を推測で足さないでください。',
-        '・断定的な有利不利の比較は書かない。将来の運用成果・受取額は約束しない。',
-        '・特定の保険商品・金融商品をすすめる書き方にしない。',
-        '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。不安であおらない。',
-        '・最後の1枚は、次に一緒に考えることを2〜3行で。「その場で決めていただく必要はありません」と明記して締める。'
+        '・ソースに「今と将来の数字」が無いときは、今回は現状の整理までです。将来の見通しやご提案を推測で足さない。',
+        '・特定の保険商品・金融商品の名前をすすめる書き方にしない。断定的な有利不利の比較を書かない。将来の運用成果・受取額は約束しない。',
+        '・ソースの「ご確認いただきたい点」は、省かずに全文を最後のスライドに載せる。',
+        '・急かす言葉（今すぐ・今だけ・手遅れ）は使わない。',
+        '・最後は「その場で決めていただく必要はありません」と明記して締める。'
       ].join('\n');
 
       /* お名前を伏せるために「お名前らしい語」を集める。
@@ -16012,8 +16121,9 @@
          変わった（ユーザー指摘）。旧 notebooklm.google.com からは転送されるが、新しいほうを直に開く。
          ★id・関数名の nlm は旧称の名残。見えないところなので触っていない */
       const NLM_URL = 'https://notebook.google.com/';
-      const NLM_SKIP_KEY = 'lifeplan_nlm_skipconfirm_v1';
-      function nlmSkip(){ try{ return localStorage.getItem(NLM_SKIP_KEY) === '1'; }catch(e){ return false; } }
+      /* ★「次からはこの画面を出さずに開く」はやめた（2026-09-14）。①ファイル ②プロンプト の2つを
+         向こうへ持っていく作りになったので、画面を飛ばすと持っていくものが無くなる。
+         以前に localStorage（lifeplan_nlm_skipconfirm_v1）へ残った印は読まない */
       /* 概要がご入力から作られている回は、「ご入力・試算・AIの分析」が概要の中に入っている。
          本文側は mnDeck／mnSlideMD で重複を落としてあるので、画面でもそれが分かるようにする */
       function nlmSyncPick(){
@@ -16025,24 +16135,37 @@
       function nlmOpen(){
         const md = mnSlideMD(true);
         if(!md){ alert('送れる中身がまだありません。「概要を作る」を押すか、入力欄をご記入ください。'); return; }
-        if(nlmSkip()){ nlmSend(md); return; }          // 2回目からは確認なしで1タップ
         nlmSyncPick();
         const ta = $('nlm-text'); if(ta) ta.value = md;
         if($('nlm-anon')) $('nlm-anon').checked = true;
-        if($('nlm-skip')) $('nlm-skip').checked = false;
+        const pr = $('nlm-prompt-text'); if(pr) pr.value = NLM_PROMPT;
+        nlmPromptShow(false);                          // 開くたびに畳む。「プロンプトを表示」で出す
         if($('nlm-modal')) $('nlm-modal').hidden = false;
       }
-      /* クリップボードへ入れてから開く。★どちらも「押した流れ」の中でやる
-         （待ってから書くと、ブラウザが人の操作と見なさずコピーを断る） */
-      function nlmSend(txt){
-        const go = function(){
-          try{ window.open(NLM_URL, '_blank', 'noopener'); }
-          catch(e){ location.href = NLM_URL; }
-          setStatus('本文をコピーしました。Gemini Notebookで貼り付けてください');
-        };
-        if(navigator.clipboard && navigator.clipboard.writeText){
-          navigator.clipboard.writeText(txt).then(go, function(){ mnCopyFallback(txt, '本文'); go(); });
-        } else { mnCopyFallback(txt, '本文'); go(); }
+      /* ②プロンプトの出し入れ（2026-09-14）。読むだけの欄。正本は NLM_PROMPT */
+      function nlmPromptShow(on){
+        const w = $('nlm-prompt-wrap'), b = $('nlm-prompt-show');
+        if(!w || !b) return;
+        w.hidden = !on;
+        b.setAttribute('aria-expanded', on ? 'true' : 'false');
+        b.innerHTML = on ? '<i class="fa-solid fa-eye-slash"></i> プロンプトを隠す'
+                         : '<i class="fa-solid fa-eye"></i> プロンプトを表示';
+        if(on){ try{ w.scrollIntoView({ block:'nearest' }); }catch(e){} }
+      }
+      /* Gemini Notebook を別のタブで開くだけ（2026-09-14）。
+         以前は本文をコピーしてから開いていたが、①ファイル ②プロンプト をそれぞれのボタンで
+         持っていく作りにしたので、ここでクリップボードを書き換えない（②でコピーしたものが消える） */
+      function nlmOpenSite(){
+        try{ window.open(NLM_URL, '_blank', 'noopener'); }
+        catch(e){ location.href = NLM_URL; }
+        setStatus('Gemini Notebook を開きました。①のファイルをソースに足し、②のプロンプトを貼ってください');
+      }
+      /* 使い方（動画）の開閉。閉じるときは再生も止める */
+      function nlmHowto(on){
+        const m = $('nlm-howto-modal'); if(!m) return;
+        m.hidden = !on;
+        const v = $('nlm-howto-video');
+        if(v && !on){ try{ v.pause(); }catch(e){} }
       }
 
       /* ---------- そのままパワポにする（この端末の中だけで作る） ---------- */
@@ -17314,26 +17437,40 @@
         setStatus('PDFを作っています。保存できたら Gemini Notebook へアップロードしてください');
         b.click();
       });
+      /* ②プロンプト（2026-09-14 ユーザー指示「テキストで保存と、Gemini Notebook に貼るプロンプトの表示の2種類」） */
+      if($('nlm-prompt-show')) $('nlm-prompt-show').addEventListener('click', function(){
+        nlmPromptShow($('nlm-prompt-wrap') ? !!$('nlm-prompt-wrap').hidden : true);
+      });
       if($('nlm-prompt')) $('nlm-prompt').addEventListener('click', function(){
         if(navigator.clipboard && navigator.clipboard.writeText){
-          navigator.clipboard.writeText(NLM_PROMPT).then(function(){ setStatus('指示文をコピーしました'); },
-                                                         function(){ mnCopyFallback(NLM_PROMPT, '指示文'); });
-        } else mnCopyFallback(NLM_PROMPT, '指示文');
+          navigator.clipboard.writeText(NLM_PROMPT).then(function(){ setStatus('プロンプトをコピーしました。Gemini Notebook の入力欄に貼ってください'); },
+                                                         function(){ mnCopyFallback(NLM_PROMPT, 'プロンプト'); });
+        } else mnCopyFallback(NLM_PROMPT, 'プロンプト');
       });
-      if($('nlm-md')) $('nlm-md').addEventListener('click', function(){
+      /* ①テキストで保存＝Gemini Notebook の「ソース」にするファイル。
+         ★BOM付きの .txt（Windows のメモ帳で文字化けしない。Gemini Notebook は .txt を読める） */
+      if($('nlm-txt')) $('nlm-txt').addEventListener('click', function(){
         const txt = ($('nlm-text') && $('nlm-text').value) || '';
         if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
-        const ok = mnSaveBlob(MN_SLIDE_TITLE + '_' + mnStamp() + '.md',
-                              new Blob([ '﻿' + txt ], { type:'text/markdown;charset=utf-8' }));
-        setStatus(ok ? '.md で保存しました' : '保存できませんでした。コピーをお使いください');
+        const ok = mnSaveBlob(MN_SLIDE_TITLE + '_' + mnStamp() + '.txt',
+                              new Blob([ '﻿' + txt ], { type:'text/plain;charset=utf-8' }));
+        setStatus(ok ? 'テキストで保存しました。Gemini Notebook の「ソースを追加」→「ファイルをアップロード」で選んでください'
+                     : '保存できませんでした。「本文をコピー」をお使いください');
       });
-      if($('nlm-go')) $('nlm-go').addEventListener('click', function(){
+      if($('nlm-copy')) $('nlm-copy').addEventListener('click', function(){
         const txt = ($('nlm-text') && $('nlm-text').value) || '';
         if(!txt){ alert('先に「概要を作る」を押してください。'); return; }
-        if($('nlm-skip') && $('nlm-skip').checked){ try{ localStorage.setItem(NLM_SKIP_KEY, '1'); }catch(e){} }
-        nlmSend(txt);
-        nlmClose();
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(function(){ setStatus('本文をコピーしました。Gemini Notebook の「ソースを追加」→「コピーしたテキスト」に貼ってください'); },
+                                                  function(){ mnCopyFallback(txt, '本文'); });
+        } else mnCopyFallback(txt, '本文');
       });
+      if($('nlm-go')) $('nlm-go').addEventListener('click', nlmOpenSite);
+      /* 使い方（動画）。確認画面の中と、商談のあとの帯の②から同じものを開く */
+      if($('nlm-howto')) $('nlm-howto').addEventListener('click', function(){ nlmHowto(true); });
+      if($('mn-howto'))  $('mn-howto').addEventListener('click', function(){ nlmHowto(true); });
+      if($('nlm-howto-close')) $('nlm-howto-close').addEventListener('click', function(){ nlmHowto(false); });
+      if($('nlm-howto-modal')) $('nlm-howto-modal').addEventListener('click', function(e){ if(e.target === $('nlm-howto-modal')) nlmHowto(false); });
       /* == LPSLIDE-F-END == */
       if($('nx-build')) $('nx-build').addEventListener('click', nxRun);
       function nxCopy(only, label){
@@ -17830,7 +17967,8 @@
       document.addEventListener('keydown', (e)=>{
         if(e.key!=='Escape' || panel.hidden) return;
         /* == LPSLIDE-G-BEGIN == */
-        // Gemini Notebookの確認はいちばん手前に出るので、先に閉じる（後ろの議事録モーダルより優先）
+        // 使い方（動画）→ Gemini Notebookの確認 の順にいちばん手前から閉じる（後ろの議事録モーダルより優先）
+        if($('nlm-howto-modal') && !$('nlm-howto-modal').hidden){ if(typeof nlmHowto === 'function') nlmHowto(false); else $('nlm-howto-modal').hidden = true; return; }
         if($('nlm-modal') && !$('nlm-modal').hidden){ $('nlm-modal').hidden = true; return; }
         /* == LPSLIDE-G-END == */
         if($('mn-modal') && !$('mn-modal').hidden){ mnBig(false); return; }

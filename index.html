@@ -1365,6 +1365,42 @@
     .nlm-video{ width:100%; aspect-ratio:16/10; background:#111; border-radius:12px; display:block; max-height:60vh; }
     .nlm-howto-steps{ margin:14px 0 4px; padding-left:1.35em; }
     .nlm-howto-steps li{ font-size:.88rem; line-height:1.8; margin-bottom:6px; }
+    /* Gemini Notebook の画面の配置図（2026-09-14 ユーザー指示「Gemini Notebook のスクリーンショットを
+       貼るなど見やすく」）。★Google の画面はこちらで用意できないため、実画面ではなく「どこに何があるか」の図。
+       ★「配置イメージです」の一行（.nbm-note）を消さないこと＝実画面と誤解させないため */
+    .nbmap-wrap{ margin:18px 0 6px; }
+    .nbmap-ttl{ font-size:.88rem; font-weight:800; color:var(--ink); margin:0 0 8px; }
+    .nbmap{ border:2px solid #d5dee7; border-radius:12px; overflow:hidden; background:#fff; }
+    .nbm-top{ display:flex; align-items:center; gap:6px; height:34px; padding:0 12px; background:#f4f7fa;
+              border-bottom:1px solid #e3eaf1; font-size:.74rem; color:#7b8b9c; }
+    .nbm-top span{ width:9px; height:9px; border-radius:50%; background:#dde5ec; flex:none; }
+    .nbm-top span+span+span{ margin-right:6px; }
+    .nbm-body{ display:grid; grid-template-columns:1fr 1.25fr 1fr; }
+    .nbm-col{ padding:12px; border-right:1px solid #eaeff4; }
+    .nbm-col:last-child{ border-right:0; }
+    .nbm-col h6{ margin:0 0 10px; font-size:.8rem; font-weight:800; color:#1f3b57; }
+    .nbm-btn{ display:flex; align-items:center; gap:8px; padding:9px 10px; background:#fff;
+              border:2px solid #cfdae4; border-radius:9px; font-size:.84rem; font-weight:800; color:#1f3b57; }
+    .nbm-btn.on, .nbm-input.on{ border-color:#e08900; box-shadow:0 0 0 4px rgba(224,137,0,.16); }
+    .nbm-no{ flex:none; width:22px; height:22px; border-radius:50%; background:#1f3b57; color:#fff;
+             font-size:.74rem; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+    .nbm-file{ margin-top:9px; padding:8px 10px; border-radius:9px; background:#eef5fb;
+               border:1px solid #d5e6f4; font-size:.78rem; color:#1f3b57; }
+    .nbm-line{ height:8px; border-radius:4px; background:#eef2f6; margin-bottom:8px; }
+    .nbm-line.w85{ width:85%; } .nbm-line.w70{ width:70%; }
+    .nbm-input{ margin-top:14px; display:flex; align-items:center; gap:8px; padding:10px;
+                border:2px solid #cfdae4; border-radius:10px; font-size:.82rem; font-weight:700; color:#1f3b57; }
+    .nbm-more{ margin-top:9px; padding:8px 10px; border-radius:9px; border:1px dashed #cfdae4;
+               font-size:.74rem; color:#5b6b7c; }
+    .nbm-more b{ display:block; margin-top:4px; color:#1f3b57; font-size:.78rem; }
+    .nbm-cap{ margin:8px 0 0; font-size:.74rem; line-height:1.6; color:var(--ink-soft); }
+    .nbm-note{ margin:8px 0 0; font-size:.74rem; color:var(--ink-soft); }
+    @media (max-width:640px){
+      .nbm-body{ grid-template-columns:1fr; }
+      .nbm-pos{ display:none; }   /* 1列に畳まれるので「左・真ん中・右」は出さない */
+      .nbm-col{ border-right:0; border-bottom:1px solid #eaeff4; }
+      .nbm-col:last-child{ border-bottom:0; }
+    }
     /* == LPSLIDE-B-END == */
     .vc-auto{ display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:6px 2px;
       font-size:.82rem; font-weight:700; color:var(--ink-soft); cursor:pointer; }
@@ -3881,8 +3917,10 @@
   <!-- 使い方（2026-09-14 ユーザー指示「使い方が分からない人もいると思うので、使い方のボタンを作成し、
        動画でどのように操作をしたらいいか作成して貼って」）。
        ★動画は lifeplan の公開先に置き、絶対URLで指す（4ファイル＋控えのどこから開いても同じものが出る）。
-       ★Gemini Notebook 側の画面はこの環境から届かないので、動画の後半は文字の手順カード。
-         下の手順は動画が再生できない端末のための同じ内容 -->
+       ★Gemini Notebook 側の実画面はこちらで用意できないので、動画の後半も下の図も
+         「どこに何があるか」の配置図（.nbmap）。実画面と誤解させないため「配置イメージです」を必ず添える。
+       ★番号は動画の字幕と下の手順で通し（1〜11）。片方だけ振り直さないこと。
+       ★撮影は general.html（汎用版）で行う。ichijo.html で撮るとブランド名が映る -->
   <div class="modal-overlay no-print" id="nlm-howto-modal" hidden>
     <div class="modal modal-mid" role="dialog" aria-modal="true" aria-labelledby="nlm-howto-title">
       <div class="modal-head">
@@ -3895,13 +3933,49 @@
           <source src="https://office-m-nakatani.github.io/lifeplan/howto-gemini-notebook.mp4" type="video/mp4">
           お使いのブラウザでは動画を再生できません。下の手順をご覧ください。
         </video>
+        <p class="nlm-card-p" style="margin-top:12px;"><b>このツールの中でやること</b>（番号は動画の字幕と同じです）</p>
         <ol class="nlm-howto-steps">
-          <li><b>営業サポート → 商談のあと</b>（上の帯に無い版は 音声メモ → ミーティング概要）を開き、<b>「概要を作る」</b>を押します。録音が無くても、ご入力と試算から作れます。</li>
-          <li><b>「Gemini Notebookで作る」</b>を押すと、この画面が開きます。</li>
-          <li><b>①「テキストで保存」</b>。Gemini Notebook に入れるファイルができます。</li>
-          <li><b>②「プロンプトを表示」→「プロンプトをコピー」</b>。</li>
-          <li><b>「Gemini Notebook を開く」</b>→ 新しいノートブック →<b>「ソースを追加」→「ファイルをアップロード」</b>で①のファイルを選びます。</li>
-          <li>入力欄に<b>②の指示文を貼って送る</b>と、スライドの案ができます。<b>「スライド」</b>で形にし、<b>その他メニュー（…）→「PowerPoint（.pptx）をダウンロード」</b>で保存できます。</li>
+          <li>上の帯の<b>「営業サポート」</b>を開きます。<span class="hint" style="display:inline;">（上の帯に無い版は「音声メモ」→「ミーティング概要」）</span></li>
+          <li><b>「商談のあと」</b>を選びます。記録の板が開き、「商談のあとの流れ」が出ます。</li>
+          <li><b>「概要を作る」</b>を押します。録音が無くても、ご入力と試算から作れます。</li>
+          <li><b>「Gemini Notebookで作る」</b>を押すと、この画面が開きます。持っていくものは①と②の2つです。</li>
+          <li><b>①「テキストで保存」</b>。Gemini Notebook に入れるファイル（ソース）ができます。</li>
+          <li><b>②「プロンプトを表示」</b>。入力欄に貼る指示文が出ます。</li>
+          <li><b>「プロンプトをコピー」</b>を押します。</li>
+          <li><b>「Gemini Notebook を開く」</b>を押します。別のタブで開きます。</li>
+        </ol>
+        <div class="nbmap-wrap">
+          <p class="nbmap-ttl">Gemini Notebook の画面（ソース／チャット／Studio の3つを使います）</p>
+          <div class="nbmap">
+            <div class="nbm-top"><span></span><span></span><span></span> notebook.google.com</div>
+            <div class="nbm-body">
+              <div class="nbm-col">
+                <h6>ソース<span class="nbm-pos">（左）</span></h6>
+                <div class="nbm-btn on"><span class="nbm-no">9</span>＋ 追加</div>
+                <div class="nbm-file">ご面談のまとめ.txt</div>
+                <p class="nbm-cap">「ファイルをアップロード」で、<b>①で保存したファイル</b>を選びます。</p>
+              </div>
+              <div class="nbm-col">
+                <h6>チャット<span class="nbm-pos">（真ん中）</span></h6>
+                <div class="nbm-line"></div><div class="nbm-line w85"></div><div class="nbm-line w70"></div>
+                <div class="nbm-input on"><span class="nbm-no">10</span>②の指示文を貼って送る</div>
+                <p class="nbm-cap">スライドの案（構成と、各ページで話す内容）が返ってきます。</p>
+              </div>
+              <div class="nbm-col">
+                <h6>Studio<span class="nbm-pos">（右）</span></h6>
+                <div class="nbm-btn on"><span class="nbm-no">11</span>スライド</div>
+                <div class="nbm-more">その他メニュー（…）<b>PowerPoint（.pptx）をダウンロード</b></div>
+                <p class="nbm-cap">パワーポイントの形で、手元に保存できます。</p>
+              </div>
+            </div>
+          </div>
+          <p class="nbm-note">※ 画面の配置イメージです。実際の画面とは細部が異なります。</p>
+        </div>
+        <p class="nlm-card-p" style="margin-top:14px;"><b>Gemini Notebook の中でやること</b></p>
+        <ol class="nlm-howto-steps" start="9">
+          <li>「新しいノートブック」→ <b>ソース</b>の<b>「＋ 追加」→「ファイルをアップロード」</b>で、①のファイルを選びます。</li>
+          <li><b>チャット</b>の<b>入力欄</b>に<b>②の指示文を貼って送る</b>と、スライドの案ができます。</li>
+          <li><b>Studio</b>の<b>「スライド」</b>で形にし、<b>その他メニュー（…）→「PowerPoint（.pptx）をダウンロード」</b>で保存できます。</li>
         </ol>
         <p class="hint" style="display:block;">※ お客様のお名前や個別の数字を渡すときは、お客様の同意をいただいてからお使いください。担当者用の「提案の検討メモ」は渡るものに入っていません。</p>
       </div>
@@ -4013,7 +4087,7 @@
         <div class="mt-panel" id="mt-settings" hidden>
           <h4><i class="fa-solid fa-sliders"></i> 師匠の人物設定<button type="button" class="mt-panel-x" data-mtclose="mt-settings" aria-label="この引き出しを閉じる">&times;</button></h4>
           <div class="mt-grid">
-            <div><label>会社・場面</label><input type="text" id="mts-company" placeholder="例：一条工務店" autocomplete="off"></div>
+            <div><label>会社・場面</label><input type="text" id="mts-company" placeholder="例：〇〇工務店" autocomplete="off"></div>
             <div><label>名前（画面上の呼び名）</label><input type="text" id="mts-name" placeholder="例：師匠" autocomplete="off"></div>
             <div><label>あなたの呼ばれ方</label><input type="text" id="mts-call" placeholder="例：せんぱい" autocomplete="off"></div>
             <div><label>タイプ（口調と反応だけ変わります）</label>

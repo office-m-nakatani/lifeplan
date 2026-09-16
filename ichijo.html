@@ -6617,7 +6617,17 @@
       '紹介を頼む前に、自分が誰かをつないだ', '保険以外の土産（相手の商売に効く話）を持っていった'
     
     ];
-    const MT_KEY = 'lifeplan_ichijo_mentor_v1';
+    /* ★会社フォルダ版（カタツギ・2026-09-17 ユーザー決定「配り方：ハ」）。
+       make_agency.py --company が、下の null をその会社の「社長の型」（人物設定）に差し替える。
+       null のまま＝一条ライフプラン・共有のAI師匠。その場合は何も変わらない。
+       差し替えたときだけ：
+         ① 保存先を会社ごとに分ける（同じオリジンの他のページ・他の会社と混ざらない）
+         ② 人物設定は開くたびにこの中身で上書きする（月1回の直しを全員の端末に届けるため。
+            会話・今月の数字・段階は消さない）
+         ③ 画面では人物設定を触れない・師匠の切り替えも出さない（誰も触れない＝2026-09-17 ユーザー決定）
+       ★次の行の目印（MT-AGENCY を挟んだコメントと null）の形を変えると、make_agency.py が差し込めなくなる */
+    const MT_AGENCY = /*MT-AGENCY*/null;
+    const MT_KEY = 'lifeplan_ichijo_mentor_v1' + (MT_AGENCY && MT_AGENCY.slug ? ':' + MT_AGENCY.slug : '');
     const MT_BOOK_LABELS = { zou:'『夢をかなえるゾウ』', carnegie:'『人を動かす』', covey:'『7つの習慣』', cialdini:'『影響力の武器』', shikigaku:'『リーダーの仮面』（識学）', teio:'『誰も知らない帝王学』', koudou:'『行動経済学が最強の学問である』',
                           meyer:'『人生成功の鍵は目標設定にある』',
                           yudaya:'『ユダヤの商法』',
@@ -7300,7 +7310,32 @@
       // FP1級の目：出した一問の履歴（同じ問題を続けて出さない）と、正誤の数
       o.recentFp = Array.isArray(o.recentFp) ? o.recentFp : [];
       o.quiz = (o.quiz && typeof o.quiz === 'object') ? { n:(o.quiz.n | 0), ok:(o.quiz.ok | 0) } : { n:0, ok:0 };
+      if(MT_AGENCY) mtAgencyApply(o);
       return o;
+    }
+    /* 会社フォルダ版：社長の型1人だけを置き、開くたびに MT_AGENCY の中身で上書きする。
+       ★端末で持っているのは会話・数字・段階だけ。人物設定は端末に残っていても使わない */
+    function mtAgencyApply(o){
+      const A = MT_AGENCY, src = (A.persona && typeof A.persona === 'object') ? A.persona : {};
+      const list = function(v){ return Array.isArray(v) ? v.map(function(x){ return String(x).trim(); }).filter(Boolean) : []; };
+      const P = Object.assign({}, JSON.parse(JSON.stringify(MT_DEFAULT_PERSONA)), JSON.parse(JSON.stringify(MT_COMPANY_PRESETS[0])));
+      P.id = 'default';
+      P.company = String(A.company || P.company);
+      if(src.name) P.name = String(src.name);
+      if(src.call) P.call = String(src.call);
+      P.style = (src.style === 'zsedai') ? 'zsedai' : 'shisho';
+      const st = (src.strict && typeof src.strict === 'object') ? src.strict : MT_DEFAULT_PERSONA.strict;
+      P.strict = {}; ['num','time','promise','health','weak'].forEach(function(k){ P.strict[k] = !!st[k]; });
+      // 本は全部読んでいる前提（画面で選ばせていないのと同じ）
+      const books = Array.isArray(P.books) ? P.books.slice() : [];
+      (typeof MT_BOOKS !== 'undefined' ? MT_BOOKS : []).forEach(function(b){ if(books.indexOf(b.key) < 0) books.push(b.key); });
+      P.books = books;
+      if(Array.isArray(src.likes)) P.likes = list(src.likes);
+      P.lines = list(src.lines);
+      if(A.ctx && typeof A.ctx === 'object') P.ctx = A.ctx;
+      o.personas = { default: P };
+      o.active = 'default';
+      o.agencyRev = String(A.rev || '');
     }
     let MT; try{ MT = mtLoad(); }catch(e){ MT = { personas:{}, active:'default', kpi:{}, log:{}, deleted:[] }; try{ localStorage.removeItem(MT_KEY); }catch(_){ } MT = mtLoad(); }
     function mtSave(){ try{ localStorage.setItem(MT_KEY, JSON.stringify(MT)); }catch(e){} }
@@ -10392,6 +10427,7 @@
       const del = $('mts-del'); if(del) del.disabled = (MT.active === 'default');
     }
     function mtReadSettings(){
+      if(MT_AGENCY) return;   /* 会社フォルダ版は画面で人物設定を変えない */
       const P = mtP(); if(!P) return;
       const g = function(id){ return (($(id) && $(id).value) || '').trim(); };
       P.company = g('mts-company') || P.company; P.name = g('mts-name') || '師匠'; P.call = g('mts-call') || 'せんぱい'; P.style = g('mts-tone') || 'shisho';
@@ -10449,6 +10485,8 @@
     }
     (function mtWire(){
       if(!$('mentor-modal')) return;
+      /* 会社フォルダ版：人物設定の引き出しと師匠の切り替えを、画面から取り除く（誰も触れない） */
+      if(MT_AGENCY) ['mt-persona', 'mt-set-btn', 'mt-settings'].forEach(function(id){ const el = $(id); if(el) el.remove(); });
       if($('btn-mentor')) $('btn-mentor').addEventListener('click', mtOpen);
       if($('mt-close')) $('mt-close').addEventListener('click', mtClose);
       $('mentor-modal').addEventListener('click', function(e){ if(e.target === $('mentor-modal')) mtClose(); });

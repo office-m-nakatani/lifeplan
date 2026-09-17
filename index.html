@@ -617,36 +617,6 @@ table.cmp-table.hkd-table td:last-child{ font-size:1rem; }
 .sm-body small{ display:block; font-size:.75rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; text-wrap:pretty; }
 body.customer-mode #sales-menu, .pdf-mode #sales-menu{ display:none !important; }
 @media print{ #sales-menu{ display:none !important; } }
-/* 制度改正の反映（新着ボックス）。2026-09-17 ユーザー指示「新着ボックスみたいな感じで、修正が入れば通知されるように」。
-   担当者向け。お客様の画面（customer-mode）・PDF・印刷では出さない */
-    .law-news{ position:relative; }
-.ln-toggle .ln-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px;
-             margin-left:4px; border-radius:9px; background:#d05a6e; color:#fff; font-size:.7rem; font-weight:800; line-height:1; }
-.ln-toggle .ln-badge[hidden]{ display:none; }   /* display 指定が hidden 属性に勝つので明示 */
-.ln-toggle[aria-expanded="true"]{ background:var(--blue-pale); border-color:var(--blue); }
-.ln-pop{ position:absolute; top:calc(100% + 8px); right:0; z-index:131; background:#fff;
-             border:1.5px solid var(--blue-pale2); border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.14);
-             padding:10px 12px 12px; width:400px; max-width:calc(100vw - 32px); max-height:70vh; overflow:auto; }
-.ln-head{ font-size:.95rem; font-weight:800; color:var(--ink); padding:2px 2px 6px; }
-.ln-lead{ font-size:.75rem; color:var(--ink-soft); line-height:1.6; margin:0 2px 8px; }
-.ln-sec{ font-size:.78rem; font-weight:800; color:var(--blue-deep); margin:10px 2px 4px; padding-top:8px; border-top:1px solid var(--line); }
-.ln-item{ padding:8px 10px; border-radius:10px; background:var(--bg-soft); border:1px solid var(--line); }
-.ln-item + .ln-item{ margin-top:6px; }
-.ln-item.is-new{ border-color:#e8a3af; background:#fff6f7; }
-.ln-meta{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:.7rem; color:var(--ink-soft); }
-.ln-new{ background:#d05a6e; color:#fff; font-weight:800; border-radius:6px; padding:1px 6px; }
-.ln-title{ display:block; font-size:.86rem; font-weight:800; color:var(--ink); margin-top:3px; line-height:1.5; }
-.ln-body{ font-size:.76rem; color:var(--ink); line-height:1.65; margin-top:3px; text-wrap:pretty; }
-.ln-where{ font-size:.7rem; color:var(--ink-soft); margin-top:3px; }
-.ln-toast{ position:fixed; left:16px; bottom:16px; z-index:140; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-             max-width:calc(100vw - 32px); background:#fff; border:1.5px solid #e8a3af; border-radius:12px;
-             box-shadow:0 10px 30px rgba(0,0,0,.14); padding:10px 12px; font-size:.82rem; color:var(--ink); }
-.ln-toast i{ color:#d05a6e; }
-.ln-toast button{ font-family:inherit; }
-.ln-toast .ln-x{ background:none; border:0; color:var(--ink-soft); cursor:pointer; font-size:1rem; padding:2px 4px; }
-body.customer-mode #law-news, .pdf-mode #law-news, body.customer-mode .ln-toast, .pdf-mode .ln-toast{ display:none !important; }
-@media print{ #law-news, .ln-toast{ display:none !important; } }
-@media(max-width:560px){ .ln-pop{ position:fixed; left:12px; right:12px; width:auto; max-width:none; } }
 /* スマホ幅：ボタンが行の途中にあると右へはみ出す（375pxで実測）ため、画面幅いっぱいの固定配置にする。縦位置はJSでボタンの真下に置く */
     @media(max-width:560px){ .sm-pop{ position:fixed; left:12px; right:12px; width:auto; max-width:none; } }
 .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-soft); padding:18px 18px; }
@@ -2561,13 +2531,6 @@ input.nm-sei{ text-align:center; }
               <span class="sm-body"><b><i class="fa-solid fa-user-tie"></i> AI師匠</b><small>自分の振り返りに。切り返し・数字・販路のことを社内用の師匠に相談します</small></span>
             </button>
           </div>
-        </div>
-        <!-- 制度改正の反映（新着ボックス）。中身は LAW_NEWS（スクリプト側）が正本 -->
-        <div class="law-news" id="law-news">
-          <button type="button" class="btn btn-ghost btn-sm ln-toggle" id="law-news-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="law-news-pop">
-            <i class="fa-solid fa-bell"></i> 制度改正の反映<span class="ln-badge" id="law-news-badge" hidden></span>
-          </button>
-          <div class="ln-pop" id="law-news-pop" role="dialog" aria-label="制度改正の反映" hidden></div>
         </div>
         <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
         <!-- 共有は面談の締めの主動線なのに、入口が保存モーダルの奥にしか無かった（検証役検出）。
@@ -17609,7 +17572,7 @@ input.nm-sei{ text-align:center; }
            - 妻死亡→夫：死亡時55歳以上のみ受給資格があり、支給は60歳から（若い夫は原則ゼロ）＝制度の盲点
        ・中高齢寡婦加算：夫死亡時、妻が40〜64歳で遺族基礎の対象外の期間に年約63万
        ※2028年4月改正（子のない配偶者は原則5年有期。男性は施行時から60歳未満、女性は40歳未満から20年かけて60歳未満へ。寡婦加算は段階縮小）は、施行日前に受給権が発生する遺族厚生年金には適用されない（今の制度のまま）。
-         本計算は「いま死亡した場合」なので現行ルールのまま。施行後の死亡を計算する版は、政令の数字が出しだい施行日までに入れる（新着ボックスの LAW_PLANNED） */
+         本計算は「いま死亡した場合」なので現行ルールのまま。施行後の死亡を計算する版は、政令の数字が出しだい施行日までに入れる */
     function izokuYearAt(deceased, children, surAge, dGross, y){
       const n = children.map(c=> c.age + y).filter(a=> a>=0 && a<=18).length;
       const kiso = n>0 ? 83 + 24*Math.min(n,2) + 8*Math.max(n-2,0) : 0;
@@ -20231,130 +20194,10 @@ input.nm-sei{ text-align:center; }
         pop.style.top = (v && narrow()) ? (btn.getBoundingClientRect().bottom + 8) + 'px' : '';
       }
       window.addEventListener('scroll', function(){ if(!pop.hidden && narrow()) setOpen(false); }, { passive:true });
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        if(pop.hidden){ var lb = document.getElementById('law-news-btn'); if(lb && lb.getAttribute('aria-expanded') === 'true') lb.click(); }   // 制度改正の反映を閉じる
-        setOpen(pop.hidden);
-      });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(pop.hidden); });
       pop.addEventListener('click', function(e){ if(e.target.closest('.sm-item')) setOpen(false); });
       document.addEventListener('click', function(e){ if(!pop.hidden && !e.target.closest('#sales-menu')) setOpen(false); });
       document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !pop.hidden){ setOpen(false); btn.focus(); } });
-    })();
-
-    /* ============================================================
-       制度改正の反映（新着ボックス）── 2026-09-17
-       ★税制・保険業法・社会保険等の変更をツールに反映したら、LAW_NEWS の先頭に1件足す（反映日の新しい順）。
-         id は一度付けたら変えない（既読の記録に使う）。
-       ★既読はこの端末にだけ残す（キー lifeplan_lawnews_seen_v1）。共有リンクの3表には入れない。
-       ★初めて開く端末で古いお知らせまで「新着」にならないよう、反映日から NEW_DAYS 日を過ぎたものは既読扱い。
-       ★「施行予定と扱い」は、成立した改正を施行日までにどう扱うか（計算に入れる／注記で示す）を書く欄。
-       ============================================================ */
-    (function(){
-      var LAW_NEWS = [
-        { id:'2026-09-17-izoku', date:'2026-09-17', eff:'2028年4月施行',
-          title:'遺族厚生年金の見直し（2028年4月）の扱いを明記しました',
-          body:'必要保障額は「いま万一があった場合」の見込みです。施行日より前に受給権が発生する遺族厚生年金は今の制度のまま続くため、計算は変えていません。施行後に万一があった場合の計算への切り替えは、下の「施行予定と扱い」をご覧ください。',
-          where:'万一の備え／計算の前提と限界「遺族年金」' },
-        { id:'2026-09-17-106', date:'2026-09-17', eff:'2026年10月施行',
-          title:'「106万円の壁」（賃金要件）撤廃の扱いを明記しました',
-          body:'撤廃後は、週20時間以上働く方は年収にかかわらず社会保険に加入します。全国の最低賃金の水準では、年収106万円未満の方はおおむね週20時間未満にあたるため、「年収106万円未満は本人負担なし」の計算はそのままです。注記の食い違い（未反映／反映済み）を直しました。',
-          where:'計算の前提と限界「手取り額」' },
-        { id:'2026-08-15-kb', date:'2026-08-15', eff:'',
-          title:'知識ベースを一次資料で裏取りし、最新の制度に合わせました',
-          body:'高額療養費の上限額の引き上げと年間上限の新設（2026年8月施行）、106万円の壁の撤廃（2026年10月）、生前贈与加算の経過措置などを、相談チャット・AI診断の説明に反映しました。',
-          where:'相談チャット／AI診断' },
-        { id:'2026-07-18-tedori', date:'2026-07-18', eff:'',
-          title:'手取りの計算を令和7年度税制改正に合わせました',
-          body:'所得税の基礎控除（58万円）などの改正を、年収から手取りを出す計算に反映しました。',
-          where:'収入の「手取り目安」／資産と収支' },
-        { id:'2026-07-17-fit', date:'2026-07-17', eff:'',
-          title:'2026年度の太陽光の売電単価（二段階）と住宅の補助金を反映しました',
-          body:'2026年度FITの二段階の買取単価と、みらいエコ住宅2026の補助金を、住まいの計算に反映しました。',
-          where:'住まい（太陽光・補助金）' }
-      ];
-      var LAW_PLANNED = [
-        { when:'2026年10月', title:'短時間労働者の賃金要件（月額8.8万円）の撤廃',
-          body:'扱い済み（上の9月17日のお知らせ）。勤務先の従業員数の要件は2027年10月から段階的に縮小し、2035年10月に撤廃される予定です。本ツールは勤務先の規模を入力しないため、面談で確認します。' },
-        { when:'2028年4月', title:'遺族厚生年金の見直し',
-          body:'子のない配偶者は原則5年の有期給付（その間は増額）。男性は60歳未満が2028年4月から、女性は対象年齢を20年かけて段階的に60歳未満まで引き上げます。ほかに収入要件の撤廃、中高齢寡婦加算の段階的な縮小など。施行後に万一があった場合の計算は、政令などで細かな数字が公表されしだい、施行日までに反映します。' }
-      ];
-      var KEY = 'lifeplan_lawnews_seen_v1', NEW_DAYS = 30;
-      var box = document.getElementById('law-news'), btn = document.getElementById('law-news-btn'),
-          pop = document.getElementById('law-news-pop'), badge = document.getElementById('law-news-badge');
-      if(!box || !btn || !pop) return;
-      function readSeen(){ try{ return JSON.parse(localStorage.getItem(KEY) || '[]') || []; }catch(e){ return []; } }
-      function writeSeen(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
-      function ageDays(d){ var t = Date.parse(d + 'T00:00:00+09:00'); return isFinite(t) ? (Date.now() - t) / 86400000 : 9999; }
-      function unseen(){ var seen = readSeen(); return LAW_NEWS.filter(function(n){ return seen.indexOf(n.id) < 0 && ageDays(n.date) <= NEW_DAYS; }); }
-      function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-      function fmt(d){ var p = d.split('-'); return p[0] + '年' + (+p[1]) + '月' + (+p[2]) + '日'; }
-      function refreshBadge(){
-        var n = unseen().length;
-        badge.hidden = n === 0; badge.textContent = n ? String(n) : '';
-        btn.setAttribute('aria-label', n ? '制度改正の反映（新着' + n + '件）' : '制度改正の反映');
-      }
-      function render(newIds){
-        var h = '<div class="ln-head"><i class="fa-solid fa-scale-balanced"></i> 制度改正の反映</div>'
-          + '<p class="ln-lead">税制・保険業法・社会保険などの変更は、順次このツールに反映しています。反映した日の新しい順に並べています。</p>';
-        LAW_NEWS.forEach(function(n){
-          var isNew = newIds.indexOf(n.id) >= 0;
-          h += '<div class="ln-item' + (isNew ? ' is-new' : '') + '">'
-            + '<div class="ln-meta">' + (isNew ? '<span class="ln-new">NEW</span>' : '')
-            + '<span>反映日 ' + esc(fmt(n.date)) + '</span>' + (n.eff ? '<span>／' + esc(n.eff) + '</span>' : '') + '</div>'
-            + '<b class="ln-title">' + esc(n.title) + '</b>'
-            + '<div class="ln-body">' + esc(n.body) + '</div>'
-            + (n.where ? '<div class="ln-where"><i class="fa-solid fa-location-dot"></i> ' + esc(n.where) + '</div>' : '')
-            + '</div>';
-        });
-        h += '<div class="ln-sec"><i class="fa-regular fa-calendar"></i> 施行予定と扱い</div>';
-        LAW_PLANNED.forEach(function(n){
-          h += '<div class="ln-item"><div class="ln-meta"><span>' + esc(n.when) + '</span></div>'
-            + '<b class="ln-title">' + esc(n.title) + '</b><div class="ln-body">' + esc(n.body) + '</div></div>';
-        });
-        pop.innerHTML = h;
-      }
-      var narrow = function(){ return window.matchMedia('(max-width:560px)').matches; };
-      var toast = null, holdUntil = 0;   // 通知の「見る」で移動した直後は、スクロールで閉じない
-      function hideToast(){ if(toast){ toast.remove(); toast = null; } }
-      function setOpen(v){
-        if(v){
-          var smb = document.getElementById('sales-menu-btn');   // 営業サポートが開いていれば閉じる（stopPropagation で外側クリックが届かないため）
-          if(smb && smb.getAttribute('aria-expanded') === 'true') smb.click();
-          var ids = unseen().map(function(n){ return n.id; });
-          render(ids);
-          var seen = readSeen();
-          LAW_NEWS.forEach(function(n){ if(seen.indexOf(n.id) < 0) seen.push(n.id); });
-          writeSeen(seen); refreshBadge(); hideToast();
-        }
-        pop.hidden = !v; btn.setAttribute('aria-expanded', v ? 'true' : 'false');
-        pop.style.top = (v && narrow()) ? (btn.getBoundingClientRect().bottom + 8) + 'px' : '';
-      }
-      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(pop.hidden); });
-      document.addEventListener('click', function(e){ if(!pop.hidden && !e.target.closest('#law-news')) setOpen(false); });
-      document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !pop.hidden){ setOpen(false); btn.focus(); } });
-      window.addEventListener('scroll', function(){ if(!pop.hidden && narrow() && Date.now() > holdUntil) setOpen(false); }, { passive:true });
-
-      // 通知：新着があれば、開いたときに左下へ小さく出す（担当者の画面だけ。10秒で消える）
-      refreshBadge();
-      var n = unseen().length;
-      if(n && !document.body.classList.contains('customer-mode')){
-        toast = document.createElement('div');
-        toast.className = 'ln-toast no-print'; toast.setAttribute('role', 'status');
-        toast.innerHTML = '<i class="fa-solid fa-bell"></i><span>制度改正の反映が <b>' + n + '件</b> あります</span>'
-          + '<button type="button" class="btn btn-ghost btn-sm" data-ln="open">見る</button>'
-          + '<button type="button" class="ln-x" data-ln="x" aria-label="閉じる">&times;</button>';
-        document.body.appendChild(toast);
-        toast.querySelector('[data-ln="open"]').addEventListener('click', function(e){
-          e.stopPropagation(); holdUntil = Date.now() + 800;
-          btn.scrollIntoView({ block:'center', behavior:'instant' });   // html の scroll-behavior:smooth を打ち消す
-          setTimeout(function(){ setOpen(true); }, 60);   // 移動が済んでから開く（位置の計算がずれないように）
-        });
-        toast.querySelector('[data-ln="x"]').addEventListener('click', hideToast);
-        setTimeout(hideToast, 10000);
-        // 共有リンクで開いたときは、あとから customer-mode に切り替わるので、そこで消す
-        try{ new MutationObserver(function(){ if(document.body.classList.contains('customer-mode')) hideToast(); })
-               .observe(document.body, { attributes:true, attributeFilter:['class'] }); }catch(e){}
-      }
     })();
 
     /* ============================================================

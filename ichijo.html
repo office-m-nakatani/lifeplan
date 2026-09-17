@@ -2100,6 +2100,29 @@
 .mt-kata-say i{display:block; font-style:normal; font-size:.78rem; color:var(--ink-soft); margin-bottom:4px;}
 .mt-kata-say b{font-weight:800; line-height:1.85; color:var(--ink);}
 @media(max-width:520px){ .mt-kata-row{flex-direction:column; gap:1px;} .mt-kata-row > i{flex:none;} }
+/* ★★押したら板の全体を使う（2026-09-18 ユーザー指示「社長の型をうつすを押したら画面全体で見れるように」）。
+   もとは上の狭い引き出しに出していたので、12問の選択肢が下で切れて、社長が読めなかった
+   （#mentor-modal .modal-body > .mt-panel の min-height:132px に押し込まれていた）。
+   ★顔と名前の行（.mt-top）は残す——戻る道が無くなるため。 */
+#mentor-modal .modal-body.mt-kata-on > .mt-tools,
+#mentor-modal .modal-body.mt-kata-on > .mt-stagewrap,
+#mentor-modal .modal-body.mt-kata-on > .mt-quick,
+#mentor-modal .modal-body.mt-kata-on > .mt-quick-more,
+#mentor-modal .modal-body.mt-kata-on > .mt-input,
+#mentor-modal .modal-body.mt-kata-on > .mt-note,
+#mentor-modal .modal-body.mt-kata-on > #mt-self,
+#mentor-modal .modal-body.mt-kata-on > #mt-settings,
+#mentor-modal .modal-body.mt-kata-on > #mt-kpi{display:none !important;}
+/* ★max-height:none を必ず書く。引き出しは `#mentor-modal .mt-panel{max-height:34vh}`
+   （携帯は38vh）で背を抑えてあるので、flex:1 だけでは伸びない——1280x900 で板の41%（306px）
+   しか使わず、12問の選択肢が下で切れたままだった（2026-09-18 実測）。ここを外さないこと */
+#mentor-modal .modal-body.mt-kata-on > #mt-kata{flex:1 1 auto; min-height:0; max-height:none; overflow:auto;
+  /* ★枠と地を外す。引き出しの枠のまま画面いっぱいに伸ばすと、
+     下半分が「空の白い箱」に見える（2026-09-18 実測）。ここは一枚の画面として見せる */
+  border:none; background:transparent; padding:2px 2px 8px;}
+/* ★display を書いたものを hidden で隠すときは [hidden] をセットで（この案件で6回目）。
+   上の規則は display を書いていないが、閉じたときに必ず消えることを規則で押さえておく */
+#mt-kata[hidden]{display:none !important;}
 /* KATA-CSS-END */
     .mt-panel h4{ margin:0 0 6px; font-size:.86rem; display:flex; align-items:center; gap:7px; color:#1f3328; }
     .mt-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px 10px; }
@@ -4636,8 +4659,11 @@
           <button type="button" class="btn btn-ghost btn-sm" id="mt-self-btn" aria-expanded="false"><i class="fa-solid fa-list-check"></i> 自分で点検</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mt-clear"><i class="fa-solid fa-eraser"></i> 会話を消す</button>
           <span class="mt-stagebox">
-            <label for="mt-stage" style="font-size:.78rem; color:var(--ink-soft);">あなたの段階</label>
-            <select id="mt-stage" aria-label="あなたの段階（開くトークの段が変わります）"></select>
+            <!-- ★「あなたの段階」の選ぶ欄を外した（2026-09-18 ユーザー指示
+                 「あなたの段階を削除し、TOT最上位にしてください」）。
+                 段階は TOT（最上位・4段全て）に固定してあるので、選ばせる必要がない。
+                 固定は mtLoad の o.stage で持っている。★'base' に戻さないこと。
+                 残してあるのは「自立の段階」（自分で点検の結果）で、これは別のもの。 -->
             <span class="mt-stage-badge" id="mt-stage-badge">自立の段階：まだ点検していない</span>
           </span>
         </div>
@@ -7345,7 +7371,11 @@
       o.kpi = o.kpi || {}; o.log = o.log || {};
       // 3倍化で足した記憶：相談の型の履歴（同じ相談の繰り返しに気づかせる）・段階・点検の履歴・出した切り口
       o.hist = (o.hist && typeof o.hist === 'object') ? o.hist : {};
-      o.stage = MT_STAGES.some(function(s){ return s.id === o.stage; }) ? o.stage : 'base';
+      /* ★段階は TOT（最上位・4段全て）に固定（2026-09-18 ユーザー指示
+         「あなたの段階を削除し、TOT最上位にしてください」）。画面から選ぶ欄を外したので、
+         端末に 'base' が残っていた人も最上位で開く。★ここを元の判定に戻すと、
+         前に 'base' を選んだ端末だけ①〜②段しか開かない状態が残る。 */
+      o.stage = 'tot';
       o.self = Array.isArray(o.self) ? o.self : [];
       o.recentKk = Array.isArray(o.recentKk) ? o.recentKk : [];
       o.recentPsy = Array.isArray(o.recentPsy) ? o.recentPsy : [];
@@ -8386,7 +8416,9 @@
         const txt = (k.talk && k.talk[x[0]]) || '';
         return { who:(i === 3 ? 'eigyo-egao' : 'eigyo-idle'), lab:x[1], say:txt || x[1], key:(i === 1 || i === 2), max:52 };
       }), { max:52 });
-      h += mtFigStage();   /* いま何段まで開いているかを札でも見せる */
+      /* ★「あなたの段階」の札は出さない（2026-09-18 ユーザー指示で段階を削除・TOT固定）。
+         全員が4段全て開いているので、毎回「いまここ／4段全て・最上位」と並べても伝わるものが無い。
+         mtFigStage() は残してある（段階を戻すときに使う）。★h += で呼び戻さないこと */
       h += '<ul class="mt-tot">'; for(let i = 0; i < openTo; i++) h += step(i); h += '</ul>';
       if(openTo < 4){
         const close = (MT_TEXTS.stage_close || {})[openTo === 2 ? 'mdrt' : 'cot'];
@@ -10815,8 +10847,11 @@
     }
     (function mtWire(){
       if(!$('mentor-modal')) return;
-      /* 会社フォルダ版：人物設定の引き出しと師匠の切り替えを、画面から取り除く（誰も触れない） */
-      if(MT_AGENCY) ['mt-persona', 'mt-set-btn', 'mt-settings'].forEach(function(id){ const el = $(id); if(el) el.remove(); });
+      /* 会社フォルダ版：人物設定の引き出しと師匠の切り替えを、画面から取り除く（誰も触れない）
+         ★「社長の型を写す」（12問）もここで取り除く。あれは導入のときに社長が型を言葉にする道具で、
+           型は make_agency.py が MT_AGENCY に焼いてある。残しておくと社員が押せてしまい、
+           その場だけ型が変わって、開き直すと黙って戻る（mtAgencyApply が上書きするため）。 */
+      if(MT_AGENCY) ['mt-persona', 'mt-set-btn', 'mt-settings', 'mt-kata-btn', 'mt-kata'].forEach(function(id){ const el = $(id); if(el) el.remove(); });
       if($('btn-mentor')) $('btn-mentor').addEventListener('click', mtOpen);
       if($('mt-close')) $('mt-close').addEventListener('click', mtClose);
       $('mentor-modal').addEventListener('click', function(e){ if(e.target === $('mentor-modal')) mtClose(); });
@@ -10870,13 +10905,27 @@
       });
       mtVoiceInit();
 /* KATA-WIRE-BEGIN ★社長の型を写す（12問）の配線。2026-09-17 */
+      /* ★開いているあいだは板の全体を使う（2026-09-18）。閉じたら必ず元へ戻す */
+      function mtKataShow(on){
+        const p = $('mt-kata'), b = $('mt-kata-btn'),
+              body = $('mentor-modal') ? $('mentor-modal').querySelector('.modal-body') : null;
+        if(p) p.hidden = !on;
+        if(b) b.setAttribute('aria-expanded', on ? 'true' : 'false');
+        if(body) body.classList.toggle('mt-kata-on', !!on);
+        if(on){ if(typeof mtShut === 'function') mtShut('mt-kata'); mtKataOpen();
+                if(p) p.scrollTop = 0; }
+      }
       if($('mt-kata-btn')) $('mt-kata-btn').addEventListener('click', function(){
         const p = $('mt-kata'); if(!p) return;
-        const open = p.hidden;
-        p.hidden = !open;
-        this.setAttribute('aria-expanded', open ? 'true' : 'false');
-        if(open) mtKataOpen();
+        mtKataShow(p.hidden);
       });
+      /* ★見出しの × 。MT_DRAWERS に入れていないので、ここで自分で配線する
+         （入れていないのは、12問のあいだ他の引き出しと同じ畳み方をさせないため） */
+      (function(){
+        const p = $('mt-kata'); if(!p) return;
+        const x = p.querySelector('[data-mtclose]'); if(!x) return;
+        x.addEventListener('click', function(){ mtKataShow(false); });
+      })();
       if($('mt-kata-next')) $('mt-kata-next').addEventListener('click', mtKataNext);
       if($('mt-kata-back')) $('mt-kata-back').addEventListener('click', mtKataBack);
       if($('mt-kata-save')) $('mt-kata-save').addEventListener('click', mtKataApply);
@@ -10884,6 +10933,8 @@
       if($('mt-kata-again')) $('mt-kata-again').addEventListener('click', function(){ mtKataA = {}; mtKataOpen(); });
       if($('mt-kata-try')) $('mt-kata-try').addEventListener('click', function(){
         mtKataApply();
+        /* ★相談してみるのだから、12問を畳んで会話の画面へ戻す（でないと相談の欄が隠れたまま） */
+        mtKataShow(false);
         const t = $('mt-text'); if(t){ t.focus(); t.value = '部下に同じことを何度言っても伝わりません'; }
       });
       /* KATA-WIRE-END */      if($('mts-save')) $('mts-save').addEventListener('click', function(){ mtReadSettings(); mtRenderFace(); mtAdd('bot', mtFill(mtP().style === 'zsedai' ? '設定、覚えました。{call}、次からこの感じで話しますね。' : '設定を覚えた。{call}、次からこの口で話す。', mtP()), false); });

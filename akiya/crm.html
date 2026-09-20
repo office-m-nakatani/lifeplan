@@ -401,11 +401,18 @@ function defaultAssignee(dkey){
 function defaultVendorId(dkey){ const vs = vendorsFor(dkey); return vs.length===1 ? vs[0].id : ''; }
 /* 分野の担当に紐づく取引先。※ 名簿に無いid（別端末で採番された・削除済み）は「紐付けなし」として担当者名で照合する。
    これをしないと、提携先からの返信で入ってきた他端末のidや削除済みidのせいで実績が消える／別会社に付く */
-function domVendor(d){ return (d && d.vendorId) ? vendorById(d.vendorId) : null; }
-/* この案件のこの分野は、どの取引先の担当か（idが無ければ担当者名で照合） */
+function domVendor(d, dkey){
+  const v = (d && d.vendorId) ? vendorById(d.vendorId) : null;
+  return (v && (!dkey || v.domain===dkey)) ? v : null;      // 分野が違う取引先を指していたら「紐付けなし」（共有バケットから漏れるため）
+}
+/* この案件のこの分野は、どの取引先の担当か（idが無ければ担当者名で照合。同名が複数あるときは決めない） */
 function caseVendorId(c, dkey){
   const d = c && c.domains && c.domains[dkey]; if(!d) return '';
-  const ven = domVendor(d) || (d.assignee ? (vendorsFor(dkey).find(v=>vendorName(v)===d.assignee) || null) : null);
+  let ven = domVendor(d, dkey);
+  if(!ven && d.assignee){
+    const named = vendorsFor(dkey).filter(v=>vendorName(v)===d.assignee);
+    ven = named.length===1 ? named[0] : null;               // 表示名が同じ会社が2社あると誰の担当か決められない＝担当未定として人に確認させる
+  }
   return ven ? ven.id : '';
 }
 /* 取引先ごとの実績（この端末で見える案件だけから集計） */
@@ -469,15 +476,25 @@ function saveVendor(){
   const v = sanitizeVendor({ id: vendorEdit || '', company: val('v-company'), person: val('v-person'),
     domain: val('v-domain'), phone: val('v-phone'), email: val('v-email'), area: val('v-area'), note: val('v-note') });
   if(!v){ toast('会社名またはご担当者名を入れてください'); const el=document.getElementById('v-company'); if(el) el.focus(); return; }
+  if(VENDORS.some(x=>x.id!==v.id && x.domain===v.domain && vendorName(x)===vendorName(v))){
+    // 同一分野で表示名が同じだと、担当者名だけの案件がどちらの実績か決められなくなる
+    toast('同じ分野に同じ表示名の取引先があります。会社名かご担当者名を変えてください');
+    const el=document.getElementById('v-person'); if(el) el.focus(); return;
+  }
   const i = VENDORS.findIndex(x=>x.id===v.id);
-  const renamed = i>=0 ? vendorName(VENDORS[i]) !== vendorName(v) : false;
+  const prev    = i>=0 ? VENDORS[i] : null;
+  const renamed = prev ? vendorName(prev) !== vendorName(v) : false;
+  const moved   = prev ? prev.domain !== v.domain : false;
   if(i>=0) VENDORS[i] = v; else VENDORS.push(v);
   saveVendors();
-  if(renamed){   // 共有ファイルに乗るのは「担当者名」なので、名簿を直したら案件側の表示名も揃える
-    let touched = 0;
-    DB.forEach(c=>{ const d=c.domains && c.domains[v.domain]; if(d && d.vendorId===v.id && d.assignee!==vendorName(v)){ d.assignee = vendorName(v); touched++; } });
-    if(touched) save();
+  let touched = 0;
+  if(moved && canEditDomain(prev.domain)){   // 分野を変えたら旧分野の紐付けは無効。残すと共有の振り分けから漏れる
+    DB.forEach(c=>{ const d=c.domains && c.domains[prev.domain]; if(d && d.vendorId===v.id){ delete d.vendorId; touched++; } });
   }
+  if(renamed && canEditDomain(v.domain)){   // 共有ファイルに乗るのは「担当者名」なので、名簿を直したら案件側の表示名も揃える
+    DB.forEach(c=>{ const d=c.domains && c.domains[v.domain]; if(d && d.vendorId===v.id && d.assignee!==vendorName(v)){ d.assignee = vendorName(v); touched++; } });
+  }
+  if(touched) save();
   const after = vendorAfter;
   closeVendor();
   if(after && after.caseId) askVendor(after.caseId, after.dkey, v.id, true);
@@ -499,6 +516,7 @@ function domAssignVendor(id, dkey, vid){
   if(!canEditDomain(dkey)) return;
   const c = getC(id); if(!c) return;
   const v = vendorById(vid); if(!v) return;
+  if(v.domain!==dkey){ toast('この取引先は別の分野に登録されています'); return; }
   const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
   d.vendorId = v.id; d.assignee = vendorName(v); d.updatedAt = new Date().toISOString();
   markDirty(); upsert(c); savedFlash(); if(openId) renderDetail(); render();
@@ -507,6 +525,7 @@ function domAssignVendor(id, dkey, vid){
 function askVendor(id, dkey, vid, silent){
   const c = getC(id); if(!c) return;
   const v = vendorById(vid); if(!v) return;
+  if(v.domain!==dkey){ toast('この取引先は別の分野に登録されています'); return; }
   const dm = domainMeta(dkey); if(!dm) return;
   const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
   if(d.need!=='required'){
@@ -673,20 +692,21 @@ function pickForRole(c, role, opts){
 function casesForShare(base, role, vid){
   const rel = base.filter(c => c && c.domains && c.domains[role] && c.domains[role].need==='required');
   if(!vid) return rel;
-  if(vid==='__none__') return rel.filter(c => !caseVendorId(c, role));
+  // 担当未定＝「どの会社のバケットにも入らなかった残り全部」。こう定義しないと、分野違いのidや同名2社の案件が静かに漏れる
+  if(vid==='__none__'){ const ids = new Set(vendorsFor(role).map(v=>v.id)); return rel.filter(c => !ids.has(caseVendorId(c, role))); }
   return rel.filter(c => caseVendorId(c, role) === vid);
 }
 function shareToPartner(role, cases, opts, vid){
   opts = opts || {};
   const ven   = (vid && vid!=='__none__') ? vendorById(vid) : null;
-  const vlabel= ven ? vendorName(ven) : '';
+  const vlabel= ven ? vendorName(ven) : (vid==='__none__' ? ((ROLE_DEFS[role]?.label||role)+'（担当未定）') : '');
   const payload = { type:'akiya_crm_share', direction:'share', role, exportedAt: todayISO(),
     cases: cases.map(c => pickForRole(c, role, opts)) };
   // ファイル名に会社名を入れる（同じ分野に2社いるとき、別の会社へ送ってしまう事故を防ぐ）
   download(JSON.stringify(payload,null,2), '空き家CRM_'+(vlabel || ROLE_DEFS[role]?.label || role).replace(/[\\/:*?"<>|]/g,'_')+'宛_'+todayISO()+'.json');
   // 提供記録ログ
   let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
-  log.unshift({ date:todayISO(), role, roleLabel:ROLE_DEFS[role].label+(vlabel?('／'+vlabel):''), count:cases.length,
+  log.unshift({ date:todayISO(), role, roleLabel:(vid==='__none__') ? vlabel : (ROLE_DEFS[role].label+(vlabel?('／'+vlabel):'')), count:cases.length,
     names:cases.map(c=>c.name||c.id), withContacts:!!opts.contacts, withTeamNote:!!opts.teamNote, withEstimate:!!opts.estimate });
   localStorage.setItem('akiya_crm_sharelog', JSON.stringify(log.slice(0,200)));
   // 各案件のフォロー履歴にも共有の事実を残す
@@ -967,10 +987,12 @@ function applyReturn(e){
           c.domains[dk] = pc.domains[dk]; upd++;
           // 名簿は端末ごとの保存なので、返信に入っていたidは相手の端末の採番。こちらの名簿の同じ会社へ読み替える（無ければ外す）
           const rv = c.domains[dk].vendorId;
-          if(rv && !vendorById(rv)){
-            const byName = vendorsFor(dk).find(v=>vendorName(v)===c.domains[dk].assignee);
-            if(byName) c.domains[dk].vendorId = byName.id; else delete c.domains[dk].vendorId;
+          if(rv && !domVendor(c.domains[dk], dk)){
+            const named = vendorsFor(dk).filter(v=>vendorName(v)===c.domains[dk].assignee);
+            if(named.length===1) c.domains[dk].vendorId = named[0].id; else delete c.domains[dk].vendorId;
           }
+          const rven = domVendor(c.domains[dk], dk);
+          if(rven) c.domains[dk].assignee = vendorName(rven);   // 名簿で会社名を直していたら、こちらの名前に揃える
         }
       }
       // 参加のご提案は2経路で届く：joinRequests（自分の分野の更新に同梱）と、紹介案件のフルコピー内の domains[*].joinRequest
@@ -1372,7 +1394,7 @@ function renderInbox(){
     const refBadge = c.referredBy ? badge('紹介','#fff',ROLE_DEFS[c.referredBy]?.color||'#8B5CF6')+' ' : '';
     return `<tr class="border-t border-line hover:bg-paper cursor-pointer" onclick="openDetail('${c.id}')">
       <td class="px-3 py-2.5"><div class="font-bold">${refBadge}${esc(c.name||'（無名）')}</div><div class="text-[11px] text-sub">${esc(c.city||'')}・${lab('source',c.source)||esc(c.source||'')}</div></td>
-      <td class="px-3 py-2.5">${badge('緊急度 '+(c.urgencyLevel||'—'), '#fff', urgColor(c.urgencyLevel))}</td>
+      <td class="px-3 py-2.5">${badge('緊急度 '+esc(c.urgencyLevel||'—'), '#fff', urgColor(c.urgencyLevel))}</td>
       <td class="px-3 py-2.5 whitespace-nowrap">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):'—'}</td>
       <td class="px-3 py-2.5">${lab('owner',c.owner)} / 出口:${lab('exit',c.exit)}</td>
       <td class="px-3 py-2.5 text-[11px] text-sub">${esc(c.createdAt||'')}</td>
@@ -1438,7 +1460,7 @@ function renderKanban(){
         </div>
         <p class="text-[11px] text-sub mb-2">${esc(c.city||'')}・${lab('structure',c.structure)}・約${c.tsubo||'?'}坪</p>
         <div class="flex items-center gap-1.5 mb-2">
-          ${badge(c.urgencyLevel||'—', '#fff', urgColor(c.urgencyLevel))}
+          ${badge(esc(c.urgencyLevel||'—'), '#fff', urgColor(c.urgencyLevel))}
           <span class="text-[11px] text-sub">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'〜'+c.estimateRangeHigh+'万'):''}</span>
         </div>
         <div class="flex items-center gap-1 mb-2">${domainDots(c)}</div>
@@ -1910,7 +1932,7 @@ function toggleTeam(id,dkey){
 function assigneeField(c, dm, d){
   const vs  = vendorsFor(dm.key);
   const cur = d.assignee || '';
-  const matched = domVendor(d) || vs.find(v=>vendorName(v)===cur) || null;   // 名簿に無いidは無視（担当者名で照合）
+  const matched = domVendor(d, dm.key) || ((vs.filter(v=>vendorName(v)===cur).length===1) ? vs.find(v=>vendorName(v)===cur) : null);   // 名簿に無いid・分野違い・同名2社は無視
   const other = !!cur && !matched;
   return `<select onchange="assigneePick('${c.id}','${dm.key}',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">
       <option value="" ${!cur?'selected':''}>未割当</option>
@@ -2251,7 +2273,7 @@ function renderDetail(){
       <div class="min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
           <p class="font-black text-xl truncate">${esc(c.name||'（無名）')}<span class="text-sm font-bold text-sub ml-1">様</span></p>
-          ${badge('緊急度 '+(c.urgencyLevel||'—'),'#fff',urgColor(c.urgencyLevel))}
+          ${badge('緊急度 '+esc(c.urgencyLevel||'—'),'#fff',urgColor(c.urgencyLevel))}
           ${al.length?badge('アラート '+al.length,'#fff',al.some(x=>x.lv==='red')?'#E5484D':'#F5A524'):''}
         </div>
         <p class="text-xs text-sub">${esc(c.id)}・${esc(c.city||'')}</p>
@@ -2389,7 +2411,7 @@ function renderDetail(){
           <div class="grid grid-cols-2 gap-2 mb-3">${diag}</div>
           <div class="rounded-xl px-3.5 py-2.5 mb-3" style="background:#E7F6EC">
             <p class="text-[10px] text-sub mb-0.5">解体費の概算レンジ</p>
-            <p class="font-black text-lg text-grn">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'万〜'+c.estimateRangeHigh+'万'):'—'} <span class="text-xs text-sub font-bold">／ 緊急度 ${c.urgencyLevel||'—'}${c.urgencyScore?('（'+c.urgencyScore+'点）'):''}</span></p>
+            <p class="font-black text-lg text-grn">${c.estimateRangeLow?('¥'+c.estimateRangeLow+'万〜'+c.estimateRangeHigh+'万'):'—'} <span class="text-xs text-sub font-bold">／ 緊急度 ${esc(c.urgencyLevel||'—')}${c.urgencyScore?('（'+esc(c.urgencyScore)+'点）'):''}</span></p>
           </div>
           ${canEditCore()?`<div class="grid grid-cols-2 gap-2.5">
             <label class="text-xs text-sub font-bold">名義（再判定される）

@@ -39,15 +39,16 @@ tailwind.config = {
       <svg class="w-7 h-7 text-grn" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
       <div class="leading-tight">
         <p class="font-black text-sm sm:text-base">士業ワンストップ 顧客管理</p>
-        <p class="text-[10px] text-sub -mt-0.5">お客様を登録して、必要な専門家へお繋ぎ</p>
+        <p id="meLine" class="text-[10px] -mt-0.5">お客様を登録して、必要な専門家へお繋ぎ</p>
       </div>
     </div>
     <nav id="tabs" class="order-last sm:order-none w-full sm:w-auto flex items-center gap-1 sm:ml-auto text-xs sm:text-sm font-bold overflow-x-auto">
       <button data-view="today"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">今日</button>
-      <button data-view="inbox"     class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
+      <button data-view="inbox" data-admin class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">受信リード</button>
       <button data-view="kanban"    class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">進捗ボード</button>
       <button data-view="partner"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">分野別ボード</button>
       <button data-view="referral"  class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">送客・実績</button>
+      <button data-view="vendors"   class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">取引先</button>
       <button data-view="dashboard" class="tabbtn px-3 py-1.5 rounded-full border border-line whitespace-nowrap">ダッシュボード</button>
     </nav>
     <div class="relative shrink-0 hidden md:block">
@@ -71,6 +72,11 @@ tailwind.config = {
           <button data-admin onclick="document.getElementById('returnFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">提携先からの更新を反映（社内）</button>
           <button onclick="openShareLog()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">共有履歴（提供記録）</button>
           <div class="border-t border-line my-1"></div>
+          <p class="text-[10px] text-sub font-bold px-3 pt-0.5 pb-0.5">取引先名簿</p>
+          <button onclick="openVendor(null)" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">取引先を追加する</button>
+          <button onclick="exportVendors()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">名簿を書き出す（チームへ配布）</button>
+          <button onclick="document.getElementById('vendorFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">名簿を読み込む（統合）</button>
+          <div class="border-t border-line my-1"></div>
           <p class="text-[10px] text-sub font-bold px-3 pt-0.5 pb-0.5">データ</p>
           <button onclick="exportJSON()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">全データをJSONで書き出し（バックアップ）</button>
           <button data-admin onclick="document.getElementById('importFile').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-paper">JSONを読み込み（統合）</button>
@@ -83,6 +89,7 @@ tailwind.config = {
     <input type="file" id="importFile" accept="application/json" class="hidden" onchange="importJSON(event)">
     <input type="file" id="receiveFile" accept="application/json" class="hidden" onchange="receiveShare(event)">
     <input type="file" id="returnFile" accept="application/json" class="hidden" onchange="applyReturn(event)">
+    <input type="file" id="vendorFile" accept="application/json" class="hidden" onchange="importVendors(event)">
   </div>
 </header>
 <div id="roleBar" class="hidden"></div>
@@ -115,6 +122,17 @@ tailwind.config = {
       <button onclick="closeShare()" class="text-sub hover:text-ink text-xl leading-none">×</button>
     </div>
     <div id="shareBody" class="p-5"></div>
+  </div>
+</div>
+
+<!-- ===== 取引先の追加・編集モーダル ===== -->
+<div id="vendorModal" class="hidden fixed inset-0 z-[60] bg-black/40 flex items-start justify-center p-3 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-xl softshadow my-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-line sticky top-0 bg-white rounded-t-2xl z-10">
+      <p id="vendorTitle" class="font-black">取引先を追加</p>
+      <button onclick="closeVendor()" class="text-sub hover:text-ink text-xl leading-none">×</button>
+    </div>
+    <div id="vendorBody" class="p-5"></div>
   </div>
 </div>
 
@@ -239,6 +257,7 @@ function sanitizeCase(c){
   Object.values(c.domains||{}).forEach(d=>{
     if(!d || typeof d!=='object') return;
     if(d.nextDate && !DATE_RE.test(String(d.nextDate))) d.nextDate='';
+    if(d.vendorId!=null && !ID_RE.test(String(d.vendorId))) delete d.vendorId;   // 取引先idもonclickに埋まる
     if(!Object.prototype.hasOwnProperty.call(NEEDS, d.need)) d.need='undetermined';
     if(d.outcome && !['未定','対応中','受注','失注'].includes(d.outcome)) d.outcome='未定';
     if(d.joinRequest && typeof d.joinRequest==='object'){
@@ -328,6 +347,203 @@ function upsert(c){
 }
 
 /* ============================================================
+   取引先名簿（実際にお付き合いのある会社・ご担当者）
+   ここに登録した取引先が、各分野の「担当」セレクトの選択肢になる。
+   ※ 名簿は端末ごとの保存（費用ゼロのまま）。チームで揃えたいときはメニューの書き出し／読み込みで配る
+   ============================================================ */
+const VKEY   = 'akiya_crm_vendors';
+const MYVKEY = 'akiya_crm_myvendor';
+let VENDORS = [];
+function saveVendors(){ localStorage.setItem(VKEY, JSON.stringify(VENDORS)); }
+function sanitizeVendor(v){
+  if(!v || typeof v !== 'object') return null;
+  if(!ID_RE.test(String(v.id||''))) v.id = newId('V');          // idはonclick属性に埋まるため必ず安全な形へ
+  ['company','person','phone','email','area'].forEach(k=>{ v[k] = String(v[k]==null?'':v[k]).slice(0,120); });
+  v.note = String(v.note==null?'':v.note).slice(0,300);
+  if(!DOMAINS.some(d=>d.key===v.domain)) v.domain = 'other';
+  if(!v.company && !v.person) return null;                       // 名前の無い行は残さない
+  return v;
+}
+function loadVendors(){
+  try { VENDORS = (JSON.parse(localStorage.getItem(VKEY)) || []).map(sanitizeVendor).filter(Boolean); }
+  catch(e){ VENDORS = []; }
+  if(!VENDORS.length){ VENDORS = seedVendors(); saveVendors(); }
+}
+/* 初期名簿は「確かな情報」だけ。会社名が空の行＝ご担当者名は分かっているが会社名が未登録（編集して埋める） */
+function seedVendors(){
+  const mk = o => Object.assign({ id:newId('V'), company:'', person:'', domain:'other', phone:'', email:'', area:'', note:'' }, o);
+  return [
+    mk({ company:'株式会社フィルドストン', domain:'realestate', phone:'087-899-7080', area:'香川県木田郡三木町ほか',
+         note:'不動産売買仲介／一戸建て（新築・中古）／売土地。三木町大字池戸3208-5・9:00〜17:00・日祝休' }),
+    mk({ person:'瀬尾さん',  domain:'realestate',       note:'会社名・ご連絡先を編集してご登録ください' }),
+    mk({ person:'二朗さん',  domain:'inheritance_reg',  note:'会社名・ご連絡先を編集してご登録ください' }),
+    mk({ person:'植原さん',  domain:'construction_ext', note:'会社名・ご連絡先を編集してご登録ください' }),
+    mk({ person:'中谷',      domain:'fp',               note:'会社名・ご連絡先を編集してご登録ください' }),
+  ];
+}
+const vendorById = id => VENDORS.find(v=>v.id===id) || null;
+const vendorsFor = dkey => VENDORS.filter(v=>v.domain===dkey);
+function vendorName(v){ if(!v) return ''; return v.company ? (v.company + (v.person ? ('／'+v.person) : '')) : (v.person||''); }
+function myVendor(){ return vendorById(localStorage.getItem(MYVKEY)||''); }
+function setMyVendor(id){
+  const cur = localStorage.getItem(MYVKEY)||'';
+  if(cur===id) localStorage.removeItem(MYVKEY); else localStorage.setItem(MYVKEY, id);
+  const mv = myVendor();
+  applyRoleUI(); render();
+  toast(mv ? ('自社を「'+vendorName(mv)+'」にしました') : '自社の設定を外しました');
+}
+/* その分野の取引先が1社だけなら登録時に自動で担当へ。複数あるときは人が選ぶ（勝手に決めない） */
+function defaultAssignee(dkey){
+  const vs = vendorsFor(dkey);
+  if(vs.length===1) return vendorName(vs[0]);
+  return DOM_ASSIGNEE[dkey] || '';
+}
+function defaultVendorId(dkey){ const vs = vendorsFor(dkey); return vs.length===1 ? vs[0].id : ''; }
+/* 分野の担当に紐づく取引先。※ 名簿に無いid（別端末で採番された・削除済み）は「紐付けなし」として担当者名で照合する。
+   これをしないと、提携先からの返信で入ってきた他端末のidや削除済みidのせいで実績が消える／別会社に付く */
+function domVendor(d){ return (d && d.vendorId) ? vendorById(d.vendorId) : null; }
+/* この案件のこの分野は、どの取引先の担当か（idが無ければ担当者名で照合） */
+function caseVendorId(c, dkey){
+  const d = c && c.domains && c.domains[dkey]; if(!d) return '';
+  const ven = domVendor(d) || (d.assignee ? (vendorsFor(dkey).find(v=>vendorName(v)===d.assignee) || null) : null);
+  return ven ? ven.id : '';
+}
+/* 取引先ごとの実績（この端末で見える案件だけから集計） */
+function vendorStats(v){
+  const st = { asked:0, won:0, amount:0, last:'' };
+  scope().forEach(c=>{
+    const d = c.domains && c.domains[v.domain];
+    if(!d || d.need!=='required') return;
+    if(caseVendorId(c, v.domain) !== v.id) return;
+    st.asked++;
+    if(d.outcome==='受注'){ st.won++; st.amount += Number(d.amount)||0; }
+    const dt = String(d.updatedAt||'').slice(0,10) || c.createdAt || '';
+    if(dt > st.last) st.last = dt;
+  });
+  return st;
+}
+
+/* ---- 取引先の追加・編集（モーダル） ---- */
+let vendorEdit = null;    // 編集中のid（新規はnull）
+let vendorAfter = null;   // 追加後に担当へ割り当てる {caseId, dkey}
+function openVendor(id, dkey, after){
+  vendorEdit  = id || null;
+  vendorAfter = after || null;
+  const v = id ? vendorById(id) : null;
+  const dom = (v && v.domain) || dkey || 'other';
+  const f = (fid,label,value,ph,type) => `<label class="text-xs text-sub font-bold block">${label}
+    <input id="${fid}" ${type?('type="'+type+'"'):''} value="${esc(value||'')}" ${ph?('placeholder="'+esc(ph)+'"'):''} class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1"></label>`;
+  document.getElementById('vendorTitle').textContent = v ? '取引先を編集' : '取引先を追加';
+  document.getElementById('vendorBody').innerHTML = `
+    <div class="grid sm:grid-cols-2 gap-3">
+      ${f('v-company','会社名・事務所名', v?v.company:'', '例）株式会社フィルドストン')}
+      ${f('v-person','ご担当者名', v?v.person:'', '例）瀬尾さん')}
+    </div>
+    <label class="text-xs text-sub font-bold block mt-3">お願いする分野
+      <select id="v-domain" class="w-full border border-line rounded-lg px-2.5 py-2.5 text-[15px] font-medium mt-1">
+        ${DOMAINS.map(dm=>`<option value="${dm.key}" ${dom===dm.key?'selected':''}>${dm.label}（${dm.role}）</option>`).join('')}
+        <option value="other" ${dom==='other'?'selected':''}>その他（上記以外）</option>
+      </select></label>
+    <div class="grid sm:grid-cols-2 gap-3 mt-3">
+      ${f('v-phone','電話番号', v?v.phone:'', '例）087-899-7080', 'tel')}
+      ${f('v-email','メール', v?v.email:'', '例）info@example.co.jp', 'email')}
+    </div>
+    ${f('v-area','対応エリア', v?v.area:'', '例）高松市・三木町・木田郡')}
+    <label class="text-xs text-sub font-bold block mt-3">得意なこと・注意点（チームで見る覚え書き）
+      <textarea id="v-note" rows="2" class="w-full border border-line rounded-lg px-3 py-2.5 text-[15px] mt-1" placeholder="例）中古戸建の再販に強い／土日の内覧対応可／繁忙期は2月">${esc(v?v.note:'')}</textarea></label>
+    <div class="flex items-center gap-2 mt-5">
+      ${v?`<button type="button" onclick="delVendor('${v.id}')" class="text-xs font-bold text-red border border-red rounded-full px-4 py-2.5">名簿から削除</button>`:''}
+      <div class="ml-auto flex gap-2">
+        <button type="button" onclick="closeVendor()" class="text-sm font-bold px-5 py-3 rounded-full border border-line">キャンセル</button>
+        <button type="button" onclick="saveVendor()" class="bg-grn text-white text-sm font-bold px-7 py-3 rounded-full">保存</button>
+      </div>
+    </div>`;
+  document.getElementById('vendorModal').classList.remove('hidden');
+  const body = document.getElementById('vendorBody');
+  // ※ onkeydown への代入にすること（addEventListenerだと開き直すたびに重複して二重保存になる）
+  body.onkeydown = e=>{ if(e.key==='Enter' && e.target.tagName==='INPUT'){ e.preventDefault(); saveVendor(); } };
+  setTimeout(()=>{ const el=document.getElementById('v-company'); if(el) el.focus(); }, 30);
+}
+function closeVendor(){ document.getElementById('vendorModal').classList.add('hidden'); vendorEdit=null; vendorAfter=null; if(openId) renderDetail(); }
+function saveVendor(){
+  const v = sanitizeVendor({ id: vendorEdit || '', company: val('v-company'), person: val('v-person'),
+    domain: val('v-domain'), phone: val('v-phone'), email: val('v-email'), area: val('v-area'), note: val('v-note') });
+  if(!v){ toast('会社名またはご担当者名を入れてください'); const el=document.getElementById('v-company'); if(el) el.focus(); return; }
+  const i = VENDORS.findIndex(x=>x.id===v.id);
+  const renamed = i>=0 ? vendorName(VENDORS[i]) !== vendorName(v) : false;
+  if(i>=0) VENDORS[i] = v; else VENDORS.push(v);
+  saveVendors();
+  if(renamed){   // 共有ファイルに乗るのは「担当者名」なので、名簿を直したら案件側の表示名も揃える
+    let touched = 0;
+    DB.forEach(c=>{ const d=c.domains && c.domains[v.domain]; if(d && d.vendorId===v.id && d.assignee!==vendorName(v)){ d.assignee = vendorName(v); touched++; } });
+    if(touched) save();
+  }
+  const after = vendorAfter;
+  closeVendor();
+  if(after && after.caseId) askVendor(after.caseId, after.dkey, v.id, true);
+  else { applyRoleUI(); render(); if(openId) renderDetail(); }
+  toast('「'+vendorName(v)+'」を名簿に保存しました');
+}
+function delVendor(id){
+  const v = vendorById(id); if(!v) return;
+  if(!confirm('「'+vendorName(v)+'」を名簿から削除しますか？（案件に入力済みの担当名はそのまま残ります）')) return;
+  VENDORS = VENDORS.filter(x=>x.id!==id); saveVendors();
+  let touched = 0;
+  DB.forEach(c=>{ Object.values(c.domains||{}).forEach(d=>{ if(d && d.vendorId===id){ delete d.vendorId; touched++; } }); });   // 残った紐付けを掃除（担当者名は残す）
+  if(touched) save();
+  if((localStorage.getItem(MYVKEY)||'')===id) localStorage.removeItem(MYVKEY);
+  closeVendor(); applyRoleUI(); render(); if(openId) renderDetail(); toast('名簿から削除しました');
+}
+/* 担当だけ差し替える（共有範囲は変えない） */
+function domAssignVendor(id, dkey, vid){
+  if(!canEditDomain(dkey)) return;
+  const c = getC(id); if(!c) return;
+  const v = vendorById(vid); if(!v) return;
+  const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+  d.vendorId = v.id; d.assignee = vendorName(v); d.updatedAt = new Date().toISOString();
+  markDirty(); upsert(c); savedFlash(); if(openId) renderDetail(); render();
+}
+/* 名簿から「この分野にお願いする」＝共有範囲を広げる操作なので、必ず確認を出す */
+function askVendor(id, dkey, vid, silent){
+  const c = getC(id); if(!c) return;
+  const v = vendorById(vid); if(!v) return;
+  const dm = domainMeta(dkey); if(!dm) return;
+  const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+  if(d.need!=='required'){
+    if(!canEditCore()){ toast('共有範囲を広げるのは事務局の操作です'); return; }
+    if(!silent && !confirm('「'+vendorName(v)+'」に '+dm.label+' をお願いします。' + String.fromCharCode(10) + 'このお客様の情報が '+dm.label+' の担当へ共有される設定になります。' + String.fromCharCode(10) + 'よろしいですか？')) return;
+    d.need = 'required'; d.manualNeed = true; d.reason = '';
+    delete d.decline;
+    c.followHistory = c.followHistory || [];
+    c.followHistory.unshift({ date:todayISO(), type:'メモ', auto:true, memo:'【お声がけ】'+dm.label+'を「'+vendorName(v)+'」へお願いしました' });
+  } else if(!canEditDomain(dkey) && !canEditCore()){ return; }
+  d.vendorId = v.id; d.assignee = vendorName(v); d.updatedAt = new Date().toISOString();
+  markDirty(); upsert(c); savedFlash(); if(openId) renderDetail(); render();
+}
+/* 名簿の配布（チーム全員が同じ取引先を選べるようにする） */
+function exportVendors(){
+  download(JSON.stringify({ vendors:VENDORS }, null, 2), '取引先名簿_'+todayISO()+'.json');
+  toggleMenu(); toast('名簿を書き出しました');
+}
+function importVendors(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try {
+    const p = JSON.parse(r.result);
+    const arr = Array.isArray(p) ? p : (p && Array.isArray(p.vendors) ? p.vendors : null);
+    if(!arr) throw 0;
+    let add=0, upd=0;
+    arr.map(sanitizeVendor).filter(Boolean).forEach(v=>{
+      const i = VENDORS.findIndex(x=>x.id===v.id || (x.domain===v.domain && vendorName(x)===vendorName(v)));
+      if(i>=0){ v.id = VENDORS[i].id; VENDORS[i] = v; upd++; } else { VENDORS.push(v); add++; }
+    });
+    saveVendors(); applyRoleUI(); render(); if(openId) renderDetail();
+    toast('名簿を統合：新規'+add+'件・更新'+upd+'件');
+  } catch(err){ toast('読み込みに失敗しました（JSON形式をご確認ください）'); } };
+  r.readAsText(f); e.target.value=''; toggleMenu();
+}
+
+/* ============================================================
    役割（アクセス制御）— 社内は全権、提携先は自分の分野だけ編集可
    ============================================================ */
 const ROLE_DEFS = {
@@ -365,6 +581,15 @@ function applyRoleUI(){
     ? '<span class="sm:hidden">＋ 新規</span><span class="hidden sm:inline">＋ 新規案件</span>'
     : '<span class="sm:hidden">＋ 登録</span><span class="hidden sm:inline">＋ お客様を登録</span>';
   document.querySelectorAll('#menu [data-admin]').forEach(b=>{ b.style.display = isAdmin() ? '' : 'none'; });   // 社内専用の操作は提携先に見せない
+  document.querySelectorAll('#tabs [data-admin]').forEach(b=>{ b.style.display = isAdmin() ? '' : 'none'; });   // 受信リード＝HP診断の受け皿なので事務局だけ
+  // 取引先名簿で「自社」を選んでいれば、ヘッダーに自社名を出す（誰の画面かが一目で分かる）
+  const meLine = document.getElementById('meLine');
+  if(meLine){
+    const mv = myVendor();
+    meLine.innerHTML = mv
+      ? '<span class="font-black" style="color:#2E9E68">'+esc(vendorName(mv))+'</span> <span class="text-sub">'+esc(ROLE_DEFS[ROLE].label)+'</span>'
+      : '<span class="text-sub">お客様を登録して、必要な専門家へお繋ぎ</span>';
+  }
   const bar = document.getElementById('roleBar');
   if(bar){
     if(isAdmin() && !localStorage.getItem('akiya_crm_role')){
@@ -386,7 +611,7 @@ function applyRoleUI(){
       bar.style.background = d.color;
       bar.innerHTML = `<div class="max-w-[1400px] mx-auto px-4 py-2 flex items-center gap-2 text-sm font-bold flex-wrap">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        ${d.label}モード：<span class="font-normal">担当分野「${domainMeta(d.domain)?.label||''}」のみ編集可。他は閲覧のみ。</span>
+        ${myVendor()?esc(vendorName(myVendor()))+'／':''}${d.label}モード：<span class="font-normal">担当分野「${domainMeta(d.domain)?.label||''}」のみ編集可。他は閲覧のみ。</span>
         <span class="ml-auto flex items-center gap-1.5 flex-wrap">
           <button onclick="openIntake()" class="bg-white text-ink hover:opacity-90 rounded-full px-4 py-1.5">＋ お客様を登録</button>
           <button onclick="exportReturn()" class="bg-white/20 hover:bg-white/30 rounded-full px-4 py-1.5">自分の更新を書き出して返信</button>
@@ -444,20 +669,30 @@ function pickForRole(c, role, opts){
   // notes（社内メモ）・緊急度スコアは常に共有しない
 }
 /* 社内→提携先：ホワイトリスト書き出し＋提供記録（個情法29条対応の運用ログ） */
-function shareToPartner(role, cases, opts){
+/* その分野の案件を「担当の取引先」で絞る。vid='' なら絞らない、'__none__' は担当未定・名簿外の案件だけ */
+function casesForShare(base, role, vid){
+  const rel = base.filter(c => c && c.domains && c.domains[role] && c.domains[role].need==='required');
+  if(!vid) return rel;
+  if(vid==='__none__') return rel.filter(c => !caseVendorId(c, role));
+  return rel.filter(c => caseVendorId(c, role) === vid);
+}
+function shareToPartner(role, cases, opts, vid){
   opts = opts || {};
+  const ven   = (vid && vid!=='__none__') ? vendorById(vid) : null;
+  const vlabel= ven ? vendorName(ven) : '';
   const payload = { type:'akiya_crm_share', direction:'share', role, exportedAt: todayISO(),
     cases: cases.map(c => pickForRole(c, role, opts)) };
-  download(JSON.stringify(payload,null,2), '空き家CRM_'+(ROLE_DEFS[role]?.label||role)+'宛_'+todayISO()+'.json');
+  // ファイル名に会社名を入れる（同じ分野に2社いるとき、別の会社へ送ってしまう事故を防ぐ）
+  download(JSON.stringify(payload,null,2), '空き家CRM_'+(vlabel || ROLE_DEFS[role]?.label || role).replace(/[\\/:*?"<>|]/g,'_')+'宛_'+todayISO()+'.json');
   // 提供記録ログ
   let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
-  log.unshift({ date:todayISO(), role, roleLabel:ROLE_DEFS[role].label, count:cases.length,
+  log.unshift({ date:todayISO(), role, roleLabel:ROLE_DEFS[role].label+(vlabel?('／'+vlabel):''), count:cases.length,
     names:cases.map(c=>c.name||c.id), withContacts:!!opts.contacts, withTeamNote:!!opts.teamNote, withEstimate:!!opts.estimate });
   localStorage.setItem('akiya_crm_sharelog', JSON.stringify(log.slice(0,200)));
   // 各案件のフォロー履歴にも共有の事実を残す
   cases.forEach(sc=>{ const cc=getC(sc.id); if(cc){ cc.followHistory=cc.followHistory||[];
-    cc.followHistory.unshift({date:todayISO(), type:'共有', memo:'【共有】'+ROLE_DEFS[role].label+'向けに書き出し'+(opts.contacts?'（連絡先含む）':'')}); upsert(cc); } });
-  toast(ROLE_DEFS[role].label+'向けに'+cases.length+'件を書き出しました');
+    cc.followHistory.unshift({date:todayISO(), type:'共有', memo:'【共有】'+(vlabel||ROLE_DEFS[role].label)+'向けに書き出し'+(opts.contacts?'（連絡先含む）':'')}); upsert(cc); } });
+  toast((vlabel||ROLE_DEFS[role].label)+'向けに'+cases.length+'件を書き出しました');
 }
 function openShareModal(caseId){
   if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
@@ -479,16 +714,29 @@ function openShareModal(caseId){
     <p class="text-[11px] text-sub font-bold mb-1.5">分野ごとに書き出す</p>
     <div class="space-y-1.5">
       ${DOMAINS.map(dm=>{
-        const n = (caseId?[only]:DB).filter(c=>c && c.domains?.[dm.key]?.need==='required').length;
-        return `<button onclick="doShare('${dm.key}')" ${n?'':'disabled'} class="w-full flex items-center gap-2 border border-line rounded-xl px-3 py-2.5 text-left ${n?'hover:border-grn':'opacity-40'}">
-          <span class="w-3 h-3 rounded-full" style="background:${dm.color}"></span>
-          <span class="font-bold text-sm flex-1">${dm.label}<span class="text-sub font-normal">（${dm.role}）</span></span>
-          <span class="text-xs text-sub">${n}件</span>
-          <svg class="w-4 h-4 text-sub" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+        const src = (caseId?[only]:DB).filter(Boolean);
+        const vs  = vendorsFor(dm.key);
+        const btn = (label, sub, n, vid)=>`<button onclick="doShare('${dm.key}','${vid}')" ${n?'':'disabled'} class="w-full flex items-center gap-2 border border-line rounded-xl px-3 py-2.5 text-left ${n?'hover:border-grn':'opacity-40'}">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background:${dm.color}"></span>
+          <span class="font-bold text-sm flex-1 min-w-0">${label}
+            <span class="block text-[11px] font-normal text-sub truncate">${sub}</span>
+          </span>
+          <span class="text-xs text-sub shrink-0">${n}件</span>
+          <svg class="w-4 h-4 text-sub shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
         </button>`;
+        // 同じ分野に2社以上いるときは、会社ごとに分けて書き出す（相手の顧客が混ざらないように）
+        if(vs.length>=2){
+          const rows = vs.map(v=>btn(dm.label+'<span class="text-sub font-normal">／'+esc(vendorName(v))+'</span>', 'この会社が担当の案件だけ', casesForShare(src, dm.key, v.id).length, v.id));
+          const none = casesForShare(src, dm.key, '__none__').length;
+          if(none) rows.push(btn(dm.label+'<span class="text-sub font-normal">／担当未定</span>', '担当が未定・名簿外の案件', none, '__none__'));
+          return rows.join('');
+        }
+        return btn(dm.label+'<span class="text-sub font-normal">（'+dm.role+'）</span>',
+          vs.length?('送り先：'+esc(vendorName(vs[0]))):'取引先が名簿に未登録',
+          casesForShare(src, dm.key, '').length, '');
       }).join('')}
     </div>
-    <p class="text-[11px] text-sub mt-3">※ 社内メモ（notes）は常に含まれません。他分野の詳細は進捗ラベルのみに縮約されます。送付先を確認のうえ、メール等でお送りください。</p>`;
+    <p class="text-[11px] text-sub mt-3">※ 取引先名簿（電話・エリア・覚え書き）は共有ファイルに含まれません。相手にも同じ名簿を使ってほしいときは、メニューの「名簿を書き出す」で作ったファイルを一緒にお送りください。<br>※ 社内メモ（notes）は常に含まれません。他分野の詳細は進捗ラベルのみに縮約されます。送付先を確認のうえ、メール等でお送りください。</p>`;
   updateSharePreview();
   document.getElementById('shareModal').classList.remove('hidden');
 }
@@ -502,10 +750,10 @@ function updateSharePreview(){
 }
 let shareCaseId = null;
 function closeShare(){ document.getElementById('shareModal').classList.add('hidden'); }
-function doShare(role){
+function doShare(role, vid){
   if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
-  const base = shareCaseId ? [getC(shareCaseId)] : DB;
-  const cases = base.filter(c => c && c.domains?.[role]?.need==='required');
+  const base = (shareCaseId ? [getC(shareCaseId)] : DB).filter(Boolean);
+  const cases = casesForShare(base, role, vid||'');
   if(!cases.length){ toast('該当案件がありません'); return; }
   const opts = {
     contacts: !!document.getElementById('sh-contacts')?.checked,
@@ -522,7 +770,7 @@ function doShare(role){
       if(!finalCases.length){ toast('書き出す案件がありません（全件が同意未記録）'); return; }
     }
   }
-  shareToPartner(role, finalCases, opts);
+  shareToPartner(role, finalCases, opts, vid||'');
   closeShare();
 }
 /* 関わるチーム全員ぶんを一括書き出し（各社には各社の分だけ） */
@@ -534,7 +782,19 @@ function shareToAll(){
     teamNote: !!document.getElementById('sh-teamnote')?.checked,
     estimate: !!document.getElementById('sh-estimate')?.checked,
   };
-  let targets = DOMAINS.map(dm => ({ dm, cases: base.filter(c=>c.domains?.[dm.key]?.need==='required') })).filter(t=>t.cases.length);
+  // 同じ分野に2社以上の取引先がいるときは、会社ごとに別ファイルにする（A社の顧客がB社に渡らないように）
+  let targets = [];
+  DOMAINS.forEach(dm=>{
+    const vs = vendorsFor(dm.key);
+    if(vs.length>=2){
+      vs.forEach(v=>{ const cs = casesForShare(base, dm.key, v.id); if(cs.length) targets.push({ dm, vid:v.id, label:dm.label+'（'+vendorName(v)+'）', cases:cs }); });
+      const none = casesForShare(base, dm.key, '__none__');
+      if(none.length) targets.push({ dm, vid:'__none__', label:dm.label+'（担当未定・名簿外）', cases:none });
+    } else {
+      const cs = casesForShare(base, dm.key, '');
+      if(cs.length) targets.push({ dm, vid:'', label:dm.label+'（'+dm.role+'）', cases:cs });
+    }
+  });
   if(!targets.length){ toast('共有ONの分野がありません'); return; }
   // 第三者提供の同意ガード（全体で1回だけ確認）
   const involved = base.filter(c => DOMAINS.some(dm=>c.domains?.[dm.key]?.need==='required'));
@@ -543,19 +803,19 @@ function shareToAll(){
     const names = noConsent.map(c=>c.name||c.id).join('、');
     if(confirm('第三者提供の同意が未記録の案件があります：'+names+'\n\nOK＝未同意の案件を除外して書き出す\nキャンセル＝全件このまま書き出す（口頭同意済み等の場合）')){
       const ex = new Set(noConsent.map(c=>c.id));
-      targets = targets.map(t=>({ dm:t.dm, cases:t.cases.filter(c=>!ex.has(c.id)) })).filter(t=>t.cases.length);
+      targets = targets.map(t=>({ dm:t.dm, vid:t.vid, label:t.label, cases:t.cases.filter(c=>!ex.has(c.id)) })).filter(t=>t.cases.length);
       if(!targets.length){ toast('書き出す案件がありません（全件が同意未記録）'); return; }
     }
   }
-  const summary = targets.map(t=>'・'+t.dm.label+'（'+t.dm.role+'）'+t.cases.length+'件').join('\n');
+  const summary = targets.map(t=>'・'+t.label+' '+t.cases.length+'件').join(String.fromCharCode(10));
   if(!confirm(targets.length+'個のファイルを続けてダウンロードします。\n\n'+summary+'\n\nそれぞれの提携先へ、その1ファイルだけをお送りください。よろしいですか？')) return;
   closeShare();
-  const plan = targets.map(t=>({ key:t.dm.key, ids:t.cases.map(c=>c.id) }));   // 書き出し時点の最新データを使う
+  const plan = targets.map(t=>({ key:t.dm.key, vid:t.vid, ids:t.cases.map(c=>c.id) }));   // 書き出し時点の最新データを使う
   plan.forEach((t,i)=> setTimeout(()=>{
     const cases = t.ids.map(getC).filter(Boolean);
-    if(cases.length) shareToPartner(t.key, cases, opts);
+    if(cases.length) shareToPartner(t.key, cases, opts, t.vid);
   }, i*500));
-  setTimeout(()=> toast(targets.length+'分野ぶんのファイルを書き出しました（ダウンロードフォルダをご確認ください）'), targets.length*500+300);
+  setTimeout(()=> toast(targets.length+'件のファイルを書き出しました（ダウンロードフォルダをご確認ください）'), targets.length*500+300);
 }
 function openShareLog(){
   let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
@@ -703,7 +963,15 @@ function applyReturn(e){
         // 提携先が実際に編集した分野（updatedAt あり）だけ取り込む。未編集の返しで社内の判断（共有範囲）を巻き戻さない
         if(!remoteU){ conflict++; }
         else if(localU && remoteU < localU){ conflict++; }
-        else { c.domains[dk] = pc.domains[dk]; upd++; }
+        else {
+          c.domains[dk] = pc.domains[dk]; upd++;
+          // 名簿は端末ごとの保存なので、返信に入っていたidは相手の端末の採番。こちらの名簿の同じ会社へ読み替える（無ければ外す）
+          const rv = c.domains[dk].vendorId;
+          if(rv && !vendorById(rv)){
+            const byName = vendorsFor(dk).find(v=>vendorName(v)===c.domains[dk].assignee);
+            if(byName) c.domains[dk].vendorId = byName.id; else delete c.domains[dk].vendorId;
+          }
+        }
       }
       // 参加のご提案は2経路で届く：joinRequests（自分の分野の更新に同梱）と、紹介案件のフルコピー内の domains[*].joinRequest
       const incomingJoins = Object.assign({},
@@ -733,7 +1001,7 @@ function applyReturn(e){
   } catch(err){ toast('この返信ファイルを反映できませんでした'); } };
   r.readAsText(f); e.target.value=''; toggleMenu();
 }
-function savedFlash(){ toast('✓ 保存しました'); }
+function savedFlash(){ toast('保存しました'); }
 
 /* ============================================================
    診断データ → 分野の自動フラグ（“見える化して次の出番が分かる”の核）
@@ -977,11 +1245,13 @@ document.getElementById('tabs').addEventListener('click', e => { const b=e.targe
 function render(){
   const app = document.getElementById('app');
   let html = '';
+  if(VIEW==='inbox' && !isAdmin()){ VIEW='partner'; document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.view===VIEW)); }
   if(VIEW==='today') html = renderToday();
   else if(VIEW==='inbox') html = renderInbox();
   else if(VIEW==='kanban') html = renderKanban();
   else if(VIEW==='partner') html = renderPartner();
   else if(VIEW==='referral') html = renderReferral();
+  else if(VIEW==='vendors') html = renderVendors();
   else if(VIEW==='dashboard') html = renderDashboard();
   app.innerHTML = bannerHTML() + html;
 }
@@ -1039,7 +1309,7 @@ function completeAndNext(id, kind, ev){
   c.followHistory.unshift({date:todayISO(), type:'メモ', memo: who+memo});
   if(kind==='core'){ if(canEditCore()) c.nextActionDate = nd; }
   else if(domainMeta(kind) && canEditDomain(kind)){ const d=c.domains[kind]; if(d){ d.nextDate = nd; d.updatedAt = new Date().toISOString(); } }
-  markDirty(); upsert(c); render(); toast('✓ 消し込みました'+(nd?('（次回 '+nd+'）'):''));
+  markDirty(); upsert(c); render(); toast('消し込みました'+(nd?('（次回 '+nd+'）'):''));
 }
 
 /* ---- お客様の登録（統合フォーム openIntake() へ一本化） ---- */
@@ -1331,7 +1601,10 @@ function renderReferral(){
 
   return `
   <div class="rounded-2xl p-4 mb-4" style="background:#F2FAF5;border:2px solid #2E9E68">
-    <p class="font-black text-[15px]">お互いにお客様をご紹介し、チーム全体の売上にする</p>
+    <div class="flex items-center gap-2 flex-wrap">
+      <p class="font-black text-[15px]">お互いにお客様をご紹介し、チーム全体の売上にする</p>
+      <button onclick="setView('vendors')" class="ml-auto text-[11px] font-bold bg-white border border-grn text-grn rounded-full px-3 py-1.5 whitespace-nowrap">取引先名簿を開く</button>
+    </div>
     <p class="text-xs text-sub mt-1">ご紹介いただいたお客様が、どの分野の仕事になり、いくらの売上になったかを共有します。各分野の担当が自分の「受注状況・ご請求額」を入れると、ここに反映されます。</p>
   </div>
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 min-w-0">
@@ -1351,6 +1624,96 @@ function renderReferral(){
       <p class="text-[11px] text-sub mt-2">${isAdmin()?'金額は各分野の担当が入力した「ご請求額」の合計です。':'他の分野の金額は表示されません（あなたの分野のみ）。'}</p>
     </div>
   </div>`;
+}
+
+/* ---- 取引先（実際にお付き合いのある会社の名簿＝業種を超えて仕事を回す土台） ---- */
+function renderVendors(){
+  const mv    = myVendor();
+  const base  = scope();
+  const yen   = n => n ? ('¥'+Number(n).toLocaleString()+'万') : '—';
+  const cases = {}, referred = {};
+  DOMAINS.forEach(dm=>{
+    cases[dm.key]    = base.filter(c=>c.domains && c.domains[dm.key] && c.domains[dm.key].need==='required').length;
+    referred[dm.key] = base.filter(c=>c.referredBy===dm.key).length;
+  });
+
+  const card = v=>{
+    const st     = vendorStats(v);
+    const showAmt= isAdmin() || roleDomain()===v.domain;
+    const isMe   = !!(mv && mv.id===v.id);
+    const title  = v.company || v.person || '（名称未設定）';
+    return `<div class="bg-white rounded-xl border p-3 min-w-0" style="border-color:${isMe?'#2E9E68':'#E2E9E3'}${isMe?';box-shadow:0 0 0 2px #2E9E6833':''}">
+      <div class="flex items-start gap-2 min-w-0">
+        <div class="min-w-0 flex-1">
+          <p class="font-black text-sm break-words">${esc(title)}${isMe?'<span class="text-[10px] font-black text-white px-2 py-0.5 rounded-full ml-1" style="background:#2E9E68">自社</span>':''}</p>
+          ${(v.company&&v.person)?`<p class="text-[11px] text-sub">ご担当 ${esc(v.person)}</p>`:''}
+          ${v.area?`<p class="text-[11px] text-sub break-words">対応エリア：${esc(v.area)}</p>`:''}
+        </div>
+        <button onclick="openVendor('${v.id}')" class="shrink-0 text-[11px] font-bold border border-line rounded-full px-2.5 py-1 hover:bg-paper">編集</button>
+      </div>
+      ${v.note?`<p class="text-[11px] text-sub mt-1.5 leading-snug break-words">${esc(v.note)}</p>`:''}
+      <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+        ${v.phone?`<a href="tel:${esc(v.phone)}" class="text-[11px] font-bold border border-grn text-grn rounded-full px-2.5 py-1 hover:bg-grnL">電話 ${esc(v.phone)}</a>`:''}
+        ${v.email?`<a href="mailto:${esc(v.email)}" class="text-[11px] font-bold border border-line rounded-full px-2.5 py-1 hover:bg-paper">メール</a>`:''}
+        ${isMe?`<button onclick="setMyVendor('${v.id}')" class="text-[11px] font-bold text-sub rounded-full px-2 py-1 hover:bg-paper">自社の設定を外す</button>`
+              :`<button onclick="setMyVendor('${v.id}')" class="text-[11px] font-bold border border-line rounded-full px-2.5 py-1 hover:bg-paper">自社にする</button>`}
+      </div>
+      <div class="flex items-center gap-3 mt-2 pt-2 border-t border-line text-[11px] min-w-0">
+        <span class="whitespace-nowrap">お願いした案件 <b class="text-sm">${st.asked}</b></span>
+        <span class="whitespace-nowrap">受注 <b class="text-sm">${st.won}</b></span>
+        <span class="ml-auto font-black whitespace-nowrap" style="color:${showAmt?'#16794C':'#8A98A5'}">${showAmt?yen(st.amount):'非公開'}</span>
+      </div>
+      ${st.last?`<p class="text-[10px] text-sub mt-0.5">最後の動き ${esc(st.last)}</p>`:''}
+    </div>`;
+  };
+
+  const group = (label, role, color, vs, key)=>`<div class="bg-paper rounded-2xl border border-line p-3 min-w-0">
+    <div class="flex items-center gap-2 mb-1.5 flex-wrap min-w-0">
+      <span class="w-3 h-3 rounded-full shrink-0" style="background:${color}"></span>
+      <p class="font-black text-sm">${esc(label)}</p>
+      ${role?`<span class="text-[11px] text-sub">${esc(role)}</span>`:''}
+      ${key?`<button onclick="openVendor(null,'${key}')" class="ml-auto shrink-0 text-[11px] font-bold bg-white border border-line rounded-full px-2.5 py-1 hover:bg-grnL whitespace-nowrap">＋ 追加</button>`:''}
+    </div>
+    ${key?`<p class="text-[11px] text-sub mb-2">いまお願いしている案件 ${cases[key]}件／この分野からのご紹介 ${referred[key]}名</p>`:''}
+    ${vs.length ? `<div class="space-y-2">${vs.map(card).join('')}</div>`
+      : `<div class="bg-white border border-dashed border-line rounded-xl px-3 py-4 text-center">
+           <p class="text-[11px] text-sub">取引先が未登録です</p>
+           <button onclick="openVendor(null,'${key||'other'}')" class="mt-1.5 text-[11px] font-bold border border-grn text-grn rounded-full px-3 py-1">＋ この分野の取引先を登録</button>
+         </div>`}
+  </div>`;
+
+  const groups = DOMAINS.map(dm=>group(dm.label, dm.role, dm.color, vendorsFor(dm.key), dm.key)).join('');
+  const others = VENDORS.filter(v=>!DOMAINS.some(d=>d.key===v.domain));
+  const otherGroup = others.length ? group('その他の取引先', '', '#8A98A5', others, '') : '';
+
+  // 業種を超えたつながりの「空白」＝次に増やすべき取引先・まだ声をかけていない分野
+  const noVendor = DOMAINS.filter(dm=>!vendorsFor(dm.key).length);
+  const noAsk    = DOMAINS.filter(dm=>vendorsFor(dm.key).length && !cases[dm.key]);
+  const chips = DOMAINS.map(dm=>{
+    const n = vendorsFor(dm.key).length;
+    const on = n>0;
+    return `<button onclick="openVendor(null,'${dm.key}')" class="text-[11px] font-bold rounded-full px-2.5 py-1 border whitespace-nowrap"
+      style="${on?('border-color:'+dm.color+';color:'+dm.color+';background:#fff'):'border-color:#E5484D;color:#E5484D;background:#fff'}">
+      ${dm.label} ${on?(n+'社・依頼'+cases[dm.key]+'件'):'未登録'}</button>`;
+  }).join('');
+
+  return `
+  <div class="rounded-2xl p-4 mb-4" style="background:#F2FAF5;border:2px solid #2E9E68">
+    <div class="flex items-center gap-2 flex-wrap">
+      <p class="font-black text-[15px]">取引先名簿（お願いできる先）</p>
+      <button onclick="openVendor(null)" class="ml-auto bg-grn text-white text-xs font-bold rounded-full px-4 py-2 hover:opacity-90 whitespace-nowrap">＋ 取引先を追加</button>
+    </div>
+    <p class="text-xs text-sub mt-1">ここに登録した会社が、各案件の「担当」からそのまま選べます。1件のご相談が、登記・税務・解体・売却・外構・資金の仕事になって全員に回っていきます。</p>
+    <div class="flex flex-wrap gap-1.5 mt-3">${chips}</div>
+    ${noVendor.length?`<p class="text-[11px] mt-2 font-bold" style="color:#B42318">未登録の分野：${noVendor.map(d=>d.label).join('・')} ／ ここが埋まると、その仕事をチーム内で受けられます。</p>`:''}
+    ${noAsk.length?`<p class="text-[11px] text-sub mt-1">取引先はいるのに、まだお願いしていない分野：${noAsk.map(d=>d.label).join('・')}</p>`:''}
+  </div>
+  ${mv?'':`<div class="bg-white border border-line rounded-2xl p-3 mb-3 text-xs">
+    <p class="font-black text-[13px]">「自社」を選んでおくと便利です</p>
+    <p class="text-sub mt-0.5">名簿の中から自社を選ぶと、画面の上に自社名が出て、お客様の登録フォームのご担当欄に自動で名前が入ります。</p>
+  </div>`}
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">${groups}${otherGroup}</div>
+  <p class="text-[11px] text-sub mt-3">※ 名簿はこの端末に保存されます（費用ゼロのまま）。チーム全員で同じ名簿を使うときは、右上のメニューから「名簿を書き出す」→ 相手が「名簿を読み込む」。<br>※ 金額は各分野の担当が入力した「ご請求額」の合計です（他の分野の金額は表示されません）。</p>`;
 }
 
 function renderDashboard(){
@@ -1535,7 +1898,7 @@ function toggleTeam(id,dkey){
   } else {
     d.need='required'; d.reason='';
     if(d.joinRequest){ c.followHistory=c.followHistory||[]; c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true, memo:'【参加提案を採用】'+(ROLE_DEFS[d.joinRequest.by]?.label||'提携先')+'のご提案どおり '+meta.label+' に参加いただきます'}); delete d.joinRequest; }
-    if(!d.assignee && DOM_ASSIGNEE[dkey]) d.assignee = DOM_ASSIGNEE[dkey];
+    if(!d.assignee){ d.assignee = defaultAssignee(dkey); const vid0 = defaultVendorId(dkey); if(vid0) d.vendorId = vid0; }
   }
   d.manualNeed = true;
   d.updatedAt = new Date().toISOString();
@@ -1543,10 +1906,47 @@ function toggleTeam(id,dkey){
   c.followHistory.unshift({date:todayISO(), type:'メモ', auto:true, memo:'【共有範囲】'+meta.label+'を'+(d.need==='required'?'共有ONに変更':'共有OFFに変更（'+d.reason+'）')});
   markDirty(); upsert(c); savedFlash(); renderDetail();
 }
+/* 担当セレクト＝取引先名簿から選ぶ（名簿に無い人は「その他」で手入力できる） */
+function assigneeField(c, dm, d){
+  const vs  = vendorsFor(dm.key);
+  const cur = d.assignee || '';
+  const matched = domVendor(d) || vs.find(v=>vendorName(v)===cur) || null;   // 名簿に無いidは無視（担当者名で照合）
+  const other = !!cur && !matched;
+  return `<select onchange="assigneePick('${c.id}','${dm.key}',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">
+      <option value="" ${!cur?'selected':''}>未割当</option>
+      ${vs.map(v=>`<option value="v:${v.id}" ${matched&&matched.id===v.id?'selected':''}>${esc(vendorName(v))}</option>`).join('')}
+      <option value="__other__" ${other?'selected':''}>その他（手入力）</option>
+      <option value="__add__">＋ 取引先名簿に追加…</option>
+    </select>
+    <input id="asg-${dm.key}" value="${other?esc(cur):''}" onchange="assigneeText('${c.id}','${dm.key}',this.value)" placeholder="担当者名を入力" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1 ${other?'':'hidden'}">`;
+}
 function assigneePick(id,dkey,v){
   if(!canEditDomain(dkey)) return;
-  if(v==='__other__'){ const inp=document.getElementById('asg-'+dkey); if(inp){ inp.classList.remove('hidden'); inp.focus(); } return; }
+  if(v==='__other__'){
+    unlinkVendor(id, dkey);                                                                // 名簿の会社との紐付けを外す（実績が別会社に付かないように）
+    const inp=document.getElementById('asg-'+dkey); if(inp){ inp.classList.remove('hidden'); inp.focus(); }
+    return;
+  }
+  if(v==='__add__'){ openVendor(null, dkey, { caseId:id, dkey:dkey }); return; }          // 追加したらそのまま担当に入る
+  if(v.slice(0,2)==='v:'){ domAssignVendor(id, dkey, v.slice(2)); return; }
+  if(v===''){ unlinkVendor(id, dkey); }   // 未割当に戻すときは取引先の紐付けも外す
   domField(id,dkey,'assignee',v);
+}
+/* 名簿の会社との紐付けだけを外す（担当者名はそのまま） */
+function unlinkVendor(id, dkey){
+  if(!canEditDomain(dkey)) return;
+  const c = getC(id); if(!c) return;
+  const d = c.domains && c.domains[dkey];
+  if(d && d.vendorId){ delete d.vendorId; upsert(c); }
+}
+/* 名簿に無い担当者名を手入力したとき（＝名簿の会社の実績にしない） */
+function assigneeText(id, dkey, value){
+  if(!canEditDomain(dkey)) return;
+  const c = getC(id); if(!c) return;
+  const d = c.domains[dkey] = c.domains[dkey] || {need:'undetermined',stage:'未判定',assignee:'',next:'',reason:''};
+  delete d.vendorId;
+  d.assignee = value; d.updatedAt = new Date().toISOString();
+  markDirty(); upsert(c); savedFlash(); renderDetail();
 }
 function domField(id,dkey,prop,value){
   if(!canEditDomain(dkey)) return;
@@ -1730,6 +2130,39 @@ function renderDetail(){
       ${dm.label}${suffix}</button>${declineBtn}`;
   }).join('');
 
+
+  /* --- このお客様から生まれる他分野の仕事（名簿の取引先へ一手でお願いする） --- */
+  const synergyBlock = (()=>{
+    const cards = DOMAINS.map(dm=>{
+      const d   = c.domains && c.domains[dm.key];
+      const req = !!(d && d.need==='required');
+      if(d && d.need==='not_required') return '';                          // 不要と判断した分野は出さない
+      if(req && d.assignee) return '';                                     // 担当が決まっている分野は出さない
+      if(!canEditCore() && !(req && canEditDomain(dm.key))) return '';     // 提携先は自分の分野だけ
+      const vs = vendorsFor(dm.key);
+      if(!vs.length) return `<div class="border border-dashed rounded-xl p-2.5" style="border-color:${dm.color}66">
+        <p class="text-[11px] font-black" style="color:${dm.color}">${dm.label}</p>
+        <p class="text-[11px] text-sub mb-1.5">お願いできる取引先が未登録です</p>
+        <button onclick="openVendor(null,'${dm.key}')" class="text-[11px] font-bold border rounded-full px-2.5 py-1 hover:bg-paper" style="border-color:${dm.color};color:${dm.color}">＋ 取引先を登録</button>
+      </div>`;
+      return `<div class="border rounded-xl p-2.5" style="border-color:${dm.color}66">
+        <p class="text-[11px] font-black" style="color:${dm.color}">${dm.label}<span class="text-sub font-bold">${req?'（担当が未定）':'（まだお声がけしていません）'}</span></p>
+        <div class="flex flex-wrap gap-1 mt-1.5">
+          ${vs.slice(0,4).map(v=>`<button onclick="askVendor('${c.id}','${dm.key}','${v.id}')" class="text-[11px] font-bold border rounded-full px-2.5 py-1 hover:bg-paper" style="border-color:${dm.color};color:${dm.color}">${esc(vendorName(v))}へお願いする</button>`).join('')}
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+    if(!cards) return '';
+    return `<div class="bg-white rounded-2xl border border-line p-5">
+      <div class="flex items-center gap-2 flex-wrap mb-1">
+        <p class="font-black text-[15px]">このお客様から生まれる他分野のお仕事</p>
+        <button onclick="setView('vendors')" class="ml-auto text-[11px] font-bold border border-line rounded-full px-3 py-1 hover:bg-paper whitespace-nowrap">取引先名簿</button>
+      </div>
+      <p class="text-[11px] text-sub mb-3">名簿の取引先をその場で担当に入れられます。「お願いする」を押すと、その分野にこのお客様の情報が共有されます。</p>
+      <div class="grid sm:grid-cols-2 gap-2">${cards}</div>
+    </div>`;
+  })();
+
   /* --- 6分野（1行1分野・進捗バーつき・役割で編集可否） --- */
   const ro = (labelTxt, val) => `<div><p class="text-xs text-sub font-bold">${labelTxt}</p><p class="mt-1 text-[15px] px-2.5 py-2 rounded-lg bg-paper">${val?esc(val):'—'}</p></div>`;
   const domainRows = DOMAINS.map(dm=>{
@@ -1765,15 +2198,7 @@ function renderDetail(){
           <select onchange="domField('${c.id}','${dm.key}','stage',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1" ${d.need!=='required'?'disabled':''}>${stageSel}</select>
         </label>
         <label class="text-xs text-sub font-bold">担当
-          ${(()=>{ const def=DOM_ASSIGNEE[dm.key];
-            if(!def) return `<input value="${esc(d.assignee||'')}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者名" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">`;
-            const other=!!(d.assignee&&d.assignee!==def);
-            return `<select onchange="assigneePick('${c.id}','${dm.key}',this.value)" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] font-medium mt-1">
-              <option value="" ${!d.assignee?'selected':''}>未割当</option>
-              <option value="${esc(def)}" ${d.assignee===def?'selected':''}>${esc(def)}</option>
-              <option value="__other__" ${other?'selected':''}>その他</option>
-            </select>
-            <input id="asg-${dm.key}" value="${other?esc(d.assignee):''}" onchange="domField('${c.id}','${dm.key}','assignee',this.value)" placeholder="担当者名を入力" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1 ${other?'':'hidden'}">`; })()}
+          ${assigneeField(c, dm, d)}
         </label>
         <label class="text-xs text-sub font-bold">次アクション
           <input value="${esc(d.next||'')}" onchange="domField('${c.id}','${dm.key}','next',this.value)" placeholder="次にやること" class="w-full border border-line rounded-lg px-2.5 py-2 text-[15px] mt-1">
@@ -1901,6 +2326,8 @@ function renderDetail(){
           <p class="text-[11px] text-sub mb-3">色つき＝共有中（この専門家がお客様情報を見られます）／グレー＝共有しない。${canEditCore()?'ボタンで切り替えできます。':'変更は事務局が行います。'}<br>※ 共有をOFFにしても、すでにお渡し済みのファイルは相手の手元に残ります（今後の共有を止める設定です）。</p>
           <div class="flex flex-wrap gap-1.5">${teamChips}</div>
         </div>
+
+        ${synergyBlock}
 
         <!-- 6分野 -->
         <div>
@@ -2174,6 +2601,8 @@ function renderIntake(){
     <button type="button" onclick="submitIntake()" class="bg-grn text-white text-sm font-bold px-7 py-3 rounded-full">${partner?'登録してチームへ共有':'このお客様を登録'}</button>
   </div>`;
   intakeRecommend(true);
+  // 取引先名簿で自社を選んでいれば、担当欄にそのご担当者名を入れておく（毎回打たなくて済むように）
+  (()=>{ const asg=document.getElementById('n-assignee'); const mv=myVendor(); if(asg && !asg.value && mv) asg.value = mv.person || mv.company; })();
   ['n-owner','n-exit','n-urg','n-lo','n-garden'].forEach(id=>{ const e=document.getElementById(id); if(e) e.addEventListener('change', ()=>intakeRecommend(true)); });
   // Enterキーでも登録できるように（テキスト入力欄のみ。textareaは改行のまま）
   // ※ onkeydown への代入にすること。addEventListener だとモーダルを開き直すたびに重複登録され、1回のEnterで複数件登録される
@@ -2295,8 +2724,8 @@ function applyTeamChecks(c){
     if(on !== recommended || (!on && typedReason)) d.manualNeed = true;
     if(on){
       d.need = 'required'; d.reason = '';
-      if(dm.key===myKey) d.assignee = val('n-assignee') || d.assignee || DOM_ASSIGNEE[dm.key] || '';   // 登録者が入力した担当名を最優先
-      else if(!d.assignee && DOM_ASSIGNEE[dm.key]) d.assignee = DOM_ASSIGNEE[dm.key];
+      if(dm.key===myKey) d.assignee = val('n-assignee') || d.assignee || defaultAssignee(dm.key);   // 登録者が入力した担当名を最優先
+      else if(!d.assignee){ d.assignee = defaultAssignee(dm.key); const vid1 = defaultVendorId(dm.key); if(vid1) d.vendorId = vid1; }
     } else {
       // 「推奨されたのに外した」「自分で触って外した」＝明示的に不要。触っていない未推奨は自動判定（未判定）のまま残す
       if(recommended || intakeTouched.has(dm.key) || typedReason){
@@ -2529,6 +2958,7 @@ document.getElementById('roleSel').innerHTML = Object.keys(ROLE_DEFS).map(k=>`<o
   });
   document.addEventListener('click', e=>{ if(!e.target.closest('#searchBox') && !e.target.closest('#searchDrop')) document.getElementById('searchDrop').classList.add('hidden'); });
 })();
+loadVendors();
 load();
 applyRoleUI();
 setView(isAdmin() ? 'today' : 'partner');

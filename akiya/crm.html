@@ -688,6 +688,7 @@ function pickForRole(c, role, opts){
   // notes（社内メモ）・緊急度スコアは常に共有しない
 }
 /* 社内→提携先：ホワイトリスト書き出し＋提供記録（個情法29条対応の運用ログ） */
+let shareNameUsed = {};   // 1回の書き出しでファイル名が重複しないようにする
 /* その分野の案件を「担当の取引先」で絞る。vid='' なら絞らない、'__none__' は担当未定・名簿外の案件だけ */
 function casesForShare(base, role, vid){
   const rel = base.filter(c => c && c.domains && c.domains[role] && c.domains[role].need==='required');
@@ -702,8 +703,13 @@ function shareToPartner(role, cases, opts, vid){
   const vlabel= ven ? vendorName(ven) : (vid==='__none__' ? ((ROLE_DEFS[role]?.label||role)+'（担当未定）') : '');
   const payload = { type:'akiya_crm_share', direction:'share', role, exportedAt: todayISO(),
     cases: cases.map(c => pickForRole(c, role, opts)) };
-  // ファイル名に会社名を入れる（同じ分野に2社いるとき、別の会社へ送ってしまう事故を防ぐ）
-  download(JSON.stringify(payload,null,2), '空き家CRM_'+(vlabel || ROLE_DEFS[role]?.label || role).replace(/[\\/:*?"<>|]/g,'_')+'宛_'+todayISO()+'.json');
+  // ファイル名に「分野＋会社名」を入れる（同じ表示名の取引先が別分野にいても取り違えないように）
+  const dmLabel = domainMeta(role) ? domainMeta(role).label : (ROLE_DEFS[role]?.label || role);
+  const vShort  = ven ? vendorName(ven) : (vid==='__none__' ? '担当未定' : '');
+  let fname = ('空き家CRM_'+dmLabel+(vShort?('_'+vShort):'')+'宛_'+todayISO()).replace(/[\\/:*?"<>|]/g,'_');
+  shareNameUsed[fname] = (shareNameUsed[fname]||0) + 1;
+  if(shareNameUsed[fname] > 1) fname += '('+shareNameUsed[fname]+')';   // 同名が続けて出たら連番（旧データに同一分野・同名の取引先がある場合）
+  download(JSON.stringify(payload,null,2), fname+'.json');
   // 提供記録ログ
   let log = []; try { log = JSON.parse(localStorage.getItem('akiya_crm_sharelog'))||[]; } catch(e){}
   log.unshift({ date:todayISO(), role, roleLabel:(vid==='__none__') ? vlabel : (ROLE_DEFS[role].label+(vlabel?('／'+vlabel):'')), count:cases.length,
@@ -716,6 +722,7 @@ function shareToPartner(role, cases, opts, vid){
 }
 function openShareModal(caseId){
   if(!isAdmin()){ toast('提携先への書き出しは事務局が行います'); return; }
+  shareNameUsed = {};
   shareCaseId = caseId || null;
   const only = caseId ? getC(caseId) : null;
   document.getElementById('shareBody').innerHTML = `
@@ -744,15 +751,14 @@ function openShareModal(caseId){
           <span class="text-xs text-sub shrink-0">${n}件</span>
           <svg class="w-4 h-4 text-sub shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
         </button>`;
-        // 同じ分野に2社以上いるときは、会社ごとに分けて書き出す（相手の顧客が混ざらないように）
-        if(vs.length>=2){
+        // 名簿に取引先がいる分野は、必ず「会社ごと」＋「担当未定ぶん」に分ける（1社でも分ける：その1社の担当でない案件を同梱しないため）
+        if(vs.length>=1){
           const rows = vs.map(v=>btn(dm.label+'<span class="text-sub font-normal">／'+esc(vendorName(v))+'</span>', 'この会社が担当の案件だけ', casesForShare(src, dm.key, v.id).length, v.id));
           const none = casesForShare(src, dm.key, '__none__').length;
-          if(none) rows.push(btn(dm.label+'<span class="text-sub font-normal">／担当未定</span>', '担当が未定・名簿外の案件', none, '__none__'));
+          if(none) rows.push(btn(dm.label+'<span class="text-sub font-normal">／担当未定</span>', '担当が未定・名簿外の案件（送り先を決めてから）', none, '__none__'));
           return rows.join('');
         }
-        return btn(dm.label+'<span class="text-sub font-normal">（'+dm.role+'）</span>',
-          vs.length?('送り先：'+esc(vendorName(vs[0]))):'取引先が名簿に未登録',
+        return btn(dm.label+'<span class="text-sub font-normal">（'+dm.role+'）</span>', '取引先が名簿に未登録',
           casesForShare(src, dm.key, '').length, '');
       }).join('')}
     </div>
@@ -802,11 +808,11 @@ function shareToAll(){
     teamNote: !!document.getElementById('sh-teamnote')?.checked,
     estimate: !!document.getElementById('sh-estimate')?.checked,
   };
-  // 同じ分野に2社以上の取引先がいるときは、会社ごとに別ファイルにする（A社の顧客がB社に渡らないように）
+  // 名簿に取引先がいる分野は会社ごとに別ファイル＋担当未定ぶんは別（A社の顧客がB社に渡らないように。1社の分野も分ける）
   let targets = [];
   DOMAINS.forEach(dm=>{
     const vs = vendorsFor(dm.key);
-    if(vs.length>=2){
+    if(vs.length>=1){
       vs.forEach(v=>{ const cs = casesForShare(base, dm.key, v.id); if(cs.length) targets.push({ dm, vid:v.id, label:dm.label+'（'+vendorName(v)+'）', cases:cs }); });
       const none = casesForShare(base, dm.key, '__none__');
       if(none.length) targets.push({ dm, vid:'__none__', label:dm.label+'（担当未定・名簿外）', cases:none });

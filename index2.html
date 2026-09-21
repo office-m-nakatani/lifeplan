@@ -4332,7 +4332,7 @@
       const goodHTML = c.good && c.good.length ? `<div class="adv-sec-title good"><i class="fa-solid fa-circle-check"></i> 安心できるポイント</div><ul class="adv-points good">${c.good.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
       const conHTML  = c.concern && c.concern.length ? `<div class="adv-sec-title concern"><i class="fa-solid fa-triangle-exclamation"></i> 気をつけたいポイント</div><ul class="adv-points concern">${c.concern.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
       const cta = forPdf ? '' : `<div class="adv-detail-cta">より詳しい試算や、ご家庭に最適なプランづくりは無料相談で承ります。<br><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button></div>`;
-      return `<div class="adv-detail-head"><span class="adv-dh-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label}の診断</div>`
+      return `<div class="adv-detail-head"><span class="adv-dh-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.key==='overall' ? c.label : c.label+'の診断'}</div>`
         +`<div class="adv-summary-text">${c.sum}</div>`+goodHTML+conHTML+cta;
     }
     function renderAdviceDetail(c){

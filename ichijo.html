@@ -2697,10 +2697,11 @@
               <span class="sm-step">2</span>
               <span class="sm-body"><b><i class="fa-solid fa-flag-checkered"></i> 商談のあと</b><small>商談が終わったら。概要をまとめ → スライドを作り → お客様へ送ります</small></span>
             </button>
-            <button type="button" class="sm-item" id="btn-mentor" role="menuitem">
-              <span class="sm-step">3</span>
-              <span class="sm-body"><b><i class="fa-solid fa-user-tie"></i> AI師匠</b><small>自分の振り返りに。切り返し・数字・販路のことを社内用の師匠に相談します</small></span>
-            </button>
+            <!-- ★AI師匠の入口は外した（2026-09-24・ユーザー指示「ライフプランのAI師匠は削除」）。
+                 師匠は専用ページ（office-m リポジトリの hoken-mentor/）に一本化した。
+                 CSS（#mentor-modal …）・画面（#mentor-modal）・JS（mt*）は消していない。
+                 ここに戻せばそのまま動くが、戻すときは専用ページと中身がずれている前提で見ること。
+                 ※mtOpen() を呼ぶのはこのボタンだけだったので、外すと画面は一切開かない -->
           </div>
         </div>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。

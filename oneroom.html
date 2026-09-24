@@ -8266,9 +8266,7 @@
       // 物価上昇率は現状・将来とも2.0%（2026-08-21 ユーザー指示）。
       // 片方だけ1%にすると、プランの差が「前提の差」なのか「選択の差」なのか分からなくなる
       'end-age':'100', 'inflation':'2.0', 'rent':'10',
-      // ZEHの「光熱費の削減」は現状・将来とも0。将来は生活費で電気0・ガス0にしてあり、
-      // 自家消費と高断熱の効果はそこで反映済み。この欄にも入れると二重に引くことになる
-      // （現状の光熱費24万円/年を超える節約になってしまう）。現状は賃貸なのでそもそも対象外
+      // ZEHの「光熱費の削減」は現状・将来とも0（差をワンルームの有無だけにするため）
       'zeh-save':'0',
       // 預貯金1,200万円。頭金1,000万円を別途現金で出せる裏づけ（残り200万円が手元に残る）
       'cash-on':true, 'cash':'1200', 'pension-age':'65', 'pension-monthly':'22',
@@ -8288,21 +8286,14 @@
       'kg-wf-alive':'ご健在', 'kg-wf-age':'66', 'kg-wf-pref':'岡山県',
       'kg-wm-alive':'ご健在', 'kg-wm-age':'64', 'kg-wm-pref':'岡山県'
     };
-    /* 毎月の生活費。現状＝合計32.2万円、将来＝合計34.0万円
-       （太陽光＋蓄電池で電気を、オール電化でガスをまかなう前提。浮いたぶんを食費・日用品にまわした形。
-         水道は住宅性能でほとんど変わらないため、将来でも現状と同じ額に置く）
-       ※ 電気を0にしているので、ZEHの「光熱費の削減（年）」欄と二重に引かないよう注意すること */
-    const SAMPLE_LIVING_GENJO = {
+    /* 毎月の生活費（合計32.2万円）。現状・将来とも同じ金額（2026-09-25 ユーザー指示）。
+       以前は将来だけ食費増・電気ガス0などにしていたが、ワンルームと関係のない差が混ざるため廃止 */
+    const SAMPLE_LIVING = {
       'e-food':'7', 'e-eatout':'1.5', 'e-water':'0.5', 'e-elec':'1.2', 'e-gas':'0.8',
       'e-daily':'2', 'e-cloth':'2', 'e-misc':'0', 'e-life':'1.2', 'e-nonlife':'1',
       'e-car':'1.5', 'e-fuel':'1.5', 'e-shaken':'1', 'e-phone':'1.5', 'e-net':'0.5',
       'e-pocket':'5', 'e-hobby':'2.5', 'e-other':'1.5'
     };
-    const SAMPLE_LIVING_MIRAI = Object.assign({}, SAMPLE_LIVING_GENJO, {
-      'e-food':'10', 'e-eatout':'2', 'e-daily':'3',      // 食費まわりは増える
-      'e-elec':'0', 'e-gas':'0',                         // 太陽光12kW＋蓄電池7kWhでまかなう／オール電化でガスなし（水道は据え置き）
-      'e-life':'0.5'                                     // 生命保険は掛け捨て中心に見直し（損害保険は現状と同額）
-    });
     const SAMPLE_CHILDREN = [
       { name:'さくら', sei:'田中', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'boarding',
         gender:'girl', bEra:'seireki', bY:'2020', bM:'4', bD:'5' },
@@ -8316,39 +8307,25 @@
       { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
       { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
-    /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）をそのまま写している。
-       将来の打ち手＝ワンルームを1戸購入・太郎様は68歳まで就労・花子様は正社員へ・iDeCoを追加。
+    /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）の「現状」側を写している。
+       現状と将来の差は「ワンルームを買うか買わないか」だけ（2026-09-25 ユーザー指示）。
+       以前は将来だけ 太郎様68歳まで就労・花子様正社員・保障の積み増し・家5,000万頭金0・iDeCo追加・生活費の組み替え
+       を入れていたが、ワンルームの効果とそれ以外の打ち手の効果が混ざって見えるため、すべて現状にそろえた。
+       ここで将来だけの上書きを足さないこと（足すなら他の4サンプルと同じくワンルーム関連の項目だけ）。
        ※「サンプルを表示」の欄には説明文を置かない方針。資金ショートの年齢は前提を直すたびに動くので、
          ここの数字を画面のどこかに書き写さないこと（必ず陳腐化する） */
     function sampleState(kind){
       if(!INITIAL_STATE) return null;
       const mirai = (kind === 'mirai');
       const s = JSON.parse(JSON.stringify(INITIAL_STATE));
-      Object.assign(s.fields, SAMPLE_FIELDS, mirai ? SAMPLE_LIVING_MIRAI : SAMPLE_LIVING_GENJO);
-      /* サンプルの生活費は SAMPLE_LIVING_* で項目ごとに持っているため、入力方法を明示する。
+      Object.assign(s.fields, SAMPLE_FIELDS, SAMPLE_LIVING);
+      /* サンプルの生活費は SAMPLE_LIVING で項目ごとに持っているため、入力方法を明示する。
          既定が「まとめて入力」になったあとも、サンプルだけは従来どおりの内訳・金額で動く
          （明示しないと e-bulk の23万円が使われ、サンプルの生活費が別物になる） */
       s.expMode = 'detail';
-      if(mirai){
-        s.fields['h-retire'] = '68'; s.fields['w-retire'] = '65';   // 太郎様は68歳まで就労／花子様は65歳
-        s.fields['w-income'] = '380';                               // 花子様がパート→正社員へ（手が離れたら）
-        // 預貯金は現状・将来とも1,200万（SAMPLE_FIELDS で設定済み。ここで上書きしない）
-        // 物価上昇率は SAMPLE_FIELDS で現状・将来とも2.0%に統一済み（ここでは上書きしない）
-        s.fields['ins-total-h'] = '6000';                           // 住宅取得に合わせて死亡保障を積み増す
-        s.fields['ins-total-w'] = '5000';
-        s.fields['maint'] = '6';                                    // 修繕・管理（年額）。タイル外壁で再塗装が要らない前提
-        /* 同じ5,000万円の家を、現状＝頭金1,000万を入れて借入4,000万／将来＝頭金を入れず借入5,000万。
-           「頭金を入れるか、手元に残すか」だけが違う比較になるよう、家の総額をそろえる
-           （頭金の欄はローン総額から差し引かない＝購入時に別途用意する現金）。2026-08-21 ユーザー指示 */
-        s.fields['house-price'] = '5000';
-        s.fields['down'] = '0';
-      }
       s.children = JSON.parse(JSON.stringify(SAMPLE_CHILDREN));
       s.events = JSON.parse(JSON.stringify(SAMPLE_EVENTS));
-      s.investments = mirai
-        ? [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'2',   ret:'5', start:'35', end:'68', after:'use', on:true },
-           { type:'ideco', name:'iDeCo',       lump:'0',  monthly:'2.3', ret:'5', start:'36', end:'65', after:'use', on:true }]
-        : [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'2',   ret:'5', start:'35', end:'65', after:'use', on:true }];
+      s.investments = [{ type:'nisa', name:'つみたてNISA', lump:'80', monthly:'2', ret:'5', start:'35', end:'65', after:'use', on:true }];
       s.hokenMode = 'simple';
       s.household = 'couple';
       /* 住宅ローンは65歳で一括完済する前提（2026-08-21 ユーザー指示）。

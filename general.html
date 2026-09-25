@@ -684,7 +684,7 @@ table.cfh th, table.cfh td{ min-width:64px; }
       border-right:1.5px solid var(--line); box-shadow:2px 0 4px rgba(31,51,40,.06);
     }
 table.cfh tr:nth-child(even) .rowhead{ background:var(--bg-soft); }
-table.cfh thead th.rowhead{ background:var(--blue-pale2); }
+table.cfh thead th.rowhead{ background:var(--blue-pale2); z-index:7; }  /* ★左上の角は年の見出し(z6)より手前に。横に送ると年が角に重なって崩れていた（2026-09-25） */
 /* 年の見出し（西暦＋年齢）。5年ごとに区切り線でリズムを作る */
     table.cfh th.cfh-y{ background:var(--blue-pale2); color:var(--blue-deep); font-weight:700; }
 table.cfh th.cfh-y .cfh-age{ display:block; font-size:.68rem; font-weight:600; color:var(--ink-soft); }
@@ -8758,7 +8758,7 @@ input.nm-sei{ text-align:center; }
         good.push(`進路（公立・私立・下宿）まで織り込んだ具体的な必要額が把握できています。教育費は<b>いつ・いくら必要かが早くから分かる</b>数少ない支出で、そのぶん準備の計画が立てやすいのが特徴です。金額の大きさより「山の位置が見えているか」が大切です。`);
         if(totalMonthly>0) good.push(`月 ${fmt(totalMonthly)}万円 の積立があり、教育資金づくりの助けになります。進学の時期が決まっている資金は、<b>使う予定の数年前から値動きの小さい形に移していく</b>と、相場の下がった年に取り崩す事態を避けられます。`);
         good.push(`児童手当（2024年10月の拡充で所得制限なし・高校生年代まで）を使わずに積み立てると、お子さま1人あたり<b>約200万円</b>の準備になります。生活費に混ぜず、受け取り口座を分けておくだけで残りやすくなります。`);
-        con.push(`いちばんの山は19歳からの進学費用で、${esc(yg.name)}の進学まで <b>あと${yrsToUniv}年</b> です。ここは<b>住宅ローンの返済と重なりやすい</b>時期でもあり、2つが同時に来ると家計がいちばん締まります。`);
+        con.push(`いちばんの山は19歳からの進学費用で、${esc(yg.name)}の進学まで <b>あと${yrsToUniv}年</b> です。ここは<b>住宅ローンの返済と重なりやすい</b>時期でもあり、2つが同時に来ると家計の負担がいちばん大きくなります。`);
         con.push(`無理なく備えるには <b>月 約${fmt(monthly)}万円</b> の積立が目安です。準備の手段は新NISA・学資保険・預金などがあり、<b>値動きを受け入れて増やしたいか、金額を確定させたいか</b>で選び方が変わります（学資保険は所定の時期まで払い込む前提の商品で、早期に解約すると払込額を下回るのが一般的です。新NISAは非課税で運用できる一方、相場により元本を下回ることがあります）。`);
         if(p.depletion) con.push(`教育費のピークと資金不足の時期が重なり、家計が苦しくなる局面があります。教育費は<b>時期をずらせない支出</b>なので、動かせる方（住宅の購入時期・車の買い替え・積立額）で調整するのが現実的です。`);
         con.push(`奨学金・教育ローンという方法もありますが、<b>奨学金の多くはお子さま自身の借入</b>で、社会人になってからの返済が始まります。使う前提で足りない分を埋めるのか、あくまで最後の手段にするのか——ご家庭の考え方を早めに決めておくと、進路の話がしやすくなります。`);

@@ -1108,6 +1108,10 @@
     /* 音声メモは全画面。開いている間はチャットFABを隠し、背面のスクロールも止める
        （背面が動くと、ドックの中をスクロールしたいのにページが動いてしまう） */
     body.vc-dock-on .chat-fab{ display:none !important; }
+    /* ★キャッシュフロー表が画面に入っている間は、右下の「AIに相談」を消す（表の数字を隠していた・2026-09-25）。
+       結果画面の上の「AIに相談する」タブからはいつでも開ける */
+    .chat-fab{ transition:opacity .2s ease, transform .2s ease; }
+    body.cfh-inview .chat-fab{ opacity:0; transform:translateY(16px); pointer-events:none; }
     body.vc-dock-on{ overflow:hidden; }
 
     /* ★2026-08-18 全画面化（ユーザー指示「音声メモを押すと画面全体に表示」）。
@@ -13889,8 +13893,8 @@
     /* ライフイベント（現状・将来どちらにも入れる）。every:0＝1回のみ／until＝繰り返しをやめる年齢
        車は10年ごとに買い替え、運転をやめる想定の75歳で終わり（2026-08-20 ユーザー指示） */
     const SAMPLE_EVENTS = [
-      { age:'43', label:'太郎さんの車の買い替え', amount:'300', every:'10', until:'75' },
-      { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
+      { age:'43', label:'太郎様の車の買い替え', amount:'300', every:'10', until:'75' },
+      { age:'45', label:'花子様の車の買い替え', amount:'150', every:'10', until:'75' },
       { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
     /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）をそのまま写している。
@@ -15163,6 +15167,15 @@
     if($('chat-fab')){
       $('chat-fab').hidden = false;
       $('chat-fab').addEventListener('click', ()=> switchView('result','chat'));
+      // ★キャッシュフロー表が画面に入っている間は右下のボタンを消す（表の数字を隠していた・2026-09-25）
+      if('IntersectionObserver' in window){
+        const cfhSeen = new Set();
+        const cfhIO = new IntersectionObserver(es=>{
+          es.forEach(en=>{ if(en.isIntersecting) cfhSeen.add(en.target); else cfhSeen.delete(en.target); });
+          document.body.classList.toggle('cfh-inview', cfhSeen.size>0);
+        });
+        document.querySelectorAll('.cfh-scroll').forEach(el=>cfhIO.observe(el));
+      }
     }
 
     /* ============================================================

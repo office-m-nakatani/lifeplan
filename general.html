@@ -814,6 +814,10 @@ table.cf-summary th{ font-size:.72rem; line-height:1.25; }
 /* 音声メモは全画面。開いている間はチャットFABを隠し、背面のスクロールも止める
        （背面が動くと、ドックの中をスクロールしたいのにページが動いてしまう） */
     body.vc-dock-on .chat-fab{ display:none !important; }
+    /* ★キャッシュフロー表が画面に入っている間は、右下の「AIに相談」を消す（表の数字を隠していた・2026-09-25）。
+       結果画面の上の「AIに相談する」タブからはいつでも開ける */
+    .chat-fab{ transition:opacity .2s ease, transform .2s ease; }
+    body.cfh-inview .chat-fab{ opacity:0; transform:translateY(16px); pointer-events:none; }
 /* ---------- AI師匠（担当者専用・2026-09-06追加） ----------
        師匠に相談する画面。お客様には見せない（customer-mode／PDF／印刷で丸ごと消す）。
        入力欄は #input-panel の外に置く＝保存データ・共有リンクには一切乗らない。 */
@@ -8474,8 +8478,8 @@ input.nm-sei{ text-align:center; }
     /* ライフイベント（現状・将来どちらにも入れる）。every:0＝1回のみ／until＝繰り返しをやめる年齢
        車は10年ごとに買い替え、運転をやめる想定の75歳で終わり（2026-08-20 ユーザー指示） */
     const SAMPLE_EVENTS = [
-      { age:'43', label:'太郎さんの車の買い替え', amount:'300', every:'10', until:'75' },
-      { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
+      { age:'43', label:'太郎様の車の買い替え', amount:'300', every:'10', until:'75' },
+      { age:'45', label:'花子様の車の買い替え', amount:'150', every:'10', until:'75' },
       { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
     /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）をそのまま写している。
@@ -9749,6 +9753,15 @@ input.nm-sei{ text-align:center; }
     if($('chat-fab')){
       $('chat-fab').hidden = false;
       $('chat-fab').addEventListener('click', ()=> switchView('result','chat'));
+      // ★キャッシュフロー表が画面に入っている間は右下のボタンを消す（表の数字を隠していた・2026-09-25）
+      if('IntersectionObserver' in window){
+        const cfhSeen = new Set();
+        const cfhIO = new IntersectionObserver(es=>{
+          es.forEach(en=>{ if(en.isIntersecting) cfhSeen.add(en.target); else cfhSeen.delete(en.target); });
+          document.body.classList.toggle('cfh-inview', cfhSeen.size>0);
+        });
+        document.querySelectorAll('.cfh-scroll').forEach(el=>cfhIO.observe(el));
+      }
     }
 
     /* ============================================================

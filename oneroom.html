@@ -1624,6 +1624,60 @@ background:#fff; padding:0; overflow:visible;
     .ic-vs .icv-diff .icv-v{ font-size:1.35rem; color:var(--blue-deep); }
     .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
     .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
+    .ic-vs:empty{ display:none; }
+    /* 【湘建】団信の入力画面の「ワンルーム団信」一覧 */
+    #re-dansin-list{ display:grid; gap:8px; }
+    .rdb-item{ padding:9px 12px; border:1px solid var(--blue-pale2); border-radius:10px; background:#fff; }
+    .rdb-name{ font-size:.88rem; font-weight:800; color:var(--ink); }
+    .rdb-name span{ display:block; font-size:.76rem; font-weight:500; color:var(--ink-soft); margin-top:1px; }
+    .rdb-type{ font-size:.82rem; color:var(--blue-deep); margin-top:4px; line-height:1.55; }
+    .rdb-type i{ color:var(--yellow); margin-right:3px; }
+    .rr-sell-auto{ display:block; margin-top:3px; opacity:.75; }   /* 【湘建】売却価格の目安（薄く） */
+    .rr-sell-auto:empty{ display:none; }
+    /* 【湘建】差を主役にした結論（2026-09-25） */
+    .ic-total .ict-lead{ font-size:.9rem; font-weight:700; color:var(--ink); line-height:1.6; }
+    .ic-total .ict-num{ font-size:2.8rem; letter-spacing:.01em; margin:2px 0; }
+    .ic-total .ict-num small{ font-size:1.1rem; margin-left:3px; }
+    .ic-total .ict-num.neg{ color:#b34f4f; }
+    .ic-total .ict-vs{ display:inline-block; margin:8px 0 10px; padding:5px 12px; border-radius:12px; background:#fff;
+      border:1px solid var(--blue-pale2); font-size:.8rem; color:var(--ink-soft); line-height:1.6; }
+    .ic-total .ict-vs b{ color:var(--ink); }
+    .ic-total .ict-vs span{ white-space:nowrap; }
+    /* 【湘建】差の推移・売る時期の表・万一のとき の見出しと枠 */
+    .ic-sec{ margin:18px 0 6px; }
+    .ic-sec:empty{ display:none; }
+    .ic-sec-title{ font-size:.95rem; font-weight:800; color:var(--blue-deep); margin-bottom:4px; }
+    .ic-sec-title i{ color:var(--yellow); margin-right:6px; }
+    .ic-sec-lead{ font-size:.8rem; color:var(--ink-soft); line-height:1.65; }
+    .ic-sec-lead b{ color:var(--ink); }
+    #oneroom-compare-card .chart-box.ic-trend-box{ height:240px; }
+    .ic-ex-table{ width:100%; border-collapse:collapse; font-size:.84rem; margin-top:8px; }
+    .ic-ex-table th, .ic-ex-table td{ padding:9px 10px; border-bottom:1px solid var(--blue-pale2); text-align:right; white-space:nowrap; }
+    .ic-ex-table th:first-child, .ic-ex-table td:first-child{ text-align:left; white-space:normal; }
+    .ic-ex-table thead th{ background:var(--blue-pale); font-size:.76rem; color:var(--ink-soft); line-height:1.4; vertical-align:bottom; }
+    .ic-ex-table td.pos{ color:var(--blue-deep); font-weight:800; }
+    .ic-ex-table td.neg{ color:#b34f4f; font-weight:800; }
+    .ic-ex-table tr.cur td{ background:var(--warn-pale); }
+    .ic-ex-table .ic-ex-cur{ display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:.7rem;
+      background:var(--blue-deep); color:#fff; font-weight:700; vertical-align:1px; }
+    .ic-ex-note{ font-size:.74rem; color:var(--ink-soft); line-height:1.6; margin-top:6px; }
+    .ic-banichi:not(:empty){ margin:16px 0 6px; padding:13px 14px; border:2px solid var(--blue-pale2); border-radius:14px; background:#fff; }
+    .ic-banichi .icb-head > b{ display:block; font-size:.95rem; color:var(--blue-deep); }
+    .ic-banichi .icb-head span b{ color:var(--ink); }
+    .ic-banichi .icb-head b i{ color:var(--yellow); margin-right:6px; }
+    .ic-banichi .icb-head span{ display:block; font-size:.78rem; color:var(--ink-soft); line-height:1.6; margin-top:3px; }
+    .ic-banichi .icb-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+    .ic-banichi .icb-col{ border:1px solid var(--blue-pale2); border-radius:10px; padding:9px 11px; background:var(--blue-pale); }
+    .ic-banichi .icb-age{ font-size:.8rem; font-weight:800; color:var(--ink); margin-bottom:4px; }
+    .ic-banichi .icb-line{ display:flex; justify-content:space-between; gap:8px; font-size:.78rem; color:var(--ink-soft); line-height:1.8; }
+    .ic-banichi .icb-line b{ color:var(--blue-deep); white-space:nowrap; }
+    .ic-banichi .icb-note{ font-size:.72rem; color:var(--ink-soft); line-height:1.6; margin-top:8px; }
+    .ic-banichi .icb-note .rr-q-neg{ color:#b34f4f; }
+    @media(max-width:620px){
+      .ic-total .ict-num{ font-size:2.3rem; }
+      .ic-ex-table{ font-size:.78rem; }
+      .ic-ex-table th, .ic-ex-table td{ padding:8px 6px; }
+    }
     /* 【湘建】結果画面から出口（途中売却）を切り替える操作列 */
     .ic-exit:not(:empty){ margin:4px 0 14px; padding:11px 13px 12px; border:1.5px solid var(--yellow-soft);
       border-radius:12px; background:var(--warn-pale); }
@@ -1931,10 +1985,10 @@ background:#fff; padding:0; overflow:visible;
       <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
         <button type="button" data-nav-input="family"><i class="fa-solid fa-house-user"></i> ご家族・住まい</button>
-        <button type="button" data-nav-input="oneroom"><i class="fa-solid fa-building"></i> ワンルーム投資</button><!-- 【ワンルームフック】 -->
         <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
         <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
         <button type="button" data-nav-input="insurance"><i class="fa-solid fa-shield-halved"></i> 団信・生命保険</button>
+        <button type="button" data-nav-input="oneroom"><i class="fa-solid fa-building"></i> ワンルーム投資</button><!-- 【ワンルームフック】団信・生命保険の右（2026-09-25 ユーザー指示） -->
         <button type="button" data-nav-input="kaigo"><i class="fa-solid fa-hand-holding-medical"></i> 介護</button>
       </div>
     </div>
@@ -2224,10 +2278,10 @@ background:#fff; padding:0; overflow:visible;
               <div id="property-list"></div>
               <button class="btn-add" id="add-property" type="button"><i class="fa-solid fa-plus"></i> 物件を追加（2戸目・3戸目）</button>
 
-              <!-- 【湘建】雑費の経費計上（2026-08-21 ユーザー指示：チェックで反映・金額調整可・既定40万円） -->
+              <!-- 【湘建】雑費の経費計上（2026-08-21 ユーザー指示：チェックで反映・金額調整可・既定40万円／2026-09-25 既定でオン） -->
               <div class="field" id="re-misc-wrap" style="margin-top:14px;">
-                <label><input type="checkbox" id="re-misc-on"> <b>雑費を経費に計上する（確定申告）</b></label>
-                <div class="input-unit re-misc-amt hidden"><input type="number" id="re-misc" value="40" min="0" step="5"><span class="u">万円/年</span></div>
+                <label><input type="checkbox" id="re-misc-on" checked> <b>雑費を経費に計上する（確定申告）</b></label>
+                <div class="input-unit re-misc-amt"><input type="number" id="re-misc" value="40" min="0" step="5"><span class="u">万円/年</span></div>
                 <span class="hint">物件の見回りや管理会社との打合せの交通費、通信費、書籍・セミナー代などのうち<b>不動産投資に関わる部分</b>を経費として計上する想定です。損益通算（節税額）の計算にだけ反映します。すでに毎月の生活費に入っている支出の按分という前提のため、<b>支出としては二重に数えません</b>。実際に経費にできる金額は支出の実態と記録（領収書など）によります。<b>金額を大きくするほど試算は有利に出ます</b>ので、実態に合う金額でお使いください。</span>
               </div>
 
@@ -2563,6 +2617,14 @@ background:#fff; padding:0; overflow:visible;
                 </div>
               </div>
             </div>
+            <!-- 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住まい（賃貸／購入）に関係なく、
+                 ワンルームを購入するプランなら物件ごとに表示する。設定そのものはワンルーム投資の入力で行う（二重入力にしない） -->
+            <div class="loan-payoff-box hidden" id="re-dansin-box">
+              <div class="lp-title"><i class="fa-solid fa-building"></i> ワンルーム団信</div>
+              <div id="re-dansin-list"></div>
+              <span class="hint" style="display:block; margin-top:6px;">ワンルームのローンに付く団信です。名義人に万一のことがあると残りのローンが0になり、<b>ローンのない物件と家賃</b>がご家族に残ります。保障範囲・上乗せ金利は物件ごとに<b>「ワンルーム投資」</b>の入力で変えられます。「万が一（保障）」の死亡保障額にも<b>「ワンルーム団信」</b>として含めています。</span>
+              <button type="button" class="btn btn-ghost btn-sm" id="re-dansin-go" style="margin-top:8px;"><i class="fa-solid fa-building"></i> ワンルーム投資の入力を開く</button>
+            </div>
           </div>
         </div>
 
@@ -2856,14 +2918,27 @@ background:#fff; padding:0; overflow:visible;
           <!-- 【湘建】結果を見ながら出口（途中売却）を切り替えられる操作列。
                入力画面へ戻らずに「10年後に売る／持ち続ける／◯歳で売る」を試せる（2026-08-21 ユーザー指示） -->
           <div class="ic-exit no-print" id="ic-exit"></div>
-          <div class="res-grid" id="res-grid"></div>
+          <!-- 【湘建】差を主役にする（2026-09-25 ユーザー指示）。家計全体の合計（数千万円）を先に出すと
+               差が小さく見えるため、差を大きく出し、2つの合計は小さな1行に下げた -->
           <div class="ic-total" id="ic-total"></div>
+          <div class="res-grid" id="res-grid"></div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この数字を、わが家の条件で確かめる（無料相談）</button>
           </div>
           <!-- 【湘建】買った場合と買わなかった場合の総資産は、家計全体（数千万円）に対して差が小さく、
                2本の棒を並べても長さがほとんど同じで「差が分からない」（2026-08-21 ユーザー指摘）。
                総資産どうしは数字で並べ、グラフは「差が何でできているか」の内訳に差し替える -->
+          <!-- 【湘建】万一のとき残るもの（団信）。総資産の比較には入らない価値なので別の欄で見せる -->
+          <div class="ic-banichi" id="ic-banichi"></div>
+          <!-- 【湘建】年齢ごとの差の推移（棒）。「最初は少しマイナス → 持ち直す → 完済後に伸びる」の流れを見せる -->
+          <div class="ic-sec" id="ic-trend-wrap">
+            <div class="ic-sec-title"><i class="fa-solid fa-chart-column"></i> 年齢ごとの差（買った場合 − 買わなかった場合）</div>
+            <div class="ic-sec-lead" id="ic-trend-say"></div>
+            <div class="chart-box ic-trend-box"><canvas id="oneroomTrendChart"></canvas></div>
+          </div>
+          <!-- 【湘建】売る時期ごとの差。有利な1パターンだけを見せないよう、並べて出す -->
+          <div class="ic-sec" id="ic-exits"></div>
+          <div class="ic-sec-title" style="margin-top:18px;"><i class="fa-solid fa-layer-group"></i> 差の内訳</div>
           <div class="ic-vs" id="ic-vs"></div>
           <div class="ic-vs-note" id="ic-vs-note"></div>
           <div class="chart-box tall"><canvas id="oneroomChart"></canvas></div>
@@ -2913,7 +2988,7 @@ background:#fff; padding:0; overflow:visible;
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
         <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
-          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
+          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>と<b>ワンルーム団信</b>（ワンルームを購入するプランのみ）を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
             <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
@@ -3094,7 +3169,7 @@ background:#fff; padding:0; overflow:visible;
               <span class="bs-name">田中家</span>
               <span class="bs-sub">夫35歳・妻33歳／お子さま2人</span>
               <span class="bs-sub">年収 750万＋260万円</span>
-              <span class="bs-tag">1戸・65歳で売却</span>
+              <span class="bs-tag">1戸・持ち続ける</span>
             </button>
             <button class="btn-sample" data-sample="dual" type="button">
               <span class="bs-name">佐藤家</span>
@@ -4967,12 +5042,15 @@ background:#fff; padding:0; overflow:visible;
         rate:       o.rate!=null ? o.rate : 1.9,
         term:       o.term!=null ? o.term : 35,
         danshin:    o.danshin!==false,        // 【湘建】団信あり/なし（2戸目以降は未加入の融資もある）
-        danType:    o.danType || 'general',   // 【湘建】団信の保障範囲（一般／がん／全疾病／配偶者がん）
-        danAdd:     o.danAdd!=null ? o.danAdd : 0,        // 団信特約の上乗せ金利
-        mgmtType:   o.mgmtType || 'jitsugaku',            // 【湘建】管理方式（実額＝集金代行／家賃保証＝空室保証）
+        /* 【湘建】既定は「湘建で買った場合」の形（2026-09-25 ユーザー指示：他のワンルームとは違う湘建用の既定値に）。
+           全疾病保障つき団信・家賃保証（空室保証）・設備修繕/リフォーム補償つき。一般的な形（一般団信・集金代行・実費）には
+           各プルダウンで戻せる。保存データ・サンプルで明示した値はそちらが優先される */
+        danType:    o.danType || 'zen',       // 【湘建】団信の保障範囲（一般／がん／全疾病／配偶者がん）
+        danAdd:     o.danAdd!=null ? o.danAdd : 0,        // 団信特約の上乗せ金利（湘建の団信は付帯の前提で0。上乗せがある融資ならここに入れる）
+        mgmtType:   o.mgmtType || 'hosho',                // 【湘建】管理方式（実額＝集金代行／家賃保証＝空室保証）
         hoshoPct:   o.hoshoPct!=null ? o.hoshoPct : 90,   // 家賃保証で受け取る割合
         repair:     o.repair!=null ? o.repair : 3,        // 原状回復・設備交換の費用（年あたりの目安）
-        repairCov:  o.repairCov===true,                   // 【湘建】設備修繕・リフォーム補償を付ける
+        repairCov:  o.repairCov!==false,                  // 【湘建】設備修繕・リフォーム補償を付ける（既定で付ける）
         sellVia:    o.sellVia || 'chukai',                // 【湘建】売却方法（仲介／買取）
         kaitoriPct: o.kaitoriPct!=null ? o.kaitoriPct : 90,
         rent:       o.rent!=null ? o.rent : 8.5,
@@ -4984,7 +5062,7 @@ background:#fff; padding:0; overflow:visible;
         bldgPct:    o.bldgPct!=null ? o.bldgPct : 60,
         depYears:   o.depYears!=null ? o.depYears : 47,
         priceDown:  o.priceDown!=null ? o.priceDown : 1.0,
-        exit:       o.exit || 'sell',
+        exit:       o.exit || 'hold',   // 【湘建】既定は「売らずに持ち続ける」（2026-09-25 ユーザー指示：65歳売却だと売却後に差が増えず、65歳と100歳の差が同じに見えるため）
         sellAge:    o.sellAge!=null ? o.sellAge : 65,
         sellPrice:  o.sellPrice!=null ? o.sellPrice : 0,
         rateUpAfter:o.rateUpAfter!=null ? o.rateUpAfter : 0,
@@ -5016,22 +5094,18 @@ background:#fff; padding:0; overflow:visible;
           <div class="field"><label>購入時の諸費用</label><div class="input-unit"><input type="number" class="re-cost" value="${v.cost}" min="0" step="10"><span class="u">万円</span></div><span class="hint">登記・不動産取得税・融資事務手数料など（初年度の経費）</span></div>
           <div class="field"><label>借入金利</label><div class="input-unit"><input type="number" class="re-rate" value="${v.rate}" min="0" max="10" step="0.05"><span class="u">％</span></div></div>
           <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" class="re-term" value="${v.term}" min="1" max="50"><span class="u">年</span></div></div>
-          <div class="field"><label>団体信用生命保険（団信）</label>
-            <select class="re-danshin">
-              <option value="on"${v.danshin?' selected':''}>団信あり</option>
-              <option value="off"${v.danshin?'':' selected'}>団信なし</option>
-            </select>
-            <span class="hint">2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあります。「なし」にすると、万一の診断で残債が残る前提になります</span>
-          </div>
-          <!-- 【湘建】団信は死亡だけでなく、がん・全疾病・配偶者がんまで広げられる（湘建資料 p.10） -->
-          <div class="field rr-f-dantype"><label>団信の保障範囲</label>
+          <!-- 【湘建】団信は死亡だけでなく、がん・全疾病・配偶者がんまで広げられる（湘建資料 p.10）。
+               2026-09-25 ユーザー指示：保障範囲のプルダウンで「団信なし」も選べるようにし、
+               別にあった「団信あり／なし」の欄はこれに統合した（同じことを2か所で選ばせない） -->
+          <div class="field"><label>団信の保障範囲</label>
             <select class="re-dantype">
-              <option value="general"${sel(v.danType,'general')}>一般団信（死亡・高度障害）</option>
-              <option value="gan"${sel(v.danType,'gan')}>＋がん団信（がん診断で残債0）</option>
-              <option value="zen"${sel(v.danType,'zen')}>＋全疾病保障</option>
-              <option value="pair"${sel(v.danType,'pair')}>＋配偶者がん団信</option>
+              <option value="general"${v.danshin ? sel(v.danType,'general') : ''}>一般団信（死亡・高度障害）</option>
+              <option value="gan"${v.danshin ? sel(v.danType,'gan') : ''}>＋がん団信（がん診断で残債0）</option>
+              <option value="zen"${v.danshin ? sel(v.danType,'zen') : ''}>＋全疾病保障</option>
+              <option value="pair"${v.danshin ? sel(v.danType,'pair') : ''}>＋配偶者がん団信</option>
+              <option value="none"${v.danshin ? '' : ' selected'}>団信なし</option>
             </select>
-            <span class="hint">死亡以外（がん・就業不能など）でも残債が消えるタイプ。<b>取扱いの有無・条件は金融機関によります</b></span>
+            <span class="hint">がん・全疾病などは死亡以外でも残債が消えるタイプ（<b>取扱いの有無・条件は金融機関によります</b>）。2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあり、「団信なし」にすると万一のときも残債が残る前提になります</span>
           </div>
           <div class="field rr-f-dantype"><label>団信特約の上乗せ金利</label><div class="input-unit"><input type="number" class="re-danadd" value="${v.danAdd}" min="0" max="1" step="0.05"><span class="u">％</span></div><span class="hint">がん団信などを付けるときの上乗せ（実務の目安 ＋0.1〜0.3%）。返済額に反映します</span></div>
         </div>
@@ -5091,7 +5165,7 @@ background:#fff; padding:0; overflow:visible;
             <span class="hint">仲介は手数料（4%目安）がかかり、買取は手数料なしで時期を選べるかわりに価格が下がります</span>
           </div>
           <div class="field rr-f-kaitori"><label>買取価格の目安</label><div class="input-unit"><input type="number" class="re-kaitoripct" value="${v.kaitoriPct}" min="50" max="100" step="1"><span class="u">％</span></div><span class="hint">相場に対する割合（<b>実際の買取価格は査定によります</b>）</span></div>
-          <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
+          <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span><span class="hint rr-sell-auto"></span></div>
         </div>
         <div class="rr-exit-say"></div>
 
@@ -5117,7 +5191,7 @@ background:#fff; padding:0; overflow:visible;
       div.querySelector('.re-mgmttype')?.addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
       applyExitUI(div); applyPropOptionUI(div);
       div.querySelector('.re-owner').addEventListener('change', recompute);
-      div.querySelector('.re-danshin').addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
+      div.querySelector('.re-dantype').addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
       /* 【湘建】売却シミュレーションの「この想定を売却条件に反映」。
          結果ボックスは recompute のたびに描き直されるため、行への委譲で拾う */
       div.addEventListener('click', (e)=>{
@@ -5144,8 +5218,8 @@ background:#fff; padding:0; overflow:visible;
         cost:     rfv(r,'.re-cost',0),
         rate:     rfv(r,'.re-rate',0),
         term:     Math.max(Math.round(rfv(r,'.re-term',35)),1),
-        danshin:  r.querySelector('.re-danshin').value !== 'off',
-        danType:  r.querySelector('.re-dantype')?.value || 'general',   /* 【湘建】団信の保障範囲 */
+        danshin:  (r.querySelector('.re-dantype')?.value || 'general') !== 'none',   /* 【湘建】「団信なし」も保障範囲の欄で選ぶ */
+        danType:  ((v)=> v==='none' ? 'general' : v)(r.querySelector('.re-dantype')?.value || 'general'),
         danAdd:   rfv(r,'.re-danadd',0),
         mgmtType: r.querySelector('.re-mgmttype')?.value || 'jitsugaku',/* 【湘建】管理方式 */
         hoshoPct: Math.min(Math.max(rfv(r,'.re-hoshopct',90),0),100),
@@ -5202,7 +5276,7 @@ background:#fff; padding:0; overflow:visible;
       const hosho = div.querySelector('.re-mgmttype')?.value === 'hosho';
       div.querySelectorAll('.rr-f-jitsugaku').forEach(el=> el.classList.toggle('hidden', hosho));
       div.querySelectorAll('.rr-f-hosho').forEach(el=> el.classList.toggle('hidden', !hosho));
-      const dan = div.querySelector('.re-danshin')?.value !== 'off';
+      const dan = div.querySelector('.re-dantype')?.value !== 'none';
       div.querySelectorAll('.rr-f-dantype').forEach(el=> el.classList.toggle('hidden', !dan));
     }
     /* 出口の選び方に応じて、使う欄だけを出す（持ち続けるのに売却年齢を出さない） */
@@ -5448,6 +5522,34 @@ background:#fff; padding:0; overflow:visible;
 
 
     /* ---------- 物件カードの下に出る「その物件のいまの数字」 ---------- */
+    /* 【湘建】売却価格（手入力）の下に「一般的な売却価格の目安」を薄く出す（2026-09-25 ユーザー指示）。
+       金額は手入力が空欄のときに計算で使う値と同じ（propYear の評価額：下落率で減らし、土地の価値を下限にする）。
+       買取を選んでいるときは、買取価格の目安も添える */
+    function updateSellAutoHint(row, pr){
+      const el = row.querySelector('.rr-sell-auto'); if(!el) return;
+      const sa = sellAgeOf(pr);
+      if(sa == null || pr.price <= 0){ el.innerHTML = ''; return; }
+      const yo = Math.max(sa - pr.buyAge, 0);
+      const auto = Math.max(pr.price*Math.pow(1 - pr.priceDown/100, yo+1), pr.price*(1 - pr.bldgPct/100));
+      el.innerHTML = `一般的な売却価格の目安：約${fmt(auto)}万円（${sa}歳・購入から${yo}年後／物件価格 ${fmt(pr.price)}万円を年${pr.priceDown}%ずつ下げた想定）`
+        + (pr.sellVia==='kaitori' ? `。買取なら約${fmt(auto*pr.kaitoriPct/100)}万円（${pr.kaitoriPct}%）` : '');
+    }
+    /* 【湘建】「団信・生命保険」の入力画面に出す「ワンルーム団信」の一覧（2026-09-25 ユーザー指示） */
+    function renderReDansinBox(){
+      const box = $('re-dansin-box'), list = $('re-dansin-list'); if(!box || !list) return;
+      const props = readProperties();   // 「購入しない」なら空
+      box.classList.toggle('hidden', !props.length);
+      if(!props.length){ list.innerHTML = ''; return; }
+      /* 表だと375px幅で横スクロールになるため、物件ごとのカードで縦に並べる */
+      list.innerHTML = props.map(pr=> `<div class="rdb-item">`
+          + `<div class="rdb-name">${esc(pr.name)}<span>${esc(pr.owner==='w' ? wNameH() : hNameH())}名義・借入 ${fmt(Math.max(pr.price - pr.down, 0))}万円</span></div>`
+          + `<div class="rdb-type">${pr.danshin===false ? '<span class="diff-minus">団信なし</span>（万一のときもローンが残ります）'
+              : `<i class="fa-solid fa-shield-halved"></i> ${esc(DAN_TYPE_LABEL[pr.danType] || DAN_TYPE_LABEL.general)}${pr.danAdd>0 ? `（上乗せ金利 ＋${pr.danAdd}%）` : ''}`}</div>`
+        + `</div>`).join('');
+    }
+    if($('re-dansin-go')) $('re-dansin-go').addEventListener('click', ()=>{
+      const b = document.querySelector('#nav-input button[data-nav-input="oneroom"]'); if(b) b.click();
+    });
     function updatePropertyQuotes(){
       const infl = num('inflation',2)/100;
       /* 【湘建】雑費：チェックしたときだけ金額欄を出す（zeh-fields と同じ流儀） */
@@ -5458,9 +5560,11 @@ background:#fff; padding:0; overflow:visible;
         if(oh) oh.textContent = hNameH()+'の名義';
         if(ow) ow.textContent = wNameH()+'の名義';
       });
+      renderReDansinBox();   // 【湘建】団信・生命保険の入力画面の「ワンルーム団信」
       allPropertyRows().forEach((row,i)=>{
         const box = row.querySelector('.rr-quote'); if(!box) return;
         const pr = readPropertyRow(row, i);
+        updateSellAutoHint(row, pr);   // 【湘建】売却価格（手入力）の下の目安
         if(pr.price<=0){ box.innerHTML = '<i class="fa-solid fa-circle-info"></i> 物件価格を入力すると、この物件の利回り・毎月の収支・節税額の目安を表示します。'; const ss = row.querySelector('.rr-sellsim'); if(ss) ss.innerHTML = ''; return; }
         const st = { bal:0, remM:0, depAccum:0, done:false };
         const y  = propYear(pr, st, pr.buyAge, infl);                  // 1年目
@@ -5675,24 +5779,26 @@ background:#fff; padding:0; overflow:visible;
         + cell('家賃収入の累計', fmt(rentSum), '万円')
         + lastCell;
 
-      // 結論
-      $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}の総資産は 約 ${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}万円<span style="font-size:1rem;">（買わなかった場合との差）</span></div>`
+      // 結論。【湘建】差を主役にし、2つの合計は小さな1行に下げる（2026-09-25 ユーザー指示）
+      const noBuyTotal = Math.round(rowNo.netAll), buyTotal = Math.round(row.netAll);
+      $('ic-total').innerHTML = `<div class="ict-lead">ワンルームを買った場合、${horizonLbl}の総資産は</div>`
+        + `<div class="ict-num${diff<0?' neg':''}">${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}<small>万円</small></div>`
+        + `<div class="ict-lead">買わなかった場合より${diff>=0?'多くなる':'少なくなる'}試算です</div>`
+        + `<div class="ict-vs"><span>買わなかった場合 <b>${fmt(noBuyTotal)}万円</b></span> → <span>買った場合 <b>${fmt(buyTotal)}万円</b></span></div>`
         + `<div class="ict-sub">物件${props.length}件・総額 <b>${fmt(totalPrice)}万円</b>を、自己資金 <b>${fmt(totalOwn)}万円</b>（頭金＋諸費用）でスタートし、`
         + `毎月の持ち出しは <b>${cfM>=0?'＋':'−'}${fmt2(Math.abs(cfM))}万円</b>。`
         + (danshin>0 ? `借入 ${fmt(danshin)}万円には<b>団信</b>が付くため、万一のときは無借金の物件と家賃がご家族に残ります。` : '')
         + (noDanshinDebt>0 ? `<b>団信なしの借入 ${fmt(noDanshinDebt)}万円</b>は万一のときも残るため、生命保険での備えとセットでご検討ください${isSingle() ? '（単身の場合、この残債は相続財産の債務として相続人に関わります）' : '（「万が一（保障）」の画面に反映済み）'}。` : '')
         + (paidRow ? `ローン完済は<b>${paidRow.hAge}歳</b>、以後の家賃 年 約${fmt(paidRow.reRent - paidRow.reOpex)}万円がそのまま収入になります。` : '')
         + (($('re-misc-on') && $('re-misc-on').checked && num('re-misc',0)>0) ? `雑費 年${fmt(num('re-misc',0))}万円の経費計上（損益通算）を含めた試算です。` : '')
+        + (lastForcedSales.length ? `<br>${forcedSaleSay()}` : '')
         + `</div>`;
 
-      /* 【湘建】総資産は数字で対比し、グラフは「差の内訳」にする（棒2本では差が見えないため） */
-      const noBuyTotal = Math.round(rowNo.netAll), buyTotal = Math.round(row.netAll);
-      $('ic-vs').innerHTML =
-          `<div class="icv-cell"><span class="icv-l">買わなかった場合</span><span class="icv-v">${fmt(noBuyTotal)}<small> 万円</small></span></div>`
-        + `<div class="icv-arrow">→</div>`
-        + `<div class="icv-cell"><span class="icv-l">ワンルームを買った場合</span><span class="icv-v">${fmt(buyTotal)}<small> 万円</small></span></div>`
-        + `<div class="icv-arrow">＝</div>`
-        + `<div class="icv-cell icv-diff${diff<0?' neg':''}"><span class="icv-l">差</span><span class="icv-v">${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}<small> 万円</small></span></div>`;
+      /* 【湘建】総資産どうしの対比は結論（#ic-total）の1行に移した。グラフは「差の内訳」 */
+      $('ic-vs').innerHTML = '';
+      renderBanichi(rows, props);               // 【湘建】万一のとき残るもの（団信）
+      renderDiffTrend(rows, noProp, atAge);     // 【湘建】年齢ごとの差の推移
+      renderExitCompare(props, noProp);         // 【湘建】売る時期ごとの差
       /* 差の内訳。家賃・節税などの「増える側」と、返済・経費などの「出ていく側」を並べて、
          合計がちょうど差になるように組む。明示できない残り（現金が減るぶん積立・運用に
          回せなかった差など）は「運用に回るお金の差」として最後に置き、必ず合計を一致させる */
@@ -5717,7 +5823,8 @@ background:#fff; padding:0; overflow:visible;
       renderShokenDiff(props);   // 【湘建】一般的なワンルーム販売との違い
       /* グラフの各項目が何を指すか。金額はグラフ側に出ているので、ここでは中身の説明だけ */
       const WF_DESC = {
-        '家賃収入': `空室・滞納を差し引いた実効家賃の累計（${horizonLbl}まで）`,
+        '家賃収入': (props.every(p=> p.mgmtType==='hosho') ? `家賃保証で受け取る保証賃料の累計（${horizonLbl}まで）`   /* 【湘建】家賃保証なら空室の差し引きは無い */
+                   : `空室・滞納を差し引いた実効家賃（家賃保証の物件は保証賃料）の累計（${horizonLbl}まで）`),
         '税金の還付（節税）': '損益通算による所得税・住民税の戻りの累計',
         '黒字化後の納税': '不動産所得が黒字に転じたあとの税金（還付ではなく納税になります）',
         '売却の手取り': soldRow ? `${soldRow.hAge}歳で売却：売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税。手取りは現金として金融資産に加えています` : '売却価格 − 仲介手数料 − ローン残債 − 譲渡所得税',
@@ -5749,6 +5856,7 @@ background:#fff; padding:0; overflow:visible;
         + `・<b>設備修繕・リフォーム補償</b>：付けた場合は「原状回復・設備交換」が出ていかない前提で計算しています。<b>補償の範囲・上限額・免責はご確認ください</b>（対象外の工事は自己負担になります）。<br>`
         + `・<b>買取</b>：仲介手数料をかけずに時期を選んで売れるかわりに、価格は相場に対する掛け目で計算しています。<b>実際の買取価格は査定によります</b>。<br>`
         + `・<b>がん団信・全疾病保障・配偶者がん団信</b>：死亡以外でも残債が消えるタイプです。上乗せ金利を入力すると返済額に反映します。<b>取扱いの有無・保障の開始条件（上皮内がんの扱いなど）・告知は金融機関によって異なります</b>。本ツールの「万が一（保障）」の診断は<b>死亡</b>を前提にしているため、がん等での残債消滅は必要保障額には算入していません。<br>`
+        + `・<b>借入枠（与信）</b>：ワンルームのローンも借入として扱われるため、その後の住宅ローンや2戸目以降の審査で<b>借りられる額が減る</b>ことがあります。年収が高くない方ほど影響が大きいので、マイホームのご予定があれば購入の順番を先に確認してください。<br>`
         + `・<b>含めていないもの</b>：広告料（AD）、大規模修繕の一時金による修繕積立金の値上げ、賃貸管理会社の変更、税制改正の影響。<br>`
         + `・<b>比較の考え方</b>：同じ自己資金・毎月の持ち出しを新NISA等の運用に回した場合とも見比べてください（「貯蓄・資産運用」で積立額を増やすと、この画面の点線が動きます）。<br>`
         + `<span style="color:var(--ink-soft);">Office-M（税理士事務所を母体とするFP事務所）試算</span>`;
@@ -5786,7 +5894,7 @@ background:#fff; padding:0; overflow:visible;
         { item:'確定申告',
           gen:'初年度の申告や毎年の記帳を自分で',
           us:'<b>申告のフォロー体制</b>があります',
-          st: off('この試算には費用として入れていません（本ツールは税理士事務所が作成しています）') }
+          st: on('この試算の還付は、毎年の確定申告が前提です。初年度の進め方は湘建のフォローで確認できます') }
       ];
       box.innerHTML = `<div class="skd-head"><b><i class="fa-solid fa-shield-halved"></i> 湘建だからできること（一般的なワンルーム販売との違い）</b>`
           + `<span>ワンルーム投資の不安は「空室・設備修繕・家賃下落・確定申告」。湘建はこれを会社側で引き受けられる点が他社との違いです。</span></div>`
@@ -5796,6 +5904,123 @@ background:#fff; padding:0; overflow:visible;
         + `</tbody></table>`
         + `<div class="skd-note">※ 保証・補償の<b>割合、免責期間、見直しの周期、対象範囲、上限額、解約条件</b>は契約によって異なります。上の試算は画面で入力した条件によるもので、実際の条件は湘建の契約書・重要事項説明でご確認ください。`
         + `保証があっても<b>家賃そのものの見直し</b>や<b>物件価格の下落・金利上昇</b>の影響は残ります。</div>`;
+    }
+
+    /* 【湘建】万一のとき残るもの（2026-09-25 ユーザー指示）。
+       団信で消える残債・残る物件・家賃は、総資産の比較（生きている前提）には入らない価値なので、別の欄で見せる。
+       保険の要否の判断材料にはしない（必要保障額は「万が一（保障）」の画面が扱う）。
+       金額はその年の年末の残高・評価額で概算する */
+    function renderBanichi(rows, props){
+      const box = $('ic-banichi'); if(!box) return;
+      const idxs = props.map((p,i)=> i).filter(i=> props[i].danshin!==false);
+      if(!idxs.length){ box.innerHTML=''; return; }
+      const first = rows.findIndex(r=> idxs.some(i=> { const y=(r.reDetail||[])[i]; return y && y.own && !y.sold && y.bal>0.5; }));
+      if(first < 0){ box.innerHTML=''; return; }
+      const pick = [];
+      for(let k=first; k<rows.length && pick.length<4; k+=10){
+        const r = rows[k];
+        const ys = idxs.map(i=> (r.reDetail||[])[i]).filter(y=> y && y.own && !y.sold);
+        const debt = ys.reduce((a,y)=> a+y.bal, 0);
+        if(debt < 0.5) break;
+        pick.push({ age:r.hAge, debt,
+          value: ys.reduce((a,y)=> a+y.value, 0),
+          rentM: ys.reduce((a,y)=> a+(y.rent - y.mgmt - y.fee - y.ptax - y.repair), 0)/12 });
+      }
+      if(!pick.length){ box.innerHTML=''; return; }
+      const owners = [...new Set(idxs.map(i=> (props[i].owner==='w' && !isSingle()) ? 'w' : 'h'))];
+      const who = owners.length===1 ? `${esc(owners[0]==='w' ? wNameH() : hNameH())}（ローンの名義人）` : 'ローンの名義人';
+      const COVER = { general:'死亡・高度障害', gan:'死亡・高度障害のほか、がんと診断されたとき',
+                      zen:'死亡・高度障害のほか、がんなどの病気で所定の状態になったとき', pair:'死亡・高度障害のほか、配偶者ががんと診断されたとき' };
+      const cover = [...new Set(idxs.map(i=> props[i].danType || 'general'))].map(t=> COVER[t] || COVER.general).join('／');
+      const noDan = props.filter(p=> p.danshin===false).length;
+      box.innerHTML = `<div class="icb-head"><b><i class="fa-solid fa-umbrella"></i> 万一のとき、ご家族に残るもの（団信）</b>`
+          + `<span>${who}に万一のことがあった場合（${cover}）、団信でローンの残りが0になり、<b>ローンのない物件と毎月の家賃</b>が残ります。</span></div>`
+        + `<div class="icb-grid">` + pick.map(p=>
+            `<div class="icb-col"><div class="icb-age">${esc(hNameH())} ${p.age}歳のとき</div>`
+          + `<div class="icb-line"><span>0になるローン</span><b>${fmt(p.debt)}万円</b></div>`
+          + `<div class="icb-line"><span>残る物件の評価額</span><b>${fmt(p.value)}万円</b></div>`
+          + `<div class="icb-line"><span>家賃の手取り</span><b>月${fmt2(Math.max(p.rentM,0))}万円</b></div></div>`).join('')
+        + `</div><div class="icb-note">※ 家賃の手取りは、家賃（家賃保証の物件は保証賃料）から管理費・修繕積立金・固定資産税などを引いた額です。家賃の見直しや物価で変わります。`
+          + `保障の対象・条件は、金融機関の団信の約款によります。<b>上の「総資産」の比較には、この保障のぶんは含めていません。</b>`
+          + (noDan ? `<br><span class="rr-q-neg">団信なしの物件（${noDan}件）は、万一のときもローンが残るため、この欄に入れていません。</span>` : '')
+          + `</div>`;
+    }
+
+    /* 【湘建】年齢ごとの差（買った場合の総資産 − 買わなかった場合の総資産）を棒で並べる（2026-09-25）。
+       合計どうしの棒では差が見えないため、差そのものを年ごとに出す。比較期間の年は金色にする */
+    let oneroomTrendChart = null;
+    function renderDiffTrend(rows, noProp, atAge){
+      const cv = $('oneroomTrendChart'), say = $('ic-trend-say');
+      if(!cv || !noProp || typeof Chart==='undefined') return;
+      const pts = rows.map((r,i)=> ({ age:r.hAge, d: Math.round(r.netAll - ((noProp[i]||r).netAll)) }));
+      const minPt = pts.reduce((a,b)=> b.d < a.d ? b : a, pts[0]);
+      const turn  = pts.find((p,i)=> i>0 && p.d>=0 && pts[i-1].d<0 && pts.slice(i).every(q=> q.d>=0));
+      const last  = pts[pts.length-1];
+      const paid  = rows.find(r=> r.reRent>0 && r.reDebt<0.5 && r.reLoan<0.5);
+      const sell  = rows.find(r=> Math.abs(r.reSell)>0.5);
+      const si    = sell ? pts.findIndex(p=> p.age===sell.hAge) : -1;
+      const sellDrop = si>0 ? pts[si].d - pts[si-1].d : 0;   // 売却の年の差の変化（評価額 → 手取りへの置き換わり）
+      if(say) say.innerHTML = (minPt.d<0 ? `マイナスがいちばん大きいのは <b>${minPt.age}歳ごろ（−${fmt(Math.abs(minPt.d))}万円）</b>。頭金・諸費用と毎月の持ち出しのぶんです。` : '')
+        + (turn ? `<b>${turn.age}歳ごろ</b>から、買った場合のほうが多くなります。` : '')
+        + (sell ? (sellDrop < 0
+            ? `${sell.hAge}歳の売却の年は、仲介手数料・譲渡所得税などのぶん差が <b>${fmt(-sellDrop)}万円</b> 下がります（売るまでは物件を評価額で数えているため）。`
+            : `${sell.hAge}歳の売却で、売却の手取りが金融資産に加わります。`) : '')
+        + (paid ? `ローン完済（${paid.hAge}歳）のあとは家賃がそのまま収入になり、差が広がります。` : '')
+        + `${last.age}歳時点の差は <b class="${last.d<0?'rr-q-neg':''}">${last.d>=0?'＋':'−'}${fmt(Math.abs(last.d))}万円</b>。<span style="color:#7a5c0f; font-weight:700;">金色の棒</span>が、上で選んでいる比較期間の年です。`;
+      if(oneroomTrendChart) oneroomTrendChart.destroy();
+      oneroomTrendChart = new Chart(cv.getContext('2d'), {
+        type:'bar',
+        data:{ labels: pts.map(p=> p.age+'歳'), datasets:[{
+          label:'買った場合 − 買わなかった場合',
+          data: pts.map(p=> p.d),
+          backgroundColor: pts.map(p=> p.age===atAge ? '#cfa14e' : (p.d>=0 ? '#2e5288' : '#c9736f')),
+          borderRadius:3, barPercentage:0.9, categoryPercentage:0.9
+        }]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:false },
+            tooltip:{ callbacks:{ label:(c)=> ' 差 '+(c.parsed.y>=0?'＋':'−')+fmt(Math.abs(c.parsed.y))+'万円' } } },
+          scales:{
+            x:{ grid:{ display:false }, ticks:{ font:{ size:10 }, maxRotation:0, autoSkip:true, maxTicksLimit:10 } },
+            y:{ ticks:{ callback:(v)=> fmt(v)+'万' }, grid:{ color:(c)=> c.tick.value===0 ? '#9aa8b8' : '#eef3f8' } }
+          } }
+      });
+    }
+
+    /* 【湘建】売る時期ごとの差（2026-09-25）。いまの設定・すべて持ち続ける・すべて購入10年後に売却 を
+       退職時と想定年齢の2時点で並べる。有利な1パターンだけを見せないため（断定的な見せ方の回避も兼ねる）。
+       物件の入力は変えず、計算だけ出口を差し替えて回す（simulate の opts.props） */
+    function renderExitCompare(props, noProp){
+      const box = $('ic-exits'); if(!box) return;
+      if(!props.length || !noProp){ box.innerHTML=''; return; }
+      const hAge0 = num('h-age',35), retire = num('h-retire',65), endA = num('end-age',100);
+      const ages = [...new Set([retire, endA])].filter(a=> a>hAge0);
+      if(!ages.length){ box.innerHTML=''; return; }
+      const at = (rows, a)=> {
+        const i = rows.findIndex(r=> r.hAge===a); if(i<0) return null;
+        return Math.round(rows[i].netAll - ((noProp[i]||rows[i]).netAll));
+      };
+      const sig = (ps)=> ps.map(p=> p.exit==='sell' ? 'sell'+p.sellAge : p.exit).join('/');
+      const exitWord = (p)=> p.exit==='hold' ? '持ち続ける' : (p.exit==='sell10' ? '10年後に売却' : p.sellAge+'歳で売却');
+      const pats = [
+        { label:`いまの設定（${props.map(exitWord).join('・')}）`, ps: props, cur:true },
+        { label:'すべて持ち続ける', ps: props.map(p=> Object.assign({}, p, { exit:'hold' })) },
+        { label:'すべて購入10年後に売却', ps: props.map(p=> Object.assign({}, p, { exit:'sell10' })) },
+        { label:`すべて退職時（${retire}歳）に売却`, ps: props.map(p=> Object.assign({}, p, { exit:'sell', sellAge:retire })) }
+      ];
+      const seen = new Set(), list = [];
+      pats.forEach(pt=>{
+        const k = sig(pt.ps);
+        if(seen.has(k)) return; seen.add(k);
+        const rows = pt.cur ? lastRows : simulate(null, { props: pt.ps }).rows;
+        list.push({ label: pt.label, cur: !!pt.cur, vals: ages.map(a=> at(rows, a)) });
+      });
+      const td = (v)=> v==null ? '<td>—</td>' : `<td class="${v<0?'neg':'pos'}">${v>=0?'＋':'−'}${fmt(Math.abs(v))}万円</td>`;
+      box.innerHTML = `<div class="ic-sec-title"><i class="fa-solid fa-table"></i> 売る時期で、差はこう変わります</div>`
+        + `<div class="ic-sec-lead">買わなかった場合との総資産の差です。売る時期の選び方で大きく変わるため、1つだけでなく並べてご確認ください。</div>`
+        + `<table class="ic-ex-table"><thead><tr><th>売る時期</th>${ages.map(a=> `<th>${a===retire?'退職時':'想定年齢'}<br>${a}歳</th>`).join('')}</tr></thead><tbody>`
+        + list.map(x=> `<tr${x.cur?' class="cur"':''}><td>${esc(x.label)}${x.cur?'<span class="ic-ex-cur">表示中</span>':''}</td>${x.vals.map(td).join('')}</tr>`).join('')
+        + `</tbody></table>`
+        + `<div class="ic-ex-note">※ 売却価格は「物件価格の下落率」からの想定です（手入力した売却価格があればそれを使います）。持ち続ける場合は、その時点の物件の評価額 − ローン残高を資産に含めています。実際の売却価格は市場で決まり、この差をお約束するものではありません。</div>`;
     }
 
     /* 【湘建】差の内訳グラフ（2026-08-21 ユーザー指摘）
@@ -7020,7 +7245,54 @@ background:#fff; padding:0; overflow:visible;
     /* ============================================================
        メイン計算
        ============================================================ */
+    /* 【湘建】資金が足りなくなったら物件を売って充てる（2026-09-25 ユーザー指摘）。
+       金融資産（現金＋運用）がマイナスになる年に、まだ持っている物件があれば、その年に売却して
+       手取りを生活費に充てる前提で計算し直す。これをしないと「物件を持ち続けると総資産は増えるのに、
+       資金ショートは買わなかった場合より早い」という、実際にはありえない結果になる
+       （お金が尽きれば売ればよいので、物件の価値のぶん長く持ちこたえるのが実態）。
+       ・売るのは、その年の「評価額 − ローン残高」がいちばん大きい物件から1戸ずつ。まだ足りなければ次の物件
+       ・評価額がローン残高を下回る物件は売っても足しにならないので売らない
+       ・物件の入力（出口の設定）は書き換えない。結果の forcedSales に「何歳でどれを売ったか」を残し、画面で注記する
+       ・どの画面（判定・資産の比較・AI診断・チャット・ワンルームの比較）も simulate() の結果を使うので、全部そろう */
     function simulate(returnOverride, opts){
+      let res = simulateCore(returnOverride, opts);
+      if(opts && opts.noProperty) return res;
+      const base = res.props || [];
+      if(!base.length) return res;
+      let cur = base.map(x=> Object.assign({}, x));
+      const forced = [];
+      for(let k=0; k<base.length; k++){
+        const di = res.rows.findIndex(r=> r.net < 0);
+        if(di < 0) break;
+        const r = res.rows[di];
+        let best = -1, bestEq = 0;
+        cur.forEach((pr,i)=>{
+          const y = (r.reDetail||[])[i];
+          if(!y || !y.own || y.sold) return;
+          const sa = sellAgeOf(pr);
+          if(sa != null && sa <= r.hAge) return;
+          const eq = y.value - y.bal;
+          if(eq > bestEq){ bestEq = eq; best = i; }
+        });
+        if(best < 0) break;
+        cur[best] = Object.assign({}, cur[best], { exit:'sell', sellAge:r.hAge, sellPrice:0 });
+        forced.push({ idx:best, age:r.hAge, year:r.year, name:cur[best].name });
+        res = simulateCore(returnOverride, Object.assign({}, opts||{}, { props:cur }));
+      }
+      res.props = base;              // 画面の設定（出口）はそのまま返す
+      res.forcedSales = forced;
+      return res;
+    }
+    let lastForcedSales = [];
+    /* 資金が足りなくて売却した物件の注記（判定・ワンルームの比較で共通の文言） */
+    function forcedSaleSay(){
+      if(!lastForcedSales.length) return '';
+      const f = lastForcedSales;
+      const what = f.length===1 ? `<b>${esc(hNameH())}${f[0].age}歳</b>で${esc(f[0].name)}を`
+                                : `その年に ${f.map(x=> `${esc(x.name)}（${x.age}歳）`).join('・')} を`;
+      return `※ 金融資産が足りなくなるため、${what}<b>売却して生活費に充てる</b>前提で計算しています（物件の出口の設定はそのまま。売却しないと ${esc(hNameH())}${f[0].age}歳ごろに金融資産が底をつきます）。`;
+    }
+    function simulateCore(returnOverride, opts){
       const hAge0 = num('h-age',35), wAge0 = num('w-age',33);
       const endAge = Math.max(num('end-age',95), hAge0+1);
       const infl = num('inflation',1)/100;
@@ -7033,8 +7305,9 @@ background:#fff; padding:0; overflow:visible;
       const events = readEvents();
       const incomeEvents = readIncomeEvents();
 
-      // 【ワンルームフック】ワンルームマンション投資（複数戸）。opts.noProperty なら「買わなかった場合」
-      const props = (opts && opts.noProperty) ? [] : readProperties();
+      // 【ワンルームフック】ワンルームマンション投資（複数戸）。opts.noProperty なら「買わなかった場合」。
+      // 【湘建】opts.props を渡すと画面の物件の代わりにそれで計算する（売る時期のパターン比較用）
+      const props = (opts && opts.noProperty) ? [] : ((opts && opts.props) ? opts.props : readProperties());
       const pStates = props.map(()=> ({ bal:0, remM:0, depAccum:0, done:false }));
       // すでに所有している物件（購入年齢＜現在年齢）は、購入年から現在まで早送りして残高・償却累計をそろえる
       props.forEach((pr,i)=>{ for(let a=pr.buyAge; a<hAge0; a++) propYear(pr, pStates[i], a, infl); });
@@ -7320,6 +7593,7 @@ background:#fff; padding:0; overflow:visible;
         /* ---- 【ワンルームフック】ワンルームマンション投資 ---- */
         let reRent=0, reOpex=0, reLoan=0, reCf=0, reBuy=0, reValue=0, reDebt=0, reSell=0, reDep=0, reInterest=0;
         const reIncOwner = { h:0, w:0 }, reLandOwner = { h:0, w:0 };
+        const reDs = { h:0, w:0 };   // 【湘建】ワンルーム団信：名義人に万一のとき団信で消える残債（団信ありの物件だけ）
         const reDetail = [];
         for(let pi=0; pi<props.length; pi++){
           const pr = props[pi];
@@ -7327,6 +7601,7 @@ background:#fff; padding:0; overflow:visible;
           reDetail.push(y);
           if(!y.own) continue;
           const owner = (pr.owner==='w' && !single) ? 'w' : 'h';
+          if(pr.danshin!==false && !y.sold) reDs[owner] += y.bal;
           reIncOwner[owner]  += y.taxIncome;
           reLandOwner[owner] += y.landInterest;
           reRent += y.rent;
@@ -7479,7 +7754,7 @@ background:#fff; padding:0; overflow:visible;
           principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
           investGainCum,   // 運用益の生涯累計（その年までの合計）
           // 【ワンルームフック】ワンルーム投資
-          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest, reMisc,
+          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest, reMisc, reDs,
           reIncome: reIncOwner.h + reIncOwner.w,
           reDetail,
           netAll: net + reNet,              // 不動産を含む総資産
@@ -7614,7 +7889,8 @@ background:#fff; padding:0; overflow:visible;
       if(typeof updateInsTotal==='function') updateInsTotal();   // 死亡保障の合計＋現状比
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       updatePropertyQuotes();   // 【ワンルームフック】物件カードの下の数字
-      const { rows, hRetire, hAge0, endAge, props } = simulate();
+      const { rows, hRetire, hAge0, endAge, props, forcedSales } = simulate();
+      lastForcedSales = forcedSales || [];   // 【湘建】資金不足で売却した物件
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
       // 【ワンルームフック】ワンルームを買わなかった場合（比較用）。物件がなければ計算しない
       lastRows = rows; lastProps = props;
@@ -7688,6 +7964,8 @@ background:#fff; padding:0; overflow:visible;
         $('verdict-title').textContent = `${endAge}歳の老後まで資金ショートを起こさない、安定したシミュレーション結果です！`;
         $('verdict-text').innerHTML = `終了時（${endAge}歳）の総資産は <b>${fmt(endRow.net)}万円</b> の見込みです。`;
       }
+      // 【湘建】資金が足りなくなって物件を売却した前提なら、どの判定でも注記する
+      if(lastForcedSales.length) $('verdict-text').insertAdjacentHTML('beforeend', `<br><span style="font-size:.85em;">${forcedSaleSay()}</span>`);
 
       // 「金融資産の推移」の表示期間で、グラフとキャッシュフロー表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）。
       // 資産運用の詳細（asset-modal）は切替UIが見えない場所にあり、「満期残高」が打ち切り年の残高に化けるので必ず全期間で描く。
@@ -7842,7 +8120,7 @@ background:#fff; padding:0; overflow:visible;
             ins[mm.key] = (simple || cAge==null) ? 0 : insCoverAtAge(insList, mm.key, cAge);
           }
         });
-        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), netAll:Math.round(r.netAll!=null ? r.netAll : r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
+        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), netAll:Math.round(r.netAll!=null ? r.netAll : r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW}, rds:{ h:Math.round((r.reDs&&r.reDs.h)||0), w:Math.round((r.reDs&&r.reDs.w)||0) } };
       });
       // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
       // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
@@ -8119,8 +8397,10 @@ background:#fff; padding:0; overflow:visible;
         if(!row) return null;
         const ins = (row.ins && typeof row.ins[key]==='number') ? row.ins[key] : 0;
         let ds = (key==='h') ? (row.ds ? row.ds.h : 0) : (key==='w') ? (row.ds ? row.ds.w : 0) : 0;
-        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ
-        return { total: Math.round(ins+ds), ins: Math.round(ins), ds: Math.round(ds) };
+        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ（住宅ローンだけ）
+        // 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住宅ローンの団信とは別の行で見せる
+        const rds = (key==='h' || key==='w') ? ((row.rds && row.rds[key]) || 0) : 0;
+        return { total: Math.round(ins+ds+rds), ins: Math.round(ins), ds: Math.round(ds), rds: Math.round(rds) };
       };
       const members = insWhoMembers().filter(mm=>{
         if(mm.key==='w') return !isSingle();
@@ -8138,7 +8418,7 @@ background:#fff; padding:0; overflow:visible;
          （ユーザー指示 2026-08-20。必要保障額と突き合わせるのは「生命保険」の行） */
       const cell = (t)=> t==null ? '—'
         : `<span class="hkd-total">${fmt(t.total)}<span class="hkd-unit">万円</span></span>`
-          + (t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}</small>` : '');
+          + (t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}${t.rds>0 ? `<br>ワンルーム団信 ${fmt(t.rds)}` : ''}</small>` : '');
       // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);
@@ -8282,9 +8562,7 @@ background:#fff; padding:0; overflow:visible;
       // 物価上昇率は現状・将来とも2.0%（2026-08-21 ユーザー指示）。
       // 片方だけ1%にすると、プランの差が「前提の差」なのか「選択の差」なのか分からなくなる
       'end-age':'100', 'inflation':'2.0', 'rent':'10',
-      // ZEHの「光熱費の削減」は現状・将来とも0。将来は生活費で電気0・ガス0にしてあり、
-      // 自家消費と高断熱の効果はそこで反映済み。この欄にも入れると二重に引くことになる
-      // （現状の光熱費24万円/年を超える節約になってしまう）。現状は賃貸なのでそもそも対象外
+      // ZEHの「光熱費の削減」は現状・将来とも0（差をワンルームの有無だけにするため）
       'zeh-save':'0',
       // 預貯金1,200万円。頭金1,000万円を別途現金で出せる裏づけ（残り200万円が手元に残る）
       'cash-on':true, 'cash':'1200', 'pension-age':'65', 'pension-monthly':'22',
@@ -8304,21 +8582,14 @@ background:#fff; padding:0; overflow:visible;
       'kg-wf-alive':'ご健在', 'kg-wf-age':'66', 'kg-wf-pref':'岡山県',
       'kg-wm-alive':'ご健在', 'kg-wm-age':'64', 'kg-wm-pref':'岡山県'
     };
-    /* 毎月の生活費。現状＝合計32.2万円、将来＝合計34.0万円
-       （太陽光＋蓄電池で電気を、オール電化でガスをまかなう前提。浮いたぶんを食費・日用品にまわした形。
-         水道は住宅性能でほとんど変わらないため、将来でも現状と同じ額に置く）
-       ※ 電気を0にしているので、ZEHの「光熱費の削減（年）」欄と二重に引かないよう注意すること */
-    const SAMPLE_LIVING_GENJO = {
+    /* 毎月の生活費（合計32.2万円）。現状・将来とも同じ金額（2026-09-25 ユーザー指示）。
+       以前は将来だけ食費増・電気ガス0などにしていたが、ワンルームと関係のない差が混ざるため廃止 */
+    const SAMPLE_LIVING = {
       'e-food':'7', 'e-eatout':'1.5', 'e-water':'0.5', 'e-elec':'1.2', 'e-gas':'0.8',
       'e-daily':'2', 'e-cloth':'2', 'e-misc':'0', 'e-life':'1.2', 'e-nonlife':'1',
       'e-car':'1.5', 'e-fuel':'1.5', 'e-shaken':'1', 'e-phone':'1.5', 'e-net':'0.5',
       'e-pocket':'5', 'e-hobby':'2.5', 'e-other':'1.5'
     };
-    const SAMPLE_LIVING_MIRAI = Object.assign({}, SAMPLE_LIVING_GENJO, {
-      'e-food':'10', 'e-eatout':'2', 'e-daily':'3',      // 食費まわりは増える
-      'e-elec':'0', 'e-gas':'0',                         // 太陽光12kW＋蓄電池7kWhでまかなう／オール電化でガスなし（水道は据え置き）
-      'e-life':'0.5'                                     // 生命保険は掛け捨て中心に見直し（損害保険は現状と同額）
-    });
     const SAMPLE_CHILDREN = [
       { name:'さくら', sei:'田中', age:'6', k12:'public', highEd:'shiritsu_b', lodging:'boarding',
         gender:'girl', bEra:'seireki', bY:'2020', bM:'4', bD:'5' },
@@ -8332,39 +8603,25 @@ background:#fff; padding:0; overflow:visible;
       { age:'45', label:'花子さんの車の買い替え', amount:'150', every:'10', until:'75' },
       { age:'50', label:'海外旅行',               amount:'200', every:'0',  until:'0'  }
     ];
-    /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）をそのまま写している。
-       将来の打ち手＝ワンルームを1戸購入・太郎様は68歳まで就労・花子様は正社員へ・iDeCoを追加。
+    /* 金額は 2026-08-20 の録画（ユーザーが画面で入れた内容）の「現状」側を写している。
+       現状と将来の差は「ワンルームを買うか買わないか」だけ（2026-09-25 ユーザー指示）。
+       以前は将来だけ 太郎様68歳まで就労・花子様正社員・保障の積み増し・家5,000万頭金0・iDeCo追加・生活費の組み替え
+       を入れていたが、ワンルームの効果とそれ以外の打ち手の効果が混ざって見えるため、すべて現状にそろえた。
+       ここで将来だけの上書きを足さないこと（足すなら他の4サンプルと同じくワンルーム関連の項目だけ）。
        ※「サンプルを表示」の欄には説明文を置かない方針。資金ショートの年齢は前提を直すたびに動くので、
          ここの数字を画面のどこかに書き写さないこと（必ず陳腐化する） */
     function sampleState(kind){
       if(!INITIAL_STATE) return null;
       const mirai = (kind === 'mirai');
       const s = JSON.parse(JSON.stringify(INITIAL_STATE));
-      Object.assign(s.fields, SAMPLE_FIELDS, mirai ? SAMPLE_LIVING_MIRAI : SAMPLE_LIVING_GENJO);
-      /* サンプルの生活費は SAMPLE_LIVING_* で項目ごとに持っているため、入力方法を明示する。
+      Object.assign(s.fields, SAMPLE_FIELDS, SAMPLE_LIVING);
+      /* サンプルの生活費は SAMPLE_LIVING で項目ごとに持っているため、入力方法を明示する。
          既定が「まとめて入力」になったあとも、サンプルだけは従来どおりの内訳・金額で動く
          （明示しないと e-bulk の23万円が使われ、サンプルの生活費が別物になる） */
       s.expMode = 'detail';
-      if(mirai){
-        s.fields['h-retire'] = '68'; s.fields['w-retire'] = '65';   // 太郎様は68歳まで就労／花子様は65歳
-        s.fields['w-income'] = '380';                               // 花子様がパート→正社員へ（手が離れたら）
-        // 預貯金は現状・将来とも1,200万（SAMPLE_FIELDS で設定済み。ここで上書きしない）
-        // 物価上昇率は SAMPLE_FIELDS で現状・将来とも2.0%に統一済み（ここでは上書きしない）
-        s.fields['ins-total-h'] = '6000';                           // 住宅取得に合わせて死亡保障を積み増す
-        s.fields['ins-total-w'] = '5000';
-        s.fields['maint'] = '6';                                    // 修繕・管理（年額）。タイル外壁で再塗装が要らない前提
-        /* 同じ5,000万円の家を、現状＝頭金1,000万を入れて借入4,000万／将来＝頭金を入れず借入5,000万。
-           「頭金を入れるか、手元に残すか」だけが違う比較になるよう、家の総額をそろえる
-           （頭金の欄はローン総額から差し引かない＝購入時に別途用意する現金）。2026-08-21 ユーザー指示 */
-        s.fields['house-price'] = '5000';
-        s.fields['down'] = '0';
-      }
       s.children = JSON.parse(JSON.stringify(SAMPLE_CHILDREN));
       s.events = JSON.parse(JSON.stringify(SAMPLE_EVENTS));
-      s.investments = mirai
-        ? [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'2',   ret:'5', start:'35', end:'68', after:'use', on:true },
-           { type:'ideco', name:'iDeCo',       lump:'0',  monthly:'2.3', ret:'5', start:'36', end:'65', after:'use', on:true }]
-        : [{ type:'nisa',  name:'つみたてNISA', lump:'80', monthly:'2',   ret:'5', start:'35', end:'65', after:'use', on:true }];
+      s.investments = [{ type:'nisa', name:'つみたてNISA', lump:'80', monthly:'2', ret:'5', start:'35', end:'65', after:'use', on:true }];
       s.hokenMode = 'simple';
       s.household = 'couple';
       /* 住宅ローンは65歳で一括完済する前提（2026-08-21 ユーザー指示）。
@@ -8461,16 +8718,15 @@ background:#fff; padding:0; overflow:visible;
           children:[ { name:'颯', sei:'伊藤', age:'10', k12:'public', highEd:'shiritsu_b', lodging:'home', gender:'boy' } ],
           investments:[ { type:'nisa', name:'つみたてNISA', lump:'500', monthly:'10', ret:'5', start:'40', end:'65', after:'use', on:true } ],
           /* 1戸目＝持ち続けて完済後の家賃を私的年金に／2戸目＝2年後に団信なし融資で買い増し・10年後に売却。
-             高年収で税率が高いぶん損益通算の効果が出やすい層。雑費の経費計上（将来プランでON）の例も兼ねる */
-          /* 湘建の管理プランを入れた例：家賃保証＋設備修繕・リフォーム補償、1戸目はがん団信つき。
-             山本様（3戸）は集金代行（実額）のままにしてあり、2つを見比べられる */
+             高年収で税率が高いぶん損益通算の効果が出やすい層。雑費の経費計上は全サンプルとも既定でオン（年40万円） */
+          /* 湘建の管理プランを入れた例：家賃保証＋設備修繕・リフォーム補償、1戸目はがん団信つき（上乗せ0.2%の例）。
+             他のサンプルは湘建の既定値（全疾病保障つき団信・家賃保証・補償つき）のまま */
           properties:[
             { owner:'h', buyAge:40, exit:'hold', danshin:true, danType:'gan', danAdd:0.2,
               mgmtType:'hosho', hoshoPct:90, repairCov:true },
             { owner:'h', buyAge:42, exit:'sell10', danshin:false,
               mgmtType:'hosho', hoshoPct:90, repairCov:true }
-          ],
-          miraiFields:{ 're-misc-on':true, 're-misc':'40' }
+          ]
         }); }
       },
       solo40: {
@@ -8493,8 +8749,7 @@ background:#fff; padding:0; overflow:visible;
             { owner:'h', buyAge:40, exit:'hold',   danshin:true  },
             { owner:'h', buyAge:42, exit:'sell10', danshin:true  },
             { owner:'h', buyAge:44, exit:'hold',   danshin:false }
-          ],
-          miraiFields:{ 're-misc-on':true, 're-misc':'40' }
+          ]
         }); }
       }
     };
@@ -9525,7 +9780,7 @@ background:#fff; padding:0; overflow:visible;
        ============================================================ */
     const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance','kaigo'];   // 指紋・基準の単位（全acc）
     const INPUT_GROUPS = { family:['family','home'], oneroom:['oneroom'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };   // 【ワンルームフック】oneroom
-    const INPUT_GROUP_ORDER = ['family','oneroom','living','save','insurance','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）
+    const INPUT_GROUP_ORDER = ['family','living','save','insurance','oneroom','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）／【湘建】ワンルーム投資は団信・生命保険の右（2026-09-25）
     const INPUT_GROUP_LABEL = { family:'ご家族・住まい', oneroom:'ワンルーム投資', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／ワンルーム投資／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */
@@ -9601,7 +9856,7 @@ background:#fff; padding:0; overflow:visible;
       const run = ()=>{
         try{
           [typeof assetChart!=='undefined'&&assetChart, typeof flowChart!=='undefined'&&flowChart,
-           typeof compareChart2!=='undefined'&&compareChart2, typeof oneroomChart!=='undefined'&&oneroomChart,
+           typeof compareChart2!=='undefined'&&compareChart2, typeof oneroomChart!=='undefined'&&oneroomChart, typeof oneroomTrendChart!=='undefined'&&oneroomTrendChart,
            typeof investDiffChart!=='undefined'&&investDiffChart, typeof hokenDiffChart!=='undefined'&&hokenDiffChart
           ].forEach(c=>{ if(c && c.resize) c.resize(); });
         }catch(e){}
@@ -12800,7 +13055,7 @@ background:#fff; padding:0; overflow:visible;
       }
       document.body.classList.add('pdf-mode');
       document.querySelectorAll('details.ic-fold').forEach(d=>{ d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });   // 前提・出典はPDF/印刷では全文表示
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(oneroomTrendChart) oneroomTrendChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
@@ -12808,7 +13063,7 @@ background:#fff; padding:0; overflow:visible;
       const pt = $('pdf-tasks'); if(pt) pt.remove();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
       document.querySelectorAll('details.ic-fold').forEach(d=>{ d.open = d.dataset.wasOpen === '1'; });
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(oneroomTrendChart) oneroomTrendChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
 
     // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力

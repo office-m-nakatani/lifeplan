@@ -1960,10 +1960,10 @@
       <!-- 2026-08-17 ペア化：ボタン＝グループ（値はJSの INPUT_GROUPS のキー）。PC幅では2セクションを左右に並べて表示 -->
       <div class="tool-nav-scroll" id="nav-input">
         <button type="button" data-nav-input="family"><i class="fa-solid fa-house-user"></i> ご家族・住まい</button>
-        <button type="button" data-nav-input="oneroom"><i class="fa-solid fa-building"></i> ワンルーム投資</button><!-- 【ワンルームフック】 -->
         <button type="button" data-nav-input="living"><i class="fa-solid fa-cart-shopping"></i> 生活費・ライフイベント</button>
         <button type="button" data-nav-input="save"><i class="fa-solid fa-piggy-bank"></i> 貯蓄運用・年金</button>
         <button type="button" data-nav-input="insurance"><i class="fa-solid fa-shield-halved"></i> 団信・生命保険</button>
+        <button type="button" data-nav-input="oneroom"><i class="fa-solid fa-building"></i> ワンルーム投資</button><!-- 【ワンルームフック】団信・生命保険の右（2026-09-25 ユーザー指示） -->
         <button type="button" data-nav-input="kaigo"><i class="fa-solid fa-hand-holding-medical"></i> 介護</button>
       </div>
     </div>
@@ -9665,7 +9665,7 @@
        ============================================================ */
     const INPUT_SECTIONS = ['family','home','living','events','save','pension','dansin','insurance','kaigo'];   // 指紋・基準の単位（全acc）
     const INPUT_GROUPS = { family:['family','home'], oneroom:['oneroom'], living:['living','events'], save:['save','pension'], insurance:['dansin','insurance'], kaigo:['kaigo'] };   // 【ワンルームフック】oneroom
-    const INPUT_GROUP_ORDER = ['family','oneroom','living','save','insurance','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）
+    const INPUT_GROUP_ORDER = ['family','living','save','insurance','oneroom','kaigo'];   // 介護は団信・生命保険の右（2026-08-19新設）／【湘建】ワンルーム投資は団信・生命保険の右（2026-09-25）
     const INPUT_GROUP_LABEL = { family:'ご家族・住まい', oneroom:'ワンルーム投資', living:'生活費・ライフイベント', save:'貯蓄運用・年金', insurance:'団信・生命保険', kaigo:'介護' };
     /* 結果のテーマ分け（2026-08-17夜）：お金＝assets+compare（縦積み）／ワンルーム投資／万が一＝保障／
        AI診断＝全幅1パート／キャッシュフロー表／相談。左右2画面のペアは廃止（rpair-2は使わない） */

@@ -2521,10 +2521,19 @@
         <div class="acc" data-acc data-sec="dansin">
           <button class="acc-head" type="button">
             <span class="acc-ico ico-teal"><i class="fa-solid fa-shield-halved"></i></span>
-            <span class="acc-title"><b>団信（住宅ローンの保険）</b><span>ローンの名義・がん団信などの上乗せ</span></span>
+            <span class="acc-title"><b>団信（住宅ローン・ワンルーム）</b><span>ローンの名義・がん団信などの上乗せ・ワンルーム団信</span></span><!-- 【湘建】ワンルーム団信もこの欄に出す -->
             <i class="fa-solid fa-chevron-down acc-chev"></i>
           </button>
           <div class="acc-body">
+            <!-- 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住まい（賃貸／購入）に関係なく、
+                 ワンルームを購入するプランなら物件ごとに表示する。設定そのものはワンルーム投資の入力で行う（二重入力にしない）。
+                 PC幅では欄の最下部だと気づかれないため、団信の欄のいちばん上に置く -->
+            <div class="loan-payoff-box hidden" id="re-dansin-box" style="margin-top:0; margin-bottom:12px;">
+              <div class="lp-title"><i class="fa-solid fa-building"></i> ワンルーム団信</div>
+              <div id="re-dansin-list"></div>
+              <span class="hint" style="display:block; margin-top:6px;">ワンルームのローンに付く団信です。名義人に万一のことがあると残りのローンが0になり、<b>ローンのない物件と家賃</b>がご家族に残ります。保障範囲・上乗せ金利は物件ごとに<b>「ワンルーム投資」</b>の入力で変えられます。「万が一（保障）」の死亡保障額にも<b>「ワンルーム団信」</b>として含めています。</span>
+              <button type="button" class="btn btn-ghost btn-sm" id="re-dansin-go" style="margin-top:8px;"><i class="fa-solid fa-building"></i> ワンルーム投資の入力を開く</button>
+            </div>
             <!-- 賃貸のときは案内だけ表示（applyHousePanels が住まいのプランに連動して切替える） -->
             <div class="conditional" data-house-panel="rent">
               <div class="note">
@@ -2600,14 +2609,6 @@
                   <span class="hint">がん団信・三大疾病保障などを付ける場合の金利上乗せ（実務の目安 +0.1〜0.3%）。全期間の金利に加算し、「住まい」の毎月の返済額にも反映されます。</span>
                 </div>
               </div>
-            </div>
-            <!-- 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住まい（賃貸／購入）に関係なく、
-                 ワンルームを購入するプランなら物件ごとに表示する。設定そのものはワンルーム投資の入力で行う（二重入力にしない） -->
-            <div class="loan-payoff-box hidden" id="re-dansin-box">
-              <div class="lp-title"><i class="fa-solid fa-building"></i> ワンルーム団信</div>
-              <div id="re-dansin-list"></div>
-              <span class="hint" style="display:block; margin-top:6px;">ワンルームのローンに付く団信です。名義人に万一のことがあると残りのローンが0になり、<b>ローンのない物件と家賃</b>がご家族に残ります。保障範囲・上乗せ金利は物件ごとに<b>「ワンルーム投資」</b>の入力で変えられます。「万が一（保障）」の死亡保障額にも<b>「ワンルーム団信」</b>として含めています。</span>
-              <button type="button" class="btn btn-ghost btn-sm" id="re-dansin-go" style="margin-top:8px;"><i class="fa-solid fa-building"></i> ワンルーム投資の入力を開く</button>
             </div>
           </div>
         </div>

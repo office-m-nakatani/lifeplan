@@ -3138,7 +3138,7 @@
               <span class="bs-name">田中家</span>
               <span class="bs-sub">夫35歳・妻33歳／お子さま2人</span>
               <span class="bs-sub">年収 750万＋260万円</span>
-              <span class="bs-tag">1戸・65歳で売却</span>
+              <span class="bs-tag">1戸・持ち続ける</span>
             </button>
             <button class="btn-sample" data-sample="dual" type="button">
               <span class="bs-name">佐藤家</span>
@@ -5031,7 +5031,7 @@
         bldgPct:    o.bldgPct!=null ? o.bldgPct : 60,
         depYears:   o.depYears!=null ? o.depYears : 47,
         priceDown:  o.priceDown!=null ? o.priceDown : 1.0,
-        exit:       o.exit || 'sell',
+        exit:       o.exit || 'hold',   // 【湘建】既定は「売らずに持ち続ける」（2026-09-25 ユーザー指示：65歳売却だと売却後に差が増えず、65歳と100歳の差が同じに見えるため）
         sellAge:    o.sellAge!=null ? o.sellAge : 65,
         sellPrice:  o.sellPrice!=null ? o.sellPrice : 0,
         rateUpAfter:o.rateUpAfter!=null ? o.rateUpAfter : 0,
@@ -5955,7 +5955,8 @@
       const pats = [
         { label:`いまの設定（${props.map(exitWord).join('・')}）`, ps: props, cur:true },
         { label:'すべて持ち続ける', ps: props.map(p=> Object.assign({}, p, { exit:'hold' })) },
-        { label:'すべて購入10年後に売却', ps: props.map(p=> Object.assign({}, p, { exit:'sell10' })) }
+        { label:'すべて購入10年後に売却', ps: props.map(p=> Object.assign({}, p, { exit:'sell10' })) },
+        { label:`すべて退職時（${retire}歳）に売却`, ps: props.map(p=> Object.assign({}, p, { exit:'sell', sellAge:retire })) }
       ];
       const seen = new Set(), list = [];
       pats.forEach(pt=>{

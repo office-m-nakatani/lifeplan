@@ -1608,6 +1608,51 @@
     .ic-vs .icv-diff .icv-v{ font-size:1.35rem; color:var(--blue-deep); }
     .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
     .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
+    .ic-vs:empty{ display:none; }
+    /* 【湘建】差を主役にした結論（2026-09-25） */
+    .ic-total .ict-lead{ font-size:.9rem; font-weight:700; color:var(--ink); line-height:1.6; }
+    .ic-total .ict-num{ font-size:2.8rem; letter-spacing:.01em; margin:2px 0; }
+    .ic-total .ict-num small{ font-size:1.1rem; margin-left:3px; }
+    .ic-total .ict-num.neg{ color:#b34f4f; }
+    .ic-total .ict-vs{ display:inline-block; margin:8px 0 10px; padding:5px 12px; border-radius:12px; background:#fff;
+      border:1px solid var(--blue-pale2); font-size:.8rem; color:var(--ink-soft); line-height:1.6; }
+    .ic-total .ict-vs b{ color:var(--ink); }
+    .ic-total .ict-vs span{ white-space:nowrap; }
+    /* 【湘建】差の推移・売る時期の表・万一のとき の見出しと枠 */
+    .ic-sec{ margin:18px 0 6px; }
+    .ic-sec:empty{ display:none; }
+    .ic-sec-title{ font-size:.95rem; font-weight:800; color:var(--blue-deep); margin-bottom:4px; }
+    .ic-sec-title i{ color:var(--yellow); margin-right:6px; }
+    .ic-sec-lead{ font-size:.8rem; color:var(--ink-soft); line-height:1.65; }
+    .ic-sec-lead b{ color:var(--ink); }
+    #oneroom-compare-card .chart-box.ic-trend-box{ height:240px; }
+    .ic-ex-table{ width:100%; border-collapse:collapse; font-size:.84rem; margin-top:8px; }
+    .ic-ex-table th, .ic-ex-table td{ padding:9px 10px; border-bottom:1px solid var(--blue-pale2); text-align:right; white-space:nowrap; }
+    .ic-ex-table th:first-child, .ic-ex-table td:first-child{ text-align:left; white-space:normal; }
+    .ic-ex-table thead th{ background:var(--blue-pale); font-size:.76rem; color:var(--ink-soft); line-height:1.4; vertical-align:bottom; }
+    .ic-ex-table td.pos{ color:var(--blue-deep); font-weight:800; }
+    .ic-ex-table td.neg{ color:#b34f4f; font-weight:800; }
+    .ic-ex-table tr.cur td{ background:var(--warn-pale); }
+    .ic-ex-table .ic-ex-cur{ display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:.7rem;
+      background:var(--blue-deep); color:#fff; font-weight:700; vertical-align:1px; }
+    .ic-ex-note{ font-size:.74rem; color:var(--ink-soft); line-height:1.6; margin-top:6px; }
+    .ic-banichi:not(:empty){ margin:16px 0 6px; padding:13px 14px; border:2px solid var(--blue-pale2); border-radius:14px; background:#fff; }
+    .ic-banichi .icb-head > b{ display:block; font-size:.95rem; color:var(--blue-deep); }
+    .ic-banichi .icb-head span b{ color:var(--ink); }
+    .ic-banichi .icb-head b i{ color:var(--yellow); margin-right:6px; }
+    .ic-banichi .icb-head span{ display:block; font-size:.78rem; color:var(--ink-soft); line-height:1.6; margin-top:3px; }
+    .ic-banichi .icb-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+    .ic-banichi .icb-col{ border:1px solid var(--blue-pale2); border-radius:10px; padding:9px 11px; background:var(--blue-pale); }
+    .ic-banichi .icb-age{ font-size:.8rem; font-weight:800; color:var(--ink); margin-bottom:4px; }
+    .ic-banichi .icb-line{ display:flex; justify-content:space-between; gap:8px; font-size:.78rem; color:var(--ink-soft); line-height:1.8; }
+    .ic-banichi .icb-line b{ color:var(--blue-deep); white-space:nowrap; }
+    .ic-banichi .icb-note{ font-size:.72rem; color:var(--ink-soft); line-height:1.6; margin-top:8px; }
+    .ic-banichi .icb-note .rr-q-neg{ color:#b34f4f; }
+    @media(max-width:620px){
+      .ic-total .ict-num{ font-size:2.3rem; }
+      .ic-ex-table{ font-size:.78rem; }
+      .ic-ex-table th, .ic-ex-table td{ padding:8px 6px; }
+    }
     /* 【湘建】結果画面から出口（途中売却）を切り替える操作列 */
     .ic-exit:not(:empty){ margin:4px 0 14px; padding:11px 13px 12px; border:1.5px solid var(--yellow-soft);
       border-radius:12px; background:var(--warn-pale); }
@@ -2840,14 +2885,27 @@
           <!-- 【湘建】結果を見ながら出口（途中売却）を切り替えられる操作列。
                入力画面へ戻らずに「10年後に売る／持ち続ける／◯歳で売る」を試せる（2026-08-21 ユーザー指示） -->
           <div class="ic-exit no-print" id="ic-exit"></div>
-          <div class="res-grid" id="res-grid"></div>
+          <!-- 【湘建】差を主役にする（2026-09-25 ユーザー指示）。家計全体の合計（数千万円）を先に出すと
+               差が小さく見えるため、差を大きく出し、2つの合計は小さな1行に下げた -->
           <div class="ic-total" id="ic-total"></div>
+          <div class="res-grid" id="res-grid"></div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この数字を、わが家の条件で確かめる（無料相談）</button>
           </div>
           <!-- 【湘建】買った場合と買わなかった場合の総資産は、家計全体（数千万円）に対して差が小さく、
                2本の棒を並べても長さがほとんど同じで「差が分からない」（2026-08-21 ユーザー指摘）。
                総資産どうしは数字で並べ、グラフは「差が何でできているか」の内訳に差し替える -->
+          <!-- 【湘建】万一のとき残るもの（団信）。総資産の比較には入らない価値なので別の欄で見せる -->
+          <div class="ic-banichi" id="ic-banichi"></div>
+          <!-- 【湘建】年齢ごとの差の推移（棒）。「最初は少しマイナス → 持ち直す → 完済後に伸びる」の流れを見せる -->
+          <div class="ic-sec" id="ic-trend-wrap">
+            <div class="ic-sec-title"><i class="fa-solid fa-chart-column"></i> 年齢ごとの差（買った場合 − 買わなかった場合）</div>
+            <div class="ic-sec-lead" id="ic-trend-say"></div>
+            <div class="chart-box ic-trend-box"><canvas id="oneroomTrendChart"></canvas></div>
+          </div>
+          <!-- 【湘建】売る時期ごとの差。有利な1パターンだけを見せないよう、並べて出す -->
+          <div class="ic-sec" id="ic-exits"></div>
+          <div class="ic-sec-title" style="margin-top:18px;"><i class="fa-solid fa-layer-group"></i> 差の内訳</div>
           <div class="ic-vs" id="ic-vs"></div>
           <div class="ic-vs-note" id="ic-vs-note"></div>
           <div class="chart-box tall"><canvas id="oneroomChart"></canvas></div>
@@ -5662,8 +5720,12 @@
         + cell('家賃収入の累計', fmt(rentSum), '万円')
         + lastCell;
 
-      // 結論
-      $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}の総資産は 約 ${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}万円<span style="font-size:1rem;">（買わなかった場合との差）</span></div>`
+      // 結論。【湘建】差を主役にし、2つの合計は小さな1行に下げる（2026-09-25 ユーザー指示）
+      const noBuyTotal = Math.round(rowNo.netAll), buyTotal = Math.round(row.netAll);
+      $('ic-total').innerHTML = `<div class="ict-lead">ワンルームを買った場合、${horizonLbl}の総資産は</div>`
+        + `<div class="ict-num${diff<0?' neg':''}">${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}<small>万円</small></div>`
+        + `<div class="ict-lead">買わなかった場合より${diff>=0?'多くなる':'少なくなる'}試算です</div>`
+        + `<div class="ict-vs"><span>買わなかった場合 <b>${fmt(noBuyTotal)}万円</b></span> → <span>買った場合 <b>${fmt(buyTotal)}万円</b></span></div>`
         + `<div class="ict-sub">物件${props.length}件・総額 <b>${fmt(totalPrice)}万円</b>を、自己資金 <b>${fmt(totalOwn)}万円</b>（頭金＋諸費用）でスタートし、`
         + `毎月の持ち出しは <b>${cfM>=0?'＋':'−'}${fmt2(Math.abs(cfM))}万円</b>。`
         + (danshin>0 ? `借入 ${fmt(danshin)}万円には<b>団信</b>が付くため、万一のときは無借金の物件と家賃がご家族に残ります。` : '')
@@ -5672,14 +5734,11 @@
         + (($('re-misc-on') && $('re-misc-on').checked && num('re-misc',0)>0) ? `雑費 年${fmt(num('re-misc',0))}万円の経費計上（損益通算）を含めた試算です。` : '')
         + `</div>`;
 
-      /* 【湘建】総資産は数字で対比し、グラフは「差の内訳」にする（棒2本では差が見えないため） */
-      const noBuyTotal = Math.round(rowNo.netAll), buyTotal = Math.round(row.netAll);
-      $('ic-vs').innerHTML =
-          `<div class="icv-cell"><span class="icv-l">買わなかった場合</span><span class="icv-v">${fmt(noBuyTotal)}<small> 万円</small></span></div>`
-        + `<div class="icv-arrow">→</div>`
-        + `<div class="icv-cell"><span class="icv-l">ワンルームを買った場合</span><span class="icv-v">${fmt(buyTotal)}<small> 万円</small></span></div>`
-        + `<div class="icv-arrow">＝</div>`
-        + `<div class="icv-cell icv-diff${diff<0?' neg':''}"><span class="icv-l">差</span><span class="icv-v">${diff>=0?'＋':'−'}${fmt(Math.abs(diff))}<small> 万円</small></span></div>`;
+      /* 【湘建】総資産どうしの対比は結論（#ic-total）の1行に移した。グラフは「差の内訳」 */
+      $('ic-vs').innerHTML = '';
+      renderBanichi(rows, props);               // 【湘建】万一のとき残るもの（団信）
+      renderDiffTrend(rows, noProp, atAge);     // 【湘建】年齢ごとの差の推移
+      renderExitCompare(props, noProp);         // 【湘建】売る時期ごとの差
       /* 差の内訳。家賃・節税などの「増える側」と、返済・経費などの「出ていく側」を並べて、
          合計がちょうど差になるように組む。明示できない残り（現金が減るぶん積立・運用に
          回せなかった差など）は「運用に回るお金の差」として最後に置き、必ず合計を一致させる */
@@ -5785,6 +5844,122 @@
         + `</tbody></table>`
         + `<div class="skd-note">※ 保証・補償の<b>割合、免責期間、見直しの周期、対象範囲、上限額、解約条件</b>は契約によって異なります。上の試算は画面で入力した条件によるもので、実際の条件は湘建の契約書・重要事項説明でご確認ください。`
         + `保証があっても<b>家賃そのものの見直し</b>や<b>物件価格の下落・金利上昇</b>の影響は残ります。</div>`;
+    }
+
+    /* 【湘建】万一のとき残るもの（2026-09-25 ユーザー指示）。
+       団信で消える残債・残る物件・家賃は、総資産の比較（生きている前提）には入らない価値なので、別の欄で見せる。
+       保険の要否の判断材料にはしない（必要保障額は「万が一（保障）」の画面が扱う）。
+       金額はその年の年末の残高・評価額で概算する */
+    function renderBanichi(rows, props){
+      const box = $('ic-banichi'); if(!box) return;
+      const idxs = props.map((p,i)=> i).filter(i=> props[i].danshin!==false);
+      if(!idxs.length){ box.innerHTML=''; return; }
+      const first = rows.findIndex(r=> idxs.some(i=> { const y=(r.reDetail||[])[i]; return y && y.own && !y.sold && y.bal>0.5; }));
+      if(first < 0){ box.innerHTML=''; return; }
+      const pick = [];
+      for(let k=first; k<rows.length && pick.length<4; k+=10){
+        const r = rows[k];
+        const ys = idxs.map(i=> (r.reDetail||[])[i]).filter(y=> y && y.own && !y.sold);
+        const debt = ys.reduce((a,y)=> a+y.bal, 0);
+        if(debt < 0.5) break;
+        pick.push({ age:r.hAge, debt,
+          value: ys.reduce((a,y)=> a+y.value, 0),
+          rentM: ys.reduce((a,y)=> a+(y.rent - y.mgmt - y.fee - y.ptax - y.repair), 0)/12 });
+      }
+      if(!pick.length){ box.innerHTML=''; return; }
+      const owners = [...new Set(idxs.map(i=> (props[i].owner==='w' && !isSingle()) ? 'w' : 'h'))];
+      const who = owners.length===1 ? `${esc(owners[0]==='w' ? wNameH() : hNameH())}（ローンの名義人）` : 'ローンの名義人';
+      const COVER = { general:'死亡・高度障害', gan:'死亡・高度障害のほか、がんと診断されたとき',
+                      zen:'死亡・高度障害のほか、がんなどの病気で所定の状態になったとき', pair:'死亡・高度障害のほか、配偶者ががんと診断されたとき' };
+      const cover = [...new Set(idxs.map(i=> props[i].danType || 'general'))].map(t=> COVER[t] || COVER.general).join('／');
+      const noDan = props.filter(p=> p.danshin===false).length;
+      box.innerHTML = `<div class="icb-head"><b><i class="fa-solid fa-umbrella"></i> 万一のとき、ご家族に残るもの（団信）</b>`
+          + `<span>${who}に万一のことがあった場合（${cover}）、団信でローンの残りが0になり、<b>ローンのない物件と毎月の家賃</b>が残ります。</span></div>`
+        + `<div class="icb-grid">` + pick.map(p=>
+            `<div class="icb-col"><div class="icb-age">${esc(hNameH())} ${p.age}歳のとき</div>`
+          + `<div class="icb-line"><span>0になるローン</span><b>${fmt(p.debt)}万円</b></div>`
+          + `<div class="icb-line"><span>残る物件の評価額</span><b>${fmt(p.value)}万円</b></div>`
+          + `<div class="icb-line"><span>家賃の手取り</span><b>月${fmt2(Math.max(p.rentM,0))}万円</b></div></div>`).join('')
+        + `</div><div class="icb-note">※ 家賃の手取りは、家賃（家賃保証の物件は保証賃料）から管理費・修繕積立金・固定資産税などを引いた額です。家賃の見直しや物価で変わります。`
+          + `保障の対象・条件は、金融機関の団信の約款によります。<b>上の「総資産」の比較には、この保障のぶんは含めていません。</b>`
+          + (noDan ? `<br><span class="rr-q-neg">団信なしの物件（${noDan}件）は、万一のときもローンが残るため、この欄に入れていません。</span>` : '')
+          + `</div>`;
+    }
+
+    /* 【湘建】年齢ごとの差（買った場合の総資産 − 買わなかった場合の総資産）を棒で並べる（2026-09-25）。
+       合計どうしの棒では差が見えないため、差そのものを年ごとに出す。比較期間の年は金色にする */
+    let oneroomTrendChart = null;
+    function renderDiffTrend(rows, noProp, atAge){
+      const cv = $('oneroomTrendChart'), say = $('ic-trend-say');
+      if(!cv || !noProp || typeof Chart==='undefined') return;
+      const pts = rows.map((r,i)=> ({ age:r.hAge, d: Math.round(r.netAll - ((noProp[i]||r).netAll)) }));
+      const minPt = pts.reduce((a,b)=> b.d < a.d ? b : a, pts[0]);
+      const turn  = pts.find((p,i)=> i>0 && p.d>=0 && pts[i-1].d<0 && pts.slice(i).every(q=> q.d>=0));
+      const last  = pts[pts.length-1];
+      const paid  = rows.find(r=> r.reRent>0 && r.reDebt<0.5 && r.reLoan<0.5);
+      const sell  = rows.find(r=> Math.abs(r.reSell)>0.5);
+      const si    = sell ? pts.findIndex(p=> p.age===sell.hAge) : -1;
+      const sellDrop = si>0 ? pts[si].d - pts[si-1].d : 0;   // 売却の年の差の変化（評価額 → 手取りへの置き換わり）
+      if(say) say.innerHTML = (minPt.d<0 ? `マイナスがいちばん大きいのは <b>${minPt.age}歳ごろ（−${fmt(Math.abs(minPt.d))}万円）</b>。頭金・諸費用と毎月の持ち出しのぶんです。` : '')
+        + (turn ? `<b>${turn.age}歳ごろ</b>から、買った場合のほうが多くなります。` : '')
+        + (sell ? (sellDrop < 0
+            ? `${sell.hAge}歳の売却の年は、仲介手数料・譲渡所得税などのぶん差が <b>${fmt(-sellDrop)}万円</b> 下がります（売るまでは物件を評価額で数えているため）。`
+            : `${sell.hAge}歳の売却で、売却の手取りが金融資産に加わります。`) : '')
+        + (paid ? `ローン完済（${paid.hAge}歳）のあとは家賃がそのまま収入になり、差が広がります。` : '')
+        + `${last.age}歳時点の差は <b class="${last.d<0?'rr-q-neg':''}">${last.d>=0?'＋':'−'}${fmt(Math.abs(last.d))}万円</b>。<span style="color:#7a5c0f; font-weight:700;">金色の棒</span>が、上で選んでいる比較期間の年です。`;
+      if(oneroomTrendChart) oneroomTrendChart.destroy();
+      oneroomTrendChart = new Chart(cv.getContext('2d'), {
+        type:'bar',
+        data:{ labels: pts.map(p=> p.age+'歳'), datasets:[{
+          label:'買った場合 − 買わなかった場合',
+          data: pts.map(p=> p.d),
+          backgroundColor: pts.map(p=> p.age===atAge ? '#cfa14e' : (p.d>=0 ? '#2e5288' : '#c9736f')),
+          borderRadius:3, barPercentage:0.9, categoryPercentage:0.9
+        }]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:false },
+            tooltip:{ callbacks:{ label:(c)=> ' 差 '+(c.parsed.y>=0?'＋':'−')+fmt(Math.abs(c.parsed.y))+'万円' } } },
+          scales:{
+            x:{ grid:{ display:false }, ticks:{ font:{ size:10 }, maxRotation:0, autoSkip:true, maxTicksLimit:10 } },
+            y:{ ticks:{ callback:(v)=> fmt(v)+'万' }, grid:{ color:(c)=> c.tick.value===0 ? '#9aa8b8' : '#eef3f8' } }
+          } }
+      });
+    }
+
+    /* 【湘建】売る時期ごとの差（2026-09-25）。いまの設定・すべて持ち続ける・すべて購入10年後に売却 を
+       退職時と想定年齢の2時点で並べる。有利な1パターンだけを見せないため（断定的な見せ方の回避も兼ねる）。
+       物件の入力は変えず、計算だけ出口を差し替えて回す（simulate の opts.props） */
+    function renderExitCompare(props, noProp){
+      const box = $('ic-exits'); if(!box) return;
+      if(!props.length || !noProp){ box.innerHTML=''; return; }
+      const hAge0 = num('h-age',35), retire = num('h-retire',65), endA = num('end-age',100);
+      const ages = [...new Set([retire, endA])].filter(a=> a>hAge0);
+      if(!ages.length){ box.innerHTML=''; return; }
+      const at = (rows, a)=> {
+        const i = rows.findIndex(r=> r.hAge===a); if(i<0) return null;
+        return Math.round(rows[i].netAll - ((noProp[i]||rows[i]).netAll));
+      };
+      const sig = (ps)=> ps.map(p=> p.exit==='sell' ? 'sell'+p.sellAge : p.exit).join('/');
+      const exitWord = (p)=> p.exit==='hold' ? '持ち続ける' : (p.exit==='sell10' ? '10年後に売却' : p.sellAge+'歳で売却');
+      const pats = [
+        { label:`いまの設定（${props.map(exitWord).join('・')}）`, ps: props, cur:true },
+        { label:'すべて持ち続ける', ps: props.map(p=> Object.assign({}, p, { exit:'hold' })) },
+        { label:'すべて購入10年後に売却', ps: props.map(p=> Object.assign({}, p, { exit:'sell10' })) }
+      ];
+      const seen = new Set(), list = [];
+      pats.forEach(pt=>{
+        const k = sig(pt.ps);
+        if(seen.has(k)) return; seen.add(k);
+        const rows = pt.cur ? lastRows : simulate(null, { props: pt.ps }).rows;
+        list.push({ label: pt.label, cur: !!pt.cur, vals: ages.map(a=> at(rows, a)) });
+      });
+      const td = (v)=> v==null ? '<td>—</td>' : `<td class="${v<0?'neg':'pos'}">${v>=0?'＋':'−'}${fmt(Math.abs(v))}万円</td>`;
+      box.innerHTML = `<div class="ic-sec-title"><i class="fa-solid fa-table"></i> 売る時期で、差はこう変わります</div>`
+        + `<div class="ic-sec-lead">買わなかった場合との総資産の差です。売る時期の選び方で大きく変わるため、1つだけでなく並べてご確認ください。</div>`
+        + `<table class="ic-ex-table"><thead><tr><th>売る時期</th>${ages.map(a=> `<th>${a===retire?'退職時':'想定年齢'}<br>${a}歳</th>`).join('')}</tr></thead><tbody>`
+        + list.map(x=> `<tr${x.cur?' class="cur"':''}><td>${esc(x.label)}${x.cur?'<span class="ic-ex-cur">表示中</span>':''}</td>${x.vals.map(td).join('')}</tr>`).join('')
+        + `</tbody></table>`
+        + `<div class="ic-ex-note">※ 売却価格は「物件価格の下落率」からの想定です（手入力した売却価格があればそれを使います）。持ち続ける場合は、その時点の物件の評価額 − ローン残高を資産に含めています。実際の売却価格は市場で決まり、この差をお約束するものではありません。</div>`;
     }
 
     /* 【湘建】差の内訳グラフ（2026-08-21 ユーザー指摘）
@@ -7022,8 +7197,9 @@
       const events = readEvents();
       const incomeEvents = readIncomeEvents();
 
-      // 【ワンルームフック】ワンルームマンション投資（複数戸）。opts.noProperty なら「買わなかった場合」
-      const props = (opts && opts.noProperty) ? [] : readProperties();
+      // 【ワンルームフック】ワンルームマンション投資（複数戸）。opts.noProperty なら「買わなかった場合」。
+      // 【湘建】opts.props を渡すと画面の物件の代わりにそれで計算する（売る時期のパターン比較用）
+      const props = (opts && opts.noProperty) ? [] : ((opts && opts.props) ? opts.props : readProperties());
       const pStates = props.map(()=> ({ bal:0, remM:0, depAccum:0, done:false }));
       // すでに所有している物件（購入年齢＜現在年齢）は、購入年から現在まで早送りして残高・償却累計をそろえる
       props.forEach((pr,i)=>{ for(let a=pr.buyAge; a<hAge0; a++) propYear(pr, pStates[i], a, infl); });
@@ -9565,7 +9741,7 @@
       const run = ()=>{
         try{
           [typeof assetChart!=='undefined'&&assetChart, typeof flowChart!=='undefined'&&flowChart,
-           typeof compareChart2!=='undefined'&&compareChart2, typeof oneroomChart!=='undefined'&&oneroomChart,
+           typeof compareChart2!=='undefined'&&compareChart2, typeof oneroomChart!=='undefined'&&oneroomChart, typeof oneroomTrendChart!=='undefined'&&oneroomTrendChart,
            typeof investDiffChart!=='undefined'&&investDiffChart, typeof hokenDiffChart!=='undefined'&&hokenDiffChart
           ].forEach(c=>{ if(c && c.resize) c.resize(); });
         }catch(e){}
@@ -12764,7 +12940,7 @@
       }
       document.body.classList.add('pdf-mode');
       document.querySelectorAll('details.ic-fold').forEach(d=>{ d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });   // 前提・出典はPDF/印刷では全文表示
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(oneroomTrendChart) oneroomTrendChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
     function exitPdfMode(){
       document.body.classList.remove('pdf-mode');
@@ -12772,7 +12948,7 @@
       const pt = $('pdf-tasks'); if(pt) pt.remove();
       const pd = $('pdf-disclaimer'); if(pd) pd.remove();
       document.querySelectorAll('details.ic-fold').forEach(d=>{ d.open = d.dataset.wasOpen === '1'; });
-      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
+      try{ if(assetChart) assetChart.resize(); if(flowChart) flowChart.resize(); if(compareChart2) compareChart2.resize(); if(oneroomChart) oneroomChart.resize(); if(oneroomTrendChart) oneroomTrendChart.resize(); if(investDiffChart) investDiffChart.resize(); if(hokenDiffChart) hokenDiffChart.resize(); }catch(e){}
     }
 
     // 印刷（ブラウザの印刷→PDFとして保存も可）。1カラムで全項目を開き、運用資産表をCF表の下に出力

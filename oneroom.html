@@ -1609,6 +1609,13 @@
     .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
     .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
     .ic-vs:empty{ display:none; }
+    /* 【湘建】団信の入力画面の「ワンルーム団信」一覧 */
+    #re-dansin-list{ display:grid; gap:8px; }
+    .rdb-item{ padding:9px 12px; border:1px solid var(--blue-pale2); border-radius:10px; background:#fff; }
+    .rdb-name{ font-size:.88rem; font-weight:800; color:var(--ink); }
+    .rdb-name span{ display:block; font-size:.76rem; font-weight:500; color:var(--ink-soft); margin-top:1px; }
+    .rdb-type{ font-size:.82rem; color:var(--blue-deep); margin-top:4px; line-height:1.55; }
+    .rdb-type i{ color:var(--yellow); margin-right:3px; }
     .rr-sell-auto{ display:block; margin-top:3px; opacity:.75; }   /* 【湘建】売却価格の目安（薄く） */
     .rr-sell-auto:empty{ display:none; }
     /* 【湘建】差を主役にした結論（2026-09-25） */
@@ -2594,6 +2601,14 @@
                 </div>
               </div>
             </div>
+            <!-- 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住まい（賃貸／購入）に関係なく、
+                 ワンルームを購入するプランなら物件ごとに表示する。設定そのものはワンルーム投資の入力で行う（二重入力にしない） -->
+            <div class="loan-payoff-box hidden" id="re-dansin-box">
+              <div class="lp-title"><i class="fa-solid fa-building"></i> ワンルーム団信</div>
+              <div id="re-dansin-list"></div>
+              <span class="hint" style="display:block; margin-top:6px;">ワンルームのローンに付く団信です。名義人に万一のことがあると残りのローンが0になり、<b>ローンのない物件と家賃</b>がご家族に残ります。保障範囲・上乗せ金利は物件ごとに<b>「ワンルーム投資」</b>の入力で変えられます。「万が一（保障）」の死亡保障額にも<b>「ワンルーム団信」</b>として含めています。</span>
+              <button type="button" class="btn btn-ghost btn-sm" id="re-dansin-go" style="margin-top:8px;"><i class="fa-solid fa-building"></i> ワンルーム投資の入力を開く</button>
+            </div>
           </div>
         </div>
 
@@ -2957,7 +2972,7 @@
         <!-- 現状⇔将来の追加くらべ②：万一のときの死亡保障額（⑦の保険＋団信。何歳時点でも確認できる）-->
         <div class="card" id="hoken-diff-card">
           <div class="card-title"><i class="fa-solid fa-file-shield"></i> 万一のときの死亡保障額（現状 と 将来）</div>
-          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
+          <p class="hint" style="display:block; margin-bottom:8px;">「加入中の保険」で入力した保険の死亡保障に、<b>住宅ローンの団信（万一のとき残債の返済がなくなる分）</b>と<b>ワンルーム団信</b>（ワンルームを購入するプランのみ）を合計した金額です。団信は返済が進むにつれて<b>毎月少しずつ減っていきます</b>。<span id="hkd-dansin-type"></span>詳しい前提は下の「前提・ご注意」をご覧ください。</p>
           <div class="hkd-look no-print" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; margin-bottom:8px;">
             <span>何歳時点で見る？</span>
             <input type="number" id="hkd-age" placeholder="購入後" min="0" max="110" style="width:70px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">歳
@@ -5503,6 +5518,22 @@
       el.innerHTML = `一般的な売却価格の目安：約${fmt(auto)}万円（${sa}歳・購入から${yo}年後／物件価格 ${fmt(pr.price)}万円を年${pr.priceDown}%ずつ下げた想定）`
         + (pr.sellVia==='kaitori' ? `。買取なら約${fmt(auto*pr.kaitoriPct/100)}万円（${pr.kaitoriPct}%）` : '');
     }
+    /* 【湘建】「団信・生命保険」の入力画面に出す「ワンルーム団信」の一覧（2026-09-25 ユーザー指示） */
+    function renderReDansinBox(){
+      const box = $('re-dansin-box'), list = $('re-dansin-list'); if(!box || !list) return;
+      const props = readProperties();   // 「購入しない」なら空
+      box.classList.toggle('hidden', !props.length);
+      if(!props.length){ list.innerHTML = ''; return; }
+      /* 表だと375px幅で横スクロールになるため、物件ごとのカードで縦に並べる */
+      list.innerHTML = props.map(pr=> `<div class="rdb-item">`
+          + `<div class="rdb-name">${esc(pr.name)}<span>${esc(pr.owner==='w' ? wNameH() : hNameH())}名義・借入 ${fmt(Math.max(pr.price - pr.down, 0))}万円</span></div>`
+          + `<div class="rdb-type">${pr.danshin===false ? '<span class="diff-minus">団信なし</span>（万一のときもローンが残ります）'
+              : `<i class="fa-solid fa-shield-halved"></i> ${esc(DAN_TYPE_LABEL[pr.danType] || DAN_TYPE_LABEL.general)}${pr.danAdd>0 ? `（上乗せ金利 ＋${pr.danAdd}%）` : ''}`}</div>`
+        + `</div>`).join('');
+    }
+    if($('re-dansin-go')) $('re-dansin-go').addEventListener('click', ()=>{
+      const b = document.querySelector('#nav-input button[data-nav-input="oneroom"]'); if(b) b.click();
+    });
     function updatePropertyQuotes(){
       const infl = num('inflation',2)/100;
       /* 【湘建】雑費：チェックしたときだけ金額欄を出す（zeh-fields と同じ流儀） */
@@ -5513,6 +5544,7 @@
         if(oh) oh.textContent = hNameH()+'の名義';
         if(ow) ow.textContent = wNameH()+'の名義';
       });
+      renderReDansinBox();   // 【湘建】団信・生命保険の入力画面の「ワンルーム団信」
       allPropertyRows().forEach((row,i)=>{
         const box = row.querySelector('.rr-quote'); if(!box) return;
         const pr = readPropertyRow(row, i);
@@ -7545,6 +7577,7 @@
         /* ---- 【ワンルームフック】ワンルームマンション投資 ---- */
         let reRent=0, reOpex=0, reLoan=0, reCf=0, reBuy=0, reValue=0, reDebt=0, reSell=0, reDep=0, reInterest=0;
         const reIncOwner = { h:0, w:0 }, reLandOwner = { h:0, w:0 };
+        const reDs = { h:0, w:0 };   // 【湘建】ワンルーム団信：名義人に万一のとき団信で消える残債（団信ありの物件だけ）
         const reDetail = [];
         for(let pi=0; pi<props.length; pi++){
           const pr = props[pi];
@@ -7552,6 +7585,7 @@
           reDetail.push(y);
           if(!y.own) continue;
           const owner = (pr.owner==='w' && !single) ? 'w' : 'h';
+          if(pr.danshin!==false && !y.sold) reDs[owner] += y.bal;
           reIncOwner[owner]  += y.taxIncome;
           reLandOwner[owner] += y.landInterest;
           reRent += y.rent;
@@ -7704,7 +7738,7 @@
           principalByItem: principalByItem.slice(),   // 運用商品ごとの投じた元本（累計・運用益を除く）
           investGainCum,   // 運用益の生涯累計（その年までの合計）
           // 【ワンルームフック】ワンルーム投資
-          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest, reMisc,
+          reRent, reOpex, reLoan, reCf, reBuy, reValue, reDebt, reNet, reSell, reTaxSave, reDep, reInterest, reMisc, reDs,
           reIncome: reIncOwner.h + reIncOwner.w,
           reDetail,
           netAll: net + reNet,              // 不動産を含む総資産
@@ -8070,7 +8104,7 @@
             ins[mm.key] = (simple || cAge==null) ? 0 : insCoverAtAge(insList, mm.key, cAge);
           }
         });
-        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), netAll:Math.round(r.netAll!=null ? r.netAll : r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW} };
+        return { hAge:r.hAge, wAge:r.wAge, net:Math.round(r.net), netAll:Math.round(r.netAll!=null ? r.netAll : r.net), inflF:r.inflF, iv:Math.round(r.invest), gainCum:Math.round(r.investGainCum||0), ins, ds:{h:dsH, w:dsW}, rds:{ h:Math.round((r.reDs&&r.reDs.h)||0), w:Math.round((r.reDs&&r.reDs.w)||0) } };
       });
       // 運用益の累計（トータルでいくら利益が生じたか）＝毎年の運用益（成長分）を生涯合計したもの。
       // simulate側で積算済み（取り崩して使った分の利益も取りこぼさない・積立額の多い方が必ず大きく出る）
@@ -8347,8 +8381,10 @@
         if(!row) return null;
         const ins = (row.ins && typeof row.ins[key]==='number') ? row.ins[key] : 0;
         let ds = (key==='h') ? (row.ds ? row.ds.h : 0) : (key==='w') ? (row.ds ? row.ds.w : 0) : 0;
-        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ
-        return { total: Math.round(ins+ds), ins: Math.round(ins), ds: Math.round(ds) };
+        if(danPayoff && row.hAge >= danAge) ds = 0;   // ○歳で完済とみなす＝以降は団信ゼロ（住宅ローンだけ）
+        // 【湘建】ワンルーム団信（2026-09-25 ユーザー指示）。住宅ローンの団信とは別の行で見せる
+        const rds = (key==='h' || key==='w') ? ((row.rds && row.rds[key]) || 0) : 0;
+        return { total: Math.round(ins+ds+rds), ins: Math.round(ins), ds: Math.round(ds), rds: Math.round(rds) };
       };
       const members = insWhoMembers().filter(mm=>{
         if(mm.key==='w') return !isSingle();
@@ -8366,7 +8402,7 @@
          （ユーザー指示 2026-08-20。必要保障額と突き合わせるのは「生命保険」の行） */
       const cell = (t)=> t==null ? '—'
         : `<span class="hkd-total">${fmt(t.total)}<span class="hkd-unit">万円</span></span>`
-          + (t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}</small>` : '');
+          + (t.total>0 ? `<br><small class="hkd-bd">生命保険 ${fmt(t.ins)}<br>団信 ${fmt(t.ds)}${t.rds>0 ? `<br>ワンルーム団信 ${fmt(t.rds)}` : ''}</small>` : '');
       // 指定した年齢時点の死亡保障を、被保険者ごとに1行ずつ表示（何歳時点かは上の入力欄で自由に変えられる）
       const trs = members.map(mm=>{
         const gt = totalOf(ga, mm.key), mt = totalOf(ma, mm.key);

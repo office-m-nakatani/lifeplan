@@ -1609,6 +1609,8 @@
     .ic-vs .icv-diff.neg .icv-v{ color:#b34f4f; }
     .ic-vs-note{ font-size:.8rem; color:var(--ink-soft); text-align:center; margin:6px 0 2px; line-height:1.6; }
     .ic-vs:empty{ display:none; }
+    .rr-sell-auto{ display:block; margin-top:3px; opacity:.75; }   /* 【湘建】売却価格の目安（薄く） */
+    .rr-sell-auto:empty{ display:none; }
     /* 【湘建】差を主役にした結論（2026-09-25） */
     .ic-total .ict-lead{ font-size:.9rem; font-weight:700; color:var(--ink); line-height:1.6; }
     .ic-total .ict-num{ font-size:2.8rem; letter-spacing:.01em; margin:2px 0; }
@@ -5061,22 +5063,18 @@
           <div class="field"><label>購入時の諸費用</label><div class="input-unit"><input type="number" class="re-cost" value="${v.cost}" min="0" step="10"><span class="u">万円</span></div><span class="hint">登記・不動産取得税・融資事務手数料など（初年度の経費）</span></div>
           <div class="field"><label>借入金利</label><div class="input-unit"><input type="number" class="re-rate" value="${v.rate}" min="0" max="10" step="0.05"><span class="u">％</span></div></div>
           <div class="field"><label>返済期間</label><div class="input-unit"><input type="number" class="re-term" value="${v.term}" min="1" max="50"><span class="u">年</span></div></div>
-          <div class="field"><label>団体信用生命保険（団信）</label>
-            <select class="re-danshin">
-              <option value="on"${v.danshin?' selected':''}>団信あり</option>
-              <option value="off"${v.danshin?'':' selected'}>団信なし</option>
-            </select>
-            <span class="hint">2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあります。「なし」にすると、万一の診断で残債が残る前提になります</span>
-          </div>
-          <!-- 【湘建】団信は死亡だけでなく、がん・全疾病・配偶者がんまで広げられる（湘建資料 p.10） -->
-          <div class="field rr-f-dantype"><label>団信の保障範囲</label>
+          <!-- 【湘建】団信は死亡だけでなく、がん・全疾病・配偶者がんまで広げられる（湘建資料 p.10）。
+               2026-09-25 ユーザー指示：保障範囲のプルダウンで「団信なし」も選べるようにし、
+               別にあった「団信あり／なし」の欄はこれに統合した（同じことを2か所で選ばせない） -->
+          <div class="field"><label>団信の保障範囲</label>
             <select class="re-dantype">
-              <option value="general"${sel(v.danType,'general')}>一般団信（死亡・高度障害）</option>
-              <option value="gan"${sel(v.danType,'gan')}>＋がん団信（がん診断で残債0）</option>
-              <option value="zen"${sel(v.danType,'zen')}>＋全疾病保障</option>
-              <option value="pair"${sel(v.danType,'pair')}>＋配偶者がん団信</option>
+              <option value="general"${v.danshin ? sel(v.danType,'general') : ''}>一般団信（死亡・高度障害）</option>
+              <option value="gan"${v.danshin ? sel(v.danType,'gan') : ''}>＋がん団信（がん診断で残債0）</option>
+              <option value="zen"${v.danshin ? sel(v.danType,'zen') : ''}>＋全疾病保障</option>
+              <option value="pair"${v.danshin ? sel(v.danType,'pair') : ''}>＋配偶者がん団信</option>
+              <option value="none"${v.danshin ? '' : ' selected'}>団信なし</option>
             </select>
-            <span class="hint">死亡以外（がん・就業不能など）でも残債が消えるタイプ。<b>取扱いの有無・条件は金融機関によります</b></span>
+            <span class="hint">がん・全疾病などは死亡以外でも残債が消えるタイプ（<b>取扱いの有無・条件は金融機関によります</b>）。2戸目以降や金融機関・ご年齢によっては<b>団信なしの融資</b>もあり、「団信なし」にすると万一のときも残債が残る前提になります</span>
           </div>
           <div class="field rr-f-dantype"><label>団信特約の上乗せ金利</label><div class="input-unit"><input type="number" class="re-danadd" value="${v.danAdd}" min="0" max="1" step="0.05"><span class="u">％</span></div><span class="hint">がん団信などを付けるときの上乗せ（実務の目安 ＋0.1〜0.3%）。返済額に反映します</span></div>
         </div>
@@ -5136,7 +5134,7 @@
             <span class="hint">仲介は手数料（4%目安）がかかり、買取は手数料なしで時期を選べるかわりに価格が下がります</span>
           </div>
           <div class="field rr-f-kaitori"><label>買取価格の目安</label><div class="input-unit"><input type="number" class="re-kaitoripct" value="${v.kaitoriPct}" min="50" max="100" step="1"><span class="u">％</span></div><span class="hint">相場に対する割合（<b>実際の買取価格は査定によります</b>）</span></div>
-          <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span></div>
+          <div class="field rr-f-sellprice"><label>売却価格（手入力）</label><div class="input-unit"><input type="number" class="re-sellprice" value="${v.sellPrice||''}" placeholder="自動計算" min="0" step="50"><span class="u">万円</span></div><span class="hint">空欄なら下落率から自動計算</span><span class="hint rr-sell-auto"></span></div>
         </div>
         <div class="rr-exit-say"></div>
 
@@ -5162,7 +5160,7 @@
       div.querySelector('.re-mgmttype')?.addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
       applyExitUI(div); applyPropOptionUI(div);
       div.querySelector('.re-owner').addEventListener('change', recompute);
-      div.querySelector('.re-danshin').addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
+      div.querySelector('.re-dantype').addEventListener('change', ()=>{ applyPropOptionUI(div); recompute(); });
       /* 【湘建】売却シミュレーションの「この想定を売却条件に反映」。
          結果ボックスは recompute のたびに描き直されるため、行への委譲で拾う */
       div.addEventListener('click', (e)=>{
@@ -5189,8 +5187,8 @@
         cost:     rfv(r,'.re-cost',0),
         rate:     rfv(r,'.re-rate',0),
         term:     Math.max(Math.round(rfv(r,'.re-term',35)),1),
-        danshin:  r.querySelector('.re-danshin').value !== 'off',
-        danType:  r.querySelector('.re-dantype')?.value || 'general',   /* 【湘建】団信の保障範囲 */
+        danshin:  (r.querySelector('.re-dantype')?.value || 'general') !== 'none',   /* 【湘建】「団信なし」も保障範囲の欄で選ぶ */
+        danType:  ((v)=> v==='none' ? 'general' : v)(r.querySelector('.re-dantype')?.value || 'general'),
         danAdd:   rfv(r,'.re-danadd',0),
         mgmtType: r.querySelector('.re-mgmttype')?.value || 'jitsugaku',/* 【湘建】管理方式 */
         hoshoPct: Math.min(Math.max(rfv(r,'.re-hoshopct',90),0),100),
@@ -5247,7 +5245,7 @@
       const hosho = div.querySelector('.re-mgmttype')?.value === 'hosho';
       div.querySelectorAll('.rr-f-jitsugaku').forEach(el=> el.classList.toggle('hidden', hosho));
       div.querySelectorAll('.rr-f-hosho').forEach(el=> el.classList.toggle('hidden', !hosho));
-      const dan = div.querySelector('.re-danshin')?.value !== 'off';
+      const dan = div.querySelector('.re-dantype')?.value !== 'none';
       div.querySelectorAll('.rr-f-dantype').forEach(el=> el.classList.toggle('hidden', !dan));
     }
     /* 出口の選び方に応じて、使う欄だけを出す（持ち続けるのに売却年齢を出さない） */
@@ -5493,6 +5491,18 @@
 
 
     /* ---------- 物件カードの下に出る「その物件のいまの数字」 ---------- */
+    /* 【湘建】売却価格（手入力）の下に「一般的な売却価格の目安」を薄く出す（2026-09-25 ユーザー指示）。
+       金額は手入力が空欄のときに計算で使う値と同じ（propYear の評価額：下落率で減らし、土地の価値を下限にする）。
+       買取を選んでいるときは、買取価格の目安も添える */
+    function updateSellAutoHint(row, pr){
+      const el = row.querySelector('.rr-sell-auto'); if(!el) return;
+      const sa = sellAgeOf(pr);
+      if(sa == null || pr.price <= 0){ el.innerHTML = ''; return; }
+      const yo = Math.max(sa - pr.buyAge, 0);
+      const auto = Math.max(pr.price*Math.pow(1 - pr.priceDown/100, yo+1), pr.price*(1 - pr.bldgPct/100));
+      el.innerHTML = `一般的な売却価格の目安：約${fmt(auto)}万円（${sa}歳・購入から${yo}年後／物件価格 ${fmt(pr.price)}万円を年${pr.priceDown}%ずつ下げた想定）`
+        + (pr.sellVia==='kaitori' ? `。買取なら約${fmt(auto*pr.kaitoriPct/100)}万円（${pr.kaitoriPct}%）` : '');
+    }
     function updatePropertyQuotes(){
       const infl = num('inflation',2)/100;
       /* 【湘建】雑費：チェックしたときだけ金額欄を出す（zeh-fields と同じ流儀） */
@@ -5506,6 +5516,7 @@
       allPropertyRows().forEach((row,i)=>{
         const box = row.querySelector('.rr-quote'); if(!box) return;
         const pr = readPropertyRow(row, i);
+        updateSellAutoHint(row, pr);   // 【湘建】売却価格（手入力）の下の目安
         if(pr.price<=0){ box.innerHTML = '<i class="fa-solid fa-circle-info"></i> 物件価格を入力すると、この物件の利回り・毎月の収支・節税額の目安を表示します。'; const ss = row.querySelector('.rr-sellsim'); if(ss) ss.innerHTML = ''; return; }
         const st = { bal:0, remM:0, depAccum:0, done:false };
         const y  = propYear(pr, st, pr.buyAge, infl);                  // 1年目

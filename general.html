@@ -2122,6 +2122,37 @@ body.ink-on .plan-wrap{ z-index:97 !important; }
 .mn-raw summary{ cursor:pointer; font-weight:700; color:var(--blue-deep); min-height:44px; display:flex; align-items:center; gap:6px; }
 .mn-raw p{ margin:3px 0; line-height:1.6; }
 .mn-t{ display:inline-block; min-width:44px; color:var(--ink-soft); font-size:.72rem; font-variant-numeric:tabular-nums; }
+/* MEETLOG-CSS-BEGIN 商談記録（2026-09-25 ユーザー指示「何月何日にどこで商談をしたか残せるように。保険の監査で使います」）。
+   ★字下げを付けない（apply_mentor_kb.py が汎用版のCSSを字下げ0に並べ直すため。付けると次に止まる） */
+.mr-box{ margin:0 0 10px; padding:10px 12px 12px; border:1.5px solid var(--line); border-radius:12px; background:#fff; }
+.mr-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin-bottom:8px; }
+.mr-head b{ font-size:.95rem; color:var(--ink); }
+.mr-head small{ font-size:.76rem; color:var(--ink-soft); }
+.mr-form{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; }
+.mr-f{ display:flex; flex-direction:column; gap:3px; font-size:.76rem; color:var(--ink-soft); }
+.mr-f i{ font-style:normal; font-size:.7rem; }
+.mr-f input, .mr-f select{ min-height:44px; padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; font:inherit; font-size:.92rem; color:var(--ink); background:#fff; box-sizing:border-box; }
+.mr-grow{ flex:1 1 220px; min-width:0; }
+.mr-grow input{ width:100%; }
+#mr-add{ min-height:44px; }
+.mr-for, .mr-status{ margin:8px 0 0; font-size:.8rem; line-height:1.6; color:var(--ink-soft); }
+.mr-status:empty{ display:none; }
+.mr-warn{ color:#8a5200; font-weight:700; }
+.mr-ok{ color:#1d6b3a; font-weight:700; }
+.mr-fold{ margin-top:6px; }
+.mr-fold > summary{ cursor:pointer; font-size:.86rem; font-weight:700; color:var(--ink); min-height:36px; display:flex; align-items:center; gap:6px; }
+.mr-count{ font-weight:400; color:var(--ink-soft); }
+.mr-list{ list-style:none; margin:4px 0 0; padding:0; display:grid; gap:6px; }
+.mr-item{ position:relative; display:flex; flex-wrap:wrap; gap:2px 12px; padding:8px 48px 8px 10px; border:1px solid var(--line); border-radius:10px; font-size:.86rem; line-height:1.55; color:var(--ink); }
+.mr-att, .mr-at{ font-size:.78rem; color:var(--ink-soft); }
+.mr-at{ flex-basis:100%; }
+.mr-del{ position:absolute; top:4px; right:4px; width:40px; height:40px; border:0; border-radius:8px; background:transparent; color:var(--ink-soft); cursor:pointer; }
+.mr-del:hover, .mr-del:focus-visible{ background:#fdecec; color:#b3261e; }
+.mr-empty{ font-size:.8rem; color:var(--ink-soft); padding:6px 2px; }
+.mr-tools{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.mr-note{ margin:8px 0 0; font-size:.76rem; line-height:1.65; color:var(--ink-soft); }
+@media print{ .mr-box{ display:none !important; } }
+/* MEETLOG-CSS-END */
 .mn-att{ display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.8rem; color:var(--ink-soft); }
 .mn-att input{ flex:1; min-width:0; min-height:44px; padding:9px 12px; border:1.5px solid var(--line);
       border-radius:9px; font-family:inherit; font-size:.85rem; }
@@ -4109,6 +4140,36 @@ input.nm-sei{ text-align:center; }
         <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる） -->
         <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off">
           <label for="mn-next-date">次回</label><input type="text" id="mn-next-date" placeholder="例：9/1（月）19時〜 オンライン" autocomplete="off"></div>
+        <!-- == MEETLOG-HTML-BEGIN == 商談記録（2026-09-25 ユーザー指示「商談記録として何月何日にどこで商談をしたか
+             残せるように。保険の監査で使います」）。★お客様の資料と一緒に保存する（2週間で消える文字起こしとは別）。
+             ★共有リンクには入れない。部品は apply_lifeplan_meetlog.py が持っている -->
+        <section class="mr-box" id="mr-box" aria-labelledby="mr-h">
+          <div class="mr-head"><b id="mr-h"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> 商談記録</b>
+            <small>いつ・どこで商談したかを残します。監査のときに見返せます</small></div>
+          <div class="mr-form">
+            <label class="mr-f"><span>商談日</span><input type="date" id="mr-date"></label>
+            <label class="mr-f"><span>時刻 <i>（任意）</i></span><input type="time" id="mr-time"></label>
+            <label class="mr-f"><span>方法</span><select id="mr-way"><option value="対面">対面</option><option value="オンライン">オンライン</option><option value="電話">電話</option></select></label>
+            <label class="mr-f mr-grow"><span>場所</span><input type="text" id="mr-place" list="mr-place-list" autocomplete="off" placeholder="例：お客様のご自宅（松山市）／当社事務所"></label>
+            <button type="button" class="btn btn-primary btn-sm" id="mr-add"><i class="fa-solid fa-plus" aria-hidden="true"></i> 記録する</button>
+          </div>
+          <datalist id="mr-place-list">
+            <option value="お客様のご自宅"></option><option value="当社事務所"></option><option value="展示場・店舗"></option>
+            <option value="お客様の勤務先"></option><option value="Zoom"></option><option value="Microsoft Teams"></option><option value="Google Meet"></option>
+          </datalist>
+          <p class="mr-for" id="mr-for" aria-live="polite"></p>
+          <p class="mr-status" id="mr-status" role="status"></p>
+          <details class="mr-fold" id="mr-fold">
+            <summary>これまでの商談記録 <span class="mr-count" id="mr-count"></span></summary>
+            <ol class="mr-list" id="mr-list"></ol>
+            <div class="mr-tools">
+              <button type="button" class="btn btn-ghost btn-sm" id="mr-csv"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> このお客様の記録をCSVで保存</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="mr-csv-all"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> 保存した全員の記録をCSVで保存</button>
+            </div>
+            <p class="mr-note">「ご出席」は、上の欄の中身を記録するときに一緒に残します。記録は<b>お客様の資料と一緒に保存</b>され、文字起こし・概要（最後の更新から2週間で自動削除）とは別に、資料を消すまで残ります。お客様への共有リンクには入りません。保存すると、顧客管理の「商談メモ」にも入ります。</p>
+          </details>
+        </section>
+        <!-- == MEETLOG-HTML-END == -->
         <div class="vc-tools">
           <button type="button" class="btn btn-primary btn-sm" id="mn-build"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
           <button type="button" class="btn btn-ghost btn-sm" id="mn-copy"><i class="fa-solid fa-copy"></i> コピー</button>
@@ -7924,8 +7985,9 @@ input.nm-sei{ text-align:center; }
         if(draftHold) return;                                  // タイマー発火時に再チェック（初期化競合でドラフトを潰さない）
         try{
           const plans = collectPlans();
-          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot) return;   // 未編集（デモ初期値／共有された内容のまま）は保存しない
+          if(demoSnapshot && JSON.stringify(plans) === demoSnapshot /*MEETLOG-SKIP*/ && !(!customerMode && lpMeetGet().length)) return;   // 未編集（デモ初期値／共有された内容のまま）は保存しない
           const rec = { plans, savedAt: Date.now() };
+          if(!customerMode && lpMeetGet().length) rec.meetings = lpMeetGet().slice();   /*MEETLOG-DRAFT*/
           if(customerMode) rec.fp = shareFp;                   // お客様の変更は共有リンクごとに区別して保存
           localStorage.setItem(customerMode ? SHARED_DRAFT_KEY : DRAFT_KEY, JSON.stringify(rec));
         }catch(e){}
@@ -8565,6 +8627,7 @@ input.nm-sei{ text-align:center; }
         mirai:{ state:PLANS.mirai.state, sum:PLANS.mirai.sum } };
     }
     function applyPlans(saved){
+      try{ lpMeetSet(saved && saved.meetings); }catch(e){}   /*MEETLOG-APPLY*/
       if(saved && saved.plans){
         const pl = saved.plans;
         PLANS.genjo = { state: pl.genjo && pl.genjo.state || null, sum: pl.genjo && pl.genjo.sum || null };
@@ -10662,10 +10725,10 @@ input.nm-sei{ text-align:center; }
         if(last > 12*60*60*1000) last = 0;      // 前日の録音を持ち越したとき「約1440分」にならないように
         const e = new Date((mnT0 || Date.now()) + last);
         const hm = function(x){ return x.getHours()+':'+String(x.getMinutes()).padStart(2,'0'); };
-        return { dateLabel: d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate(),
+        return lpMeetMeta({ dateLabel: d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate(),
                  start: hm(d), end: hm(e), minutes: last ? Math.max(1, Math.round(last/60000)) : 0,
                  attendees: ($('mn-attendees') && $('mn-attendees').value.trim()) || '',
-                 next: ($('mn-next-date') && $('mn-next-date').value.trim()) || '' };
+                 next: ($('mn-next-date') && $('mn-next-date').value.trim()) || '' }, mnT0 ? new Date(mnT0) : null);   /*MEETLOG-META*/
       }
       function mnRawLines(utters){
         return (utters||[]).map(function(u){
@@ -10745,6 +10808,7 @@ input.nm-sei{ text-align:center; }
         let h = '<div class="mn-doc" id="mn-doc" contenteditable="true" spellcheck="false">';
         h += '<p class="mn-meta">' + esc(m.dateLabel) + ' ' + esc(m.start)
            + (m.minutes ? '〜' + esc(m.end) + '（約' + m.minutes + '分）' : '')
+           + (m.place ? '　場所：' + esc(m.place) : '')   /*MEETLOG-PLACE*/
            + (m.attendees ? '　ご出席：' + esc(m.attendees) : '')
            + (m.next ? '　次回：' + esc(m.next) : '') + '</p>';
         if(model.tooShort){
@@ -11199,7 +11263,7 @@ input.nm-sei{ text-align:center; }
       function mnMetaLine(){
         try{
           const m = mnMeta([]);
-          return m.dateLabel + (m.attendees ? '　ご出席：' + m.attendees : '')
+          return m.dateLabel + (m.place ? '　場所：' + m.place : '') /*MEETLOG-PLACE*/ + (m.attendees ? '　ご出席：' + m.attendees : '')
                              + (m.next ? '　次回：' + m.next : '');
         }catch(e){ return ''; }
       }
@@ -20435,19 +20499,261 @@ input.nm-sei{ text-align:center; }
         }
         c.lifeplans = c.lifeplans || [];
         const hit = c.lifeplans.find(l=> l && l.tool==='汎用版' && l.acct===currentUser && l.name===name);
+        lpMeetCrm(c, name);   /*MEETLOG-CRM*/
         if(hit) hit.t = Date.now(); else c.lifeplans.push({ tool:'汎用版', file:'general.html', acct:currentUser, name, t:Date.now() });
         c.updatedAt = Date.now();
         localStorage.setItem(key, JSON.stringify(s));
       }catch(e){}
     }
 
+/* ==== MEETLOG-BEGIN ============================================================
+   ★商談記録（2026-09-25 ユーザー指示「商談記録として何月何日にどこで商談をしたか残せるように。
+     保険の監査で使います」）。部品は apply_lifeplan_meetlog.py が持っている（ここを手で直さない）
+   ・1件＝{ id, date:'YYYY-MM-DD', time:'HH:MM'|'', way:'対面'|'オンライン'|'電話', place, att, at, by }
+   ・お客様の保存データ（getSaves の1件）に meetings として残す。共有リンクには入れない
+   ★起動の途中で applyPlans から呼ばれることがあるので、状態は var・関数は function 宣言。
+     currentUser / currentSaveName（let）に触るところは全部 try の中（TDZ で起動を止めない）
+   ============================================================ */
+    var lpMeetList;
+    function lpMeetGet(){ return Array.isArray(lpMeetList) ? lpMeetList : []; }
+    function lpMeetSet(arr){
+      lpMeetList = Array.isArray(arr) ? arr.filter(function(m){ return m && m.date; }).map(function(m){ return Object.assign({}, m); }) : [];
+      lpMeetRender();
+    }
+    function lpMeetEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+    function lpMeetYmd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function lpMeetParse(ymd){
+      const p = String(ymd || '').split('-');
+      if(p.length !== 3) return null;
+      const d = new Date(+p[0], +p[1]-1, +p[2]);
+      return isNaN(d) ? null : d;
+    }
+    function lpMeetDateJa(ymd){
+      const d = lpMeetParse(ymd); if(!d) return String(ymd || '');
+      return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日（' + '日月火水木金土'[d.getDay()] + '）';
+    }
+    function lpMeetStamp(ms){
+      if(!ms) return '';
+      const d = new Date(ms);
+      return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0')
+           + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+    /* 表示用の場所。対面は場所だけ、オンライン・電話は方法を頭に付ける（「オンライン（オンライン）」にしない） */
+    function lpMeetWhere(m){
+      const pl = String(m.place || '').trim(), w = m.way || '対面';
+      if(w === '対面') return pl || '対面';
+      if(!pl || pl === w) return w;
+      return w + '（' + pl + '）';
+    }
+    function lpMeetSort(a, b){ return (b.date + ' ' + (b.time || '')).localeCompare(a.date + ' ' + (a.time || '')); }
+    function lpMeetCurName(){ try{ return currentSaveName || null; }catch(e){ return null; } }
+    function lpMeetSavedList(){
+      try{
+        const nm = lpMeetCurName(); if(!nm || !currentUser) return null;
+        const e = getSaves()[nm];
+        return e ? (Array.isArray(e.meetings) ? e.meetings : []) : null;
+      }catch(e){ return null; }
+    }
+    function lpMeetRender(){
+      try{
+        if(!$('mr-box')) return;
+        const list = lpMeetGet().slice().sort(lpMeetSort);
+        if($('mr-count')) $('mr-count').textContent = list.length ? '（' + list.length + '件）' : '（まだありません）';
+        if($('mr-list')){
+          $('mr-list').innerHTML = list.length ? list.map(function(m){
+            return '<li class="mr-item">'
+              + '<span class="mr-when"><b>' + lpMeetEsc(lpMeetDateJa(m.date)) + '</b>' + (m.time ? ' ' + lpMeetEsc(m.time) : '') + '</span>'
+              + '<span class="mr-where">' + lpMeetEsc(lpMeetWhere(m)) + '</span>'
+              + (m.att ? '<span class="mr-att">ご出席：' + lpMeetEsc(m.att) + '</span>' : '')
+              + '<span class="mr-at">記録 ' + lpMeetEsc(lpMeetStamp(m.at)) + (m.by ? '（' + lpMeetEsc(m.by) + '）' : '') + '</span>'
+              + '<button type="button" class="mr-del" data-mr-del="' + lpMeetEsc(m.id) + '" aria-label="' + lpMeetEsc(lpMeetDateJa(m.date)) + ' の記録を消す" title="この記録を消す"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>'
+              + '</li>';
+          }).join('') : '<li class="mr-empty">まだ記録はありません。商談日と場所を入れて「記録する」を押してください。</li>';
+        }
+        if($('mr-for')){
+          const nm = lpMeetCurName(), saved = lpMeetSavedList(), cur = lpMeetGet();
+          let h;
+          if(nm){
+            h = '記録先：<b>' + lpMeetEsc(nm) + '</b> の資料';
+            if(saved && JSON.stringify(saved) !== JSON.stringify(cur)){
+              h += '　<span class="mr-warn">まだ資料に保存していない記録があります</span> '
+                 + '<button type="button" class="btn btn-ghost btn-sm" id="mr-save">上書き保存する</button>';
+            }else if(cur.length){
+              h += '　<span class="mr-ok">資料に保存済みです</span>';
+            }
+          }else{
+            h = '記録先：<b>まだ保存していないお客様</b>';
+            if(cur.length) h += '　<span class="mr-warn">上の「保存・読み込み」からお客様の資料として保存すると、記録も一緒に残ります</span>';
+          }
+          $('mr-for').innerHTML = h;
+          if($('mr-save')) $('mr-save').addEventListener('click', function(){ if($('save-overwrite')) $('save-overwrite').click(); });
+        }
+      }catch(e){}
+    }
+    function lpMeetAdd(){
+      const date = ($('mr-date') && $('mr-date').value) || '';
+      if(!lpMeetParse(date)){ alert('商談日を入れてください。'); if($('mr-date')) $('mr-date').focus(); return; }
+      const way = ($('mr-way') && $('mr-way').value) || '対面';
+      let place = (($('mr-place') && $('mr-place').value) || '').trim();
+      if(!place && way === '電話') place = '電話';
+      if(!place){
+        alert(way === 'オンライン' ? '場所の欄に、使ったもの（Zoom・Teams など）を入れてください。' : '商談した場所を入れてください（例：お客様のご自宅）。');
+        if($('mr-place')) $('mr-place').focus();
+        return;
+      }
+      const time = ($('mr-time') && $('mr-time').value) || '';
+      const att = (($('mn-attendees') && $('mn-attendees').value) || '').trim();
+      let by = ''; try{ by = currentUser || ''; }catch(e){}
+      const list = lpMeetGet().slice();
+      const w = lpMeetWhere({ way: way, place: place });
+      if(list.some(function(m){ return m.date === date && (m.time || '') === time && lpMeetWhere(m) === w; })
+         && !confirm('同じ日時・同じ場所の記録が既にあります。もう1件記録しますか？')) return;
+      list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                  date: date, time: time, way: way, place: place, att: att, at: Date.now(), by: by });
+      lpMeetList = list;
+      lpMeetRender();
+      try{ scheduleDraftSave(); }catch(e){}
+      if($('mr-status')) $('mr-status').textContent = lpMeetDateJa(date) + (time ? ' ' + time : '') + '　' + w + ' の商談を記録しました。';
+      if($('mr-fold')) $('mr-fold').open = true;
+    }
+    function lpMeetDel(id){
+      const m = lpMeetGet().filter(function(x){ return x.id === id; })[0];
+      if(!m) return;
+      if(!confirm(lpMeetDateJa(m.date) + '（' + lpMeetWhere(m) + '）の記録を消します。\n監査のための記録なので、間違えて入れたものだけ消してください。よろしいですか？')) return;
+      lpMeetList = lpMeetGet().filter(function(x){ return x.id !== id; });
+      lpMeetRender();
+      try{ scheduleDraftSave(); }catch(e){}
+      if($('mr-status')) $('mr-status').textContent = '記録を1件消しました。資料に反映するには「上書き保存」をしてください。';
+    }
+    /* ★新規保存（別の名前で保存）のとき。読み込んでいる資料と違う名前なら、記録を写すかを聞く。
+       「Aさんを読み込んだまま、Bさんの数字に打ち直して新規保存」すると、Aさんの商談記録が
+       Bさんの資料に写ってしまう（2026-09-25 に検査で見つけた）。監査の記録が別のお客様に混ざらないように */
+    function lpMeetForNew(name){
+      const list = lpMeetGet(), cur = lpMeetCurName();
+      if(!list.length || !cur || cur === name) return list.slice();
+      if(confirm('いま読み込んでいる「' + cur + '」の商談記録が ' + list.length + '件あります。\n'
+               + '「' + name + '」の資料にも同じ記録を残しますか？\n\n'
+               + '［OK］残す（同じお客様の資料を、別の名前で保存するとき）\n'
+               + '［キャンセル］残さない（別のお客様のとき）')) return list.slice();
+      lpMeetList = [];
+      setTimeout(lpMeetRender, 0);
+      return [];
+    }
+    /* CSV（Excel で開ける形。BOM付き・CRLF）。★先頭が = + - @ の値は数式として動かないように ' を付ける */
+    function lpMeetCell(v){
+      v = String(v == null ? '' : v);
+      if(/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+      return '"' + v.replace(/"/g, '""') + '"';
+    }
+    function lpMeetCsv(rows, fname){
+      const L = [['お客様（資料名）', '商談日', '曜日', '時刻', '方法', '場所', 'ご出席', '記録した日時', '記録した人'].map(lpMeetCell).join(',')];
+      rows.forEach(function(r){
+        const m = r.m, d = lpMeetParse(m.date);
+        L.push([r.name, String(m.date).replace(/-/g, '/'), d ? '日月火水木金土'[d.getDay()] : '', m.time || '',
+                m.way || '', m.place || '', m.att || '', lpMeetStamp(m.at), m.by || ''].map(lpMeetCell).join(','));
+      });
+      const blob = new Blob(['﻿' + L.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = fname;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }
+    function lpMeetFileName(label){
+      return '商談記録_' + String(label).replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40) + '_' + lpMeetYmd(new Date()).replace(/-/g, '') + '.csv';
+    }
+    function lpMeetCsvOne(){
+      const list = lpMeetGet().slice().sort(lpMeetSort).reverse();
+      if(!list.length){ alert('このお客様の商談記録はまだありません。'); return; }
+      const nm = lpMeetCurName() || '（まだ保存していないお客様）';
+      lpMeetCsv(list.map(function(m){ return { name: nm, m: m }; }), lpMeetFileName(nm));
+    }
+    function lpMeetCsvAll(){
+      let saves = {}; try{ saves = getSaves() || {}; }catch(e){}
+      const cur = lpMeetCurName(), rows = [];
+      Object.keys(saves).forEach(function(nm){
+        const list = (nm === cur) ? lpMeetGet() : ((saves[nm] && Array.isArray(saves[nm].meetings)) ? saves[nm].meetings : []);
+        list.forEach(function(m){ if(m && m.date) rows.push({ name: nm, m: m }); });
+      });
+      if(!cur) lpMeetGet().forEach(function(m){ rows.push({ name: '（まだ保存していないお客様）', m: m }); });
+      if(!rows.length){ alert('書き出せる商談記録がありません（ログインして保存したお客様の記録が対象です）。'); return; }
+      rows.sort(function(a, b){ return (a.m.date + ' ' + (a.m.time || '') + a.name).localeCompare(b.m.date + ' ' + (b.m.time || '') + b.name); });
+      lpMeetCsv(rows, lpMeetFileName('全員'));
+    }
+    /* 顧客管理（crm.html）の「商談メモ」へ。id が mt- の行だけを触る（手で書いたメモは触らない） */
+    function lpMeetCrm(c, name){
+      try{
+        const list = lpMeetGet(), ids = {};
+        list.forEach(function(m){ ids['mt-' + m.id] = 1; });
+        c.actions = (c.actions || []).filter(function(a){ return !(a && a.lp === name && String(a.id || '').indexOf('mt-') === 0 && !ids[a.id]); });
+        list.forEach(function(m){
+          const id = 'mt-' + m.id;
+          const text = '【商談記録】' + [m.time ? m.time + '〜' : '', lpMeetWhere(m), m.att ? 'ご出席：' + m.att : ''].filter(Boolean).join('　');
+          const type = (m.way === '電話') ? '電話' : '面談';
+          const a = c.actions.filter(function(x){ return x && x.id === id; })[0];
+          if(a){ a.d = m.date; a.type = type; a.text = text; a.lp = name; }
+          else c.actions.unshift({ id: id, d: m.date, type: type, text: text, lp: name });
+        });
+      }catch(e){}
+    }
+    /* 概要の1行目に使う（音声メモのIIFEから呼ぶ）。商談日の欄があればそちらを正にする */
+    function lpMeetMeta(r, d0){
+      try{
+        const date = ($('mr-date') && $('mr-date').value) || '', time = ($('mr-time') && $('mr-time').value) || '';
+        const d = lpMeetParse(date);
+        if(d){
+          const same = !!d0 && d0.getFullYear() === d.getFullYear() && d0.getMonth() === d.getMonth() && d0.getDate() === d.getDate();
+          r.dateLabel = d.getFullYear() + '.' + (d.getMonth()+1) + '.' + d.getDate() + '（' + '日月火水木金土'[d.getDay()] + '）';
+          if(!same){ r.start = time; r.minutes = 0; }      // 録音の無い日の概要に、いまの時刻を「開始」として載せない
+          else if(time){
+            r.start = time;
+            if(r.minutes){ const t = time.split(':'), e = new Date(2000, 0, 1, +t[0], +t[1] + r.minutes); r.end = e.getHours() + ':' + String(e.getMinutes()).padStart(2, '0'); }
+          }
+        }
+        const way = ($('mr-way') && $('mr-way').value) || '対面', place = (($('mr-place') && $('mr-place').value) || '').trim();
+        if(place || way !== '対面') r.place = lpMeetWhere({ way: way, place: place });
+      }catch(e){}
+      return r;
+    }
+    (function(){
+      if(!$('mr-box')) return;
+      if($('mr-date') && !$('mr-date').value) $('mr-date').value = lpMeetYmd(new Date());
+      if($('mr-add')) $('mr-add').addEventListener('click', lpMeetAdd);
+      if($('mr-list')) $('mr-list').addEventListener('click', function(e){
+        const b = e.target.closest('[data-mr-del]'); if(b) lpMeetDel(b.getAttribute('data-mr-del'));
+      });
+      if($('mr-csv')) $('mr-csv').addEventListener('click', lpMeetCsvOne);
+      if($('mr-csv-all')) $('mr-csv-all').addEventListener('click', lpMeetCsvAll);
+      if($('mr-way')) $('mr-way').addEventListener('change', function(){
+        const w = this.value, p = $('mr-place'); if(!p) return;
+        p.placeholder = (w === 'オンライン') ? '例：Zoom／Microsoft Teams／Google Meet'
+                      : (w === '電話') ? '（電話のときは空欄で構いません）'
+                      : '例：お客様のご自宅（松山市）／当社事務所';
+      });
+      /* 日をまたいで開いたままでも、概要タブを開いたときに「今日」に戻す（手で変えた日付は触らない） */
+      let autoDate = $('mr-date') ? $('mr-date').value : '';
+      if($('mr-date')) $('mr-date').addEventListener('input', function(){ autoDate = ''; });
+      ['vc-tab-minutes', 'btn-after'].forEach(function(id){
+        if($(id)) $(id).addEventListener('click', function(){
+          const el = $('mr-date');
+          if(el && (!el.value || el.value === autoDate)){ el.value = lpMeetYmd(new Date()); autoDate = el.value; }
+          lpMeetRender();
+        });
+      });
+      /* 保存・上書き保存・ログインのあとに「記録先」と「保存済み」を出し直す */
+      ['save-do', 'save-overwrite', 'btn-save'].forEach(function(id){
+        if($(id)) $(id).addEventListener('click', function(){ setTimeout(lpMeetRender, 30); });
+      });
+      document.addEventListener('lp-state-loaded', function(){ setTimeout(lpMeetRender, 30); });
+      lpMeetRender();
+    })();
+/* ==== MEETLOG-END ==== */
     // 新規保存
     $('save-do').addEventListener('click', ()=>{
       const name = ($('save-name').value||'').trim();
       if(!name){ alert('保存名（お客様名など）を入力してください。'); return; }
       const o = getSaves();
       if(o[name] && !confirm(`「${name}」は既に保存されています。上書きしますか？`)) return;
-      o[name] = { t: Date.now(), plans: collectPlans(), by: currentUser };
+      o[name] = { t: Date.now(), plans: collectPlans(), by: currentUser, /*MEETLOG-SAVE*/ meetings: lpMeetForNew(name) };
       if(putSaves(o)){ $('save-name').value=''; setCurrentSave(name); renderSaveList(); omcrmSync(name); alert(`「${name}」を保存しました（顧客管理にも反映）。`); }
     });
 
@@ -20455,7 +20761,7 @@ input.nm-sei{ text-align:center; }
     $('save-overwrite').addEventListener('click', ()=>{
       if(!currentSaveName){ alert('先に下の一覧から資料を読み込んでください。'); return; }
       const o = getSaves();
-      o[currentSaveName] = { t: Date.now(), plans: collectPlans(), by: currentUser };
+      o[currentSaveName] = { t: Date.now(), plans: collectPlans(), by: currentUser, /*MEETLOG-SAVE*/ meetings: lpMeetGet().slice() };
       if(putSaves(o)){ renderSaveList(); omcrmSync(currentSaveName); alert(`「${currentSaveName}」を上書き保存しました（顧客管理にも反映）。`); }
     });
 

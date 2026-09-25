@@ -5743,6 +5743,7 @@
         + (noDanshinDebt>0 ? `<b>団信なしの借入 ${fmt(noDanshinDebt)}万円</b>は万一のときも残るため、生命保険での備えとセットでご検討ください${isSingle() ? '（単身の場合、この残債は相続財産の債務として相続人に関わります）' : '（「万が一（保障）」の画面に反映済み）'}。` : '')
         + (paidRow ? `ローン完済は<b>${paidRow.hAge}歳</b>、以後の家賃 年 約${fmt(paidRow.reRent - paidRow.reOpex)}万円がそのまま収入になります。` : '')
         + (($('re-misc-on') && $('re-misc-on').checked && num('re-misc',0)>0) ? `雑費 年${fmt(num('re-misc',0))}万円の経費計上（損益通算）を含めた試算です。` : '')
+        + (lastForcedSales.length ? `<br>${forcedSaleSay()}` : '')
         + `</div>`;
 
       /* 【湘建】総資産どうしの対比は結論（#ic-total）の1行に移した。グラフは「差の内訳」 */
@@ -7196,7 +7197,54 @@
     /* ============================================================
        メイン計算
        ============================================================ */
+    /* 【湘建】資金が足りなくなったら物件を売って充てる（2026-09-25 ユーザー指摘）。
+       金融資産（現金＋運用）がマイナスになる年に、まだ持っている物件があれば、その年に売却して
+       手取りを生活費に充てる前提で計算し直す。これをしないと「物件を持ち続けると総資産は増えるのに、
+       資金ショートは買わなかった場合より早い」という、実際にはありえない結果になる
+       （お金が尽きれば売ればよいので、物件の価値のぶん長く持ちこたえるのが実態）。
+       ・売るのは、その年の「評価額 − ローン残高」がいちばん大きい物件から1戸ずつ。まだ足りなければ次の物件
+       ・評価額がローン残高を下回る物件は売っても足しにならないので売らない
+       ・物件の入力（出口の設定）は書き換えない。結果の forcedSales に「何歳でどれを売ったか」を残し、画面で注記する
+       ・どの画面（判定・資産の比較・AI診断・チャット・ワンルームの比較）も simulate() の結果を使うので、全部そろう */
     function simulate(returnOverride, opts){
+      let res = simulateCore(returnOverride, opts);
+      if(opts && opts.noProperty) return res;
+      const base = res.props || [];
+      if(!base.length) return res;
+      let cur = base.map(x=> Object.assign({}, x));
+      const forced = [];
+      for(let k=0; k<base.length; k++){
+        const di = res.rows.findIndex(r=> r.net < 0);
+        if(di < 0) break;
+        const r = res.rows[di];
+        let best = -1, bestEq = 0;
+        cur.forEach((pr,i)=>{
+          const y = (r.reDetail||[])[i];
+          if(!y || !y.own || y.sold) return;
+          const sa = sellAgeOf(pr);
+          if(sa != null && sa <= r.hAge) return;
+          const eq = y.value - y.bal;
+          if(eq > bestEq){ bestEq = eq; best = i; }
+        });
+        if(best < 0) break;
+        cur[best] = Object.assign({}, cur[best], { exit:'sell', sellAge:r.hAge, sellPrice:0 });
+        forced.push({ idx:best, age:r.hAge, year:r.year, name:cur[best].name });
+        res = simulateCore(returnOverride, Object.assign({}, opts||{}, { props:cur }));
+      }
+      res.props = base;              // 画面の設定（出口）はそのまま返す
+      res.forcedSales = forced;
+      return res;
+    }
+    let lastForcedSales = [];
+    /* 資金が足りなくて売却した物件の注記（判定・ワンルームの比較で共通の文言） */
+    function forcedSaleSay(){
+      if(!lastForcedSales.length) return '';
+      const f = lastForcedSales;
+      const what = f.length===1 ? `<b>${esc(hNameH())}${f[0].age}歳</b>で${esc(f[0].name)}を`
+                                : `その年に ${f.map(x=> `${esc(x.name)}（${x.age}歳）`).join('・')} を`;
+      return `※ 金融資産が足りなくなるため、${what}<b>売却して生活費に充てる</b>前提で計算しています（物件の出口の設定はそのまま。売却しないと ${esc(hNameH())}${f[0].age}歳ごろに金融資産が底をつきます）。`;
+    }
+    function simulateCore(returnOverride, opts){
       const hAge0 = num('h-age',35), wAge0 = num('w-age',33);
       const endAge = Math.max(num('end-age',95), hAge0+1);
       const infl = num('inflation',1)/100;
@@ -7791,7 +7839,8 @@
       if(typeof updateInsTotal==='function') updateInsTotal();   // 死亡保障の合計＋現状比
       if(typeof updateLoanShareUI==='function') updateLoanShareUI();   // お名前・割合ラベルを反映
       updatePropertyQuotes();   // 【ワンルームフック】物件カードの下の数字
-      const { rows, hRetire, hAge0, endAge, props } = simulate();
+      const { rows, hRetire, hAge0, endAge, props, forcedSales } = simulate();
+      lastForcedSales = forcedSales || [];   // 【湘建】資金不足で売却した物件
       const noInvRows = simulate(0).rows;  // 運用しなかった場合（利回り0%＝預貯金だけ）
       // 【ワンルームフック】ワンルームを買わなかった場合（比較用）。物件がなければ計算しない
       lastRows = rows; lastProps = props;
@@ -7865,6 +7914,8 @@
         $('verdict-title').textContent = `${endAge}歳の老後まで資金ショートを起こさない、安定したシミュレーション結果です！`;
         $('verdict-text').innerHTML = `終了時（${endAge}歳）の総資産は <b>${fmt(endRow.net)}万円</b> の見込みです。`;
       }
+      // 【湘建】資金が足りなくなって物件を売却した前提なら、どの判定でも注記する
+      if(lastForcedSales.length) $('verdict-text').insertAdjacentHTML('beforeend', `<br><span style="font-size:.85em;">${forcedSaleSay()}</span>`);
 
       // 「金融資産の推移」の表示期間で、グラフとキャッシュフロー表の表示年数だけを絞り込む（判定・AI診断は全期間のまま）。
       // 資産運用の詳細（asset-modal）は切替UIが見えない場所にあり、「満期残高」が打ち切り年の残高に化けるので必ず全期間で描く。

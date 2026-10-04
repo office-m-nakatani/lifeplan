@@ -2160,6 +2160,139 @@ body.ink-on .plan-wrap{ z-index:97 !important; }
 .mn-att{ display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.8rem; color:var(--ink-soft); }
 .mn-att input{ flex:1; min-width:0; min-height:44px; padding:9px 12px; border:1.5px solid var(--line);
       border-radius:9px; font-family:inherit; font-size:.85rem; }
+/* == VCUI-CSS-BEGIN == */
+/* 営業サポートの窓（2026-10-04 組み直し・ユーザー指示「ミーティング概要と音声メモに関しては特に本当に見ずらい。見やすさを重視し、内容を大幅に修正」）。
+   真ん中の列（960px）に白いカードを積む。タブは上に貼りつく（読み進めても、いまどこかと行き先が見える）。
+   ★全て #vc-dock から書く（後ろにある前の規則より強くするため。並び順に頼らない）。字下げを付けない（apply_mentor_kb.py のため） */
+#vc-dock{ background:var(--bg); --vcu-pad:max(16px, calc((100% - 960px) / 2)); }
+#vc-dock .vc-bar{ min-height:64px; gap:12px; padding:10px var(--vcu-pad); background:#fff; border-bottom:1px solid var(--line); }
+#vc-dock .vcu-title{ display:inline-flex; align-items:center; gap:8px; font-size:1.06rem; font-weight:800; color:var(--ink); white-space:nowrap; }
+#vc-dock .vcu-title i{ color:var(--blue-deep); }
+#vc-dock .vc-status{ font-size:.84rem; }
+#vc-dock .vc-elapsed{ font-size:.86rem; }
+#vc-dock .btn-primary{ background:var(--blue-deep); box-shadow:0 4px 12px rgba(47,124,181,.22); }
+#vc-dock .btn-primary:hover{ background:#24679a; }
+#vc-dock #vc-rec{ min-height:44px; padding:10px 18px; }
+#vc-dock #vc-rec.rec-on{ background:var(--vc-rec-on); border-color:var(--vc-rec-on); color:#fff; }
+#vc-dock .vc-chips{ margin:0; padding:8px var(--vcu-pad); background:#fff; border-bottom:1px solid var(--line); -webkit-mask-image:none; mask-image:none; }
+#vc-dock .vc-chip{ flex:0 1 auto; max-width:100%; white-space:normal; line-height:1.55; }
+#vc-dock #vc-more{ background:var(--bg); }
+#vc-dock .vc-tabs{ position:sticky; top:0; z-index:3; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0; overflow:visible; padding:0 var(--vcu-pad); background:#fff; border-bottom:1px solid var(--line); -webkit-mask-image:none; mask-image:none; }
+#vc-dock .vc-tab{ display:flex; align-items:center; justify-content:center; gap:10px; min-height:64px; padding:8px 6px; border:0; border-bottom:3px solid transparent; border-radius:0; background:none; color:var(--ink-soft); font-weight:700; text-align:left; }
+#vc-dock .vc-tab:hover{ background:var(--bg-soft); }
+#vc-dock .vc-tab[aria-selected="true"]{ background:none; color:var(--blue-deep); border-bottom-color:var(--blue-deep); }
+#vc-dock .vc-tab:focus-visible{ outline:2px solid var(--blue-deep); outline-offset:-4px; }
+#vc-dock .vct-no{ flex:0 0 26px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.84rem; font-weight:800; background:var(--blue-pale); color:var(--dg-blue-deep, #2f5d8c); }
+#vc-dock .vc-tab[aria-selected="true"] .vct-no{ background:var(--blue-deep); color:#fff; }
+#vc-dock .vct-b{ display:flex; flex-direction:column; min-width:0; line-height:1.3; }
+#vc-dock .vct-b b{ font-size:1rem; color:inherit; }
+#vc-dock .vct-b small{ margin-top:2px; font-size:.82rem; font-weight:600; color:var(--ink-soft); }
+#vc-dock .vct-nw{ white-space:nowrap; }
+#vc-dock .vc-pane{ padding:20px var(--vcu-pad) 48px; overflow:visible; }
+#vc-dock .vcu-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 22px 22px; box-shadow:var(--shadow-soft); }
+#vc-dock .vcu-card + .vcu-card, #vc-dock .vcu-card + .vcu-after, #vc-dock .vcu-after > .vcu-card + .vcu-card{ margin-top:16px; }
+#vc-dock .vcu-h{ display:flex; align-items:flex-start; gap:12px; margin:0 0 14px; }
+#vc-dock .vcu-h h3{ margin:3px 0 0; font-size:1.12rem; font-weight:800; line-height:1.4; color:var(--ink); }
+#vc-dock .vcu-h p{ margin:4px 0 0; font-size:.88rem; line-height:1.75; color:var(--ink-soft); }
+#vc-dock .vcu-h p b{ color:var(--ink); }
+#vc-dock .vcu-no, #vc-dock .vcu-ic{ flex:0 0 32px; width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; font-weight:800; }
+#vc-dock .vcu-no{ background:var(--blue-deep); color:#fff; }
+#vc-dock .vcu-ic{ background:var(--blue-pale); color:var(--blue-deep); }
+#vc-dock .vcu-lab{ display:block; margin:0 0 6px; font-size:.86rem; font-weight:800; color:var(--ink); }
+#vc-dock .vcu-hint{ margin:8px 0 0; font-size:.84rem; line-height:1.75; color:var(--ink-soft); }
+#vc-dock .vcu-hint b{ color:var(--ink); }
+#vc-dock .vcu-opts{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; margin-top:10px; }
+#vc-dock .vcu-opts .btn, #vc-dock .vcu-tools .btn, #vc-dock .vcu-btns .btn{ min-height:44px; }
+#vc-dock .vc-auto{ font-size:.88rem; color:var(--ink); }
+#vc-dock .vcu-ex{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; }
+#vc-dock .vcu-ex span{ padding:5px 12px; border-radius:999px; background:var(--bg-soft); border:1px solid var(--line); font-size:.86rem; font-weight:700; color:var(--ink); }
+#vc-dock .vc-edit-row{ margin:0; }
+#vc-dock .vc-edit-row input{ font-size:.95rem; }
+#vc-dock .vc-cap-wrap{ margin:12px 0 0; }
+#vc-dock .vc-cap-empty{ font-size:.86rem; }
+#vc-dock .vc-memos{ border-top:1px solid var(--line); }
+#vc-dock .vc-memo{ padding:8px 0; border-bottom:1px solid var(--line); font-size:.9rem; }
+#vc-dock .vc-memo-time{ font-size:.8rem; }
+#vc-dock .vc-memo-empty{ padding:12px 0 2px; font-size:.86rem; }
+#vc-dock .vcu-note{ margin-top:16px; padding:14px 18px; border-radius:14px; background:#fff; border:1px solid var(--line); }
+#vc-dock .vcu-note p{ margin:0; font-size:.84rem; line-height:1.8; color:var(--ink-soft); }
+#vc-dock .vcu-note p + p{ margin-top:6px; }
+#vc-dock .vcu-note .vcu-note-h{ margin-bottom:6px; font-weight:800; color:var(--ink); }
+#vc-dock .vcu-note .vcu-note-h i{ color:var(--blue-deep); }
+#vc-dock .mn-att{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-template-rows:auto auto; grid-auto-flow:column; gap:6px 16px; margin:0; }
+#vc-dock .mn-att label{ font-size:.86rem; font-weight:800; color:var(--ink); }
+#vc-dock .mn-att input{ width:100%; font-size:.95rem; }
+#vc-dock .vcu-rec .mr-box{ padding:16px 0 0; margin:18px 0 0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; }
+#vc-dock .vcu-rec .mr-head small{ display:none; }
+#vc-dock .vcu-rec .mr-head b{ font-size:.98rem; }
+#vc-dock .mr-f{ font-size:.84rem; }
+#vc-dock .mr-f i{ font-size:.8rem; }
+#vc-dock .mr-note, #vc-dock .mr-for, #vc-dock .mr-status{ font-size:.82rem; }
+#vc-dock .vcu-range{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 14px; padding:12px 14px; border-radius:12px; background:var(--bg-soft); border:1px solid var(--line); }
+#vc-dock .vcu-range .vcu-lab{ margin:0; }
+#vc-dock .vcu-seg{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:#fff; border:1px solid var(--line); }
+#vc-dock .vcu-seg .mn-rg{ min-height:40px; border:0; background:none; color:var(--ink-soft); box-shadow:none; }
+#vc-dock .vcu-seg .mn-rg.is-on{ background:var(--blue-deep); color:#fff; }
+#vc-dock .mn-range-n{ flex:1 1 100%; font-size:.84rem; line-height:1.7; color:var(--ink-soft); }
+#vc-dock .vcu-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+#vc-dock .vcu-main{ min-height:50px; padding:0 26px; font-size:1rem; }
+#vc-dock .vcu-tools{ display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; }
+#vc-dock #mn-out{ margin-top:16px; }
+#vc-dock #mn-out:empty{ display:flex; align-items:center; justify-content:center; min-height:120px; border:1.5px dashed var(--blue-pale2); border-radius:12px; background:var(--bg-soft); }
+#vc-dock #mn-out:empty::before{ content:"「概要を作る」を押すと、ここに概要が出ます。"; padding:16px; font-size:.9rem; line-height:1.7; color:var(--ink-soft); text-align:center; }
+#vc-dock .mn-doc{ max-width:none; padding:18px 22px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:.95rem; }
+#vc-dock .mn-src span{ font-size:.82rem; }
+#vc-dock .mn-notes{ margin-top:12px; padding:10px 14px; font-size:.8rem; }
+#vc-dock .mn-raw{ display:none; }
+#vc-dock .vcu-two{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
+#vc-dock .vcu-grp{ display:flex; flex-direction:column; padding:16px 18px; border-radius:12px; background:var(--bg-soft); border:1px solid var(--line); }
+#vc-dock .vcu-grp h4{ display:flex; align-items:center; gap:8px; margin:0; font-size:1rem; font-weight:800; color:var(--ink); }
+#vc-dock .vcu-grp h4 i{ color:var(--blue-deep); }
+#vc-dock .vcu-grp h4 .vcu-howto{ margin-left:auto; min-height:44px; padding:0 14px; font-size:.82rem; }
+#vc-dock .vcu-grp h4 .vcu-howto i{ color:inherit; }
+#vc-dock .vcu-grp p{ flex:1 1 auto; margin:6px 0 12px; font-size:.86rem; line-height:1.7; color:var(--ink-soft); }
+#vc-dock .vcu-btns{ display:flex; flex-wrap:wrap; gap:8px; }
+#vc-dock #vc-pane-next{ padding-bottom:16px; }
+#vc-dock .vcu-nextfoot{ display:none; }
+#vc-dock #vc-pane-next:not([hidden]) + .vcu-nextfoot{ display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; margin:0 var(--vcu-pad) 48px; padding:16px 20px; border-radius:14px; background:#fff; border:1px solid var(--blue-pale2); border-left:4px solid var(--blue-deep); }
+#vc-dock .vcu-nextfoot p{ flex:1 1 320px; margin:0; font-size:.9rem; line-height:1.7; color:var(--ink); }
+#vc-dock .vcu-nextfoot .btn{ min-height:44px; }
+#vc-dock .nx-item{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; column-gap:10px; align-items:start; }
+#vc-dock .nx-item > input[type="checkbox"]{ width:20px; height:20px; margin-top:4px; }
+#vc-dock .nx-due{ padding-top:3px; }
+/* 次の一手と見取り図のもとの小さな字（.66〜.78rem）を、この窓の中では .8rem（12.8px）以上にする */
+#vc-dock .nx-why, #vc-dock .nx-due, #vc-dock .nx-due-date, #vc-dock .nx-disclaimer, #vc-dock .np-note, #vc-dock .vc-memo-time,
+#vc-dock .nxv-note, #vc-dock .nxv-mx-yl, #vc-dock .nxv-mx-xl, #vc-dock .nxv-no, #vc-dock .nxv-cnt, #vc-dock .nxv-cell-t small, #vc-dock .nxv-none,
+#vc-dock .nxv-chip, #vc-dock .nxv-chip .nxv-who, #vc-dock .nxv-cell-f, #vc-dock .nxv-rl, #vc-dock .nxv-rn, #vc-dock .nxv-legend{ font-size:.8rem; }
+#vc-dock .nx-basis, #vc-dock .nx-caution{ font-size:.84rem; }
+#vc-dock .nxv-cell.is-3 .nxv-no{ background:#8a6212; }
+@media (max-width:560px){
+#vc-dock .nx-item{ grid-template-columns:auto minmax(0, 1fr); }
+#vc-dock .nx-due{ grid-column:2; margin-left:0; padding-top:6px; }
+#vc-dock .nx-staff-row .mn-slide-lab{ flex:1 1 100%; }
+#vc-dock .vc-bar{ min-height:56px; gap:8px; }
+#vc-dock .vcu-title{ font-size:1rem; }
+#vc-dock #vc-rec{ width:44px; padding:0; }
+#vc-dock .vc-tab{ flex-direction:column; gap:4px; min-height:64px; padding:6px 2px; text-align:center; }
+#vc-dock .vct-no{ flex-basis:24px; width:24px; height:24px; font-size:.82rem; }
+#vc-dock .vct-b b{ font-size:.86rem; text-align:center; }
+#vc-dock .vct-b small{ display:none; }
+#vc-dock .vc-pane{ padding-top:14px; }
+#vc-dock .vcu-card{ padding:16px 16px 18px; border-radius:14px; }
+#vc-dock .vcu-h{ gap:10px; }
+#vc-dock .vcu-h h3{ font-size:1.04rem; }
+#vc-dock .mn-att{ grid-template-columns:minmax(0, 1fr); grid-template-rows:none; grid-auto-flow:row; }
+#vc-dock .vcu-main{ width:100%; }
+#vc-dock .vcu-tools{ margin-left:0; }
+#vc-dock .vcu-two{ grid-template-columns:minmax(0, 1fr); }
+#vc-dock .mn-doc{ padding:14px 14px; }
+#vc-dock .vcu-h{ display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:10px; }
+#vc-dock .vcu-h > div{ display:contents; }
+#vc-dock .vcu-h h3{ margin:0; }
+#vc-dock .vcu-h p{ grid-column:1 / -1; margin-top:8px; }
+#vc-dock .vcu-ex span{ padding:4px 10px; font-size:.82rem; }
+}
+/* == VCUI-CSS-END == */
 /* ---------- 1分モード／「目安のまま」の帯（2026-09-06追加） ---------- */
     .qs-note{ margin:0 0 12px; padding:9px 12px; background:var(--blue-pale); border:1.5px solid var(--blue-pale2);
       border-radius:var(--radius-sm); font-size:.8rem; line-height:1.7; color:var(--ink); }
@@ -2626,31 +2759,15 @@ input.nm-sei{ text-align:center; }
         <button class="btn btn-primary btn-sm" id="btn-save"><i class="fa-solid fa-floppy-disk"></i> 保存・読み込み</button>
         <!-- ★2026-08-18 印刷ボタンを廃止し、その位置を音声メモの入口にした（ユーザー指示）。
              右下の浮きボタンだと商談中に視界に入り続けるため、操作バーへ移した -->
-        <!-- 営業サポート（2026-09-14 ユーザー指示「営業操作項目のようなタイトルを作り、次の一手・AI師匠・商談のあとを中に格納してすっきり」）。
-             3つとも担当者専用の入口で、商談の流れに沿って上から順に使う。ボタンの id は据え置き（既存のハンドラがそのまま効く）。
-             お客様の画面（customer-mode）・PDF・印刷では出さない -->
-        <div class="sales-menu" id="sales-menu">
-          <button type="button" class="btn btn-ghost btn-sm sm-toggle" id="sales-menu-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sales-menu-pop">
-            <i class="fa-solid fa-briefcase"></i> 営業サポート <i class="fa-solid fa-chevron-down sm-chev" aria-hidden="true"></i>
-          </button>
-          <div class="sm-pop" id="sales-menu-pop" role="menu" hidden>
-            <div class="sm-head">商談の流れに沿って、上から順にお使いください</div>
-            <button type="button" class="sm-item" id="btn-next" role="menuitem">
-              <span class="sm-step">1</span>
-              <span class="sm-body"><b><i class="fa-solid fa-list-check"></i> 次の一手</b><small>商談の締めに。この家庭の数字から「次に何を提案するか」を出します</small></span>
-            </button>
-            <button type="button" class="sm-item" id="btn-after" role="menuitem">
-              <span class="sm-step">2</span>
-              <span class="sm-body"><b><i class="fa-solid fa-flag-checkered"></i> 商談のあと</b><small>商談が終わったら。概要をまとめ → スライドを作り → お客様へ送ります</small></span>
-            </button>
-            <!-- ★AI師匠の入口は外した（2026-09-24・ユーザー指示「ライフプランのAI師匠は削除」）。
-                 師匠は専用ページ（office-m リポジトリの hoken-mentor/）に一本化した。
-                 CSS（#mentor-modal …）・画面（#mentor-modal）・JS（mt*）は消していない。
-                 ここに戻せばそのまま動くが、戻すときは専用ページと中身がずれている前提で見ること。
-                 ※mtOpen() を呼ぶのはこのボタンだけだったので、外すと画面は一切開かない -->
-          </div>
-        </div>
-        <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-microphone"></i> 音声メモ</button>
+        <!-- == VCUI-MENU-BEGIN == 営業サポート（2026-10-04 組み直し・ユーザー指示「次の一手の中にパワポ作成があるので、商談のあとのところは削除」
+             「ミーティング概要と音声メモで内容が重複しているものがある。どちらかにまとめて」）。
+             前は「営業サポート」のメニュー（次の一手・商談のあと）と「音声メモ」のボタンの2つの入口が、同じ窓を開いていた。
+             入口をこのボタン1つにして、窓の中を「1 音声メモ／2 次の一手／3 ミーティング概要」のタブにした。
+             ★id は vc-open-btn のまま（録音中の合図＝「録音中」の表示と色をこのボタンが持つ。vcFabUI）。
+             ★AI師匠の入口は 2026-09-24 に外してある（ユーザー指示「ライフプランのAI師匠は削除」）。
+             お客様の画面（customer-mode）・PDF・印刷には出さない（.vc-dock と同じ規則） -->
+        <button class="btn btn-ghost btn-sm" id="vc-open-btn" hidden><i class="fa-solid fa-briefcase"></i> 営業サポート</button>
+        <!-- == VCUI-MENU-END == -->
         <!-- 共有は面談の締めの主動線なのに、入口が保存モーダルの奥にしか無かった（検証役検出）。
              ここから直接開けるようにする（ログインは不要＝共有はサーバーを使わない） -->
         <!-- 面談中に画面へ直接書き込む（丸をつける・数字を書き足す）。ユーザー指示 2026-08-19 -->
@@ -4093,56 +4210,93 @@ input.nm-sei{ text-align:center; }
        ミニ＝録音ボタン＋字幕2行／展開＝文字起こし・議事録・次の一手・メモ。
        文字起こし・議事録・次の一手はこの端末のlocalStorageのみ
        （collectState・保存データ・共有リンクには含めない＝共有3表を伸ばさない） -->
-  <section class="vc-dock no-print" id="vc-dock" data-vc-mode="mini" hidden role="region" aria-label="音声メモ・自動入力">
+  <section class="vc-dock no-print" id="vc-dock" data-vc-mode="mini" hidden role="region" aria-label="営業サポート（音声メモ・次の一手・ミーティング概要）">
+    <!-- == VCUI-TOP-BEGIN == 窓の上の帯（2026-10-04）。題名「営業サポート」・録音・閉じる。録音はどのタブからでも止められるようにここに置く -->
     <div class="vc-bar">
-      <button type="button" class="btn btn-primary" id="vc-rec" aria-label="録音して入力する" title="録音して入力する"><i class="fa-solid fa-microphone"></i> <span class="vc-lbl">録音して入力</span></button>
-      <span class="vc-elapsed" id="vc-elapsed" hidden aria-hidden="true">0:00</span>
+      <span class="vcu-title"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> 営業サポート</span>
       <!-- 状態（マイク不許可・録音終了など）は読み上げ対象にする。字幕側はライブにしない（全発話を読み上げ続けてしまう） -->
       <span class="vc-grow"><span class="vc-status" id="vc-status" role="status" aria-live="polite"></span></span>
+      <span class="vc-elapsed" id="vc-elapsed" hidden aria-hidden="true">0:00</span>
+      <button type="button" class="btn btn-primary" id="vc-rec" aria-label="録音して入力する" title="録音して入力する"><i class="fa-solid fa-microphone"></i> <span class="vc-lbl">録音して入力</span></button>
       <button type="button" class="vc-icon-btn" id="vc-expand" aria-expanded="false" aria-controls="vc-more" title="大きく表示"><i class="fa-solid fa-chevron-up"></i><span class="vc-sr">大きく表示</span></button>
-      <button type="button" class="vc-icon-btn" id="vc-close" title="音声メモを閉じる"><i class="fa-solid fa-xmark"></i><span class="vc-sr">閉じる</span></button>
+      <button type="button" class="vc-icon-btn" id="vc-close" title="閉じる"><i class="fa-solid fa-xmark"></i><span class="vc-sr">閉じる</span></button>
     </div>
 
-    <!-- 字幕（録音中は下から積み上がる。確定＝濃い文字／未確定＝薄い文字＋キャレット） -->
-    <div class="vc-cap-wrap">
-      <div class="vc-cap" id="vc-cap" hidden aria-label="文字起こし"></div>
-      <button type="button" class="vc-jump" id="vc-jump" hidden><i class="fa-solid fa-arrow-down"></i> 最新へ</button>
-    </div>
-
-    <!-- 入力欄へ反映できた内容のチップ -->
+    <!-- 入力欄へ反映できた内容のチップ（どのタブにいても、話した内容がどの欄に入ったかをここで知らせる） -->
     <div class="vc-chips" id="vc-applied" hidden></div>
+    <!-- == VCUI-TOP-END == -->
 
     <div id="vc-more">
-      <div class="vc-tabs" role="tablist" aria-label="音声メモの表示">
-        <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><i class="fa-solid fa-closed-captioning"></i> 文字起こし</button>
-        <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><i class="fa-solid fa-file-lines"></i> ミーティング概要</button>
-        <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><i class="fa-solid fa-list-check"></i> 次の一手</button>
-        <button type="button" id="vc-tab-memo"    class="vc-tab" role="tab" data-vc-tab="memo"    aria-selected="false" aria-controls="vc-pane-memo"><i class="fa-solid fa-note-sticky"></i> メモ</button>
+      <!-- == VCUI-PANES-BEGIN == タブと「音声メモ」「ミーティング概要」（2026-10-04 組み直し）。
+           ★印のあいだは apply_lifeplan_vc.py が作り直す。商談記録の塊（MEETLOG-HTML）と LPSLIDE-C は中に入れたまま写す。
+           ★タブの id・data-vc-tab は前のまま（cap＝音声メモ／next＝次の一手／minutes＝ミーティング概要）。前の「メモ」のタブ（memo）は音声メモへ読み替える -->
+      <div class="vc-tabs" role="tablist" aria-label="営業サポートの表示">
+        <button type="button" id="vc-tab-cap"     class="vc-tab" role="tab" data-vc-tab="cap"     aria-selected="true"  aria-controls="vc-pane-cap"><span class="vct-no" aria-hidden="true">1</span><span class="vct-b"><b>音声メモ</b><small>商談中に</small></span></button>
+        <button type="button" id="vc-tab-next"    class="vc-tab" role="tab" data-vc-tab="next"    aria-selected="false" aria-controls="vc-pane-next"><span class="vct-no" aria-hidden="true">2</span><span class="vct-b"><b>次の一手</b><small>商談の締めに</small></span></button>
+        <button type="button" id="vc-tab-minutes" class="vc-tab" role="tab" data-vc-tab="minutes" aria-selected="false" aria-controls="vc-pane-min"><span class="vct-no" aria-hidden="true">3</span><span class="vct-b"><b><span class="vct-nw">ミーティング</span><span class="vct-nw">概要</span></b><small>商談のあと</small></span></button>
       </div>
 
-      <!-- 文字起こしタブ：行をタップ→下の欄で直して反映 -->
+      <!-- 音声メモのタブ（前の「文字起こし」と「メモ」を1つにした）。上から＝話して入力する／文字起こし／メモ／ご注意 -->
       <div class="vc-pane" id="vc-pane-cap" role="tabpanel" aria-labelledby="vc-tab-cap">
-        <div class="vc-edit-row">
-          <input type="text" id="vc-manual" placeholder="行をタップして直す／打ち込みでもOK（例：食費7万円）" autocomplete="off" aria-label="認識結果を直して反映">
-          <button type="button" class="btn btn-primary btn-sm" id="vc-manual-go">反映</button>
-        </div>
-        <div class="vc-tools">
-          <label class="vc-auto"><input type="checkbox" id="vc-show-cap"> 文字起こしを画面に表示する</label>
-          <label class="vc-auto"><input type="checkbox" id="vc-auto" checked> 話した内容を自動で入力欄に反映する</label>
-          <button type="button" class="btn btn-ghost btn-sm" id="vc-apply-all"><i class="fa-solid fa-arrow-right-to-bracket"></i> 話した内容をまとめて入力欄に入れ直す</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="vc-clear"><i class="fa-solid fa-eraser"></i> 文字起こしを消す</button>
-        </div>
-        <details class="ic-fold vc-help">
-          <summary><i class="fa-solid fa-circle-info"></i> 使える言い方の例・ご注意</summary>
-          <p class="hint" style="display:block; margin-top:8px;">「<b>食費7万円</b>」「<b>電気1万2千円</b>」「<b>年収550万</b>」「<b>預貯金500万</b>」「<b>住宅ローン5000万円</b>」「<b>金利0.95％</b>」「<b>返済期間35年</b>」「<b>妻の年収300万</b>」のように、<b>項目名＋数字</b>で話すと該当欄へ自動入力します。「、」で区切れば一度に複数もOK。自動で反映したくないときは上のチェックを外してください。</p>
-          <p class="hint" style="display:block; margin-top:8px;">※ <b>文字起こしは画面に出しません</b>（既定）。お客様と画面を見ながらの面談で読まれてしまわないようにするためです。録音した内容は端末内に残り、「ミーティング概要」や発言メモとして<b>振り返りに使えます</b>。面談後などに読みたいときは上のチェックを入れてください。</p>
-          <p class="hint" style="display:block; margin-top:8px;">※ 音声はお使いの<b>ブラウザ／OSの音声認識機能</b>で文字に変換されます（端末の設定によっては提供元のサーバーを経由して処理されます）。このツール自体が音声を保存・外部送信することはありません。<br>※ 文字起こし・概要は<b>この端末のブラウザ内にのみ</b>保存され（最後の更新から2週間を過ぎると、次に開いたときに自動削除）、お客様データの保存・共有リンクには含まれません。メモは「文字起こしを消す」では消えず、この端末に残ります（各メモのゴミ箱ボタンで削除できます）。</p>
-        </details>
+        <section class="vcu-card" aria-labelledby="vcu-h-talk">
+          <div class="vcu-h"><span class="vcu-ic" aria-hidden="true"><i class="fa-solid fa-microphone"></i></span><div>
+            <h3 id="vcu-h-talk">話して入力する</h3>
+            <p>右上の<b>「録音して入力」</b>（マイクのボタン）を押して、<b>項目名＋数字</b>で話すと、その欄に入ります。「、」で区切れば一度に複数もOK。</p></div></div>
+          <div class="vcu-ex" aria-label="使える言い方の例">
+            <span>食費7万円</span><span>電気1万2千円</span><span>年収550万</span><span>預貯金500万</span><span>住宅ローン5000万円</span><span>金利0.95％</span><span>返済期間35年</span><span>妻の年収300万</span>
+          </div>
+          <span class="vcu-lab">打ち込んで入れる・直す</span>
+          <div class="vc-edit-row">
+            <input type="text" id="vc-manual" placeholder="例：食費7万円" autocomplete="off" aria-label="打ち込んで入れる・認識結果を直して反映">
+            <button type="button" class="btn btn-primary btn-sm" id="vc-manual-go">反映</button>
+          </div>
+          <div class="vcu-opts">
+            <label class="vc-auto"><input type="checkbox" id="vc-auto" checked> 話した内容を自動で入力欄に反映する</label>
+            <button type="button" class="btn btn-ghost btn-sm" id="vc-apply-all"><i class="fa-solid fa-arrow-right-to-bracket"></i> 話した内容をまとめて入力欄に入れ直す</button>
+          </div>
+          <p class="vcu-hint">自動で反映したくないときは、上のチェックを外してください。</p>
+        </section>
+
+        <section class="vcu-card" aria-labelledby="vcu-h-cap">
+          <div class="vcu-h"><span class="vcu-ic" aria-hidden="true"><i class="fa-solid fa-closed-captioning"></i></span><div>
+            <h3 id="vcu-h-cap">文字起こし</h3>
+            <p>録音した発言です。「ミーティング概要」を作るときの材料になります。行を押すと、上の「打ち込んで入れる・直す」の欄で直せます。</p></div></div>
+          <label class="vc-auto vcu-toggle"><input type="checkbox" id="vc-show-cap"> 文字起こしを画面に表示する</label>
+          <p class="vcu-hint">※ <b>文字起こしは画面に出しません</b>（既定）。お客様と画面を見ながらの面談で読まれてしまわないようにするためです。録音した内容は端末内に残り、「ミーティング概要」の材料として振り返りに使えます。面談後などに読みたいときは上のチェックを入れてください。</p>
+          <!-- 字幕（録音中は下から積み上がる。確定＝濃い文字／未確定＝薄い文字＋キャレット） -->
+          <div class="vc-cap-wrap">
+            <div class="vc-cap" id="vc-cap" hidden aria-label="文字起こし"></div>
+            <button type="button" class="vc-jump" id="vc-jump" hidden><i class="fa-solid fa-arrow-down"></i> 最新へ</button>
+          </div>
+          <div class="vcu-opts">
+            <button type="button" class="btn btn-ghost btn-sm" id="vc-clear"><i class="fa-solid fa-eraser"></i> 文字起こしを消す</button>
+          </div>
+        </section>
+
+        <section class="vcu-card" aria-labelledby="vcu-h-memo">
+          <div class="vcu-h"><span class="vcu-ic" aria-hidden="true"><i class="fa-solid fa-note-sticky"></i></span><div>
+            <h3 id="vcu-h-memo">メモ</h3>
+            <p>どの欄か分からなかった内容や、面談中の気づきを残せます（この端末にのみ保存）。入力欄に入らなかった発言や打ち込みは、上に出る<b>「メモに残す」</b>でここへ入ります。</p></div></div>
+          <div class="vc-memos" id="vc-memos"></div>
+        </section>
+
+        <!-- ご注意は畳まない（前は「使える言い方の例・ご注意」の中に畳んであった） -->
+        <aside class="vcu-note" aria-label="ご注意">
+          <p class="vcu-note-h"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ご注意</p>
+          <p>※ 音声はお使いの<b>ブラウザ／OSの音声認識機能</b>で文字に変換されます（端末の設定によっては提供元のサーバーを経由して処理されます）。このツール自体が音声を保存・外部送信することはありません。</p>
+          <p>※ 文字起こし・概要は<b>この端末のブラウザ内にのみ</b>保存され（最後の更新から2週間を過ぎると、次に開いたときに自動削除）、お客様データの保存・共有リンクには含まれません。メモは「文字起こしを消す」では消えず、この端末に残ります（各メモのゴミ箱ボタンで削除できます）。</p>
+          <p>※ 録音するのは、この端末のマイクに入った音だけです。Web会議でイヤホン・ヘッドセットをお使いのときは、相手の方の声は入りません（スピーカーのときも、入らないことがあります）。話している人の区別も付きません。</p>
+        </aside>
       </div>
 
-      <!-- ミーティング概要タブ（番号＋テーマ／リード語: 本文） -->
+      <!-- ミーティング概要のタブ（2026-10-04 組み直し）。①ご出席と商談記録 ②概要を作る ③資料にして、お客様へ -->
       <div class="vc-pane" id="vc-pane-min" role="tabpanel" aria-labelledby="vc-tab-minutes" hidden>
-        <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる） -->
+        <section class="vcu-card vcu-rec" aria-labelledby="vcu-h-rec">
+          <div class="vcu-h"><span class="vcu-no" aria-hidden="true">1</span><div>
+            <h3 id="vcu-h-rec">ご出席と商談記録</h3>
+            <p>ご出席・次回の予定と、いつ・どこで商談したかを残します（監査のときに見返せます）。</p></div></div>
+        <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる）。
+             ★この div の閉じタグの直後が apply_lifeplan_meetlog.py の差し込み口。中身と書き方を変えない（見た目は CSS で並べる） -->
         <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off">
           <label for="mn-next-date">次回</label><input type="text" id="mn-next-date" placeholder="例：9/1（月）19時〜 オンライン" autocomplete="off"></div>
         <!-- == MEETLOG-HTML-BEGIN == 商談記録（2026-09-25 ユーザー指示「商談記録として何月何日にどこで商談をしたか
@@ -4175,55 +4329,67 @@ input.nm-sei{ text-align:center; }
           </details>
         </section>
         <!-- == MEETLOG-HTML-END == -->
-        <div class="vc-tools">
-          <button type="button" class="btn btn-primary btn-sm" id="mn-build"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="mn-copy"><i class="fa-solid fa-copy"></i> コピー</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="mn-dl"><i class="fa-solid fa-download"></i> .txtで保存</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="mn-big"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> 大きく開く</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
-        </div>
+        </section>
 <!-- == LPSLIDE-C-BEGIN == -->
-        <!-- 商談のあと（2026-09-13 ユーザー指示「商談後は概要をもとにパワポを作成し、お客様に振り返りツールとして送る流れ。
-             見た目はお客様目線、使い方は営業マン目線」）。①概要 ②スライド ③お客様へ、を1つの帯にした。
-             ★上の行（コピー／.txt／大きく開く／1つ前）は概要そのものの道具。ここは商談のあとの本線 -->
-        <div class="mn-after" id="mn-after">
-          <div class="mn-after-h"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> 商談のあとの流れ <small>ご入力と試算だけで作れます（録音はあれば使う、くらいで大丈夫です）</small></div>
-          <!-- まとめる範囲（2026-09-14 ユーザー指示「現状のものだけで概要を作るか、将来も含めた概要にするのかも
-               選択できるように」）。初回は現状の整理まで、次回に運用のご提案を足す進め方に合わせている -->
-          <div class="mn-step mn-range">
-            <span class="mn-step-t">まとめる範囲</span>
-            <span class="mn-step-b">
-              <button type="button" class="btn btn-sm mn-rg is-on" id="mn-range-now" aria-pressed="true">現状だけ</button>
-              <button type="button" class="btn btn-sm mn-rg" id="mn-range-mirai" aria-pressed="false">将来も含める</button>
+        <!-- ②概要を作る ③資料にして、お客様へ（2026-10-04 組み直し・ユーザー指示「ミーティング概要と音声メモで内容が重複しているものがある。
+             どちらかにまとめて」「見やすさを重視し、内容を大幅に修正」）。前の「概要の道具の行」と「商談のあとの流れ」の帯を、この2枚に1本化した。
+             「概要を作る」は1つだけ（前は2つ）。「次の一手を見る」はタブにあるので外した。「大きく開く」は窓が既に全画面なので外した。
+             ★id は前のまま（mn-build・mn-copy・mn-dl・mn-undo・mn-range-*・mn-pptx・mn-nlm・mn-howto・mn-share・mn-pdf・mn-out）。
+             ★湘建版（oneroom）・控えには写さない（apply_lifeplan_slide.py が C を飛ばす。前の作りの行と id が重なるため） -->
+        <div class="vcu-after" id="mn-after">
+          <section class="vcu-card" aria-labelledby="vcu-h-build">
+            <div class="vcu-h"><span class="vcu-no" aria-hidden="true">2</span><div>
+              <h3 id="vcu-h-build">概要を作る</h3>
+              <p>ご入力と試算だけで作れます（録音はあれば使う、くらいで大丈夫です）。出てきた文章は、そのまま直せます。</p></div></div>
+            <!-- まとめる範囲（2026-09-14 ユーザー指示「現状のものだけで概要を作るか、将来も含めた概要にするのかも
+                 選択できるように」）。初回は現状の整理まで、次回に運用のご提案を足す進め方に合わせている -->
+            <div class="vcu-range">
+              <span class="vcu-lab">まとめる範囲</span>
+              <span class="vcu-seg" role="group" aria-label="まとめる範囲">
+                <button type="button" class="btn btn-sm mn-rg is-on" id="mn-range-now" aria-pressed="true">現状だけ</button>
+                <button type="button" class="btn btn-sm mn-rg" id="mn-range-mirai" aria-pressed="false">将来も含める</button>
+              </span>
               <span class="mn-range-n" id="mn-range-note">現状プランの数字だけをまとめます。運用のご提案はまだ入りません。</span>
-            </span>
-          </div>
-          <div class="mn-step">
-            <span class="mn-step-no">1</span><span class="mn-step-t">概要を作る</span>
-            <span class="mn-step-b">
-              <button type="button" class="btn btn-primary btn-sm" id="mn-build2"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="mn-next2"><i class="fa-solid fa-list-check"></i> 次の一手を見る</button>
-            </span>
-          </div>
-          <div class="mn-step">
-            <span class="mn-step-no">2</span><span class="mn-step-t">スライドにする</span>
-            <span class="mn-step-b">
-              <button type="button" class="btn btn-primary btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="mn-howto"><i class="fa-solid fa-circle-play"></i> 使い方</button>
-            </span>
-          </div>
-          <div class="mn-step">
-            <span class="mn-step-no">3</span><span class="mn-step-t">お客様へ送る</span>
-            <span class="mn-step-b">
-              <button type="button" class="btn btn-primary btn-sm" id="mn-share"><i class="fa-solid fa-share-nodes"></i> 共有リンクを作る</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="mn-pdf"><i class="fa-regular fa-file-pdf"></i> PDFを作る</button>
-            </span>
-          </div>
+            </div>
+            <div class="vcu-row">
+              <button type="button" class="btn btn-primary vcu-main" id="mn-build"><i class="fa-solid fa-wand-magic-sparkles"></i> 概要を作る</button>
+              <span class="vcu-tools">
+                <button type="button" class="btn btn-ghost btn-sm" id="mn-copy"><i class="fa-solid fa-copy"></i> コピー</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="mn-dl"><i class="fa-solid fa-download"></i> .txtで保存</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="mn-undo"><i class="fa-solid fa-rotate-left"></i> 1つ前に戻す</button>
+              </span>
+            </div>
+            <div id="mn-out"></div>
+          </section>
+
+          <section class="vcu-card" aria-labelledby="vcu-h-send">
+            <div class="vcu-h"><span class="vcu-no" aria-hidden="true">3</span><div>
+              <h3 id="vcu-h-send">資料にして、お客様へ</h3>
+              <p>商談が終わったら、振り返りの資料にしてお渡しします。</p></div></div>
+            <div class="vcu-two">
+              <div class="vcu-grp">
+                <h4><i class="fa-regular fa-file-powerpoint" aria-hidden="true"></i> スライドにする
+                  <button type="button" class="btn btn-ghost btn-sm vcu-howto" id="mn-howto"><i class="fa-solid fa-circle-play"></i> 使い方</button></h4>
+                <p>②の概要をもとに作ります。Gemini Notebook は、渡す中身を確かめてから開きます。</p>
+                <div class="vcu-btns">
+                  <button type="button" class="btn btn-primary btn-sm" id="mn-pptx"><i class="fa-regular fa-file-powerpoint"></i> パワポで保存</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="mn-nlm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Gemini Notebookで作る</button>
+                </div>
+              </div>
+              <div class="vcu-grp">
+                <h4><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> お客様へ送る</h4>
+                <p>試算の画面を、共有リンクかPDFでお渡しします。</p>
+                <div class="vcu-btns">
+                  <button type="button" class="btn btn-primary btn-sm" id="mn-share"><i class="fa-solid fa-share-nodes"></i> 共有リンクを作る</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="mn-pdf"><i class="fa-regular fa-file-pdf"></i> PDFを作る</button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
         <!-- == LPSLIDE-C-END == -->
-        <div id="mn-out"></div>
       </div>
+      <!-- == VCUI-PANES-END == -->
 
       <!-- 次の一手タブ（2026-08-18に一度削除→同日ユーザー指示で復活・提案検討メモを追加）。
            上＝お客様に見せてよい宿題リスト（コピーはLINE・メールで渡りうる前提の文言）。
@@ -4261,11 +4427,13 @@ input.nm-sei{ text-align:center; }
         </div>
       </div>
 
-      <!-- メモタブ -->
-      <div class="vc-pane" id="vc-pane-memo" role="tabpanel" aria-labelledby="vc-tab-memo" hidden>
-        <p class="hint" style="display:block; margin:2px 0 6px;">どの欄か分からなかった内容や、面談中の気づきを残せます（この端末にのみ保存）。</p>
-        <div class="vc-memos" id="vc-memos"></div>
+      <!-- == VCUI-TAIL-BEGIN == 前の「メモ」のタブは「音声メモ」のタブの中へ入れた（2026-10-04）。
+           ここは次の一手のタブの下にだけ出す「次へ」の帯（#vc-pane-next が出ているときだけ見える＝CSS の + で決める） -->
+      <div class="vcu-nextfoot">
+        <p><b>商談が終わったら</b>「3 ミーティング概要」で、概要づくり → スライド（パワポ・Gemini Notebook）→ お客様への送付まで進めます。</p>
+        <button type="button" class="btn btn-primary btn-sm" id="vcu-go-min"><i class="fa-solid fa-arrow-right"></i> ミーティング概要へ</button>
       </div>
+      <!-- == VCUI-TAIL-END == -->
     </div>
   </section>
 
@@ -4383,8 +4551,8 @@ input.nm-sei{ text-align:center; }
         </video>
         <p class="nlm-card-p" style="margin-top:12px;"><b>このツールの中でやること</b>（番号は動画の字幕と同じです）</p>
         <ol class="nlm-howto-steps">
-          <li>上の帯の<b>「営業サポート」</b>を開きます。<span class="hint" style="display:inline;">（上の帯に無い版は「音声メモ」→「ミーティング概要」）</span></li>
-          <li><b>「商談のあと」</b>を選びます。記録の板が開き、「商談のあとの流れ」が出ます。</li>
+          <li>上の帯の<b>「営業サポート」</b>を押します。<span class="hint" style="display:inline;">（上の帯に無い版は「音声メモ」）</span></li>
+          <li><b>「3 ミーティング概要」</b>のタブを選びます。「概要を作る」と「資料にして、お客様へ」が出ます。</li>
           <li><b>「概要を作る」</b>を押します。録音が無くても、ご入力と試算から作れます。</li>
           <li><b>「Gemini Notebookで作る」</b>を押すと、この画面が開きます。持っていくものは①と②の2つです。</li>
           <li><b>①「テキストで保存」</b>。Gemini Notebook に入れるファイル（ソース）ができます。</li>
@@ -10081,7 +10249,7 @@ input.nm-sei{ text-align:center; }
           const d = new Date(m.t);
           const ts = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
           return `<div class="vc-memo"><span class="vc-memo-time">${ts}</span><span class="vc-memo-text">${esc(m.x)}</span><button type="button" class="vc-memo-del" data-vc-del="${i}" title="削除"><i class="fa-solid fa-trash-can"></i></button></div>`;
-        }).join('') : `<div class="vc-memo-empty">まだメモはありません。録音した内容や気づきをここに残せます。</div>`;
+        }).join('') : `<div class="vc-memo-empty">まだメモはありません。入力欄に入らなかった発言や打ち込みは、「メモに残す」でここに残せます。</div>`;
       }
       panel.addEventListener('click', (e)=>{
         const del = e.target.closest('[data-vc-del]');
@@ -10147,7 +10315,7 @@ input.nm-sei{ text-align:center; }
         const div = document.createElement('div');
         div.className = 'vc-cap-line';
         if(panel.dataset.vcMode === 'open'){ div.setAttribute('role','button'); div.tabIndex = 0; }
-        div.title = 'タップすると下の欄に入り、直してから反映できます';
+        div.title = 'タップすると「打ち込んで入れる・直す」の欄に入り、直してから反映できます';
         div.innerHTML = vcCapLineHTML(text, ms);
         if(capInterim && capInterim.parentNode===cap) cap.insertBefore(div, capInterim);
         else cap.appendChild(div);
@@ -10179,7 +10347,7 @@ input.nm-sei{ text-align:center; }
           return;
         }
         cap.innerHTML = mnUtter.slice(-200).map(function(u){
-          return '<div class="vc-cap-line" title="タップすると下の欄に入り、直してから反映できます">' + vcCapLineHTML(u.x, u.t) + '</div>';
+          return '<div class="vc-cap-line" title="タップすると「打ち込んで入れる・直す」の欄に入り、直してから反映できます">' + vcCapLineHTML(u.x, u.t) + '</div>';
         }).join('');
         cap.hidden = !vcCapVisible(); capStick = true; vcCapInteractive(panel.dataset.vcMode === 'open'); vcCapFollow();
       }
@@ -10240,9 +10408,9 @@ input.nm-sei{ text-align:center; }
         // 経過時間は出さない（ユーザー指示 2026-08-18）。毎秒の書き換えも避ける
         const html = on
           ? '<i class="fa-solid fa-microphone"></i> 録音中'
-          : '<i class="fa-solid fa-microphone"></i> 音声メモ';
+          : '<i class="fa-solid fa-briefcase"></i> 営業サポート';   // 2026-10-04 入口を1つにした（録音中は「録音中」）
         if(fab.innerHTML !== html) fab.innerHTML = html;
-        fab.setAttribute('aria-label', on ? '録音中です。押すと音声メモを開きます' : '音声メモを開く');
+        fab.setAttribute('aria-label', on ? '録音中です。押すと営業サポート（音声メモ）を開きます' : '営業サポートを開く（音声メモ・次の一手・ミーティング概要）');
       }
       function vcRecUI(on){
         if(!recBtn) return;
@@ -10847,9 +11015,7 @@ input.nm-sei{ text-align:center; }
         h += '</div>';
         // 注記は contenteditable の外に置く＝手直ししても消えない
         h += '<div class="mn-notes">' + mnNotesForHTML(h).map(function(n){ return '<p>※ ' + esc(n) + '</p>'; }).join('') + '</div>';
-        h += '<details class="mn-raw"><summary><i class="fa-solid fa-list-ul"></i> 発言メモ（文字起こし全文 ' + model.rawLines.length + '行）</summary>'
-           + model.rawLines.map(function(r){ return '<p><span class="mn-t">' + esc(r.time) + '</span>' + esc(r.x) + '</p>'; }).join('')
-           + '</details>';
+        /* 2026-10-04 発言メモ（文字起こし全文）は概要の中に出さない。「音声メモ」のタブの文字起こしと同じものなので、そちらに一本化した */
         return h;
       }
       // コピー・保存用のテキスト（手直しした内容＋次の一手＋注記。注記は必ず付ける）
@@ -11235,7 +11401,7 @@ input.nm-sei{ text-align:center; }
         let f = [];
         try{ f = mnFactsSecs(); }catch(e){ f = []; }
         if(!f.length) return '<p class="mn-item mn-empty">まとめられる中身がまだありません。'
-          + '入力欄をご記入いただくか、録音するか、下の欄に打ち込んでから「概要を作る」を押してください。</p>';
+          + '入力欄をご記入いただくか、録音するか打ち込んで入れてから「概要を作る」を押してください。</p>';
         let h = '<p class="mn-src"><i class="fa-solid fa-keyboard" aria-hidden="true"></i>'
               + 'ご入力いただいた内容と試算から、<b>'
               + (mnRange() === 'mirai' ? 'いまと、これからの見通し' : 'いまの状況') + '</b>をまとめました。'
@@ -12589,7 +12755,7 @@ input.nm-sei{ text-align:center; }
       }
       function vcSetTab(t){
         const map = { cap:'vc-pane-cap', minutes:'vc-pane-min', next:'vc-pane-next', memo:'vc-pane-memo' };
-        if(!map[t]) t = 'cap';
+        if(t === 'memo' || !map[t]) t = 'cap';   // 2026-10-04 前の「メモ」のタブは「音声メモ」のタブの中へ入れた
         document.querySelectorAll('.vc-tab').forEach(function(b){
           const on = (b.dataset.vcTab===t);
           b.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -12597,7 +12763,7 @@ input.nm-sei{ text-align:center; }
         });
         Object.keys(map).forEach(function(k){ const el = $(map[k]); if(el) el.hidden = (k!==t); });
         if(panel.dataset.vcMode !== 'open') vcSetMode('open');
-        if(t==='memo') renderVcMemos();
+        if(t==='cap') renderVcMemos();   // メモは「音声メモ」のタブの中（2026-10-04）
         vcCapSync();   // 字幕枠は「文字起こし」タブのときだけ出す（タブ切替に追従）
         vcSaveUI(); vcSyncDockH();
       }
@@ -13210,6 +13376,34 @@ input.nm-sei{ text-align:center; }
         vcSyncDockH();
         const a = $('mn-after'); if(a && a.scrollIntoView) setTimeout(()=> a.scrollIntoView({ block:'nearest' }), 80);
       });
+/* == VCUI-JS-BEGIN == */
+      /* 2026-10-04 入口を「営業サポート」1つにした（前は「音声メモ」のボタンと、営業サポートのメニューの「次の一手」「商談のあと」）。
+         次の一手のタブを開いたとき、まだ中身が無ければその場で作る（前は「次の一手」の入口が作っていた） */
+      function vcuEnsureNext(){
+        if(panel.hidden) return;
+        const t = document.querySelector('.vc-tab[aria-selected="true"]');
+        if(!t || t.dataset.vcTab !== 'next') return;
+        const box = $('next-actions');
+        if(box && !box.innerHTML.trim()) nxRun();
+      }
+      fab.addEventListener('click', vcuEnsureNext);
+      if($('vc-tab-next')){
+        $('vc-tab-next').addEventListener('click', vcuEnsureNext);
+        $('vc-tab-next').addEventListener('focus', ()=> setTimeout(vcuEnsureNext, 0));   // ←→ で移ったとき
+      }
+      /* 「概要を作る」を押したら、出てきた概要が見える所まで送る（ボタンの行をタブのすぐ下へ） */
+      if($('mn-build')) $('mn-build').addEventListener('click', ()=> setTimeout(()=>{
+        const m = $('vc-more'), r = document.querySelector('#mn-after .vcu-row'), tb = document.querySelector('#vc-dock .vc-tabs');
+        if(!m || !r || !$('mn-doc')) return;
+        const top = m.scrollTop + r.getBoundingClientRect().top - m.getBoundingClientRect().top - (tb ? tb.offsetHeight : 0) - 12;
+        try{ m.scrollTo({ top: Math.max(0, top), behavior:'smooth' }); }catch(e){ m.scrollTop = Math.max(0, top); }
+      }, 60));
+      /* 次の一手の下の「ミーティング概要へ」。タブを押したのと同じ動き（商談日の欄を今日に戻す処理もそちらに付いている） */
+      if($('vcu-go-min')) $('vcu-go-min').addEventListener('click', ()=>{
+        const t = $('vc-tab-minutes'); if(t) t.click();
+        const m = $('vc-more'); if(m) m.scrollTop = 0;
+      });
+      /* == VCUI-JS-END == */
       $('vc-close').addEventListener('click', ()=>{
         vcStopRec();
         panel.hidden = true;

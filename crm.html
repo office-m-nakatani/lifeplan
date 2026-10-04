@@ -16,9 +16,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Office-M 顧客管理｜保険営業CRM（ライフプラン連携）</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232c5d8f'/><path d='M20 44 V28 l12-9 12 9 v16 h-8 v-10 h-8 v10 z' fill='%23f6c84c'/></svg>" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="vendor/fonts/fonts.css" />
+  <link rel="stylesheet" href="vendor/fa/fa.css" />
   <style>
     :root{
       --bg:#eef2f6; --card:#ffffff; --ink:#243342; --ink-soft:#5b6b7d; --line:#d9e2ec;
@@ -600,6 +599,8 @@ function renderLp(){
     return `<div class="item-row"><div class="ir-head"><b>${esc(l.name)}</b><span class="chip">${esc(l.tool)}</span><span class="ir-meta">${esc(l.acct)}・${l.t?dstr(l.t):''}</span>
       <button class="btn btn-line btn-sm lp-link" style="margin-left:auto;" ${done?'disabled':''} data-k='${esc(JSON.stringify(l))}'>${done?'紐付け済み':'この顧客に紐付け'}</button></div></div>`;
   }).join('') : '<p class="muted">保存データが見つかりません。ライフプランツール側で保存すると表示されます。</p>';
+  /* 2026-10-04 一条版・汎用版の保存は暗号化（apply_lifeplan_vault.py）。中身を読めないので一覧には出ない */
+  $('lp-all').insertAdjacentHTML('beforeend', '<p class="muted">一条版・汎用版の保存は、パスワードから作った鍵で暗号化しているため、この一覧には出ません。ライフプランで保存すると、同じお名前の顧客に自動で結び付きます。</p>');
   $('lp-all').querySelectorAll('.lp-link').forEach(b=> b.onclick=()=>{
     const l = JSON.parse(b.dataset.k);
     cur.lifeplans = cur.lifeplans||[]; cur.lifeplans.push(l);
@@ -638,7 +639,7 @@ const extOf = n => { const m=/\.([A-Za-z0-9]{1,5})$/.exec(n||''); return m ? m[1
 const fileExt = rec => extOf(rec.name) || MIME_EXT[rec.type] || '';
 const dlName = rec => { const e=extOf(rec.name); if(e) return rec.name; const m=MIME_EXT[rec.type]; return m ? rec.name+'.'+m : rec.name; };
 const viewable = rec => { const e=fileExt(rec); return /^(pdf|png|jpg|jpeg|gif|webp|svg|txt)$/.test(e) || /^(image\/|application\/pdf|text\/plain)/.test(rec.type||''); };
-const fileIco = rec => { const e=fileExt(rec); return e==='pdf'?'fa-file-pdf':/pptx?/.test(e)?'fa-file-powerpoint':/docx?/.test(e)?'fa-file-word':/xlsx?|csv/.test(e)?'fa-file-excel':/png|jpe?g|gif|webp|svg|heic/.test(e)?'fa-file-image':'fa-file'; };
+const fileIco = rec => { const e=fileExt(rec); return e==='pdf'?'fa-file':/pptx?/.test(e)?'fa-file-powerpoint':/docx?/.test(e)?'fa-file-word':/xlsx?|csv/.test(e)?'fa-file-excel':/png|jpe?g|gif|webp|svg|heic/.test(e)?'fa-file-image':'fa-file'; };
 // blobを開く（PDF・画像・テキストは新規タブ表示、それ以外は正しい拡張子でダウンロード）
 async function openStored(id){
   const rec = await fileGet(id); if(!rec) return;

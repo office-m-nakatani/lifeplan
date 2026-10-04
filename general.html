@@ -4581,7 +4581,7 @@ input.nm-sei{ text-align:center; }
               <p class="mt-note" id="mts-books"></p></div>
             <div class="mt-span"><label>趣味・嗜好・大事にしていること（1行1つ）</label>
               <textarea id="mts-likes" placeholder="例：筋トレ／健康管理／正統派・シンプル／歩く"></textarea></div>
-            <div class="mt-span"><label>この師匠の考え方・口ぐせ（1行1つ。相談への返事に混ざります）</label>
+            <div class="mt-span"><label>この師匠の考え方・社長の伝えたいこと（1行1つ。相談への返事に混ざります）</label>
               <textarea id="mts-lines" placeholder="例：先に言ったら説明、聞かれて答えたら言い訳"></textarea></div>
           </div>
           <div class="vc-tools" style="margin-top:8px;">
@@ -16706,9 +16706,9 @@ input.nm-sei{ text-align:center; }
         else if(fp[0] && fp[0].line) keyUsed = fp[0].line;
         /* 知識の一言は、暮らしの相談では暮らし向けの群（jinsei/shinri/kinyu）のものだけ（本の一言は営業向けの言い方） */
         else if(know[0] && know[0].lines && know[0].lines.length && (!lifeMode || /^(jinsei|shinri|kinyu)$/.test(know[0].kind))) keyUsed = mtFreshLine(know[0].lines);
-        if(keyUsed) h += mtKeyHTML(keyUsed, 'これだけは');/* KATA-LINE-BEGIN ★社長の口ぐせを、これだけはの直後に必ず1行置く（2026-09-17）。もともと締めに50%でしか出ていなかった。これがカタツギの中核なので、書いてあれば毎回出す。★赤（これだけは）は増やさない。青い引用として1行だけ */
+        if(keyUsed) h += mtKeyHTML(keyUsed, 'これだけは');/* KATA-LINE-BEGIN ★社長の伝えたいことを、これだけはの直後に必ず1行置く（2026-09-17）。もともと締めに50%でしか出ていなかった。これがカタツギの中核なので、書いてあれば毎回出す。★赤（これだけは）は増やさない。青い引用として1行だけ */
         try{ var _kt = (P.lines || []).filter(Boolean);
-          if(_kt.length) h += mtSayHTML(mtFill(mtFreshLine(_kt), P), '社長の口ぐせ');
+          if(_kt.length) h += mtSayHTML(mtFill(mtFreshLine(_kt), P), '社長の伝えたいこと');
         }catch(e){}
         /* KATA-LINE-END */
       }
@@ -16897,7 +16897,7 @@ input.nm-sei{ text-align:center; }
         if(!brief && !kick) h += mtSenakaHTML(main, tone);
         h += mtOkuriHTML(tone, brief);
       } else {
-        // 一言（上長の口ぐせがあれば優先）
+        // 一言（上長の伝えたいことがあれば優先）
         const custom = (P.lines || []).filter(Boolean);
         const closer = (custom.length && Math.random() < 0.5) ? mtFreshLine(custom) : mtFreshLine(MT_CLOSERS[tone] || MT_CLOSERS.shisho);
         /* 2026-09-12：「一言」は見出し＋平文ではなく、師匠の吹き出し「今日の一言」で（ユーザー指示） */

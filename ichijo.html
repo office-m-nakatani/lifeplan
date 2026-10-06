@@ -1016,6 +1016,20 @@ background:#fff; padding:0; overflow:visible;
       /* ペア表示中は1枚目の「次へ」を隠す（2枚目の下の1つだけ残す。スマホの縦積みでも同じ） */
       body.tab-mode:not(.pdf-mode) #input-panel.pair-2 .acc.view-active:has(~ .acc.view-active) .sec-next{ display:none; }
     }
+/* LPRENT-CSS-BEGIN 2026-10-06 住まいが「賃貸のまま」のとき、PC で右の列だけが短く空くのを直す。
+   住まいを上に横いっぱいの1段、ご家族を横いっぱいにして中を2列に流す。
+   ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_rentbal.py。ここを手で直さない */
+@media screen and (min-width:1000px){
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active){ grid-template-columns:minmax(0,1fr); gap:18px; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"]{ order:-1; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 32px; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body > *{ min-width:0; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body > .field{ margin-bottom:0; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body{ column-count:2; column-gap:36px; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body > *{ break-inside:avoid; }
+body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body > .subgroup:has(#children-list){ break-before:column; margin-top:0 !important; }
+}
+/* LPRENT-CSS-END */
     /* 入力のペア表示（2026-08-17）：PC幅では2セクションを左右に並べ、1画面で見渡せるようにする。
        スマホ（<1000px）は従来どおり縦積み。1セクションだけのとき（単身の団信のみ等）は pair-2 が付かず中央1カラムのまま */
     @media screen and (min-width:1000px){

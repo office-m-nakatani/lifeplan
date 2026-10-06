@@ -1709,15 +1709,53 @@ body.ink-on .plan-wrap{ z-index:97 !important; }
 #vc-dock .vcu-note p + p{ margin-top:6px; }
 #vc-dock .vcu-note .vcu-note-h{ margin-bottom:6px; font-weight:800; color:var(--ink); }
 #vc-dock .vcu-note .vcu-note-h i{ color:var(--blue-deep); }
-#vc-dock .mn-att{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-template-rows:auto auto; grid-auto-flow:column; gap:6px 16px; margin:0; }
+#vc-dock .mn-att{ display:grid; grid-template-columns:minmax(0, 1fr); grid-auto-flow:row; gap:6px; margin:0; }
 #vc-dock .mn-att label{ font-size:.86rem; font-weight:800; color:var(--ink); }
 #vc-dock .mn-att input{ width:100%; font-size:.95rem; }
+#vc-dock .mn-att .mn-nx-lab{ margin-top:12px; font-size:.86rem; font-weight:800; color:var(--ink); }
+#vc-dock .mn-nx{ display:grid; grid-template-columns:minmax(0, 14.5em) minmax(0, 7.5em) minmax(0, 7.5em) minmax(0, 1fr); gap:8px 12px; align-items:end; }
+#vc-dock .mn-nx-f{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+#vc-dock .mn-att .mn-nx-f > label{ font-size:.8rem; font-weight:700; color:var(--ink-soft); }
+#vc-dock .mn-nx-w{ position:relative; }
+#vc-dock .mn-att .mn-nx-in{ display:block; width:100%; min-height:44px; padding:9px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; font-size:.95rem; font-weight:700; color:var(--ink); box-sizing:border-box; cursor:pointer; text-align:left; }
+#vc-dock .mn-att #mn-nx-place{ font-weight:400; cursor:text; }
+#vc-dock .mn-att .mn-nx-in:focus{ border-color:var(--blue-deep); outline:none; box-shadow:0 0 0 3px var(--blue-pale); }
+#vc-dock .mn-nx-hint{ grid-column:1 / -1; margin:0; font-size:.8rem; line-height:1.6; color:var(--ink-soft); }
+#vc-dock .lpdp, #vc-dock .lptp{ position:absolute; top:calc(100% + 6px); left:0; z-index:80; background:#fff; border:1.5px solid var(--line); border-radius:14px; box-shadow:0 14px 34px rgba(31,48,71,.22); padding:12px; box-sizing:border-box; }
+#vc-dock .lpdp{ width:340px; max-width:calc(100vw - 32px); }
+#vc-dock .lptp{ width:320px; max-width:calc(100vw - 32px); }
+#vc-dock .lpdp.right, #vc-dock .lptp.right{ left:auto; right:0; }
+#vc-dock .lpdp.up, #vc-dock .lptp.up{ top:auto; bottom:calc(100% + 6px); }
+#vc-dock .lpdp-head{ display:flex; align-items:center; gap:6px; background:var(--blue-pale); border-radius:10px; padding:6px; }
+#vc-dock .lpdp-nav{ flex:none; width:44px; height:44px; border-radius:8px; border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+#vc-dock .lpdp-nav svg{ width:15px; height:15px; }
+#vc-dock .lpdp-sel{ flex:1; min-width:0; min-height:44px; border:1.5px solid var(--line); border-radius:8px; background:#fff; font-family:inherit; font-size:.9rem; font-weight:700; color:var(--ink); padding:0 6px; }
+#vc-dock .lpdp-sel.mo{ flex:none; width:4.8em; }
+#vc-dock .lpdp-wd{ display:grid; grid-template-columns:repeat(7, 1fr); margin-top:10px; }
+#vc-dock .lpdp-wd span{ text-align:center; font-size:.8rem; font-weight:700; color:var(--ink-soft); }
+#vc-dock .lpdp-grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:3px; margin-top:4px; }
+#vc-dock .lpdp-d{ min-height:40px; border:1.5px solid transparent; background:#fff; border-radius:9px; cursor:pointer; font-family:inherit; font-size:.92rem; font-weight:700; color:var(--ink); padding:0; }
+#vc-dock .lpdp-d:hover{ background:var(--blue-pale); }
+#vc-dock .lpdp-d.today{ border-color:var(--blue-deep); }
+#vc-dock .lpdp-d[aria-pressed="true"]{ background:var(--blue-deep); border-color:var(--blue-deep); color:#fff; }
+#vc-dock .lpdp-d.empty{ visibility:hidden; }
+#vc-dock .lpdp-wd .sun, #vc-dock .lpdp-d.sun{ color:#b3261e; }
+#vc-dock .lpdp-wd .sat, #vc-dock .lpdp-d.sat{ color:#1f63a8; }
+#vc-dock .lpdp-d.sun[aria-pressed="true"], #vc-dock .lpdp-d.sat[aria-pressed="true"]{ color:#fff; }
+#vc-dock .lptp-h{ margin:0 0 6px; font-size:.8rem; font-weight:700; color:var(--ink-soft); }
+#vc-dock .lptp-grid{ display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; }
+#vc-dock .lptp-btn{ min-height:44px; border:1.5px solid var(--line); background:#fff; border-radius:9px; cursor:pointer; font-family:inherit; font-size:.86rem; font-weight:700; color:var(--ink); padding:0; }
+#vc-dock .lptp-btn:hover{ background:var(--blue-pale); }
+#vc-dock .lptp-btn[aria-pressed="true"]{ background:var(--blue-deep); border-color:var(--blue-deep); color:#fff; }
+#vc-dock .lpdp-foot, #vc-dock .lptp-foot{ display:flex; gap:8px; margin-top:10px; }
+#vc-dock .lpdp-foot .btn, #vc-dock .lptp-foot .btn{ flex:1; justify-content:center; min-height:44px; }
 #vc-dock .vcu-rec .mr-box{ padding:16px 0 0; margin:18px 0 0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; }
 #vc-dock .vcu-rec .mr-head small{ display:none; }
 #vc-dock .vcu-rec .mr-head b{ font-size:.98rem; }
 #vc-dock .mr-f{ font-size:.84rem; }
 #vc-dock .mr-f i{ font-size:.8rem; }
 #vc-dock .mr-note, #vc-dock .mr-for, #vc-dock .mr-status{ font-size:.82rem; }
+#vc-dock .mn-nx-hint, #vc-dock .vcu-rec .mr-note, #vc-dock .vcu-rec .mr-for, #vc-dock .vcu-rec .mr-status{ max-width:40em; }
 #vc-dock .vcu-range{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 14px; padding:12px 14px; border-radius:12px; background:var(--bg-soft); border:1px solid var(--line); }
 #vc-dock .vcu-range .vcu-lab{ margin:0; }
 #vc-dock .vcu-seg{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:#fff; border:1px solid var(--line); }
@@ -1756,6 +1794,10 @@ body.ink-on .plan-wrap{ z-index:97 !important; }
 #vc-dock .nxv-chip, #vc-dock .nxv-chip .nxv-who, #vc-dock .nxv-cell-f, #vc-dock .nxv-rl, #vc-dock .nxv-rn, #vc-dock .nxv-legend{ font-size:.8rem; }
 #vc-dock .nx-basis, #vc-dock .nx-caution{ font-size:.84rem; }
 #vc-dock .nxv-cell.is-3 .nxv-no{ background:#8a6212; }
+@media (max-width:760px){
+#vc-dock .mn-nx{ grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); }
+#vc-dock .mn-nx-p{ grid-column:1 / -1; }
+}
 @media (max-width:560px){
 #vc-dock .nx-item{ grid-template-columns:auto minmax(0, 1fr); }
 #vc-dock .nx-due{ grid-column:2; margin-left:0; padding-top:6px; }
@@ -1772,6 +1814,8 @@ body.ink-on .plan-wrap{ z-index:97 !important; }
 #vc-dock .vcu-h{ gap:10px; }
 #vc-dock .vcu-h h3{ font-size:1.04rem; }
 #vc-dock .mn-att{ grid-template-columns:minmax(0, 1fr); grid-template-rows:none; grid-auto-flow:row; }
+#vc-dock .mn-nx{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#vc-dock .mn-nx-d, #vc-dock .mn-nx-p{ grid-column:1 / -1; }
 #vc-dock .vcu-main{ width:100%; }
 #vc-dock .vcu-tools{ margin-left:0; }
 #vc-dock .vcu-two{ grid-template-columns:minmax(0, 1fr); }
@@ -2329,35 +2373,7 @@ body.customer-mode .lp-start-wrap{ display:none !important; }
 .lp-hero-src{ font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
 .lp-small-note{ font-size:max(13px, .86em); color:var(--ink-soft); }
 .lp-nw{ white-space:nowrap; }
-/* B7 PC は入力の右に結果の要約 */
-#lp-live{ display:none; }
-@media screen and (min-width:1000px){
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2{ grid-template-rows:auto 1fr; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2 > .acc.view-active:has(~ .acc.view-active){ grid-row:span 2; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2 > #lp-live{ display:block; grid-column:2; align-self:start; position:sticky; top:calc(var(--planbar-h, 84px) + 84px); }
-}
-#lp-live{ background:#fff; border:1.5px solid var(--line); border-radius:18px; box-shadow:var(--shadow-soft); padding:16px 18px; margin-bottom:18px; }
-.lpl-h{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; font-weight:800; font-size:1rem; color:var(--ink); }
-.lpl-h i{ color:var(--lp-act); }
-.lpl-h span{ font-weight:600; font-size:.84rem; color:var(--ink-soft); }
-.lpl-v{ display:flex; align-items:center; gap:10px; margin-top:12px; padding:10px 12px; border-radius:12px; font-weight:800; font-size:.98rem; line-height:1.5; background:var(--good-pale); color:#1d6b4a; }
-.lpl-v i{ flex:0 0 auto; font-size:1.1rem; }
-.lpl-v[data-st="warn"]{ background:var(--warn-pale); color:#7a5c0f; }
-.lpl-v[data-st="bad"]{ background:var(--bad-pale); color:#a93226; }
-.lpl-v[data-st="badin"]{ background:#fff5f4; color:#a93226; }
-.lpl-kpi{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-.lpl-kpi > div{ background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; padding:9px 12px; }
-.lpl-kpi span{ display:block; font-size:.84rem; font-weight:700; color:var(--ink-soft); }
-.lpl-kpi b{ display:block; margin-top:2px; font-size:1.35rem; font-weight:900; color:var(--ink); font-variant-numeric:tabular-nums; }
-.lpl-kpi b small{ font-size:.84rem; font-weight:700; color:var(--ink-soft); margin-left:2px; }
-.lpl-kpi b.lp-neg{ color:#c0392b; }
-.lpl-spark{ margin-top:12px; }
-.lpl-spark svg{ display:block; width:100%; height:96px; }
-.lpl-axis{ display:flex; justify-content:space-between; font-size:.84rem; color:var(--ink-soft); margin-top:2px; }
-.lpl-est{ margin:10px 0 0; font-size:.86rem; color:#7a5c0f; font-weight:700; }
-.lpl-est:empty{ display:none; }
-#lpl-go{ margin-top:12px; min-height:46px; }
-.lpl-note{ margin:8px 0 0; font-size:.82rem; color:var(--ink-soft); line-height:1.6; }
+/* B7（入力の右の「いまの結果」）は 2026-10-06 に外した（ユーザー指示「これは全て削除」）。2列の並びはもとの作り（左右に1枚ずつ）に戻る */
 /* B9 携帯のタブは札を上に置き、ボタンを全部見せる（横に流さない） */
 @media (max-width:640px){
 .tool-nav-row{ flex-wrap:wrap; padding:10px; row-gap:8px; }
@@ -3383,17 +3399,6 @@ body.pdf-brief .results{ margin-top:0 !important; }
           </div>
         </div>
 
-<!-- == LP100-LIVE-BEGIN == PC で入力の右に貼る結果の要約（2026-10-04・B7）。保存の中身には入らない（.acc の外） -->
-<aside id="lp-live" class="no-print" aria-live="polite" aria-label="いまの結果">
-  <div class="lpl-h"><i class="fa-solid fa-chart-line"></i> いまの結果<span>入力を変えると、その場で計算し直します</span></div>
-  <div class="lpl-v" id="lpl-v" data-st="good"></div>
-  <div class="lpl-kpi"><div><span id="lpl-a1">65歳のときの資産</span><b id="lpl-k1">—</b></div><div><span id="lpl-a2">100歳のときの資産</span><b id="lpl-k2">—</b></div></div>
-  <div class="lpl-spark"><div id="lpl-svg"></div><div class="lpl-axis"><span id="lpl-x0"></span><span>金融資産の推移</span><span id="lpl-x1"></span></div></div>
-  <p class="lpl-est" id="lpl-est"></p>
-  <button type="button" class="btn btn-primary btn-sm btn-full" id="lpl-go"><i class="fa-solid fa-chart-column"></i> 結果を詳しく見る</button>
-  <p class="lpl-note">試算の目安です。結果をお約束するものではありません。</p>
-</aside>
-<!-- == LP100-LIVE-END == -->
       </div><!-- /input-panel -->
 
       <!-- ===================== 結果パネル ===================== -->
@@ -4053,9 +4058,20 @@ body.pdf-brief .results{ margin-top:0 !important; }
             <h3 id="vcu-h-rec">ご出席と商談記録</h3>
             <p>ご出席・次回の予定と、いつ・どこで商談したかを残します（監査のときに見返せます）。</p></div></div>
         <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる）。
-             ★この div の閉じタグの直後が apply_lifeplan_meetlog.py の差し込み口。中身と書き方を変えない（見た目は CSS で並べる） -->
+             ★この div の閉じタグの直後が apply_lifeplan_meetlog.py の差し込み口（隠した次回の欄と、その後ろの閉じタグの直後）。見た目は CSS で並べる
+             ★次回の予定（2026-10-06 ユーザー指示「次回のところはカレンダーと時間を表示して入力。ダッシュボードの形式に合わせてください」）。
+               営業ダッシュボードの活動の窓と同じ「日付（押すとカレンダー）・開始時刻・終了時刻（開始の2時間後が自動）・場所」。
+               mn-next-date（隠した欄）は残す（概要・スライド・PDF・音声メモの保存が文字で読む。中身は「2026年10月13日（火）19:00〜21:00　場所」）。
+               動きは apply_lifeplan_salesfeed.py（LPSF）が持っている -->
         <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off">
-          <label for="mn-next-date">次回</label><input type="text" id="mn-next-date" placeholder="例：9/1（月）19時〜 オンライン" autocomplete="off"></div>
+          <span class="mn-nx-lab" id="mn-nx-lab">次回の予定</span>
+          <div class="mn-nx" role="group" aria-labelledby="mn-nx-lab">
+            <div class="mn-nx-f mn-nx-d"><label for="mn-nx-date">日付</label><div class="mn-nx-w"><input type="text" class="mn-nx-in" id="mn-nx-date" readonly autocomplete="off" placeholder="日付を選択"></div></div>
+            <div class="mn-nx-f"><label for="mn-nx-start">開始時刻</label><div class="mn-nx-w"><input type="text" class="mn-nx-in" id="mn-nx-start" inputmode="numeric" autocomplete="off" placeholder="例：10:00"></div></div>
+            <div class="mn-nx-f"><label for="mn-nx-end">終了時刻</label><div class="mn-nx-w"><input type="text" class="mn-nx-in" id="mn-nx-end" inputmode="numeric" autocomplete="off" placeholder="例：12:00"></div></div>
+            <div class="mn-nx-f mn-nx-p"><label for="mn-nx-place">場所</label><input type="text" class="mn-nx-in" id="mn-nx-place" autocomplete="off" placeholder="例：高松市　お客様ご自宅"></div>
+            <p class="mn-nx-hint" id="mn-nx-hint">終了時刻は、開始の2時間後が自動で入ります。</p>
+          </div><input type="hidden" id="mn-next-date"></div>
         <!-- == MEETLOG-HTML-BEGIN == 商談記録（2026-09-25 ユーザー指示「商談記録として何月何日にどこで商談をしたか
              残せるように。保険の監査で使います」）。★お客様の資料と一緒に保存する（2週間で消える文字起こしとは別）。
              ★共有リンクには入れない。部品は apply_lifeplan_meetlog.py が持っている -->
@@ -4360,7 +4376,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
   <div class="modal-overlay no-print" id="lp-pdf-modal" hidden>
     <div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="PDFを作る">
       <div class="modal-head">
-        <h3><i class="fa-solid fa-file-arrow-down"></i> PDFを作る</h3>
+        <h3><i class="fa-solid fa-file-pdf"></i> PDFを作る</h3>
         <button class="modal-close" id="lp-pdf-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
@@ -7766,49 +7782,6 @@ function lpBadGuard(what){
     + l.slice(0, 5).map(function(o){ return '・' + o.info.name + '：' + o.why; }).join('\n'));
   return true;
 }
-/* B7：入力の右に結果の要約 */
-function lpLive(rows){
-  var box = document.getElementById('lp-live');
-  if(!box || !rows || !rows.length) return;
-  if(typeof _refreshingSum !== 'undefined' && _refreshingSum) return;
-  var v = document.getElementById('verdict'), t = ((document.getElementById('verdict-title') || {}).textContent) || '';
-  var st = 'good', ico = 'fa-circle-check', label = '安定：最後まで資金が続く見込みです';
-  if(lpBadList.length){ st = 'badin'; ico = 'fa-circle-exclamation'; label = '入力を確かめてください（' + lpBadList.length + 'か所）'; }
-  else if(v && v.classList.contains('bad')){ st = 'bad'; ico = 'fa-triangle-exclamation'; label = '要対策：途中で資金が足りなくなる見込みです'; }
-  else if(v && v.classList.contains('warn')){ st = 'warn'; ico = 'fa-circle-exclamation'; label = /現金/.test(t) ? '注意：現金が足りない期間があります' : '注意：余裕は少なめです'; }
-  var lv = document.getElementById('lpl-v');
-  lv.dataset.st = st;
-  lv.innerHTML = '<i class="fa-solid ' + ico + '"></i><span>' + esc(label) + '</span>';
-  [1, 2].forEach(function(n){
-    var a = Math.round(num('age-point-' + n, n === 1 ? 65 : 100));
-    var src = document.getElementById('kpi-total-' + n);
-    document.getElementById('lpl-a' + n).textContent = a + '歳のときの資産';
-    var k = document.getElementById('lpl-k' + n);
-    k.innerHTML = lpBadList.length ? '—' : (src ? src.innerHTML : '—');
-    var row = rows.find(function(r){ return r.hAge === a; }) || rows[rows.length - 1];
-    k.classList.toggle('lp-neg', !lpBadList.length && row.net < 0);
-  });
-  /* 小さなグラフ（金融資産の推移） */
-  var W = 300, H = 90, P = 4, n = rows.length;
-  var mn = Math.min(0, Math.min.apply(null, rows.map(function(r){ return r.net; })));
-  var mx = Math.max(1, Math.max.apply(null, rows.map(function(r){ return r.net; })));
-  var X = function(i){ return P + (W - P * 2) * (n > 1 ? i / (n - 1) : 0); };
-  var Y = function(val){ return P + (H - P * 2) * (1 - (val - mn) / (mx - mn)); };
-  var pts = rows.map(function(r, i){ return X(i).toFixed(1) + ',' + Y(r.net).toFixed(1); }).join(' ');
-  var y0 = Y(0).toFixed(1);
-  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon points="' + X(0).toFixed(1) + ',' + y0 + ' ' + pts + ' ' + X(n - 1).toFixed(1) + ',' + y0 + '" fill="var(--blue-pale)"/>'
-    + '<line x1="' + P + '" x2="' + (W - P) + '" y1="' + y0 + '" y2="' + y0 + '" stroke="#9aa9b8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'
-    + '<polyline points="' + pts + '" fill="none" stroke="var(--lp-act)" stroke-width="2.4" vector-effect="non-scaling-stroke"/>';
-  var dep = rows.findIndex(function(r){ return r.net < 0; });
-  if(dep >= 0) svg += '<circle cx="' + X(dep).toFixed(1) + '" cy="' + Y(rows[dep].net).toFixed(1) + '" r="3.5" fill="#c0392b"/>';
-  svg += '</svg>';
-  document.getElementById('lpl-svg').innerHTML = lpBadList.length ? '' : svg;
-  document.getElementById('lpl-x0').textContent = lpBadList.length ? '' : rows[0].hAge + '歳';
-  document.getElementById('lpl-x1').textContent = lpBadList.length ? '' : rows[n - 1].hAge + '歳';
-  var pend = 0; try{ pend = estPending().length; }catch(e){}
-  document.getElementById('lpl-est').textContent = pend ? '一般的な目安のままの入力が' + pend + '件あります（結果を見る画面の黄色い帯から直せます）' : '';
-}
 /* B11：PDF を選ぶ窓と進み具合 */
 function lpPdfAsk(){
   var m = document.getElementById('lp-pdf-modal');
@@ -7940,7 +7913,6 @@ function lpPdfProg(text, ratio){
       renderIchijoCompare();   // 【一条フック】比較カード（住宅パート専用）の更新
       scheduleDraftSave();     // 誤リロード対策：入力内容をローカルに自動保存（1秒デバウンス）
       scheduleMarks();         // 「入力する」ボタンの入力済み表示を更新（1フレーム1回に畳む）
-      try{ lpLive(rows); }catch(e){}   /* LP100 B7 入力の右の要約 */
     }
 
     /* ---------- 自動保存（ドラフト）：誤リロード・タブ閉じでも入力が消えないように ----------
@@ -16729,10 +16701,16 @@ function lpPdfProg(text, ratio){
      部品は apply_lifeplan_salesfeed.py が持っている（ここを手で直さない）
    ・同じ端末の営業ダッシュボード（office-m の hoken-sales）が読む。置き場所 localStorage 'officem.lpFeed.v1'
    ・書くのは、営業ダッシュボードか管理画面を使っている端末だけ（どちらの記録も無い端末には何も書かない）
-   ・入れるのは、保存したお客様ごとの「ご家族のお名前・生年月日・年齢」と「商談記録（日付・時刻・方法・場所・ご出席）」だけ。
-     収入・資産・試算・メモは入れない。保存の中身を写す形なので、資料を消せば控えからも消える
+   ・入れるのは、保存したお客様ごとの「ご家族のお名前・生年月日・年齢」「商談記録（日付・時刻・方法・場所・ご出席）」
+     「次回の予定（日付・時刻・場所）」だけ。収入・資産・試算・メモは入れない。保存の中身を写す形なので、資料を消せば控えからも消える
+   ・★保存前の資料（2026-10-06 ユーザー指摘「ライフプランツールで入力したが、ダッシュボードには反映されていない」）＝
+     「保存」を押す前に記録した商談と次回の予定も、カレンダーに入れる（dr）。お客様の一覧には、資料を保存したときに入る
    ・商談記録を「記録する」と、読み込んでいる資料にもすぐ足す（上書き保存を待たない）。
      消した記録は、これまでどおり上書き保存するまで資料に残す
+   ・★次回の予定（2026-10-06 ユーザー指示「次回のところはカレンダーと時間を表示して入力。ダッシュボードの形式に合わせて」）＝
+     日付（押すとカレンダー）・開始時刻・終了時刻（開始の2時間後が自動）・場所。隠した欄 mn-next-date に「2026年10月13日（火）
+     19:00〜21:00　場所」の形で入れる（概要・スライド・PDF・音声メモの保存が読む）。読み込んでいる資料にもすぐ残す
+     （お名前が資料と同じときだけ＝別のお客様の準備中に、読み込んだ資料の予定を書き換えない）
    ============================================================ */
     var LPSF_KEY = 'officem.lpFeed.v1';
     function lpsfOn(){
@@ -16751,11 +16729,19 @@ function lpPdfProg(text, ratio){
       return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
     }
     function lpsfAge(v){ v = parseInt(v, 10); return (v >= 0 && v <= 120) ? v : null; }
-    /* 保存1件 → ご家族と商談記録だけの形（収入・資産・試算は入れない） */
+    function lpsfEntryState(e){
+      var pl = (e && e.plans) || {}, act = (pl.active === 'mirai' && pl.mirai && pl.mirai.state) ? pl.mirai : pl.genjo;
+      return (act && act.state) || (pl.genjo && pl.genjo.state) || (e && e.state) || null;
+    }
+    function lpsfNx(x){
+      if(!x || typeof x !== 'object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(x.date || ''))) return null;
+      var tm = function(v){ return /^\d{2}:\d{2}$/.test(String(v || '')) ? v : ''; };
+      return { date:x.date, start:tm(x.start), end:tm(x.end), place:lpsfS(x.place, 120) };
+    }
+    /* 保存1件 → ご家族と商談記録と次回の予定だけの形（収入・資産・試算は入れない） */
     function lpsfItem(e){
       if(!e || typeof e !== 'object') return null;
-      var pl = e.plans || {}, act = (pl.active === 'mirai' && pl.mirai && pl.mirai.state) ? pl.mirai : pl.genjo;
-      var st = (act && act.state) || (pl.genjo && pl.genjo.state) || e.state || null;
+      var st = lpsfEntryState(e);
       if(!st) return null;
       var f = st.fields || {}, mem = [];
       mem.push({ r:'h', sei:lpsfS(f['h-sei'], 30), mei:lpsfS(f['h-name'], 30), birth:lpsfYmd(f['h-b-y'], f['h-b-m'], f['h-b-d']), age:lpsfAge(f['h-age']) });
@@ -16773,32 +16759,59 @@ function lpPdfProg(text, ratio){
         return { id:lpsfS(m.id, 40), date:m.date, time:(/^\d{2}:\d{2}$/.test(String(m.time || '')) ? m.time : ''),
                  way:lpsfS(m.way || '対面', 10), place:lpsfS(m.place, 120), att:lpsfS(m.att, 160) };
       });
-      return { t:(+e.t || 0), kind:(st.household === 'single' ? 'single' : 'couple'), mem:mem, mt:mt };
+      var it = { t:(+e.t || 0), kind:(st.household === 'single' ? 'single' : 'couple'), mem:mem, mt:mt };
+      var nx = lpsfNx(e.next);
+      if(nx) it.nx = nx;
+      return it;
     }
-    /* このアカウントの保存を全て、控えに写し直す（保存の書き込みのたび・ログインのあと） */
+    /* まだ保存していないお客様（読み込んだ資料が無い）の、記録した商談と次回の予定。
+       どちらも無いときは、お名前も入れない空の形を送る（最後の1件を消したときも、カレンダーから消えるように） */
+    function lpsfDraft(){
+      try{
+        if(SHARED_VIEW || customerMode || lpMeetCurName()) return null;
+        var mt = lpMeetGet(), nx = lpsfNx(lpnxGet());
+        if(!mt.length && !nx) return { kind:'couple', mem:[], mt:[] };
+        var it = lpsfItem({ plans:{ active:'genjo', genjo:{ state:collectState() } }, meetings:mt, next:nx });
+        if(!it) return null;
+        delete it.t;
+        return it;
+      }catch(x){ return null; }
+    }
+    /* このアカウントの保存を全て、控えに写し直す（保存の書き込みのたび・ログインのあと）。
+       保存前の資料（dr）は入力のたびに作り直す（保存の一覧は、保存が変わったときだけ作り直す） */
+    var lpsfHH = null, lpsfHHUser = null, lpsfNeedFull = true;
     function lpsfSyncAll(){
       try{
-        if(!lpsfOn() || !lpvReady()) return false;
-        var u = currentUser, saves = getSaves(), hh = {};
-        Object.keys(saves).slice(0, 2000).forEach(function(n){
-          var it = lpsfItem(saves[n]);
-          if(it) hh[String(n).slice(0, 80)] = it;
-        });
+        if(!lpsfOn() || !lpvReady() || SHARED_VIEW) return false;
+        var u = currentUser;
+        if(lpsfNeedFull || !lpsfHH || lpsfHHUser !== u){
+          var saves = getSaves(), hh = {};
+          Object.keys(saves).slice(0, 2000).forEach(function(n){
+            var it = lpsfItem(saves[n]);
+            if(it) hh[String(n).slice(0, 80)] = it;
+          });
+          lpsfHH = hh; lpsfHHUser = u; lpsfNeedFull = false;
+        }
+        var dr = lpsfDraft();
         var o = null;
         try{ o = JSON.parse(localStorage.getItem(LPSF_KEY) || 'null'); }catch(x){ o = null; }
         if(!o || typeof o !== 'object' || o.v !== 1 || !o.acct || typeof o.acct !== 'object') o = { v:1, acct:{} };
-        if(JSON.stringify((o.acct[u] && o.acct[u].hh) || null) === JSON.stringify(hh)) return false;
-        o.acct[u] = { at:Date.now(), hh:hh };
+        var A = o.acct[u] || {};
+        if(JSON.stringify(A.hh || null) === JSON.stringify(lpsfHH) && JSON.stringify(A.dr || null) === JSON.stringify(dr)) return false;
+        var na = { at:Date.now(), hh:lpsfHH };
+        if(dr) na.dr = dr;
+        o.acct[u] = na;
         o.at = Date.now();
         localStorage.setItem(LPSF_KEY, JSON.stringify(o));
         return true;
       }catch(x){ return false; }
     }
     var lpsfTimer = null;
-    function lpsfSoon(){ clearTimeout(lpsfTimer); lpsfTimer = setTimeout(lpsfSyncAll, 60); }
-    /* 保存の書き込みのたび・ログインのあとに写し直す（中身は変えずに包むだけ） */
-    lpvWrite = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(); return r; }; })(lpvWrite);
-    lpvAfterUnlock = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(); return r; }; })(lpvAfterUnlock);
+    function lpsfSoon(full, ms){ if(full) lpsfNeedFull = true; clearTimeout(lpsfTimer); lpsfTimer = setTimeout(lpsfSyncAll, ms || 60); }
+    /* 保存の書き込みのたび・ログインのあと・保存先が変わったときに写し直す（中身は変えずに包むだけ） */
+    lpvWrite = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(true); return r; }; })(lpvWrite);
+    lpvAfterUnlock = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(true); return r; }; })(lpvAfterUnlock);
+    setCurrentSave = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(); return r; }; })(setCurrentSave);
     /* 商談記録を「記録する」と、読み込んでいる資料にもすぐ足す。残したら資料の名前を返す。
        ★足すだけ。消した記録は、これまでどおり上書き保存するまで資料に残す（監査の記録を
        別のお客様の準備の途中で消してしまわないため。2026-09-25 の作りのまま） */
@@ -16823,11 +16836,320 @@ function lpPdfProg(text, ratio){
         return nm;
       }catch(x){ return ''; }
     }
+
+    /* ---- 次回の予定（日付・開始時刻・終了時刻・場所）。営業ダッシュボードの活動の窓と同じ形 ---- */
+    var LPNX_DOW = '日月火水木金土';
+    var lpnxEndTouched = false, lpnxOpen = null, lpnxView = null, lpnxTimer = null;
+    var lpnxRaw = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    function lpnxPad(n){ return ('0' + n).slice(-2); }
+    function lpnxYmd(d){ return d.getFullYear() + '-' + lpnxPad(d.getMonth() + 1) + '-' + lpnxPad(d.getDate()); }
+    function lpnxDate(s){
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+      if(!m) return null;
+      var d = new Date(+m[1], +m[2] - 1, +m[3]);
+      return d.getMonth() === +m[2] - 1 ? d : null;
+    }
+    function lpnxJa(d){ return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + LPNX_DOW[d.getDay()] + '）'; }
+    function lpnxTime(v){
+      v = String(v == null ? '' : v).trim().replace(/[：]/g, ':').replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
+      if(!v) return '';
+      var m = v.match(/^(\d{1,2}):(\d{1,2})$/) || v.match(/^(\d{1,2})()$/) || v.match(/^(\d{1,2})(\d{2})$/);
+      if(!m) return '';
+      var h = +m[1], mi = +(m[2] || 0);
+      if(h > 23 || mi > 59) return '';
+      return lpnxPad(h) + ':' + lpnxPad(mi);
+    }
+    function lpnxAdd2(t){
+      var p = String(t || '').split(':');
+      if(p.length !== 2) return '';
+      var x = (+p[0]) * 60 + (+p[1]) + 120;
+      if(x >= 24 * 60) x = 23 * 60 + 59;   /* 日をまたがない */
+      return lpnxPad(Math.floor(x / 60)) + ':' + lpnxPad(x % 60);
+    }
+    /* 文字の形（概要・スライド・PDF が読む）。「2026年10月13日（火）19:00〜21:00　場所」 */
+    function lpnxText(o){
+      if(!o) return '';
+      var d = lpnxDate(o.date), h = d ? lpnxJa(d) : '';
+      if(d && o.start) h += o.start + '〜' + (o.end || '');
+      var pl = String(o.place || '').trim();
+      if(pl) h += (h ? '　' : '') + pl;
+      return h;
+    }
+    var LPNX_RE = /^(\d{4})年(\d{1,2})月(\d{1,2})日（[日月火水木金土]）(?:(\d{2}:\d{2})〜(\d{2}:\d{2})?)?(?:　([\s\S]*))?$/;
+    function lpnxParse(t){
+      t = String(t == null ? '' : t).trim();
+      var e = { date:'', start:'', end:'', place:'' };
+      if(!t) return e;
+      var m = LPNX_RE.exec(t);
+      if(m){
+        var d = new Date(+m[1], +m[2] - 1, +m[3]);
+        if(d.getMonth() === +m[2] - 1) return { date:lpnxYmd(d), start:m[4] || '', end:m[5] || '', place:(m[6] || '').trim() };
+      }
+      e.place = t.slice(0, 120);   /* 前の形（自由に書いた文）は場所の欄に残す */
+      return e;
+    }
+    function lpnxEl(k){ return $('mn-nx-' + k); }
+    function lpnxGet(){
+      var d = lpnxEl('date'), s = lpnxEl('start'), e = lpnxEl('end'), p = lpnxEl('place');
+      if(!d) return { date:'', start:'', end:'', place:'' };
+      var o = { date:d.getAttribute('data-ymd') || '', start:lpnxTime(s && s.value), end:lpnxTime(e && e.value),
+                place:String((p && p.value) || '').trim().slice(0, 120) };
+      if(!lpnxDate(o.date)) o.date = '';
+      return o;
+    }
+    function lpnxSetDate(ymd){
+      var el = lpnxEl('date');
+      if(!el) return;
+      var d = lpnxDate(ymd);
+      if(d){ el.setAttribute('data-ymd', lpnxYmd(d)); el.value = lpnxJa(d); }
+      else{ el.removeAttribute('data-ymd'); el.value = ''; }
+    }
+    function lpnxFill(o){
+      o = o || {};
+      lpnxSetDate(o.date);
+      if(lpnxEl('start')) lpnxEl('start').value = o.start || '';
+      if(lpnxEl('end')) lpnxEl('end').value = o.end || '';
+      if(lpnxEl('place')) lpnxEl('place').value = o.place || '';
+      lpnxEndTouched = !!(o.end && o.end !== lpnxAdd2(o.start));
+    }
+    /* 欄を直したとき：隠した欄に文字の形を入れて、音声メモの保存・資料・営業ダッシュボードへ */
+    function lpnxCommit(){
+      var h = $('mn-next-date');
+      if(!h) return;
+      var t = lpnxText(lpnxGet());
+      if(lpnxRaw.get.call(h) !== t){
+        lpnxRaw.set.call(h, t);
+        try{ h.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+      }
+      clearTimeout(lpnxTimer);
+      lpnxTimer = setTimeout(function(){ lpnxPersist(); lpsfSoon(); }, 400);
+    }
+    function lpsfFamKey(st){
+      var f = (st && st.fields) || {};
+      return ['h-sei', 'h-name', 'w-sei', 'w-name'].map(function(k){ return String(f[k] == null ? '' : f[k]).trim(); }).join('|');
+    }
+    function lpsfFamNow(){
+      return ['h-sei', 'h-name', 'w-sei', 'w-name'].map(function(k){ var el = $(k); return el ? String(el.value || '').trim() : ''; }).join('|');
+    }
+    /* 読み込んでいる資料に次回の予定を残す（お名前が資料と同じときだけ） */
+    function lpnxPersist(){
+      try{
+        if(!lpvReady()) return false;
+        var nm = lpMeetCurName();
+        if(!nm) return false;
+        var o = getSaves(), e = o[nm];
+        if(!e || lpsfFamKey(lpsfEntryState(e)) !== lpsfFamNow()) return false;
+        var cur = lpsfNx(lpnxGet()), was = lpsfNx(e.next);
+        if(JSON.stringify(cur) === JSON.stringify(was)) return false;
+        if(cur) e.next = cur; else delete e.next;
+        return putSaves(o);
+      }catch(x){ return false; }
+    }
+    function lpnxClose(){
+      document.querySelectorAll('.lpdp, .lptp').forEach(function(p){ p.remove(); });
+      lpnxOpen = null; lpnxView = null;
+    }
+    function lpnxPlace(pop, el){
+      var host = el.closest('.vcu-card') || document.body;
+      var lim = Math.min(window.innerWidth - 8, host.getBoundingClientRect().right - 8);
+      if(pop.getBoundingClientRect().right > lim) pop.classList.add('right');
+      try{ pop.scrollIntoView({ block:'nearest' }); }catch(x){}
+    }
+    function lpnxDrawDate(){
+      var pop = document.querySelector('.lpdp');
+      if(!pop || !lpnxView) return;
+      var el = lpnxEl('date'), cur = lpnxDate(el && el.getAttribute('data-ymd')), today = lpnxYmd(new Date());
+      var y = lpnxView.y, m = lpnxView.m, y0 = new Date().getFullYear(), ys = '', ms = '', cells = '';
+      for(var yy = Math.min(y0 - 1, y); yy <= Math.max(y0 + 2, y); yy++) ys += '<option value="' + yy + '"' + (yy === y ? ' selected' : '') + '>' + yy + '年</option>';
+      for(var mm = 0; mm < 12; mm++) ms += '<option value="' + mm + '"' + (mm === m ? ' selected' : '') + '>' + (mm + 1) + '月</option>';
+      for(var i = 0; i < new Date(y, m, 1).getDay(); i++) cells += '<span class="lpdp-d empty"></span>';
+      var last = new Date(y, m + 1, 0).getDate();
+      for(var dd = 1; dd <= last; dd++){
+        var w = new Date(y, m, dd).getDay(), ymd = lpnxYmd(new Date(y, m, dd));
+        cells += '<button type="button" class="lpdp-d' + (w === 0 ? ' sun' : w === 6 ? ' sat' : '') + (ymd === today ? ' today' : '') + '" data-d="' + dd + '"'
+              + ' aria-pressed="' + (!!cur && lpnxYmd(cur) === ymd) + '" aria-label="' + (m + 1) + '月' + dd + '日（' + LPNX_DOW[w] + '）' + (ymd === today ? '・今日' : '') + '">' + dd + '</button>';
+      }
+      var arrow = function(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>'; };
+      pop.innerHTML = '<div class="lpdp-head"><button type="button" class="lpdp-nav" data-dp="prev" aria-label="前の月">' + arrow('M15 5l-7 7 7 7') + '</button>'
+        + '<select class="lpdp-sel" data-dp="year" aria-label="年を選ぶ">' + ys + '</select>'
+        + '<select class="lpdp-sel mo" data-dp="month" aria-label="月を選ぶ">' + ms + '</select>'
+        + '<button type="button" class="lpdp-nav" data-dp="next" aria-label="次の月">' + arrow('m9 5 7 7-7 7') + '</button></div>'
+        + '<div class="lpdp-wd">' + LPNX_DOW.split('').map(function(x, i){ return '<span' + (i === 0 ? ' class="sun"' : i === 6 ? ' class="sat"' : '') + '>' + x + '</span>'; }).join('') + '</div>'
+        + '<div class="lpdp-grid">' + cells + '</div>'
+        + '<div class="lpdp-foot"><button type="button" class="btn btn-ghost btn-sm" data-dp="clear">空にする</button>'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-dp="close">閉じる</button></div>';
+    }
+    function lpnxOpenDate(){
+      var el = lpnxEl('date');
+      if(!el || lpnxOpen === 'date') return;
+      lpnxClose(); lpnxOpen = 'date';
+      var cur = lpnxDate(el.getAttribute('data-ymd')), now = new Date();
+      lpnxView = cur ? { y:cur.getFullYear(), m:cur.getMonth() } : { y:now.getFullYear(), m:now.getMonth() };
+      var pop = document.createElement('div');
+      pop.className = 'lpdp'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', '次回の日付を選ぶ');
+      el.parentNode.appendChild(pop);
+      lpnxDrawDate();
+      lpnxPlace(pop, el);
+      pop.addEventListener('change', function(ev){
+        var w = ev.target.getAttribute && ev.target.getAttribute('data-dp');
+        if(w === 'year') lpnxView.y = +ev.target.value;
+        else if(w === 'month') lpnxView.m = +ev.target.value;
+        else return;
+        lpnxDrawDate();
+      });
+      /* 中のクリックは外へ伝えない（描き直しで押したボタンが外れ、外側を押した扱いで閉じてしまうため） */
+      pop.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var b = ev.target.closest ? ev.target.closest('button') : null;
+        if(!b) return;
+        var d = b.getAttribute('data-d');
+        if(d){ lpnxSetDate(lpnxYmd(new Date(lpnxView.y, lpnxView.m, +d))); lpnxClose(); lpnxCommit(); try{ el.focus(); }catch(x){} return; }
+        var w = b.getAttribute('data-dp');
+        if(w === 'prev' || w === 'next'){
+          lpnxView.m += (w === 'next' ? 1 : -1);
+          if(lpnxView.m > 11){ lpnxView.m = 0; lpnxView.y++; }
+          if(lpnxView.m < 0){ lpnxView.m = 11; lpnxView.y--; }
+          lpnxDrawDate();
+        }else if(w === 'clear'){ lpnxSetDate(''); lpnxClose(); lpnxCommit(); }
+        else if(w === 'close') lpnxClose();
+      });
+    }
+    function lpnxSetTime(k, t){
+      var el = lpnxEl(k), e = lpnxEl('end');
+      el.value = t;
+      if(k === 'start' && t && !lpnxEndTouched && e) e.value = lpnxAdd2(t);
+      if(k === 'end') lpnxEndTouched = !!t;
+      lpnxCommit();
+    }
+    function lpnxDrawTime(k){
+      var pop = document.querySelector('.lptp');
+      if(!pop) return;
+      var cur = lpnxTime(lpnxEl(k).value), ch = cur ? +cur.split(':')[0] : -1, cm = cur ? +cur.split(':')[1] : -1, hs = '', ms = '';
+      for(var h = 0; h < 24; h++) hs += '<button type="button" class="lptp-btn" data-h="' + h + '" aria-pressed="' + (ch === h) + '">' + h + '時</button>';
+      [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].forEach(function(mi){
+        ms += '<button type="button" class="lptp-btn" data-m="' + mi + '" aria-pressed="' + (cm === mi) + '">' + lpnxPad(mi) + '分</button>';
+      });
+      pop.innerHTML = '<p class="lptp-h">時間を選ぶ（分は00になります）</p><div class="lptp-grid">' + hs + '</div>'
+        + '<p class="lptp-h" style="margin-top:10px">分を選ぶ</p><div class="lptp-grid">' + ms + '</div>'
+        + '<div class="lptp-foot"><button type="button" class="btn btn-ghost btn-sm" data-tp="clear">空にする</button>'
+        + '<button type="button" class="btn btn-primary btn-sm" data-tp="close">決定</button></div>';
+    }
+    function lpnxOpenTime(k){
+      var el = lpnxEl(k);
+      if(!el || lpnxOpen === k) return;
+      lpnxClose(); lpnxOpen = k;
+      var pop = document.createElement('div');
+      pop.className = 'lptp'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', k === 'start' ? '開始時刻を選ぶ' : '終了時刻を選ぶ');
+      el.parentNode.appendChild(pop);
+      lpnxDrawTime(k);
+      lpnxPlace(pop, el);
+      pop.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var b = ev.target.closest ? ev.target.closest('button') : null;
+        if(!b) return;
+        if(b.hasAttribute('data-h')){ lpnxSetTime(k, lpnxPad(+b.getAttribute('data-h')) + ':00'); lpnxDrawTime(k); return; }
+        if(b.hasAttribute('data-m')){
+          var base = lpnxTime(el.value) || (lpnxPad(new Date().getHours()) + ':00');
+          lpnxSetTime(k, base.split(':')[0] + ':' + lpnxPad(+b.getAttribute('data-m')));
+          lpnxClose();
+          return;
+        }
+        var w = b.getAttribute('data-tp');
+        if(w === 'clear'){
+          el.value = '';
+          if(k === 'start' && !lpnxEndTouched && lpnxEl('end')) lpnxEl('end').value = '';
+          if(k === 'end') lpnxEndTouched = false;
+          lpnxClose(); lpnxCommit();
+        }else if(w === 'close') lpnxClose();
+      });
+    }
+    (function(){
+      var h = $('mn-next-date');
+      if(!h || !lpnxEl('date')) return;
+      /* 音声メモが隠した欄に文字を入れたとき（お客様の切り替え・消す）も、4つの欄に戻す */
+      try{
+        Object.defineProperty(h, 'value', { configurable:true, enumerable:true,
+          get:function(){ return lpnxRaw.get.call(this); },
+          set:function(v){ lpnxRaw.set.call(this, v); try{ lpnxClose(); lpnxFill(lpnxParse(v)); }catch(x){} lpsfSoon(); } });
+      }catch(x){}
+      lpnxFill(lpnxParse(lpnxRaw.get.call(h)));
+      var d = lpnxEl('date');
+      d.addEventListener('click', lpnxOpenDate);
+      d.addEventListener('keydown', function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); lpnxOpenDate(); } });
+      ['start', 'end'].forEach(function(k){
+        var el = lpnxEl(k);
+        if(!el) return;
+        el.addEventListener('focus', function(){ lpnxOpenTime(k); });
+        el.addEventListener('click', function(){ lpnxOpenTime(k); });
+        el.addEventListener('input', function(){
+          if(k === 'end'){ lpnxEndTouched = true; return; }
+          var v = lpnxTime(el.value), e = lpnxEl('end');
+          if(v && e && !lpnxEndTouched && !e.value) e.value = lpnxAdd2(v);
+        });
+        el.addEventListener('change', function(){
+          var v = lpnxTime(el.value);
+          el.value = v;
+          if(v) lpnxSetTime(k, v); else lpnxCommit();
+        });
+      });
+      if(lpnxEl('place')) lpnxEl('place').addEventListener('input', lpnxCommit);
+      document.addEventListener('click', function(ev){
+        if(!lpnxOpen) return;
+        var t = ev.target;
+        if(t && t.closest && (t.closest('.lpdp, .lptp') || t === lpnxEl(lpnxOpen))) return;
+        lpnxClose();
+      });
+      document.addEventListener('keydown', function(ev){
+        if(ev.key !== 'Escape' || !lpnxOpen) return;
+        ev.stopPropagation();
+        var k = lpnxOpen; lpnxClose();
+        try{ lpnxEl(k).focus(); }catch(x){}
+      }, true);
+      /* 資料を読み込んだとき：資料に残っている次回の予定を出す（無ければ、いま出ている予定を資料に残す） */
+      document.addEventListener('lp-state-loaded', function(){
+        setTimeout(function(){
+          try{
+            var nm = lpMeetCurName();
+            if(!nm || !lpvReady()) return;
+            var e = getSaves()[nm];
+            if(!e || lpsfFamKey(lpsfEntryState(e)) !== lpsfFamNow()) return;
+            var sn = lpsfNx(e.next);
+            if(sn){
+              var t = lpnxText(sn);
+              if(t !== lpnxRaw.get.call(h)){ h.value = t; try{ h.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} }
+            }else if(lpnxGet().date) lpnxPersist();
+          }catch(x){}
+        }, 150);
+      });
+      /* 保存・上書き保存のあと：資料に次回の予定を残す（保存の中身を作り直すので、そのあとに足す）。
+         ★別のお名前のお客様として新しく保存したとき（読み込んでいた資料と、ご家族のお名前が違う）は、
+           前のお客様の次回の予定を持ち越さずに空にする（商談記録の「残さない」と同じ考え方） */
+      if($('save-overwrite')) $('save-overwrite').addEventListener('click', function(){ setTimeout(lpnxPersist, 0); });
+      if($('save-do')) $('save-do').addEventListener('click', function(){
+        var prev = '', prevFam = null;
+        try{
+          prev = lpMeetCurName() || '';
+          if(prev && lpvReady()){ var pe = getSaves()[prev]; if(pe) prevFam = lpsfFamKey(lpsfEntryState(pe)); }
+        }catch(x){}
+        setTimeout(function(){
+          var nm = '';
+          try{ nm = lpMeetCurName() || ''; }catch(x){}
+          if(prev && nm && nm !== prev && prevFam !== null && prevFam !== lpsfFamNow() && lpnxGet().date){
+            h.value = '';
+            try{ h.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+            return;
+          }
+          lpnxPersist();
+        }, 0);
+      });
+    })();
+
     (function(){
       if(!$('mr-box')) return;
       /* 商談記録の欄に、ダッシュボードへ入ることを一行で添える（使っている端末だけ） */
       function note(){
-        var p = $('lpsf-note'), on = lpsfOn();
+        var p = $('lpsf-note'), on = lpsfOn(), hint = $('mn-nx-hint');
+        if(hint) hint.textContent = '終了時刻は、開始の2時間後が自動で入ります。' + (on ? '次回の予定は、この端末の営業ダッシュボードのカレンダーにも「プレゼン」の予定として入ります。' : '');
         if(!on){ if(p) p.remove(); return; }
         if(!p){
           var at = $('mr-for');
@@ -16836,30 +17158,44 @@ function lpPdfProg(text, ratio){
           p.id = 'lpsf-note'; p.className = 'mr-for';
           at.parentNode.insertBefore(p, at.nextSibling);
         }
-        p.textContent = '保存したお客様（ご主人・奥様・お子さま）と商談記録は、この端末の営業ダッシュボードのお客様とカレンダーにも入ります。';
+        var ready = false;
+        try{ ready = lpvReady(); }catch(x){}
+        p.textContent = ready
+          ? '商談記録と次回の予定は、この端末の営業ダッシュボードのカレンダーに入ります。保存したお客様（ご主人・奥様・お子さま）は、お客様の一覧にも入ります。'
+          : 'ログインすると、商談記録と次回の予定が、この端末の営業ダッシュボードのカレンダーに入ります（上の「保存・読み込み」から）。';
       }
       function after(kind){
         setTimeout(function(){
           var nm = kind === 'add' ? lpsfMeetPersist() : '';
           try{ lpMeetRender(); }catch(x){}
           note();
+          lpsfSoon();
           var st = $('mr-status');
-          if(!st) return;
-          var t = st.textContent || '';
-          if(kind === 'add' && /記録しました/.test(t) && t.indexOf('営業ダッシュボード') < 0){
-            if(nm) t += '「' + nm + '」の資料に残しました。' + (lpsfOn() ? '営業ダッシュボードのカレンダーにも入ります。' : '');
-            else if(lpsfOn()){ try{ if(!lpMeetCurName()) t += '保存すると、営業ダッシュボードのお客様とカレンダーにも入ります。'; }catch(x){} }
+          if(!st || !lpsfOn()) return;
+          var t = st.textContent || '', cur = '', ready = false;
+          try{ cur = lpMeetCurName() || ''; ready = lpvReady(); }catch(x){}
+          if(t.indexOf('営業ダッシュボード') >= 0) return;
+          if(kind === 'add' && /記録しました/.test(t)){
+            if(nm) t += '「' + nm + '」の資料に残しました。営業ダッシュボードのカレンダーにも入ります。';
+            else if(!cur && ready) t += '営業ダッシュボードのカレンダーにも入ります。お客様の一覧には、資料を保存したときに入ります。';
+            else if(!ready) t += 'ログインすると、営業ダッシュボードのカレンダーにも入ります。';
             st.textContent = t;
           }
-          if(kind === 'del' && /消しました/.test(t) && t.indexOf('営業ダッシュボード') < 0 && lpsfOn()){
-            try{ if(lpMeetCurName()) st.textContent = t + '営業ダッシュボードのカレンダーからも、上書き保存したときに消えます。'; }catch(x){}
+          if(kind === 'del' && /消しました/.test(t)){
+            if(cur) st.textContent = t + '営業ダッシュボードのカレンダーからも、上書き保存したときに消えます。';
+            else if(ready) st.textContent = t + '営業ダッシュボードのカレンダーからも消えます。';
           }
         }, 0);
       }
       if($('mr-add')) $('mr-add').addEventListener('click', function(){ after('add'); });
       if($('mr-list')) $('mr-list').addEventListener('click', function(e){ if(e.target.closest('[data-mr-del]')) after('del'); });
       ['vc-tab-minutes', 'vc-open-btn'].forEach(function(id){ if($(id)) $(id).addEventListener('click', function(){ setTimeout(note, 40); }); });
-      document.addEventListener('lp-state-loaded', function(){ setTimeout(note, 40); });
+      document.addEventListener('lp-state-loaded', function(){ setTimeout(note, 40); lpsfSoon(); });
+      /* 保存前のお客様のお名前を直したら、カレンダーの予定のお名前も直す */
+      document.addEventListener('input', function(ev){
+        var id = ev.target && ev.target.id;
+        if(id === 'h-sei' || id === 'h-name' || id === 'w-sei' || id === 'w-name') lpsfSoon(false, 600);
+      });
       note();
     })();
 /* ==== LPSF-END ==== */
@@ -17258,7 +17594,6 @@ function lpPdfProg(text, ratio){
   if($$('lps-quick')) $$('lps-quick').addEventListener('click', function(){ if($$('quick-modal')) $$('quick-modal').hidden = false; });
   if($$('lps-input')) $$('lps-input').addEventListener('click', function(){ switchView('input', 'family'); });
   if($$('lps-open')) $$('lps-open').addEventListener('click', function(){ if($$('btn-save')) $$('btn-save').click(); });
-  if($$('lpl-go')) $$('lpl-go').addEventListener('click', function(){ switchView('result', 'assets'); });
   var pm = $$('lp-pdf-modal');
   if(pm){
     var close = function(){ pm.hidden = true; };

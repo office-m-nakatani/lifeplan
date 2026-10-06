@@ -17519,6 +17519,146 @@ function lpPdfProg(text, ratio){
       lpMeetRender();
     })();
 /* ==== MEETLOG-END ==== */
+/* ==== LPSF-BEGIN ===============================================================
+   ★営業ダッシュボードへ渡す控え（2026-10-06 ユーザー指示「ライフプランツールから入力しても、ダッシュボードのカレンダーに
+     反映できるように。ここで入力し保存された内容、情報については顧客管理に自動反映。ご主人だけでなく、奥様や、子どもについても」）。
+     部品は apply_lifeplan_salesfeed.py が持っている（ここを手で直さない）
+   ・同じ端末の営業ダッシュボード（office-m の hoken-sales）が読む。置き場所 localStorage 'officem.lpFeed.v1'
+   ・書くのは、営業ダッシュボードか管理画面を使っている端末だけ（どちらの記録も無い端末には何も書かない）
+   ・入れるのは、保存したお客様ごとの「ご家族のお名前・生年月日・年齢」と「商談記録（日付・時刻・方法・場所・ご出席）」だけ。
+     収入・資産・試算・メモは入れない。保存の中身を写す形なので、資料を消せば控えからも消える
+   ・商談記録を「記録する」と、読み込んでいる資料にもすぐ足す（上書き保存を待たない）。
+     消した記録は、これまでどおり上書き保存するまで資料に残す
+   ============================================================ */
+    var LPSF_KEY = 'officem.lpFeed.v1';
+    function lpsfOn(){
+      try{
+        if(localStorage.getItem('officem.hokenSales.v1') !== null) return true;
+        var a = JSON.parse(localStorage.getItem('officem.hokenHub.auth') || 'null');
+        return !!(a && /^[0-9a-f]{64}$/.test(String(a.h || '')));
+      }catch(e){ return false; }
+    }
+    function lpsfS(v, n){ return String(v == null ? '' : v).trim().slice(0, n || 60); }
+    function lpsfYmd(y, m, d){
+      y = parseInt(y, 10); m = parseInt(m, 10); d = parseInt(d, 10);
+      if(!(y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return '';
+      var t = new Date(y, m - 1, d);
+      if(t.getMonth() !== m - 1) return '';
+      return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    }
+    function lpsfAge(v){ v = parseInt(v, 10); return (v >= 0 && v <= 120) ? v : null; }
+    /* 保存1件 → ご家族と商談記録だけの形（収入・資産・試算は入れない） */
+    function lpsfItem(e){
+      if(!e || typeof e !== 'object') return null;
+      var pl = e.plans || {}, act = (pl.active === 'mirai' && pl.mirai && pl.mirai.state) ? pl.mirai : pl.genjo;
+      var st = (act && act.state) || (pl.genjo && pl.genjo.state) || e.state || null;
+      if(!st) return null;
+      var f = st.fields || {}, mem = [];
+      mem.push({ r:'h', sei:lpsfS(f['h-sei'], 30), mei:lpsfS(f['h-name'], 30), birth:lpsfYmd(f['h-b-y'], f['h-b-m'], f['h-b-d']), age:lpsfAge(f['h-age']) });
+      if(st.household !== 'single')
+        mem.push({ r:'w', sei:lpsfS(f['w-sei'], 30), mei:lpsfS(f['w-name'], 30), birth:lpsfYmd(f['w-b-y'], f['w-b-m'], f['w-b-d']), age:lpsfAge(f['w-age']) });
+      (Array.isArray(st.children) ? st.children : []).slice(0, 12).forEach(function(c){
+        if(!c || typeof c !== 'object') return;
+        var seireki = !c.bEra || c.bEra === 'seireki';
+        mem.push({ r:'c', sei:lpsfS(c.sei, 30), mei:lpsfS(c.name, 30), g:(c.gender === 'girl' ? 'girl' : 'boy'),
+                   birth:(seireki ? lpsfYmd(c.bY, c.bM, c.bD) : ''), age:lpsfAge(c.age) });
+      });
+      var mt = (Array.isArray(e.meetings) ? e.meetings : []).filter(function(m){
+        return m && /^\d{4}-\d{2}-\d{2}$/.test(String(m.date || '')) && m.id;
+      }).slice(0, 300).map(function(m){
+        return { id:lpsfS(m.id, 40), date:m.date, time:(/^\d{2}:\d{2}$/.test(String(m.time || '')) ? m.time : ''),
+                 way:lpsfS(m.way || '対面', 10), place:lpsfS(m.place, 120), att:lpsfS(m.att, 160) };
+      });
+      return { t:(+e.t || 0), kind:(st.household === 'single' ? 'single' : 'couple'), mem:mem, mt:mt };
+    }
+    /* このアカウントの保存を全て、控えに写し直す（保存の書き込みのたび・ログインのあと） */
+    function lpsfSyncAll(){
+      try{
+        if(!lpsfOn() || !lpvReady()) return false;
+        var u = currentUser, saves = getSaves(), hh = {};
+        Object.keys(saves).slice(0, 2000).forEach(function(n){
+          var it = lpsfItem(saves[n]);
+          if(it) hh[String(n).slice(0, 80)] = it;
+        });
+        var o = null;
+        try{ o = JSON.parse(localStorage.getItem(LPSF_KEY) || 'null'); }catch(x){ o = null; }
+        if(!o || typeof o !== 'object' || o.v !== 1 || !o.acct || typeof o.acct !== 'object') o = { v:1, acct:{} };
+        if(JSON.stringify((o.acct[u] && o.acct[u].hh) || null) === JSON.stringify(hh)) return false;
+        o.acct[u] = { at:Date.now(), hh:hh };
+        o.at = Date.now();
+        localStorage.setItem(LPSF_KEY, JSON.stringify(o));
+        return true;
+      }catch(x){ return false; }
+    }
+    var lpsfTimer = null;
+    function lpsfSoon(){ clearTimeout(lpsfTimer); lpsfTimer = setTimeout(lpsfSyncAll, 60); }
+    /* 保存の書き込みのたび・ログインのあとに写し直す（中身は変えずに包むだけ） */
+    lpvWrite = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(); return r; }; })(lpvWrite);
+    lpvAfterUnlock = (function(f){ return function(){ var r = f.apply(this, arguments); lpsfSoon(); return r; }; })(lpvAfterUnlock);
+    /* 商談記録を「記録する」と、読み込んでいる資料にもすぐ足す。残したら資料の名前を返す。
+       ★足すだけ。消した記録は、これまでどおり上書き保存するまで資料に残す（監査の記録を
+       別のお客様の準備の途中で消してしまわないため。2026-09-25 の作りのまま） */
+    function lpsfMeetPersist(){
+      try{
+        if(!lpvReady()) return '';
+        var nm = lpMeetCurName();
+        if(!nm) return '';
+        var o = getSaves(), e = o[nm];
+        if(!e) return '';
+        var cur = lpMeetGet().slice(), saved = Array.isArray(e.meetings) ? e.meetings : [];
+        var curIds = {}, savedIds = {};
+        cur.forEach(function(m){ if(m && m.id) curIds[m.id] = 1; });
+        saved.forEach(function(m){ if(m && m.id) savedIds[m.id] = 1; });
+        var add = cur.filter(function(m){ return m && m.id && !savedIds[m.id]; });
+        if(!add.length) return '';
+        var pending = saved.some(function(m){ return m && m.id && !curIds[m.id]; });
+        /* 消すのを待っている記録が無ければ、画面の一覧と同じ形で残す（「保存済み」と出るように） */
+        e.meetings = pending ? saved.concat(add) : cur;
+        if(!putSaves(o)) return '';
+        try{ omcrmSync(nm); }catch(x){}
+        return nm;
+      }catch(x){ return ''; }
+    }
+    (function(){
+      if(!$('mr-box')) return;
+      /* 商談記録の欄に、ダッシュボードへ入ることを一行で添える（使っている端末だけ） */
+      function note(){
+        var p = $('lpsf-note'), on = lpsfOn();
+        if(!on){ if(p) p.remove(); return; }
+        if(!p){
+          var at = $('mr-for');
+          if(!at || !at.parentNode) return;
+          p = document.createElement('p');
+          p.id = 'lpsf-note'; p.className = 'mr-for';
+          at.parentNode.insertBefore(p, at.nextSibling);
+        }
+        p.textContent = '保存したお客様（ご主人・奥様・お子さま）と商談記録は、この端末の営業ダッシュボードのお客様とカレンダーにも入ります。';
+      }
+      function after(kind){
+        setTimeout(function(){
+          var nm = kind === 'add' ? lpsfMeetPersist() : '';
+          try{ lpMeetRender(); }catch(x){}
+          note();
+          var st = $('mr-status');
+          if(!st) return;
+          var t = st.textContent || '';
+          if(kind === 'add' && /記録しました/.test(t) && t.indexOf('営業ダッシュボード') < 0){
+            if(nm) t += '「' + nm + '」の資料に残しました。' + (lpsfOn() ? '営業ダッシュボードのカレンダーにも入ります。' : '');
+            else if(lpsfOn()){ try{ if(!lpMeetCurName()) t += '保存すると、営業ダッシュボードのお客様とカレンダーにも入ります。'; }catch(x){} }
+            st.textContent = t;
+          }
+          if(kind === 'del' && /消しました/.test(t) && t.indexOf('営業ダッシュボード') < 0 && lpsfOn()){
+            try{ if(lpMeetCurName()) st.textContent = t + '営業ダッシュボードのカレンダーからも、上書き保存したときに消えます。'; }catch(x){}
+          }
+        }, 0);
+      }
+      if($('mr-add')) $('mr-add').addEventListener('click', function(){ after('add'); });
+      if($('mr-list')) $('mr-list').addEventListener('click', function(e){ if(e.target.closest('[data-mr-del]')) after('del'); });
+      ['vc-tab-minutes', 'vc-open-btn'].forEach(function(id){ if($(id)) $(id).addEventListener('click', function(){ setTimeout(note, 40); }); });
+      document.addEventListener('lp-state-loaded', function(){ setTimeout(note, 40); });
+      note();
+    })();
+/* ==== LPSF-END ==== */
     // 新規保存
     $('save-do').addEventListener('click', ()=>{
       const name = ($('save-name').value||'').trim();

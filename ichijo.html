@@ -2267,19 +2267,10 @@ body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].v
       }
     }
   /* == LP100-CSS-BEGIN == */
-/* 色：選んでいるタブ・主なボタン（白い字で見え方4.5以上） */
+/* ★2026-10-08 ユーザー指示「ライフプランツールは先週までの使い方に戻してください。文字の前後の間隔、色合いなどが前の方が見やすいです。ここはいらなかったです」で、
+B8（入口3つと汎用版の見出し）・B9（黄色い帯を畳む・携帯のタブ・丸い「AIに相談」）・B10（濃い色・13px への底上げ）を外した。書き戻さない。
+残すのは A1（ありえない入力の確かめ）・B11（PDF の要点版）・AI診断の一行だけ */
 :root{ --lp-act:#2a7356; --lp-act2:#1f5c41; }
-.btn-primary{ background:var(--lp-act); box-shadow:0 6px 16px rgba(30,60,90,.18); }
-.btn-primary:hover{ filter:brightness(1.08); }
-.plan-tabs button.active{ background:var(--lp-act); color:#fff; }
-.tool-nav-scroll button.active{ background:var(--lp-act); border-color:var(--lp-act); color:#fff; }
-.tool-nav-row.tnr-result .tool-nav-scroll button.active{ background:var(--lp-act2); border-color:var(--lp-act2); }
-.chat-fab{ background:var(--lp-act2); }
-/* 実質価値は、マイナスのときだけ赤。ふだんは墨の字の白い箱 */
-.kpi-real{ background:#fff; border-color:var(--line); }
-.kpi-real .k-value{ color:var(--ink); }
-.kpi .k-value.lp-neg{ color:#c0392b; }
-.kpi-real:has(.k-value.lp-neg){ background:var(--bad-pale); border-color:#f3d6d6; }
 /* A1 入力の範囲の確かめ */
 #input-panel input[aria-invalid="true"]{ border-color:#c0392b !important; background:#fff5f4 !important; box-shadow:0 0 0 3px rgba(192,57,43,.15) !important; }
 .lp-bad-msg{ display:block; margin-top:5px; font-size:.82rem; font-weight:700; color:#a93226; line-height:1.55; }
@@ -2295,117 +2286,10 @@ body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].v
 body.lp-badin-on:not(.pdf-mode) .results .view-wrap > *:not(.verdict),
 body.lp-badin-on:not(.pdf-mode) .table-section[data-view]{ opacity:.3; filter:grayscale(1); pointer-events:none; user-select:none; }
 }
-/* B9 黄色い帯を1行に（断りの2行は畳まない） */
-.est-band.est-fold .est-band-h{ align-items:center; flex-wrap:wrap; row-gap:6px; }
-.est-band.est-fold .est-band-h > span{ flex:1 1 260px; }
-.est-open{ flex:0 0 auto; min-height:44px; padding:6px 14px; background:#fff; border:1.5px solid var(--warn); border-radius:999px; font:inherit; font-size:.88rem; font-weight:800; color:#7a5c0f; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
-.est-open i{ margin:0; transition:transform .15s; }
-.est-open[aria-expanded="true"] i{ transform:rotate(180deg); }
-.est-band.est-fold .est-chips[hidden]{ display:none !important; }
-.est-band.est-fold .est-more{ margin:8px 0 0; font-size:.88rem; color:#7a5c0f; }
-.est-band.est-fold .est-chip{ min-height:44px; }
-/* B8 最初の画面の入口3つ */
-.lp-start-wrap{ margin-top:4px; }
-.lp-start{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
-.lp-start-b{ display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; column-gap:12px; align-items:center; text-align:left; min-height:76px; padding:12px 16px; background:#fff; border:1.5px solid var(--line); border-radius:16px; box-shadow:var(--shadow-soft); font:inherit; color:var(--ink); cursor:pointer; transition:border-color .15s, background .15s; }
-.lp-start-b:hover{ border-color:var(--lp-act); background:var(--blue-pale); }
-.lp-start-b i{ grid-row:1 / span 2; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background:var(--blue-pale); color:var(--lp-act); font-size:1.15rem; }
-.lp-start-b b{ font-size:1.05rem; font-weight:800; }
-.lp-start-b span{ font-size:.86rem; color:var(--ink-soft); line-height:1.5; }
-.lp-start-b.lp-start-main{ background:var(--lp-act); border-color:var(--lp-act); color:#fff; }
-.lp-start-b.lp-start-main:hover{ filter:brightness(1.08); background:var(--lp-act); }
-.lp-start-b.lp-start-main i{ background:rgba(255,255,255,.18); color:#fff; }
-.lp-start-b.lp-start-main span{ color:rgba(255,255,255,.92); }
-body.customer-mode .lp-start-wrap{ display:none !important; }
-@media (max-width:640px){
-.lp-start{ gap:8px; }
-.lp-start-b{ grid-template-columns:1fr; grid-template-rows:auto auto; justify-items:center; text-align:center; row-gap:6px; padding:10px 6px; min-height:88px; }
-.lp-start-b i{ grid-row:auto; width:40px; height:40px; }
-.lp-start-b b{ font-size:.92rem; line-height:1.35; }
-.lp-start-b span{ display:none; }
-}
-.lp-hero-src{ font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
-.lp-small-note{ font-size:max(13px, .86em); color:var(--ink-soft); }
+/* 小さな断り（作成者の表示の道具がこの名前を使う）。見た目は先週までの形 */
+.lp-hero-src{ font-size:.76rem; color:var(--ink-soft); }
+.lp-small-note{ font-size:.86em; opacity:.85; }
 .lp-nw{ white-space:nowrap; }
-/* B7（入力の右の「いまの結果」）は 2026-10-06 に外した（ユーザー指示「これは全て削除」）。2列の並びはもとの作り（左右に1枚ずつ）に戻る */
-/* B9 携帯のタブは札を上に置き、ボタンを全部見せる（横に流さない） */
-@media (max-width:640px){
-.tool-nav-row{ flex-wrap:wrap; padding:10px; row-gap:8px; }
-.tool-nav-label{ flex:1 1 100%; font-size:.84rem; }
-.tool-nav-scroll{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; overflow:visible; -webkit-mask-image:none; mask-image:none; }
-.tool-nav-scroll button{ white-space:normal; line-height:1.3; padding:6px 4px; font-size:.82rem; text-align:center; min-width:0; border-radius:12px; }
-.tool-nav-scroll button i{ display:block; margin:0 auto 2px; }
-#nav-input button::before{ display:none; }
-#nav-input button.is-filled:not(.active){ box-shadow:inset 0 -3px 0 var(--good); }
-.chat-fab{ display:none !important; }
-}
-/* 右下の「AIに相談」は丸い印だけ（字は読み上げ用に残す）。結果の見出しに重ならない大きさ */
-.chat-fab{ width:56px; height:56px; min-height:56px; padding:0; justify-content:center; border-radius:50%; font-size:1.2rem; }
-.chat-fab .chat-fab-t{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-/* B10 13px 未満の字を、画面だけ13pxへ（PDF・印刷は前のまま） */
-@media screen{
-body:not(.pdf-mode) .adv-cat .adv-cat-flag{ font-size:13px; }
-body:not(.pdf-mode) .adv-cats-hint{ font-size:13px; }
-body:not(.pdf-mode) .chat-cta{ font-size:13px; }
-body:not(.pdf-mode) .cr-gender-seg button{ font-size:13px; }
-body:not(.pdf-mode) .cr-quote{ font-size:13px; }
-body:not(.pdf-mode) .disclaimer{ font-size:13px; }
-body:not(.pdf-mode) .est-band-n{ font-size:13px; }
-body:not(.pdf-mode) .est-chip{ font-size:13px; }
-body:not(.pdf-mode) .field .hint{ font-size:13px; }
-body:not(.pdf-mode) .ic-fold summary{ font-size:13px; }
-body:not(.pdf-mode) .input-unit .u{ font-size:13px; }
-body:not(.pdf-mode) .kpi .k-label{ font-size:13px; }
-body:not(.pdf-mode) .kpi .k-value small{ font-size:13px; }
-body:not(.pdf-mode) .kt-card .kt-sub{ font-size:13px; }
-body:not(.pdf-mode) .kt-sibs{ font-size:13px; }
-body:not(.pdf-mode) .note{ font-size:13px; }
-body:not(.pdf-mode) .pen-preset{ font-size:13px; }
-body:not(.pdf-mode) .plan-hint{ font-size:13px; }
-body:not(.pdf-mode) .premise{ font-size:13px; }
-body:not(.pdf-mode) .rl-real .rl-age{ font-size:13px; }
-body:not(.pdf-mode) .rl-real .rl-amt small{ font-size:13px; }
-body:not(.pdf-mode) .rl-real .rl-basis{ font-size:13px; }
-body:not(.pdf-mode) .rl-real .rl-note{ font-size:13px; }
-body:not(.pdf-mode) .scroll-hint{ font-size:13px; }
-body:not(.pdf-mode) .subgroup-title .tag{ font-size:13px; }
-body:not(.pdf-mode) .tool-nav-label{ font-size:13px; }
-body:not(.pdf-mode) table.cf{ font-size:13px; }
-body:not(.pdf-mode) table.cfh td.evtv{ font-size:13px; }
-body:not(.pdf-mode) table.cfh th.cfh-y .cfh-age{ font-size:13px; }
-body:not(.pdf-mode) table.cfh tr:has(td.evtv) .rowhead{ font-size:13px; }
-body:not(.pdf-mode) table.cmp-table th:first-child{ font-size:13px; }
-body:not(.pdf-mode) table.cmp-table td:first-child{ font-size:13px; }
-body:not(.pdf-mode) table.cmp-table thead th{ font-size:13px; }
-body:not(.pdf-mode) table.cmp-table.hkd-table td .hkd-total .hkd-unit{ font-size:13px; }
-}
-/* B10 見えにくかった字（コントラスト 4.5 未満）を濃く。色の役割はそのまま、濃さだけ上げる */
-.field .net-hint{ color:#23704f; }
-.subgroup-title.spouse, .subgroup-title.spouse .tag, .ev-wife, .etl-tick em.w{ color:#a3436f; }
-.lp-title .tag[style*="#c2729a"]{ color:#a3436f !important; }
-#real-raise-hint b[style*="--bad"]{ color:#b23b3b !important; }
-.premise{ opacity:1; }
-.tag[style*="color:#8a6a12"], #nav-result button[data-nav-result="chat"]{ color:#6f5408 !important; }
-.tag[style*="color:#2f7cb5"]{ color:#23679b !important; }
-/* 結果の一番上の判定：白い字が読める濃さ（淡い地に白い字で 1.9〜2.2 だった）。色の役割（安定＝青か緑・注意＝琥珀・要対策＝赤）は変えない */
-.verdict.good{ background:linear-gradient(120deg, var(--lp-act), var(--lp-act2)); }
-.verdict.warn{ background:linear-gradient(120deg, #a8620d, #8c4f06); }
-.verdict.bad{ background:linear-gradient(120deg, #b04a4a, #963b3b); }
-.kpi-total .k-value{ color:#23704f; }
-.diff-plus{ color:#23679b; }
-/* AI診断の分野の札と見出し */
-.adv-cat.active{ background:var(--lp-act); border-color:var(--lp-act); }
-.adv-cat .flag-ok{ color:#1f6b52; }
-.adv-cat .flag-warn{ color:#7d5410; }
-.adv-cat .flag-bad{ color:#a33a3a; }
-.adv-sec-title.good{ color:#1f6b52; }
-.adv-sec-title.concern{ color:#8f5a0f; }
-.chat-cta, #btn-try-ichijo2{ color:#3b2f06; }
-/* 年齢別キャッシュフロー表：赤い数字・奥様の年齢・進学の帯・年の見出し */
-table.cf td.neg{ color:#b03030; }
-table.cfh td.evtv.edu-seg{ color:var(--ink) !important; }
-table.cfh th.cfh-y{ color:var(--lp-act2); }
-table.cfh th.cfh-y .cfh-age{ color:#44546a; }
 /* AI診断の一行 */
 .lp-ai-note{ margin:4px 0 10px; font-size:.86rem; color:var(--ink-soft); line-height:1.65; }
 /* B11 PDF を選ぶ窓と進み具合 */
@@ -2426,7 +2310,7 @@ table.cfh th.cfh-y .cfh-age{ color:#44546a; }
 .pdf-mode #lp-pdf-prog{ display:none !important; }
 /* 要点版：入力の欄・相談・詳しい表は出さない */
 body.pdf-brief #input-panel, body.pdf-brief .view-wrap[data-view="chat"], body.pdf-brief #pdf-asset-extra,
-body.pdf-brief #draft-banner, body.pdf-brief #est-banner .est-chips, body.pdf-brief #est-banner .est-open,
+body.pdf-brief #draft-banner, body.pdf-brief #est-banner .est-chips,
 body.pdf-brief #pdf-all-advice{ display:none !important; }
 body.pdf-brief .results{ margin-top:0 !important; }
 /* == LP100-CSS-END == */</style>
@@ -2459,15 +2343,6 @@ body.pdf-brief .results{ margin-top:0 !important; }
         <button class="btn btn-ghost btn-sm" id="btn-send"><i class="fa-solid fa-file-arrow-down"></i> PDF作成</button>
       </div><!-- 【一条フック】「一条の家で試す」はヒーローから削除（賃貸時の比較カード位置のプレースホルダー btn-try-ichijo2 から起動） -->
     </div>
-  <!-- == LP100-START-BEGIN == 最初の画面の入口3つ（2026-10-04・B8）。お客様の画面・PDF には出さない -->
-  <div class="wrap lp-start-wrap no-print">
-    <div class="lp-start">
-      <button type="button" class="lp-start-b lp-start-main" id="lps-quick"><i class="fa-solid fa-bolt"></i><b>1分で概算</b><span>7つの数字だけで、まず全体をつかむ</span></button>
-      <button type="button" class="lp-start-b" id="lps-input"><i class="fa-solid fa-pen-to-square"></i><b>最初から入力</b><span>ご家族から順に、ひとつずつ</span></button>
-      <button type="button" class="lp-start-b" id="lps-open"><i class="fa-solid fa-folder-open"></i><b>保存した方を開く</b><span>ログインして、前の資料の続きから</span></button>
-    </div>
-  </div>
-  <!-- == LP100-START-END == -->
   </section>
 
   <!-- お客様モード（共有リンクで開いたとき）のご案内と操作 -->
@@ -4108,7 +3983,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
   <button type="button" id="jump-result" class="btn btn-primary jump-result"><i class="fa-solid fa-chart-line"></i> 結果を見る</button>
 
   <!-- チャットへのショートカット（画面右下に常駐。チャット画面表示中は隠す） -->
-  <button type="button" id="chat-fab" class="chat-fab no-print" hidden aria-label="AIに相談" title="AIに相談"><i class="fa-solid fa-comments"></i><span class="chat-fab-t">AIに相談</span></button>
+  <button type="button" id="chat-fab" class="chat-fab no-print" hidden><i class="fa-solid fa-comments"></i> AIに相談</button>
 
   <!-- ===================== 音声メモ・自動入力（下端ドック）=====================
        画面下端の帯。横を塞がないので、録音中も入力欄・結果がそのまま読める。
@@ -4735,10 +4610,10 @@ body.pdf-brief .results{ margin-top:0 !important; }
 
     /* お子さまごとの色（第一子・第二子…で色分け） */
     const CHILD_COLORS = [
-      { bg:'#fbe7f0', border:'#e2849a', text:'#93406a' },  // 第一子：ピンク（LP100 B10 字を濃く）
+      { bg:'#fbe7f0', border:'#e2849a', text:'#b35a7d' },  // 第一子：ピンク
       { bg:'#e6edfb', border:'#7a93cf', text:'#4f63a8' },  // 第二子：青むらさき
-      { bg:'#e3f3ef', border:'#54bb98', text:'#1f6b52' },  // 第三子：みどり（LP100 B10 字を濃く）
-      { bg:'#fdf1dc', border:'#e0a23b', text:'#7d5410' },  // 第四子：やまぶき（LP100 B10 字を濃く）
+      { bg:'#e3f3ef', border:'#54bb98', text:'#2f8a6e' },  // 第三子：みどり
+      { bg:'#fdf1dc', border:'#e0a23b', text:'#9a6f1f' },  // 第四子：やまぶき
       { bg:'#f0e8f7', border:'#a986cf', text:'#7a52a8' }   // 第五子：むらさき
     ];
     const childColor = (i)=> CHILD_COLORS[i % CHILD_COLORS.length];
@@ -8620,7 +8495,6 @@ function lpPdfProg(text, ratio){
         const row = rows.find(r=> r.hAge===a) || rows[rows.length-1];
         $(totalId).innerHTML = manUnit(row.net);
         $(realId).innerHTML  = manUnit(row.net / row.inflF);   // 今のお金の価値に換算（インフレ後）
-        $(totalId).classList.toggle('lp-neg', row.net < 0); $(realId).classList.toggle('lp-neg', row.net < 0);   /* LP100 B10 マイナスのときだけ赤 */
       };
       showAtAge('age-point-1','kpi-total-1','kpi-real-1',65);
       showAtAge('age-point-2','kpi-total-2','kpi-real-2',100);
@@ -10371,17 +10245,17 @@ function lpPdfProg(text, ratio){
         return defaultFP[k] !== undefined && sectionFingerprint(k) === defaultFP[k];
       });
     }
-    function renderEstBanner(){   /* LP100 ★入力の確かめ（A1）と、1行に畳んだ黄色い帯（B9）。断りの2行は畳まない */
+    function renderEstBanner(){   /* LP100 ★入力の確かめ（A1）の一覧＋先週までの黄色い帯（畳まない。2026-10-08 に戻した） */
       const host = $('est-banner'); if(!host) return;
       let h = (typeof lpBadHTML === 'function') ? lpBadHTML(lpBadList) : '';
       const pend = estPending();
       if(pend.length){
         const cust = document.body.classList.contains('customer-mode');
-        h += '<div class="est-band est-fold">'
+        h += '<div class="est-band">'
           + '<div class="est-band-h"><i class="fa-solid fa-triangle-exclamation"></i>'
-          + '<span>この結果には、まだ<b>一般的な目安のままの入力が' + pend.length + '件</b>あります。</span>'
-          + '<button type="button" class="est-open" aria-expanded="' + (lpEstOpen ? 'true' : 'false') + '">確かめる <i class="fa-solid fa-chevron-down"></i></button></div>'
-          + '<div class="est-chips"' + (lpEstOpen ? '' : ' hidden') + '><p class="est-more">ここを実際の数字に直すほど、結果は正確になります。</p>' + pend.map(function(k){
+          + '<span>この結果には、まだ<b>一般的な目安のままの入力が' + pend.length + '件</b>あります。'
+          + 'ここを実際の数字に直すほど、結果は正確になります。</span></div>'
+          + '<div class="est-chips">' + pend.map(function(k){
               return '<button type="button" class="est-chip" data-est="' + k + '">' + esc(EST_SECTION_LABEL[k] || k) + 'を入力する</button>';
             }).join('') + '</div>'
           + '<div class="est-band-n">※ 目安の金額は<b>一般的な目安</b>として置いているもので、統計にもとづく確定した見込みではありません。'
@@ -10390,12 +10264,6 @@ function lpPdfProg(text, ratio){
       }
       host.innerHTML = h;
       if(typeof lpBadWire === 'function') lpBadWire(host);
-      const op = host.querySelector('.est-open');
-      if(op) op.addEventListener('click', function(){
-        lpEstOpen = !lpEstOpen;
-        op.setAttribute('aria-expanded', lpEstOpen ? 'true' : 'false');
-        const ch = host.querySelector('.est-chips'); if(ch) ch.hidden = !lpEstOpen;
-      });
       host.querySelectorAll('[data-est]').forEach(function(b){
         b.addEventListener('click', function(){ switchView('input', b.dataset.est); });
       });
@@ -10539,7 +10407,7 @@ function lpPdfProg(text, ratio){
          下までスクロールした状態でボタンを押しても、下のままだと新しいパートの頭が見えないため。
          ナビ（sticky）とプランバーに隠れない位置＝番兵の少し上へ。behavior:'auto' で即時に移動する。 */
       if(!opts.noScroll){
-        const anchor = (window.matchMedia && window.matchMedia('(max-width:640px)').matches && document.querySelector('.layout')) || $('nav-sentinel') || $('tool-nav');   /* LP100 B9 携帯はタブを全部見せるので、押したら中身の頭へ */
+        const anchor = $('nav-sentinel') || $('tool-nav');
         if(anchor){
           // 追従ナビ（sticky）の高さぶん余計に上げないと、新しいパートの見出しがナビの裏に隠れる（検証役検出）
           const y = anchor.getBoundingClientRect().top + window.pageYOffset - (_planbarH + 8);
@@ -18400,12 +18268,9 @@ function lpPdfProg(text, ratio){
       try{ const last = localStorage.getItem(SESSION_KEY); if(last && getAccounts()[last]) lpvAutoUnlock(last); }catch(e){}   /* LPVAULT ★置いてある鍵で開けたときだけログイン */
     })();
 
-/* == LP100-WIRE-BEGIN == 入口3つ・結果の要約・PDF を選ぶ窓の配線（2026-10-04） */
+/* == LP100-WIRE-BEGIN == PDF を選ぶ窓の配線（2026-10-04） */
 (function(){
   var $$ = function(id){ return document.getElementById(id); };
-  if($$('lps-quick')) $$('lps-quick').addEventListener('click', function(){ if($$('quick-modal')) $$('quick-modal').hidden = false; });
-  if($$('lps-input')) $$('lps-input').addEventListener('click', function(){ switchView('input', 'family'); });
-  if($$('lps-open')) $$('lps-open').addEventListener('click', function(){ if($$('btn-save')) $$('btn-save').click(); });
   var pm = $$('lp-pdf-modal');
   if(pm){
     var close = function(){ pm.hidden = true; };

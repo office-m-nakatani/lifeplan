@@ -1032,7 +1032,7 @@ body.lpj-on{ overflow:hidden; }
 body.lpj-on .chat-fab{ display:none !important; }
 .lpj-ov{ position:fixed; inset:0; z-index:400; background:rgba(31,48,71,.45); display:flex; align-items:center; justify-content:center; padding:16px; }
 .lpj-ov[hidden]{ display:none !important; }
-.lpj-box{ background:#fff; color:var(--ink); width:min(1040px,100%); height:min(800px, calc(100vh - 32px)); height:min(800px, calc(100dvh - 32px)); border-radius:16px; box-shadow:0 18px 50px rgba(20,40,60,.28); display:flex; flex-direction:column; overflow:hidden; }
+.lpj-box{ background:#fff; color:var(--ink); width:min(820px,100%); height:min(800px, calc(100vh - 32px)); height:min(800px, calc(100dvh - 32px)); border-radius:16px; box-shadow:0 18px 50px rgba(20,40,60,.28); display:flex; flex-direction:column; overflow:hidden; }
 .lpj-head{ display:flex; align-items:center; gap:10px; padding:12px 12px 10px 20px; border-bottom:1px solid var(--line); }
 .lpj-ttl{ font-size:1.14rem; font-weight:800; display:flex; align-items:center; gap:9px; margin:0; }
 .lpj-ttl i{ color:#1a5487; }
@@ -1044,16 +1044,14 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-chip{ display:inline-flex; align-items:center; min-height:44px; padding:6px 14px; border-radius:999px; border:1.5px solid var(--line); background:#fff; color:#1a5487; font:inherit; font-size:.86rem; font-weight:700; cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .lpj-chip:hover{ border-color:#1a5487; }
 .lpj-chip:focus-visible, .lpj-it:focus-visible, .lpj-x:focus-visible, .lpj-back:focus-visible, .lpj-card:focus-visible, .lpj-go:focus-visible, .lpj-lk:focus-visible{ outline:3px solid #1a5487; outline-offset:2px; }
-.lpj-panes{ flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,350px) minmax(0,1fr); border-top:1px solid var(--line); }
-.lpj-list{ overflow-y:auto; border-right:1px solid var(--line); padding:0 10px 18px; background:#fafcfe; }
-.lpj-det{ overflow-y:auto; padding:18px 28px 26px; }
+.lpj-body{ flex:1; min-height:0; overflow-y:auto; border-top:1px solid var(--line); }
+.lpj-list{ padding:0 20px 22px; }
+.lpj-det{ display:none; padding:10px 24px 30px; }
+.lpj-box.lpj-show-det .lpj-list{ display:none; }
+.lpj-box.lpj-show-det .lpj-det{ display:block; }
 .lpj-count{ font-size:.84rem; color:var(--ink-soft); margin:12px 6px 4px; line-height:1.6; }
-.lpj-gh{ position:sticky; top:0; z-index:1; font-size:.86rem; font-weight:800; color:#1a5487; margin:0 -10px; padding:10px 16px 6px; background:#fafcfe; border-bottom:1px solid #e6eef6; }
+.lpj-gh{ position:sticky; top:0; z-index:1; font-size:.86rem; font-weight:800; color:#1a5487; margin:0 -20px; padding:10px 20px 6px; background:#fff; border-bottom:1px solid #e6eef6; }
 .lpj-ul{ list-style:none; margin:0; padding:4px 0 6px; }
-/* ★全ての言葉（数千行）を一度に並べるので、画面の外の行は描かない（開いた直後と書体の読み込みのたびに約1秒止まっていた）。
-   高さは見える行に近い仮の値（一度描いた行は実際の高さを覚える）。枠で輪郭が切れないよう、焦点の輪は内側に寄せる */
-.lpj-list .lpj-ul > li{ content-visibility:auto; contain-intrinsic-size:auto 86px; }
-.lpj-list .lpj-it:focus-visible{ outline-offset:-3px; }
 .lpj-it{ display:block; width:100%; text-align:left; border:0; border-left:3px solid transparent; background:transparent; padding:9px 10px 9px 11px; border-radius:8px; cursor:pointer; font:inherit; color:var(--ink); min-height:44px; }
 .lpj-it:hover{ background:var(--blue-pale); }
 .lpj-it.on{ background:var(--blue-pale); border-left-color:#1a5487; }
@@ -1062,16 +1060,15 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-tag-m{ color:#2b6a3d; background:#e8f4ec; }
 .lpj-tag-k{ color:#7a4a00; background:#fdf1dc; }
 .lpj-tag-g{ color:#1a5487; background:#e3f0fa; }
+.lpj-tag-f{ color:#3f2a7a; background:#efe9fa; }
 a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
-.lpj-sec-h .fa-graduation-cap{ color:#1a5487; }
 .lpj-gc{ display:block; font-size:.82rem; color:var(--ink-soft); line-height:1.6; margin-top:2px; }
 .lpj-is{ display:block; font-size:.84rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .lpj-none{ font-size:.92rem; line-height:1.75; margin:12px 6px; }
 .lpj-wait{ font-size:.92rem; color:var(--ink-soft); margin:18px 8px; line-height:1.75; }
 .lpj-bar{ display:flex; flex-wrap:wrap; gap:4px 10px; margin:0 0 6px -8px; }
 .lpj-back, .lpj-hb{ align-items:center; gap:6px; min-height:44px; padding:6px 12px 6px 8px; border:0; background:transparent; color:#1a5487; font:inherit; font-size:.92rem; font-weight:700; cursor:pointer; border-radius:10px; max-width:100%; }
-.lpj-back{ display:none; }
-.lpj-hb{ display:inline-flex; }
+.lpj-back, .lpj-hb{ display:inline-flex; }
 .lpj-hb span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lpj-back:hover, .lpj-hb:hover{ background:var(--blue-pale); }
 .lpj-dcat{ display:inline-block; font-size:.8rem; font-weight:700; color:#1a5487; background:var(--blue-pale); border-radius:999px; padding:3px 11px; }
@@ -1089,10 +1086,25 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 .lpj-kk p{ margin:0; font-size:.94rem; line-height:1.8; }
 .lpj-kk ul{ margin:2px 0 0; padding-left:1.2em; font-size:.94rem; line-height:1.8; }
 .lpj-sec{ margin:22px 0 0; max-width:40em; }
-.lpj-sec-h{ font-weight:800; font-size:.92rem; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:7px; }
-.lpj-sec-h i{ color:#1a5487; }
-.lpj-sec-h .fa-lightbulb{ color:#2b6a3d; }
-.lpj-sec-h .fa-chart-line{ color:#a3620a; }
+.lpj-sec-h{ --sc:#7b8794; --sb:#eef1f4; --st:#2f3b48; font-weight:800; font-size:.95rem; line-height:1.5; color:var(--st); background:var(--sb); border-left:5px solid var(--sc); border-radius:8px; padding:7px 12px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+.lpj-sec-h i{ color:var(--st); }
+.lpj-sec-h.c-rel{ --sc:#3a86c8; --sb:#eaf3fb; --st:#123f6b; }
+.lpj-sec-h.c-gk{ --sc:#3c9a5f; --sb:#e6f4ea; --st:#1d5a33; }
+.lpj-sec-h.c-m{ --sc:#d99a2b; --sb:#fdf1dc; --st:#6b4300; }
+.lpj-sec-h.c-k{ --sc:#d4607f; --sb:#fbe9f0; --st:#7e1f3f; }
+.lpj-sec-h.c-fx{ --sc:#8a68c8; --sb:#efe9fa; --st:#3f2a7a; }
+.lpj-s-rel .lpj-chip{ border-color:#b9d6ee; background:#f7fbff; }
+.lpj-s-gk .lpj-card{ border-color:#bfe0c9; background:#fbfefc; }
+.lpj-s-gk .lpj-card:hover{ border-color:#1d5a33; background:#f1faf4; }
+.lpj-s-m .lpj-card{ border-color:#efd9a8; background:#fffdf8; }
+.lpj-s-m .lpj-card:hover{ border-color:#6b4300; background:#fff8ea; }
+.lpj-s-k .lpj-card{ border-color:#f0c4d1; background:#fffafc; }
+.lpj-s-k .lpj-card:hover{ border-color:#7e1f3f; background:#fff1f6; }
+.lpj-fx{ background:#f5f1fc; border:1px solid #ddd0f2; border-radius:12px; padding:12px 14px; }
+.lpj-fx-b + .lpj-fx-b{ margin-top:14px; padding-top:12px; border-top:1px dashed #cdbfe9; }
+.lpj-fx-t{ font-size:.86rem; font-weight:800; color:#3f2a7a; margin:0 0 5px; line-height:1.5; }
+.lpj-fx-f{ font-size:1.04rem; font-weight:700; color:#2b1d57; line-height:1.9; margin:0; padding:9px 13px; background:#fff; border:1px solid #e3d9f5; border-radius:8px; overflow-wrap:anywhere; }
+.lpj-fx-n{ font-size:.86rem; color:#4a4560; line-height:1.7; margin:6px 0 0; }
 .lpj-ol, .lpj-ul2{ margin:0; padding-left:1.5em; font-size:.96rem; line-height:1.85; }
 .lpj-chips{ display:flex; flex-wrap:wrap; gap:6px; }
 .lpj-cards{ display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
@@ -1117,13 +1129,9 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 .lpj-box{ width:100%; height:100vh; height:100dvh; border-radius:0; }
 .lpj-head{ padding:8px 6px 8px 16px; }
 .lpj-find{ padding:10px 14px 10px; }
-.lpj-panes{ grid-template-columns:minmax(0,1fr); }
-.lpj-list{ border-right:0; background:#fff; padding:0 8px 18px; }
-.lpj-gh{ background:#fff; margin:0 -8px; padding:10px 14px 6px; }
-.lpj-det{ display:none; padding:10px 18px 22px; }
-.lpj-box.lpj-show-det .lpj-list{ display:none; }
-.lpj-box.lpj-show-det .lpj-det{ display:block; }
-.lpj-back{ display:inline-flex; }
+.lpj-list{ padding:0 14px 18px; }
+.lpj-gh{ margin:0 -14px; padding:10px 14px 6px; }
+.lpj-det{ padding:6px 18px 22px; }
 .lpj-dw{ font-size:1.38rem; }
 .lpj-foot{ padding:7px 14px 9px; }
 }
@@ -1134,6 +1142,15 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 /* LPKIZUKI-CSS-BEGIN 2026-10-09 AI診断とチャットの「ご家庭の数字から見えた発見」。★正本は katatsugi の hoken-newtools-src/apply_lifeplan_kizuki.py。ここを手で直さない */
 .adv-sec-title.lpk-dt{ color:#1f5f93; flex-wrap:wrap; }
 .adv-sec-title.lpk-dt small{ font-weight:600; font-size:.8rem; color:#4a5560; }
+.lpk-fold{ margin:0 0 6px; }
+.lpk-fold > summary{ list-style:none; cursor:pointer; min-height:44px; align-items:center; background:#eaf3fb; border:1px solid #cfe0f0; border-radius:12px; padding:8px 14px; margin:0; }
+.lpk-fold > summary::-webkit-details-marker{ display:none; }
+.lpk-fold > summary:hover{ background:#e1eef9; }
+.lpk-fold > summary:focus-visible{ outline:3px solid #1a5487; outline-offset:2px; }
+.lpk-fold .lpk-chev{ margin-left:auto; transition:transform .2s; }
+.lpk-fold[open] .lpk-chev{ transform:rotate(180deg); }
+.lpk-fold[open] > summary small{ display:none; }
+.lpk-fold > .lpk-list{ margin-top:10px; }
 .lpk-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
 .lpk-card{ background:#fff; border:1.5px solid var(--blue-pale2); border-left:5px solid var(--blue); border-radius:12px; padding:11px 13px; font-size:.86rem; line-height:1.7; }
 .lpk-top{ display:flex; align-items:flex-start; gap:8px; }
@@ -1197,57 +1214,6 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 .lpm-ask{ display:none !important; }
 }
 /* LPMANABI-CSS-END */
-/* LPEV2-CSS-BEGIN 2026-10-09 ライフイベントの候補・目安・備考と、入力欄の間を詰める。
-   ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_events2.py。ここを手で直さない */
-@media screen{
-body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))){ row-gap:14px; }
-body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))) > .field{ display:grid; grid-row:span 3; grid-template-rows:subgrid; row-gap:4px; align-content:start; }
-body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))) > .field > label{ min-height:0; align-self:end; }
-}
-.row-item.event-row{ grid-template-columns:.85fr .85fr .85fr 1.05fr auto; grid-template-areas:"evage evlabel evlabel evamount evdel" "evevery evuntil evnote evnote evnote" "evref evref evref evref evref"; row-gap:10px; padding:10px 12px 12px; margin-top:8px; align-items:start; }
-.row-item.event-row .ev-wife, .row-item.event-row > .field.ev-every-field > .hint, .row-item.event-row > .field.ev-until-field > .hint{ position:static; margin-top:0; white-space:nowrap; }
-.row-item.event-row > .btn-del{ align-self:start; margin-top:30px; }
-.row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-areas:"evage evlabel evlabel evamount evdel" "evevery evnote evnote evnote evnote" "evref evref evref evref evref"; }
-.row-item.event-row .ev-note-field{ grid-area:evnote; }
-.row-item.event-row .ev-ref{ grid-area:evref; }
-.row-item.event-row .field{ gap:4px; }
-.ev-label-field{ position:relative; }
-.ev-pick{ position:absolute; left:0; top:100%; margin-top:4px; z-index:40; width:max(100%,300px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 28px rgba(20,40,70,.16); padding:6px; }
-.ev-pick[hidden]{ display:none !important; }
-.ev-pick-h, .ev-pick-f{ font-size:.8rem; color:var(--ink-soft); padding:4px 8px; }
-.ev-pick-b{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; width:100%; min-height:44px; padding:6px 10px; border:0; border-radius:8px; background:none; font-family:inherit; text-align:left; cursor:pointer; color:var(--ink); }
-.ev-pick-b:hover, .ev-pick-b:focus-visible{ background:var(--blue-pale); outline:none; }
-.ev-pick-b b{ font-size:.92rem; font-weight:700; color:var(--blue-deep); }
-.ev-pick-b span{ font-size:.8rem; color:var(--ink-soft); }
-.ev-ref{ font-size:.8rem; line-height:1.65; color:var(--ink-soft); background:#fff; border:1px solid var(--line); border-left:3px solid var(--blue-pale2); border-radius:8px; padding:6px 10px; }
-.ev-ref[hidden]{ display:none !important; }
-.ev-ref b{ color:var(--ink); font-weight:700; }
-.ev-ref .ev-ref-sm{ display:block; margin-top:3px; }
-.ev-ref .ev-ref-src{ display:block; margin-top:2px; color:#6b7480; }
-@media(max-width:560px){
-.row-item.event-row, .row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-columns:1fr 1fr 38px; grid-template-areas:"evlabel evlabel evdel" "evage evamount evamount" "evevery evuntil evuntil" "evnote evnote evnote" "evref evref evref"; row-gap:8px; padding:10px 10px 10px; }
-.row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-areas:"evlabel evlabel evdel" "evage evamount evamount" "evevery evnote evnote" "evref evref evref"; }
-.ev-pick{ width:100%; }
-}
-.pdf-mode .ev-pick{ display:none !important; }
-@media print{
-.ev-pick{ display:none !important; }
-}
-/* LPEV2-CSS-END */
-/* LPRENT-CSS-BEGIN 2026-10-06 住まいが「賃貸のまま」のとき、PC で右の列だけが短く空くのを直す。
-   住まいを上に横いっぱいの1段、ご家族を横いっぱいにして中を2列に流す。
-   ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_rentbal.py。ここを手で直さない */
-@media screen and (min-width:1000px){
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active){ grid-template-columns:minmax(0,1fr); gap:18px; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"]{ order:-1; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 32px; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body > *{ min-width:0; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="home"] > .acc-body > .field{ margin-bottom:0; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body{ column-count:2; column-gap:36px; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body > *{ break-inside:avoid; }
-body.tab-mode:not(.pdf-mode) #input-panel.pair-2:has(> .acc[data-sec="family"].view-active):has(> .acc[data-sec="home"].view-active #house-seg [data-house="rent"].active) > .acc[data-sec="family"] > .acc-body > .subgroup:has(#children-list){ break-before:column; margin-top:0 !important; }
-}
-/* LPRENT-CSS-END */
 /* LPADV-CSS-BEGIN 2026-10-10 AI診断の詳しい欄が PC で縦に長くなりすぎるのを直す。
    PC＝分野の一覧を上に横いっぱい・詳しい診断を全幅、安心と気をつけたい点を左右に並べ、気づきと学びを2列に流す。
    ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_advlayout.py。ここを手で直さない */
@@ -1280,7 +1246,45 @@ body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl{ display:b
 body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl > li{ break-inside:avoid; margin:0 0 8px; }
 }
 /* LPADV-CSS-END */
-    /* 入力のペア表示（2026-08-17）：PC幅では2セクションを左右に並べ、1画面で見渡せるようにする。
+    /* LPEV2-CSS-BEGIN 2026-10-09 ライフイベントの候補・目安・備考と、入力欄の間を詰める。
+   ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_events2.py。ここを手で直さない */
+@media screen{
+body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))){ row-gap:14px; }
+body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))) > .field{ display:grid; grid-row:span 3; grid-template-rows:subgrid; row-gap:4px; align-content:start; }
+body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):not(:has(> .field > :nth-child(4))) > .field > label{ min-height:0; align-self:end; }
+}
+.row-item.event-row{ grid-template-columns:.85fr .85fr .85fr 1.05fr auto; grid-template-areas:"evage evlabel evlabel evamount evdel" "evevery evuntil evnote evnote evnote" "evref evref evref evref evref"; row-gap:10px; padding:10px 12px 12px; margin-top:8px; align-items:start; }
+.row-item.event-row .ev-wife, .row-item.event-row > .field.ev-every-field > .hint, .row-item.event-row > .field.ev-until-field > .hint{ position:static; margin-top:0; white-space:nowrap; }
+.row-item.event-row > .btn-del{ align-self:start; margin-top:30px; }
+.row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-areas:"evage evlabel evlabel evamount evdel" "evevery evnote evnote evnote evnote" "evref evref evref evref evref"; }
+.row-item.event-row .ev-note-field{ grid-area:evnote; }
+.row-item.event-row .ev-note::placeholder{ color:#a9b3bd; opacity:1; }
+.row-item.event-row .ev-ref{ grid-area:evref; }
+.row-item.event-row .field{ gap:4px; }
+.ev-label-field{ position:relative; }
+.ev-pick{ position:absolute; left:0; top:100%; margin-top:4px; z-index:40; width:max(100%,300px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 28px rgba(20,40,70,.16); padding:6px; }
+.ev-pick[hidden]{ display:none !important; }
+.ev-pick-h, .ev-pick-f{ font-size:.8rem; color:var(--ink-soft); padding:4px 8px; }
+.ev-pick-b{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; width:100%; min-height:44px; padding:6px 10px; border:0; border-radius:8px; background:none; font-family:inherit; text-align:left; cursor:pointer; color:var(--ink); }
+.ev-pick-b:hover, .ev-pick-b:focus-visible{ background:var(--blue-pale); outline:none; }
+.ev-pick-b b{ font-size:.92rem; font-weight:700; color:var(--blue-deep); }
+.ev-pick-b span{ font-size:.8rem; color:var(--ink-soft); }
+.ev-ref{ font-size:.8rem; line-height:1.65; color:var(--ink-soft); background:#fff; border:1px solid var(--line); border-left:3px solid var(--blue-pale2); border-radius:8px; padding:6px 10px; }
+.ev-ref[hidden]{ display:none !important; }
+.ev-ref b{ color:var(--ink); font-weight:700; }
+.ev-ref .ev-ref-sm{ display:block; margin-top:3px; }
+.ev-ref .ev-ref-src{ display:block; margin-top:2px; color:#6b7480; }
+@media(max-width:560px){
+.row-item.event-row, .row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-columns:1fr 1fr 38px; grid-template-areas:"evlabel evlabel evdel" "evage evamount evamount" "evevery evuntil evuntil" "evnote evnote evnote" "evref evref evref"; row-gap:8px; padding:10px 10px 10px; }
+.row-item.event-row:has(> .ev-until-field[hidden]){ grid-template-areas:"evlabel evlabel evdel" "evage evamount evamount" "evevery evnote evnote" "evref evref evref"; }
+.ev-pick{ width:100%; }
+}
+.pdf-mode .ev-pick{ display:none !important; }
+@media print{
+.ev-pick{ display:none !important; }
+}
+/* LPEV2-CSS-END */
+/* 入力のペア表示（2026-08-17）：PC幅では2セクションを左右に並べ、1画面で見渡せるようにする。
        スマホ（<1000px）は従来どおり縦積み。1セクションだけのとき（単身の団信のみ等）は pair-2 が付かず中央1カラムのまま */
     @media screen and (min-width:1000px){
       body.tab-mode:not(.pdf-mode) #input-panel.pair-2{
@@ -4242,12 +4246,12 @@ body.pdf-brief .results{ margin-top:0 !important; }
         <h2 class="lpj-ttl" id="lpj-ttl"><i class="fa-solid fa-book"></i> お金の言葉の辞書</h2>
         <button type="button" class="lpj-x" id="lpj-x" aria-label="辞書を閉じる">&times;</button>
       </div>
-      <div class="lpj-find"><input type="search" id="lpj-q" placeholder="言葉を入れて引く（例：一時所得・遺留分・UA値）" autocomplete="off" aria-label="辞書で引く言葉" aria-controls="lpj-list"></div>
-      <div class="lpj-panes">
-        <div class="lpj-list" id="lpj-list" aria-label="言葉の一覧"></div>
+      <div class="lpj-find"><input type="search" id="lpj-q" placeholder="言葉を入れて引く（例：一時所得・UA値）" autocomplete="off" aria-label="辞書で引く言葉" aria-controls="lpj-body"></div>
+      <div class="lpj-body" id="lpj-body">
+        <div class="lpj-list" id="lpj-list" aria-label="引いた言葉の一覧"></div>
         <div class="lpj-det" id="lpj-det" aria-live="polite"></div>
       </div>
-      <div class="lpj-foot"><p><span>意味は一般的な説明で、制度は改正で変わることがあります。</span><span>ご家庭ごとの判断は担当者と、税は税理士に、法律は弁護士にご確認ください。</span></p></div>
+      <div class="lpj-foot"><p><span>意味は一般的な説明で、制度は改正で変わることがあります。</span><span>病気や治療は医師・薬剤師に、ご家庭ごとの判断は担当者と、税は税理士に、法律は弁護士にご確認ください。</span></p></div>
     </div>
   </div>
   <!-- LPJISHO-DLG-END -->
@@ -10580,6 +10584,7 @@ function lpPdfProg(text, ratio){
     function captureInputBaseline(){
       inputBaseline = Object.create(null);
       INPUT_SECTIONS.forEach(k=>{ inputBaseline[k] = sectionFingerprint(k); });
+      estTouched = Object.create(null);   /* LPEST：基準を取り直すときは、確かめた印も消す */
       if(!defaultFP) defaultFP = Object.assign(Object.create(null), inputBaseline);   // 最初の1回だけ＝既定値
     }
     /* ---------- 「目安のまま」の判定（2026-09-06追加） ----------
@@ -10587,10 +10592,25 @@ function lpPdfProg(text, ratio){
        「目安のまま」とみなす。画面に出ていないセクション（賃貸のときの団信など）は数えない。 */
     const EST_SECTION_LABEL = { family:'ご家族', home:'住まい', living:'毎月の生活費', events:'ライフイベント',
       save:'貯蓄・運用', pension:'年金', dansin:'団信', insurance:'加入中の生命保険', kaigo:'介護' };
+/* LPEST-BEGIN 2026-10-12 人が触って確かめた欄は「目安のまま」の帯から外す（団信など、既定値と同じ値のままでよい欄）。
+       ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_estconfirm.py。ここを手で直さない */
+    var estTouched = Object.create(null);
+    function estMark(e){
+      if(!e.isTrusted) return;
+      var t = e.target; if(!t || !t.closest) return;
+      var c = t.closest('input, select, textarea, button'); if(!c || c.closest('.acc-head')) return;
+      var acc = c.closest('#input-panel .acc[data-sec]'); if(!acc) return;
+      var k = acc.getAttribute("data-sec"); if(!k || estTouched[k]) return;
+      estTouched[k] = 1;
+      setTimeout(function(){ if(typeof renderEstBanner === 'function') renderEstBanner(); }, 0);
+    }
+    ['input', 'change', 'click'].forEach(function(n){ document.addEventListener(n, estMark, true); });
+    /* LPEST-END */
     function estPending(){
       if(!defaultFP) return [];
       return INPUT_SECTIONS.filter(function(k){
         if(!visibleAcc(k)) return false;
+        if(estTouched && estTouched[k]) return false;   /* LPEST：人が触って確かめた欄は、既定値と同じでも目安のままとは数えない */
         return defaultFP[k] !== undefined && sectionFingerprint(k) === defaultFP[k];
       });
     }
@@ -16374,8 +16394,8 @@ function lpPdfProg(text, ratio){
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
-      var LPJ_SRC = 'vendor/lpjisho-data.js?v=ff328019';
-      var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null, ALLH = '';
+      var LPJ_SRC = 'vendor/lpjisho-data.js?v=ef4b3bf0';
+      var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null;
       var st = { q:'', cur:null, hist:[], back:null, loading:false, cbs:[], listTop:0 };
       var RKEY = 'lifeplan_jisho_recent_v1';
       /* 説明の中で押せる言葉にしない2字の語（よく出てきて、押せる言葉だらけになるため） */
@@ -16406,7 +16426,7 @@ function lpPdfProg(text, ratio){
         GK = D.gaku || [];
         GIDX = GK.map(function(p){ return { t:nz(p.t), s:nz(p.s), k:p.k || '' }; });
         (D.cats || []).forEach(function(c){ CATN[c[0]] = c[1]; });
-        IDX = W.map(function(it, i){ BYW[it.w] = i; return { k:[it.w, it.y].concat(it.al || []).map(nz).filter(Boolean), b:nz(it.imi + ' ' + it.kakunin) }; });
+        IDX = W.map(function(it, i){ BYW[it.w] = i; return { k:[it.w, it.y].concat(it.al || []).map(nz).filter(Boolean), b:nz(it.imi + ' ' + fxText(it)) }; });
       }
       function flush(){ var c = st.cbs; st.cbs = []; c.forEach(function(f){ try{ f(); }catch(e){} }); }
       function load(cb){
@@ -16504,7 +16524,7 @@ function lpPdfProg(text, ratio){
         return out;
       }
       function snip(i, n){
-        var it = W[i], ps = String(it.imi + it.kakunin).split('。');
+        var it = W[i], ps = String(it.imi).split('。');
         for(var k = 0; k < ps.length; k++){ if(ps[k] && nz(ps[k]).indexOf(n) >= 0) return ps[k] + '。'; }
         return first(it.imi);
       }
@@ -16542,7 +16562,7 @@ function lpPdfProg(text, ratio){
       function isOn(t, key){ var c = st.cur; return !!c && c.t === t && String(t === 'w' ? c.i : c.k) === String(key); }
       function wItem(i, sub){
         var it = W[i];
-        return '<li><button type="button" class="lpj-it" data-lpj-i="' + i + '"><span class="lpj-iw">' + esc(it.w) + '</span><span class="lpj-is">' + esc(sub || first(it.imi)) + '</span></button></li>';
+        return '<li><button type="button" class="lpj-it" data-lpj-i="' + i + '"><span class="lpj-iw">' + (it.fx ? '<span class="lpj-tag lpj-tag-f">計算式</span>' : '') + esc(it.w) + '</span><span class="lpj-is">' + esc(sub || first(it.imi)) + '</span></button></li>';
       }
       function mItem(j){
         var x = LPMANABI[j];
@@ -16562,17 +16582,6 @@ function lpPdfProg(text, ratio){
           else if(b.hasAttribute('data-lpj-k')) on = isOn('k', b.getAttribute('data-lpj-k'));
           b.classList.toggle('on', on);
         }
-      }
-      function renderAll(){
-        if(!ALLH){
-          var h = '', g = -1;
-          W.forEach(function(it, i){
-            if(it.g !== g){ if(g >= 0) h += '</ul>'; g = it.g; h += '<h3 class="lpj-gh">' + esc((D.rows || [])[g] || '') + '行</h3><ul class="lpj-ul">'; }
-            h += wItem(i);
-          });
-          ALLH = h + '</ul>';
-        }
-        return ALLH;
       }
       function renderSearch(){
         var n = nz(st.q), h = '', parts = [];
@@ -16611,7 +16620,7 @@ function lpPdfProg(text, ratio){
       function renderList(){
         var L = E('lpj-list');
         if(!D){ L.innerHTML = failHTML(); return; }
-        L.innerHTML = st.q ? renderSearch() : renderAll();
+        L.innerHTML = st.q ? renderSearch() : startHTML();
         markOn();
       }
       function failHTML(){
@@ -16628,7 +16637,7 @@ function lpPdfProg(text, ratio){
           + '<li>上の欄に言葉を入れます（ひらがな・カタカナ・英字・別の呼び名でも引けます）。</li>'
           + '<li>説明の中で下線の付いた言葉を押すと、その言葉へ移ります。</li>'
           + '<li>言葉に関係する学びの話題と、ご家庭の数字から見えた発見へも進めます。</li></ol>'
-          + '<p class="lpj-start-n">年金・社会保険・税金・相続・不動産・住まい・保険・運用・経済の言葉を、五十音の順に並べています。</p>';
+          + '<p class="lpj-start-n">お金・税金・不動産・保険のほか、医療・法律・行政の言葉も引けます。</p>';
         var rc = recent();
         if(rc.length) h += '<p class="lpj-start-h">最近引いた言葉</p><div class="lpj-chips">' + rc.map(chip).join('') + '</div>';
         var pop = (D.pop || []).map(function(w){ return BYW[w]; }).filter(function(x){ return x >= 0; });
@@ -16642,11 +16651,22 @@ function lpPdfProg(text, ratio){
         return x ? x.t : '';
       }
       function bar(){
-        var h = '<div class="lpj-bar"><button type="button" class="lpj-back" data-lpj-back><i class="fa-solid fa-list"></i> 一覧へ戻る</button>';
+        var h = '<div class="lpj-bar"><button type="button" class="lpj-back" data-lpj-back><i class="fa-solid fa-list"></i> ' + (st.q ? '検索結果へ戻る' : 'はじめの画面へ戻る') + '</button>';
         if(st.hist.length) h += '<button type="button" class="lpj-hb" data-lpj-hb><i class="fa-solid fa-arrow-left"></i> <span>「' + esc(curTitle(st.hist[st.hist.length - 1])) + '」へ戻る</span></button>';
         return h + '</div>';
       }
-      function secH(ic, t){ return '<p class="lpj-sec-h"><i class="fa-solid ' + ic + '"></i> ' + esc(t) + '</p>'; }
+      /* 節の見出しは色付きの札。色は節の種類で決める（関係する言葉＝青／学習ツール＝緑／学びの話題＝琥珀／発見＝桃／計算のしかた＝紫） */
+      var SECC = { 'fa-link':'rel', 'fa-scale-balanced':'rel', 'fa-graduation-cap':'gk', 'fa-list-ol':'gk', 'fa-lightbulb':'m', 'fa-chart-line':'k', 'fa-calculator':'fx' };
+      function secH(ic, t){ var c = SECC[ic]; return '<p class="lpj-sec-h' + (c ? ' c-' + c : '') + '"><i class="fa-solid ' + ic + '"></i> ' + esc(t) + '</p>'; }
+      function secS(ic, t){ var c = SECC[ic]; return '<div class="lpj-sec' + (c ? ' lpj-s-' + c : '') + '">' + secH(ic, t); }
+      function fxText(it){ return (it.fx || []).map(function(b){ return [b.t, b.f, b.n].join(' '); }).join(' '); }
+      /* 計算のしかた（一般的な式）：薄い紫の箱。式だけを置く（率や額の表は置かない） */
+      function fxHTML(it){
+        if(!it.fx || !it.fx.length) return '';
+        return secS('fa-calculator', '計算のしかた（一般的な式）') + '<div class="lpj-fx">' + it.fx.map(function(b){
+          return '<div class="lpj-fx-b">' + (b.t ? '<p class="lpj-fx-t">' + esc(b.t) + '</p>' : '') + '<p class="lpj-fx-f">' + esc(b.f) + '</p>' + (b.n ? '<p class="lpj-fx-n">' + esc(b.n) + '</p>' : '') + '</div>';
+        }).join('') + '</div></div>';
+      }
       function kkHTML(list){
         list = [].concat(list || []).filter(Boolean);
         if(!list.length) return '';
@@ -16655,7 +16675,7 @@ function lpPdfProg(text, ratio){
       }
       function wordChips(text, self){
         var ws = wordsIn(text, self, 10);
-        return ws.length ? '<div class="lpj-sec">' + secH('fa-book', 'この話に出てくる言葉') + '<div class="lpj-chips">' + ws.map(chip).join('') + '</div></div>' : '';
+        return ws.length ? secS('fa-book', 'この話に出てくる言葉') + '<div class="lpj-chips">' + ws.map(chip).join('') + '</div></div>' : '';
       }
       function mCard(j){ var x = LPMANABI[j]; return '<button type="button" class="lpj-card" data-lpj-m="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(x.ippan)) + '</span></button>'; }
       function kCard(j){ var x = LPKIZUKI[j]; return '<button type="button" class="lpj-card" data-lpj-k="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(kLead(x))) + '</span></button>'; }
@@ -16666,25 +16686,25 @@ function lpPdfProg(text, ratio){
         var h = bar() + '<span class="lpj-dcat">' + esc(CATN[it.cat] || '') + '</span>'
           + '<h3 class="lpj-dw" tabindex="-1">' + esc(it.w) + '</h3>'
           + (als.length ? '<p class="lpj-dal">別の呼び名：' + als.map(esc).join('・') + '</p>' : '')
-          + '<p class="lpj-imi">' + linkify(it.imi, i, 6) + '</p>' + kkHTML(it.kakunin);
+          + '<p class="lpj-imi">' + linkify(it.imi, i, 6) + '</p>' + fxHTML(it);
         var rel = (it.rel || []).map(function(w){ return BYW[w]; }).filter(function(x){ return x >= 0; });
-        if(rel.length) h += '<div class="lpj-sec">' + secH('fa-link', '関係する言葉') + '<div class="lpj-chips">' + rel.map(chip).join('') + '</div></div>';
+        if(rel.length) h += secS('fa-link', '関係する言葉') + '<div class="lpj-chips">' + rel.map(chip).join('') + '</div></div>';
         var gl = gOfWord(i, 3);
-        if(gl.length) h += '<div class="lpj-sec">' + secH('fa-graduation-cap', '学習ツールで詳しく') + '<div class="lpj-cards">' + gl.map(gCard).join('') + '</div><p class="lpj-note">保険ツールの学習資料が、別の画面で開きます。合言葉を聞かれたときは、保険ツール管理画面と同じものを入れてください。</p></div>';
+        if(gl.length) h += secS('fa-graduation-cap', '学習ツールで詳しく') + '<div class="lpj-cards">' + gl.map(gCard).join('') + '</div><p class="lpj-note">保険ツールの学習資料が、別の画面で開きます。合言葉を聞かれたときは、保険ツール管理画面と同じものを入れてください。</p></div>';
         var terms = [it.w].concat(it.al || []).map(nz).filter(function(z){ return z.length >= 2; });
         /* 中身のカードは、題・キーワード・質問で当たるものだけ（本文で触れているだけのものは、引いた一覧にだけ出す） */
         var strong = function(a){ return a[0] >= 24; };
         var ms = scoreTo(mIdx(), terms).filter(strong).slice(0, 3), ks = scoreTo(kIdx(), terms).filter(strong).slice(0, 2);
-        if(ms.length) h += '<div class="lpj-sec">' + secH('fa-lightbulb', '学びの話題で詳しく') + '<div class="lpj-cards">' + ms.map(function(a){ return mCard(a[1]); }).join('') + '</div></div>';
-        if(ks.length) h += '<div class="lpj-sec">' + secH('fa-chart-line', 'ご家庭の数字から見えた発見') + '<div class="lpj-cards">' + ks.map(function(a){ return kCard(a[1]); }).join('') + '</div></div>';
+        if(ms.length) h += secS('fa-lightbulb', '学びの話題で詳しく') + '<div class="lpj-cards">' + ms.map(function(a){ return mCard(a[1]); }).join('') + '</div></div>';
+        if(ks.length) h += secS('fa-chart-line', 'ご家庭の数字から見えた発見') + '<div class="lpj-cards">' + ks.map(function(a){ return kCard(a[1]); }).join('') + '</div></div>';
         return h;
       }
       function mDet(x){
         var h = bar() + '<span class="lpj-dcat lpj-dcat-m">学びの話題' + (mCat(x) ? '・' + esc(mCat(x)) : '') + '</span>'
           + '<h3 class="lpj-dw" tabindex="-1">' + esc(x.t) + '</h3>'
-          + '<div class="lpj-sec">' + secH('fa-lightbulb', '一般的なお話') + '<p class="lpj-p">' + linkify(x.ippan, -1, 8) + '</p></div>';
-        if((x.steps || []).length) h += '<div class="lpj-sec">' + secH('fa-list-ol', 'はじめの一歩') + '<ol class="lpj-ol">' + x.steps.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></div>';
-        if((x.mikata || []).length) h += '<div class="lpj-sec">' + secH('fa-scale-balanced', '比べるときの見方') + '<ul class="lpj-ul2">' + x.mikata.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>';
+          + secS('fa-lightbulb', '一般的なお話') + '<p class="lpj-p">' + linkify(x.ippan, -1, 8) + '</p></div>';
+        if((x.steps || []).length) h += secS('fa-list-ol', 'はじめの一歩') + '<ol class="lpj-ol">' + x.steps.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></div>';
+        if((x.mikata || []).length) h += secS('fa-scale-balanced', '比べるときの見方') + '<ul class="lpj-ul2">' + x.mikata.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>';
         h += kkHTML(x.kakunin);
         if(x.tool) h += '<p class="lpj-tool"><b>このツールでは：</b>' + esc(x.tool) + '</p>';
         h += wordChips([x.t, x.ippan].concat(x.steps || [], x.mikata || []).join('。'), -1);
@@ -16697,8 +16717,8 @@ function lpPdfProg(text, ratio){
         var h = bar() + '<span class="lpj-dcat lpj-dcat-k">ご家庭の数字から見えた発見' + (kEye(x) ? '・' + esc(kEye(x)) : '') + '</span>'
           + '<h3 class="lpj-dw" tabindex="-1">' + esc(x.t) + '</h3>'
           + (et ? '<p class="lpj-imi"><b>' + esc(et) + '</b></p>' : '')
-          + '<div class="lpj-sec">' + secH('fa-chart-line', 'なぜそうなるか') + '<p class="lpj-p">' + linkify(x.naze, -1, 6) + '</p></div>';
-        if(x.more) h += '<div class="lpj-sec">' + secH('fa-plus', 'もう一歩くわしく') + '<p class="lpj-p">' + esc(x.more) + '</p></div>';
+          + secS('fa-chart-line', 'なぜそうなるか') + '<p class="lpj-p">' + linkify(x.naze, -1, 6) + '</p></div>';
+        if(x.more) h += secS('fa-plus', 'もう一歩くわしく') + '<p class="lpj-p">' + esc(x.more) + '</p></div>';
         h += kkHTML(x.kakunin);
         if(x.src) h += '<p class="lpj-src">出どころ：' + esc(x.src) + '</p>';
         if(x.zentei) h += '<p class="lpj-src">※ ' + esc(x.zentei) + '</p>';
@@ -16710,7 +16730,6 @@ function lpPdfProg(text, ratio){
         return h;
       }
       function box(){ return document.querySelector('#lpj-dlg .lpj-box'); }
-      function mobile(){ return window.matchMedia && window.matchMedia('(max-width:760px)').matches; }
       function show(c, how){
         var x = null, h = '';
         if(c.t === 'w'){ if(!W[c.i]) return; }
@@ -16720,26 +16739,26 @@ function lpPdfProg(text, ratio){
         st.cur = c;
         h = c.t === 'w' ? wDet(c.i) : c.t === 'm' ? mDet(x) : kDet(x);
         if(c.t === 'w') addRecent(W[c.i].w);
-        var det = E('lpj-det'), bx = box(), wasList = bx && !bx.classList.contains('lpj-show-det');
-        if(mobile() && wasList) st.listTop = E('lpj-list').scrollTop;
-        det.innerHTML = h; det.scrollTop = 0;
+        var det = E('lpj-det'), bx = box(), body = E('lpj-body');
+        if(bx && !bx.classList.contains('lpj-show-det')) st.listTop = body.scrollTop;
+        det.innerHTML = h;
         if(bx) bx.classList.add('lpj-show-det');
+        body.scrollTop = 0;
         markOn();
-        if(!mobile() && !st.q && c.t === 'w'){ var on = E('lpj-list').querySelector('.lpj-it.on'); if(on) try{ on.scrollIntoView({ block:'nearest' }); }catch(e){} }
-        if(mobile() || how !== 'fresh'){ var hd = det.querySelector('.lpj-dw'); if(hd) try{ hd.focus({ preventScroll:true }); }catch(e){} }
+        var hd = det.querySelector('.lpj-dw'); if(hd) try{ hd.focus({ preventScroll:true }); }catch(e){}
       }
       function goBack(){ var c = st.hist.pop(); if(c) show(c, 'none'); }
       function toList(){
         var bx = box(); if(bx) bx.classList.remove('lpj-show-det');
-        var L = E('lpj-list'); L.scrollTop = st.listTop || 0;
-        var on = L.querySelector('.lpj-it.on');
+        E('lpj-body').scrollTop = st.listTop || 0;
+        var on = E('lpj-list').querySelector('.lpj-it.on');
         try{ (on || E('lpj-q')).focus({ preventScroll:true }); }catch(e){}
       }
       function paint(){
         if(!D){ E('lpj-list').innerHTML = failHTML(); E('lpj-det').innerHTML = ''; return; }
         renderList();
-        if(st.cur) show(st.cur, 'none'); else E('lpj-det').innerHTML = startHTML();
-        var bx = box(); if(bx && !st.cur) bx.classList.remove('lpj-show-det');
+        var bx = box();
+        if(st.cur && bx && bx.classList.contains('lpj-show-det')) show(st.cur, 'none');
       }
       function open(){
         var d = E('lpj-dlg'); if(!d) return;
@@ -16779,7 +16798,7 @@ function lpPdfProg(text, ratio){
       document.addEventListener('input', function(e){
         if(e.target && e.target.id === 'lpj-q'){
           st.q = e.target.value.trim();
-          load(function(){ renderList(); E('lpj-list').scrollTop = 0; });
+          load(function(){ var bx = box(); if(bx) bx.classList.remove('lpj-show-det'); renderList(); E('lpj-body').scrollTop = 0; st.listTop = 0; });
         }
       });
       document.addEventListener('keydown', function(e){
@@ -16788,7 +16807,7 @@ function lpPdfProg(text, ratio){
         var tg = e.target, its;
         if(tg && tg.id === 'lpj-q'){
           if(e.key === 'Enter'){ var f = E('lpj-list').querySelector('.lpj-it:not(.lpj-gk)'); if(f){ e.preventDefault(); f.click(); } return; }
-          if(e.key === 'ArrowDown'){ var f2 = E('lpj-list').querySelector('.lpj-it'); if(f2){ e.preventDefault(); try{ f2.focus(); }catch(e2){} } return; }
+          if(e.key === 'ArrowDown'){ var f2 = E('lpj-list').querySelector('.lpj-it, .lpj-chip'); if(f2){ e.preventDefault(); try{ f2.focus(); }catch(e2){} } return; }
         }
         if(tg && tg.classList && tg.classList.contains('lpj-it') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
           its = Array.prototype.slice.call(E('lpj-list').querySelectorAll('.lpj-it'));
@@ -16799,7 +16818,7 @@ function lpPdfProg(text, ratio){
           return;
         }
         if(e.key === 'Tab'){
-          var fs = Array.prototype.filter.call(d.querySelectorAll('button, input'), function(x){ return x.offsetParent !== null; });
+          var fs = Array.prototype.filter.call(d.querySelectorAll('button, input, a[href]'), function(x){ return x.offsetParent !== null; });
           if(!fs.length) return;
           if(e.shiftKey && document.activeElement === fs[0]){ e.preventDefault(); fs[fs.length - 1].focus(); }
           else if(!e.shiftKey && document.activeElement === fs[fs.length - 1]){ e.preventDefault(); fs[0].focus(); }
@@ -16993,8 +17012,12 @@ function lpPdfProg(text, ratio){
     function lpkDiagHTML(c, forPdf){
       if(!c || !c.kizuki || !c.kizuki.length) return '';
       var vals = lpkCache || lpkVals();
-      return '<div class="adv-sec-title lpk-dt"><i class="fa-solid fa-wand-magic-sparkles"></i> ご家庭の数字から見えた発見 <small>ファイナンシャルプランナーの目で、ご入力から選びました</small></div><div class="lpk-list">'
-        + c.kizuki.map(function(it){ return lpkCardHTML(it, vals, forPdf); }).join('') + '</div>';
+      var cards = c.kizuki.map(function(it){ return lpkCardHTML(it, vals, forPdf); }).join('');
+      if(forPdf){
+        return '<div class="adv-sec-title lpk-dt"><i class="fa-solid fa-wand-magic-sparkles"></i> ご家庭の数字から見えた発見 <small>ファイナンシャルプランナーの目で、ご入力から選びました</small></div><div class="lpk-list">' + cards + '</div>';
+      }
+      /* 画面では畳んでおく（2026-10-12 ユーザー指示「ご家庭から見えた発見に関しては、折りたたんで必要な時にクリックして見れるように」）。PDF は開いた形で出す */
+      return '<details class="lpk-fold"><summary class="adv-sec-title lpk-dt"><i class="fa-solid fa-wand-magic-sparkles"></i> ご家庭の数字から見えた発見（' + c.kizuki.length + '件） <small>押すと開きます</small><i class="fa-solid fa-chevron-down lpk-chev"></i></summary><div class="lpk-list">' + cards + '</div></details>';
     }
     /* チャット */
     var LPK_LIST_RE = /見えた発見|数字から見え|気づき|気付き|驚き|おどろき|びっくり|知らなかった|意外|盲点|落とし穴|見落と|えっ/;

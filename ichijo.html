@@ -1043,7 +1043,7 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-find input:focus{ outline:none; border-color:#1a5487; box-shadow:0 0 0 3px rgba(26,84,135,.15); }
 .lpj-chip{ display:inline-flex; align-items:center; min-height:44px; padding:6px 14px; border-radius:999px; border:1.5px solid var(--line); background:#fff; color:#1a5487; font:inherit; font-size:.86rem; font-weight:700; cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .lpj-chip:hover{ border-color:#1a5487; }
-.lpj-chip:focus-visible, .lpj-it:focus-visible, .lpj-x:focus-visible, .lpj-back:focus-visible, .lpj-card:focus-visible, .lpj-pn button:focus-visible, .lpj-go:focus-visible, .lpj-lk:focus-visible{ outline:3px solid #1a5487; outline-offset:2px; }
+.lpj-chip:focus-visible, .lpj-it:focus-visible, .lpj-x:focus-visible, .lpj-back:focus-visible, .lpj-card:focus-visible, .lpj-go:focus-visible, .lpj-lk:focus-visible{ outline:3px solid #1a5487; outline-offset:2px; }
 .lpj-panes{ flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,350px) minmax(0,1fr); border-top:1px solid var(--line); }
 .lpj-list{ overflow-y:auto; border-right:1px solid var(--line); padding:0 10px 18px; background:#fafcfe; }
 .lpj-det{ overflow-y:auto; padding:18px 28px 26px; }
@@ -1057,6 +1057,10 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-tag{ display:inline-block; font-size:.8rem; font-weight:700; line-height:1.4; border-radius:999px; padding:1px 9px; margin-right:7px; vertical-align:2px; }
 .lpj-tag-m{ color:#2b6a3d; background:#e8f4ec; }
 .lpj-tag-k{ color:#7a4a00; background:#fdf1dc; }
+.lpj-tag-g{ color:#1a5487; background:#e3f0fa; }
+a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
+.lpj-sec-h .fa-graduation-cap{ color:#1a5487; }
+.lpj-gc{ display:block; font-size:.82rem; color:var(--ink-soft); line-height:1.6; margin-top:2px; }
 .lpj-is{ display:block; font-size:.84rem; color:var(--ink-soft); line-height:1.55; margin-top:2px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .lpj-none{ font-size:.92rem; line-height:1.75; margin:12px 6px; }
 .lpj-wait{ font-size:.92rem; color:var(--ink-soft); margin:18px 8px; line-height:1.75; }
@@ -1097,12 +1101,6 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-go{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:8px 18px; margin:18px 0 0; border-radius:999px; border:1.5px solid #1a5487; background:#fff; color:#1a5487; font:inherit; font-size:.92rem; font-weight:800; cursor:pointer; }
 .lpj-go:hover{ background:var(--blue-pale); }
 .lpj-note{ font-size:.82rem; color:var(--ink-soft); line-height:1.7; margin:10px 0 0; max-width:42em; }
-.lpj-pn{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; margin:28px 0 0; padding-top:14px; border-top:1px solid var(--line); max-width:40em; }
-.lpj-pn button{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; min-height:48px; padding:7px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; font:inherit; color:var(--ink); text-align:left; min-width:0; }
-.lpj-pn button:hover{ border-color:#1a5487; background:#f7fbff; }
-.lpj-pn .nx{ align-items:flex-end; text-align:right; grid-column:2; }
-.lpj-pn small{ font-size:.8rem; color:var(--ink-soft); }
-.lpj-pn b{ font-size:.92rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lpj-start-h{ font-weight:800; font-size:1rem; margin:0 0 8px; color:var(--ink); }
 .lpj-start ol{ margin:0 0 14px; padding-left:1.4em; line-height:1.85; font-size:.95rem; max-width:38em; }
 .lpj-start-n{ font-size:.9rem; color:var(--ink-soft); line-height:1.75; margin:0 0 20px; max-width:38em; }
@@ -1124,8 +1122,6 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-back{ display:inline-flex; }
 .lpj-dw{ font-size:1.38rem; }
 .lpj-foot{ padding:7px 14px 9px; }
-.lpj-pn{ grid-template-columns:minmax(0,1fr); }
-.lpj-pn .nx{ grid-column:1; }
 }
 @media print{
 .lpj-ov, .lpj-chatbtn{ display:none !important; }
@@ -16374,8 +16370,8 @@ function lpPdfProg(text, ratio){
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
-      var LPJ_SRC = 'vendor/lpjisho-data.js?v=79905100';
-      var D = null, W = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null, ALLH = '';
+      var LPJ_SRC = 'vendor/lpjisho-data.js?v=7066f880';
+      var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null, ALLH = '';
       var st = { q:'', cur:null, hist:[], back:null, loading:false, cbs:[], listTop:0 };
       var RKEY = 'lifeplan_jisho_recent_v1';
       /* 説明の中で押せる言葉にしない2字の語（よく出てきて、押せる言葉だらけになるため） */
@@ -16392,7 +16388,6 @@ function lpPdfProg(text, ratio){
         return s.replace(/[\s・･（）()「」『』、。,.\-ー－〜~]/g, '');
       }
       function first(s){ var m = String(s || '').match(/^[^。]*。/); return m ? m[0] : String(s || ''); }
-      function fmtN(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
       function hasM(){ return typeof LPMANABI !== 'undefined' && LPMANABI && LPMANABI.length > 0; }
       function hasK(){ return typeof LPKIZUKI !== 'undefined' && LPKIZUKI && LPKIZUKI.length > 0; }
       function mBy(k){ if(!hasM()) return null; for(var i = 0; i < LPMANABI.length; i++){ if(LPMANABI[i].k === k) return LPMANABI[i]; } return null; }
@@ -16404,6 +16399,8 @@ function lpPdfProg(text, ratio){
       function kLead(x){ return kEt(x) || first(x.naze); }
       function init(){
         D = window.LPJISHO_DATA; W = D.words || [];
+        GK = D.gaku || [];
+        GIDX = GK.map(function(p){ return { t:nz(p.t), s:nz(p.s), k:p.k || '' }; });
         (D.cats || []).forEach(function(c){ CATN[c[0]] = c[1]; });
         IDX = W.map(function(it, i){ BYW[it.w] = i; return { k:[it.w, it.y].concat(it.al || []).map(nz).filter(Boolean), b:nz(it.imi + ' ' + it.kakunin) }; });
       }
@@ -16507,6 +16504,37 @@ function lpPdfProg(text, ratio){
         for(var k = 0; k < ps.length; k++){ if(ps[k] && nz(ps[k]).indexOf(n) >= 0) return ps[k] + '。'; }
         return first(it.imi);
       }
+      /* 学習ツール（保険ツールの学習資料）：題・名前・検索の語で当たるもの＋辞書の言葉に結びつけたもの */
+      var GBASE = 'https://office-m-nakatani.github.io/office-m/';
+      function gFind(terms){
+        var out = [];
+        GIDX.forEach(function(x, i){
+          var sc = 0;
+          terms.forEach(function(n, j){
+            if(!n || n.length < 2) return;
+            var s = 0;
+            if(x.s === n) s = 90; else if(x.t.indexOf(n) >= 0 || x.s.indexOf(n) >= 0) s = 70; else if(x.k.indexOf(n) >= 0) s = 45;
+            sc = Math.max(sc, j === 0 ? s : s * 0.8);
+          });
+          if(sc) out.push([sc, i]);
+        });
+        out.sort(function(a, b){ return b[0] - a[0] || a[1] - b[1]; });
+        return out;
+      }
+      function gHref(j){ return GBASE + GK[j].i + '/'; }
+      function gItem(j){
+        var p = GK[j];
+        return '<li><a class="lpj-it lpj-gk" href="' + esc(gHref(j)) + '" target="_blank" rel="noopener"><span class="lpj-iw"><span class="lpj-tag lpj-tag-g">学習</span>' + esc(p.t) + '</span><span class="lpj-is">' + esc(p.c) + 'の学習資料（別の画面で開きます）</span></a></li>';
+      }
+      function gCard(j){ var p = GK[j]; return '<a class="lpj-card lpj-gk" href="' + esc(gHref(j)) + '" target="_blank" rel="noopener"><b>' + esc(p.t) + '</b><span class="lpj-gc">' + esc(p.c) + 'の学習資料・別の画面で開きます</span></a>'; }
+      function gOfWord(i, max){
+        var it = W[i], out = (it.gk || []).slice(0, max);
+        if(out.length < max){
+          var terms = [it.w].concat(it.al || []).map(nz).filter(function(z){ return z.length >= 3; });
+          gFind(terms).forEach(function(a){ if(a[0] >= 70 && out.length < max && out.indexOf(a[1]) < 0) out.push(a[1]); });
+        }
+        return out;
+      }
       function isOn(t, key){ var c = st.cur; return !!c && c.t === t && String(t === 'w' ? c.i : c.k) === String(key); }
       function wItem(i, sub){
         var it = W[i];
@@ -16533,7 +16561,7 @@ function lpPdfProg(text, ratio){
       }
       function renderAll(){
         if(!ALLH){
-          var h = '<p class="lpj-count">' + fmtN(W.length) + '語（五十音順）</p>', g = -1;
+          var h = '', g = -1;
           W.forEach(function(it, i){
             if(it.g !== g){ if(g >= 0) h += '</ul>'; g = it.g; h += '<h3 class="lpj-gh">' + esc((D.rows || [])[g] || '') + '行</h3><ul class="lpj-ul">'; }
             h += wItem(i);
@@ -16551,6 +16579,16 @@ function lpPdfProg(text, ratio){
         if(hit.length && hit[0][0] >= 60){ var t = W[hit[0][1]]; [t.w].concat(t.al || []).forEach(function(a){ var z = nz(a); if(z && terms.indexOf(z) < 0) terms.push(z); }); }
         var ms = scoreTo(mIdx(), terms).slice(0, 8), ks = scoreTo(kIdx(), terms).slice(0, 6);
         var LIM = 80, LIMB = 30;
+        var gs = [], gd = gFind(terms);
+        /* 題や名前がそのまま当たるものを先に、次に当たった言葉に結びつけたもの、最後に検索の語で当たったもの */
+        gd.forEach(function(a){ if(a[0] >= 70 && gs.indexOf(a[1]) < 0) gs.push(a[1]); });
+        hit.slice(0, 3).forEach(function(a){ gOfWord(a[1], 3).forEach(function(j){ if(gs.indexOf(j) < 0) gs.push(j); }); });
+        gd.forEach(function(a){ if(gs.indexOf(a[1]) < 0) gs.push(a[1]); });
+        if(gs.length){
+          gs = gs.slice(0, 3);
+          parts.push('学習ツール ' + gs.length + '件');
+          h += '<h3 class="lpj-gh">学習ツール（' + gs.length + '）</h3><ul class="lpj-ul">' + gs.map(gItem).join('') + '</ul>';
+        }
         if(hit.length){
           parts.push('言葉 ' + hit.length + '件');
           h += '<h3 class="lpj-gh">言葉（' + hit.length + '）</h3><ul class="lpj-ul">' + hit.slice(0, LIM).map(function(a){ return wItem(a[1]); }).join('') + '</ul>'
@@ -16586,7 +16624,7 @@ function lpPdfProg(text, ratio){
           + '<li>上の欄に言葉を入れます（ひらがな・カタカナ・英字・別の呼び名でも引けます）。</li>'
           + '<li>説明の中で下線の付いた言葉を押すと、その言葉へ移ります。</li>'
           + '<li>言葉に関係する学びの話題と、ご家庭の数字から見えた発見へも進めます。</li></ol>'
-          + '<p class="lpj-start-n">この辞書には ' + fmtN(W.length) + '語が入っています。年金・社会保険・税金・相続・不動産・住まい・保険・運用・経済の言葉を、五十音の順に並べています。</p>';
+          + '<p class="lpj-start-n">年金・社会保険・税金・相続・不動産・住まい・保険・運用・経済の言葉を、五十音の順に並べています。</p>';
         var rc = recent();
         if(rc.length) h += '<p class="lpj-start-h">最近引いた言葉</p><div class="lpj-chips">' + rc.map(chip).join('') + '</div>';
         var pop = (D.pop || []).map(function(w){ return BYW[w]; }).filter(function(x){ return x >= 0; });
@@ -16617,12 +16655,6 @@ function lpPdfProg(text, ratio){
       }
       function mCard(j){ var x = LPMANABI[j]; return '<button type="button" class="lpj-card" data-lpj-m="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(x.ippan)) + '</span></button>'; }
       function kCard(j){ var x = LPKIZUKI[j]; return '<button type="button" class="lpj-card" data-lpj-k="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(kLead(x))) + '</span></button>'; }
-      function pn(i){
-        var h = '<div class="lpj-pn">';
-        if(i > 0) h += '<button type="button" data-lpj-i="' + (i - 1) + '" data-lpj-nav><small>前の言葉</small><b>' + esc(W[i - 1].w) + '</b></button>';
-        if(i < W.length - 1) h += '<button type="button" class="nx" data-lpj-i="' + (i + 1) + '" data-lpj-nav><small>次の言葉</small><b>' + esc(W[i + 1].w) + '</b></button>';
-        return h + '</div>';
-      }
       function wDet(i){
         var it = W[i];
         /* 別の呼び名のうち、ひらがなだけのもの（読み）は引くためのもの。画面には出さない */
@@ -16633,13 +16665,15 @@ function lpPdfProg(text, ratio){
           + '<p class="lpj-imi">' + linkify(it.imi, i, 6) + '</p>' + kkHTML(it.kakunin);
         var rel = (it.rel || []).map(function(w){ return BYW[w]; }).filter(function(x){ return x >= 0; });
         if(rel.length) h += '<div class="lpj-sec">' + secH('fa-link', '関係する言葉') + '<div class="lpj-chips">' + rel.map(chip).join('') + '</div></div>';
+        var gl = gOfWord(i, 3);
+        if(gl.length) h += '<div class="lpj-sec">' + secH('fa-graduation-cap', '学習ツールで詳しく') + '<div class="lpj-cards">' + gl.map(gCard).join('') + '</div><p class="lpj-note">保険ツールの学習資料が、別の画面で開きます。合言葉を聞かれたときは、保険ツール管理画面と同じものを入れてください。</p></div>';
         var terms = [it.w].concat(it.al || []).map(nz).filter(function(z){ return z.length >= 2; });
         /* 中身のカードは、題・キーワード・質問で当たるものだけ（本文で触れているだけのものは、引いた一覧にだけ出す） */
         var strong = function(a){ return a[0] >= 24; };
         var ms = scoreTo(mIdx(), terms).filter(strong).slice(0, 3), ks = scoreTo(kIdx(), terms).filter(strong).slice(0, 2);
         if(ms.length) h += '<div class="lpj-sec">' + secH('fa-lightbulb', '学びの話題で詳しく') + '<div class="lpj-cards">' + ms.map(function(a){ return mCard(a[1]); }).join('') + '</div></div>';
         if(ks.length) h += '<div class="lpj-sec">' + secH('fa-chart-line', 'ご家庭の数字から見えた発見') + '<div class="lpj-cards">' + ks.map(function(a){ return kCard(a[1]); }).join('') + '</div></div>';
-        return h + pn(i);
+        return h;
       }
       function mDet(x){
         var h = bar() + '<span class="lpj-dcat lpj-dcat-m">学びの話題' + (mCat(x) ? '・' + esc(mCat(x)) : '') + '</span>'
@@ -16730,7 +16764,7 @@ function lpPdfProg(text, ratio){
         if(e.target.closest('[data-lpj-back]')){ toList(); return; }
         if(e.target.closest('[data-lpj-hb]')){ goBack(); return; }
         var fromList = !!e.target.closest('#lpj-list');
-        var how = fromList ? 'fresh' : (e.target.closest('[data-lpj-nav]') ? 'none' : 'push');
+        var how = fromList ? 'fresh' : 'push';
         var t = e.target.closest('[data-lpj-i]');
         if(t){ show({ t:'w', i:+t.getAttribute('data-lpj-i') }, how); return; }
         var m = e.target.closest('[data-lpj-m]');
@@ -16749,7 +16783,7 @@ function lpPdfProg(text, ratio){
         if(e.key === 'Escape'){ e.preventDefault(); close(); return; }
         var tg = e.target, its;
         if(tg && tg.id === 'lpj-q'){
-          if(e.key === 'Enter'){ var f = E('lpj-list').querySelector('.lpj-it'); if(f){ e.preventDefault(); f.click(); } return; }
+          if(e.key === 'Enter'){ var f = E('lpj-list').querySelector('.lpj-it:not(.lpj-gk)'); if(f){ e.preventDefault(); f.click(); } return; }
           if(e.key === 'ArrowDown'){ var f2 = E('lpj-list').querySelector('.lpj-it'); if(f2){ e.preventDefault(); try{ f2.focus(); }catch(e2){} } return; }
         }
         if(tg && tg.classList && tg.classList.contains('lpj-it') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){

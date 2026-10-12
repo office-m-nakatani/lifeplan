@@ -1050,6 +1050,10 @@ body.lpj-on .chat-fab{ display:none !important; }
 .lpj-count{ font-size:.84rem; color:var(--ink-soft); margin:12px 6px 4px; line-height:1.6; }
 .lpj-gh{ position:sticky; top:0; z-index:1; font-size:.86rem; font-weight:800; color:#1a5487; margin:0 -10px; padding:10px 16px 6px; background:#fafcfe; border-bottom:1px solid #e6eef6; }
 .lpj-ul{ list-style:none; margin:0; padding:4px 0 6px; }
+/* ★全ての言葉（数千行）を一度に並べるので、画面の外の行は描かない（開いた直後と書体の読み込みのたびに約1秒止まっていた）。
+   高さは見える行に近い仮の値（一度描いた行は実際の高さを覚える）。枠で輪郭が切れないよう、焦点の輪は内側に寄せる */
+.lpj-list .lpj-ul > li{ content-visibility:auto; contain-intrinsic-size:auto 86px; }
+.lpj-list .lpj-it:focus-visible{ outline-offset:-3px; }
 .lpj-it{ display:block; width:100%; text-align:left; border:0; border-left:3px solid transparent; background:transparent; padding:9px 10px 9px 11px; border-radius:8px; cursor:pointer; font:inherit; color:var(--ink); min-height:44px; }
 .lpj-it:hover{ background:var(--blue-pale); }
 .lpj-it.on{ background:var(--blue-pale); border-left-color:#1a5487; }
@@ -16370,7 +16374,7 @@ function lpPdfProg(text, ratio){
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
-      var LPJ_SRC = 'vendor/lpjisho-data.js?v=7066f880';
+      var LPJ_SRC = 'vendor/lpjisho-data.js?v=ff328019';
       var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null, ALLH = '';
       var st = { q:'', cur:null, hist:[], back:null, loading:false, cbs:[], listTop:0 };
       var RKEY = 'lifeplan_jisho_recent_v1';
@@ -16802,7 +16806,9 @@ function lpPdfProg(text, ratio){
         }
       });
       /* 先読み：ページが読み終わって少しあと、手が空いたときに辞書を読んでおく（押したときに待たせない） */
-      function pre(){ setTimeout(function(){ var f = function(){ load(null); }; if(window.requestIdleCallback) requestIdleCallback(f, { timeout:5000 }); else f(); }, 4000); }
+      /* 通信量を抑える設定の端末と、遅い回線（2G・3G）では先読みしない（押したときに読む） */
+      function slowNet(){ try{ var c = navigator.connection; return !!c && (c.saveData === true || /(^|-)(2g|3g)$/.test(String(c.effectiveType || ''))); }catch(e){ return false; } }
+      function pre(){ if(slowNet()) return; setTimeout(function(){ var f = function(){ load(null); }; if(window.requestIdleCallback) requestIdleCallback(f, { timeout:5000 }); else f(); }, 4000); }
       if(document.readyState === 'complete') pre(); else window.addEventListener('load', pre);
     })();
     /* LPJISHO-JS-END */

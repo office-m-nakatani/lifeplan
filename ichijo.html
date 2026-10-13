@@ -9593,6 +9593,8 @@ function lpPdfProg(text, ratio){
       const g = sampleState('genjo'), m = sampleState('mirai');
       if(!g || !m){ alert('サンプルを用意できませんでした。ページを開き直してお試しください。'); return false; }
       applyPlans({ plans:{ active:'genjo', genjo:{ state:g, sum:null }, mirai:{ state:m, sum:null } } });
+      INPUT_SECTIONS.forEach(function(k){ estTouched[k] = 1; });   /* LPEST：サンプルは入力例。目安のままの帯は出さない */
+      if(typeof renderEstBanner === 'function') renderEstBanner();
       return true;
     }
 
@@ -9603,6 +9605,7 @@ function lpPdfProg(text, ratio){
         mirai:{ state:PLANS.mirai.state, sum:PLANS.mirai.sum } };
     }
     function applyPlans(saved){
+      estTouched = Object.create(null);   /* LPEST：読み込むたびに、確かめた印は消して判定し直す */
       lpDiagRot = lpDiagRotNext; lpDiagRotNext = 0;   /* LPKIZUKI */
       try{ lpMeetSet(saved && saved.meetings); }catch(e){}   /*MEETLOG-APPLY*/
       if(saved && saved.plans){

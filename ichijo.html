@@ -18292,7 +18292,6 @@ function lpPdfProg(text, ratio){
     });
     if($('quick-go')) $('quick-go').addEventListener('click', quickGo);
     if($('sample-show')) $('sample-show').addEventListener('click', ()=>{
-      if(!confirm('画面の入力内容を、サンプル（田中太郎様ご一家）に置き換えます。よろしいですか？\n※ 保存したお客様のデータには影響しません。')) return;
       if(!showSample()) return;
       setCurrentSave(null);            // サンプルは「編集中の資料」にしない（上書き保存で潰さないため）
       saveModal.hidden = true;

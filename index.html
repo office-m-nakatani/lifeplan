@@ -2632,17 +2632,56 @@ body.pdf-brief .results{ margin-top:0 !important; }
 #ichijo-compare-card.lpn-empty .ic-level, #ichijo-compare-card.lpn-empty .chart-box, #ichijo-compare-card.lpn-empty .ic-fold,
 #ichijo-compare-card.lpn-empty .ic-adjust, #ichijo-compare-card.lpn-empty .ic-cta, #ichijo-compare-card.lpn-empty .ic-bars,
 #ichijo-compare-card.lpn-empty > div[style*="text-align:center"]{ display:none; }
-.lpn-specs{ display:flex; flex-direction:column; gap:4px; margin:-2px 0 12px; font-size:.84rem; color:var(--ink); }
+.lpn-specs{ display:flex; flex-direction:column; gap:4px; margin:-2px 0 12px; font-size:.86rem; color:var(--ink); }
 .lpn-specs:empty{ display:none; }
-.lpn-specs b{ color:#2f7cb5; }
-#ichijo-perf-note .field input[type=text]{ width:100%; box-sizing:border-box; padding:10px 12px; font:inherit; border:1.5px solid var(--line); border-radius:10px; background:#fff; min-height:44px; }
-@media(max-width:560px){ #ichijo-perf-note .grid2{ grid-template-columns:1fr; } }
-.lpn-checks{ display:flex; flex-direction:column; gap:10px; margin:12px 0 10px; }
-.lpn-check{ display:flex; align-items:flex-start; gap:10px; font-size:.88rem; cursor:pointer; }
+.lpn-specs b{ color:var(--ink); }
+/* 住まいの設備（ZEH・太陽光・蓄電池）。となりの「返済方法」の箱と同じ地と線 */
+.lpn-htype-hidden, .lpn-htype-hidden[hidden]{ display:none !important; }
+.zeh-box{ display:none !important; }   /* 汎用版：ZEH の欄は住まいの設備から計算する */
+.lpn-eq{ margin:4px 0 16px; padding:14px 16px 12px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
+.lpn-eq-title{ font-size:.92rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:8px; }
+.lpn-eq-title i{ color:var(--blue-deep); }
+.lpn-eq-lead{ font-size:.8rem; color:var(--ink-soft); margin:4px 0 6px; line-height:1.7; }
+.lpn-eq-row{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px; padding:12px 0; border-top:1px solid var(--line); }
+.lpn-eq-row:first-of-type{ border-top:none; }
+.lpn-eq-q{ display:flex; flex-direction:column; gap:2px; min-width:9em; }
+.lpn-eq-q b{ font-size:.92rem; color:var(--ink); }
+.lpn-eq-q small{ font-size:.76rem; color:var(--ink-soft); }
+.lpn-seg{ flex:none; }
+.lpn-seg button{ min-height:44px; padding:8px 18px; white-space:nowrap; }
+.lpn-seg button.active{ background:var(--blue-deep); color:#fff; box-shadow:none; }
+.lpn-eq-more{ flex:1 1 100%; display:flex; flex-direction:column; gap:12px; padding:12px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; }
+.lpn-eq-more[hidden]{ display:none !important; }
+.lpn-cap{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; }
+.lpn-unit{ width:9.5em; flex:none; }
+.lpn-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.lpn-chips button{ min-height:44px; min-width:3.6em; padding:6px 12px; border:1.5px solid var(--line); background:#fff; border-radius:999px; font:inherit; font-size:.85rem; font-weight:700; color:var(--blue-deep); cursor:pointer; }
+.lpn-chips button.active{ border-color:var(--blue-deep); background:var(--blue-pale); }
+.lpn-eq-note{ font-size:.78rem; color:var(--ink-soft); }
+.lpn-eq-note[hidden], .lpn-legacy[hidden]{ display:none !important; }
+.lpn-eq-opt{ border-top:1px solid var(--line); padding-top:10px; }
+.lpn-eq-opt > summary{ min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:.86rem; font-weight:700; color:var(--blue-deep); }
+.lpn-eq-opt[open] > summary{ margin-bottom:8px; }
+.lpn-eq-opt .field{ margin-bottom:12px; }
+.lpn-legacy{ margin:10px 0 6px; padding:10px 12px; background:var(--yellow-pale); border-radius:10px; font-size:.82rem; color:var(--ink); line-height:1.7; }
+.lpn-eq .ipn-note{ display:block; margin-top:8px; font-size:.76rem; color:var(--ink-soft); }
+.lpn-check{ display:flex; align-items:flex-start; gap:10px; font-size:.88rem; cursor:pointer; min-height:44px; }
 .lpn-check input{ width:20px; height:20px; margin-top:2px; accent-color:var(--blue); flex:none; }
 .lpn-check small{ display:block; font-size:.76rem; color:var(--ink-soft); margin-top:2px; }
-.lpn-off [data-nav-result="ichijo"], .lpn-off [data-view="ichijo"], .lpn-off .ichijo-htype-field, .lpn-off #ichijo-perf-note,
-.lpn-off #ichijo-solar-config, .lpn-off #ichijo-cta-placeholder, .lpn-off .chat-chip[data-q*="断熱等級"]{ display:none !important; }
+#lpn-eq small, #lpn-eq .hint, #lpn-eq .lpn-eq-note, #lpn-eq .ipn-note, #lpn-eq .lpn-check small{ font-size:13px; color:#4a5560; line-height:1.6; }
+#lpn-eq .seg button, #lpn-eq .lpn-seg button{ color:#1a5487; }
+#lpn-eq .lpn-seg button.active{ background:#1a5487; color:#fff; }
+#lpn-eq .lpn-chips button{ color:#1a5487; }
+#lpn-eq .lpn-chips button.active{ border-color:#1a5487; }
+#lpn-eq .lpn-eq-opt > summary{ color:#1a5487; }
+@media(max-width:560px){
+  .lpn-eq{ padding:12px 12px 10px; }
+  .lpn-seg{ width:100%; display:grid; grid-template-columns:1fr 1fr; }
+  .lpn-seg button{ padding:8px 10px; }
+  .lpn-eq-more{ padding:12px; }
+}
+.lpn-off [data-nav-result="ichijo"], .lpn-off [data-view="ichijo"], .lpn-off #ichijo-cta-placeholder,
+.lpn-off .chat-chip[data-q*="断熱等級"]{ display:none !important; }
 /* LPHK-CSS-END */
 </style>
 </head>
@@ -2894,47 +2933,65 @@ body.pdf-brief .results{ margin-top:0 !important; }
             <div class="conditional hidden" data-house-panel="buy owned">
 
               <!-- ▼▼▼ 【一条工務店 専用HTML ここから】住宅の性能タイプ（一般 / 一条工務店の家）＋標準性能ノート ▼▼▼ -->
-              <div class="field ichijo-htype-field">
-                <label>住宅の性能タイプ</label>
-                <div class="seg seg-wrap" id="htype-seg">
-                  <button type="button" data-htype="normal" class="active">プランA</button>
-                  <button type="button" data-htype="ichijo">プランB</button>
-                </div>
-                <span class="hint">プランBを選ぶと、下の欄に入れた見積りの数字（太陽光・光熱費・メンテナンス）を試算に反映し、結果の<b>「住まいの比較」</b>にプランAとの費用の違い（既定35年）が表示されます。数字を入れるまで、比較は表示されません。名前や仕様は下の欄で変えられます。</span>
-              </div>
+              <div class="ichijo-htype-field lpn-htype-hidden" hidden><div class="seg" id="htype-seg"><button type="button" data-htype="normal" class="active">設備なし</button><button type="button" data-htype="ichijo">設備あり</button></div></div>
               <!-- LPHK-IN-BEGIN -->
-              <div class="ichijo-perf-note hidden" id="ichijo-perf-note">
-                <div class="ipn-title"><i class="fa-solid fa-house-circle-check"></i> プランの名前と内容（見積り・仕様書の数字を入れます）</div>
-                <div class="grid2">
-                  <div class="field"><label>プランAの名前</label><input type="text" id="lpn-name-a" maxlength="14" placeholder="プランA（例：標準仕様）"></div>
-                  <div class="field"><label>プランBの名前</label><input type="text" id="lpn-name-b" maxlength="14" placeholder="プランB（例：ZEH仕様）"></div>
-                  <div class="field"><label>プランAの仕様メモ</label><input type="text" id="lpn-spec-a" maxlength="60" placeholder="例：断熱等級5・太陽光なし"></div>
-                  <div class="field"><label>プランBの仕様メモ</label><input type="text" id="lpn-spec-b" maxlength="60" placeholder="例：断熱等級6・太陽光あり・外壁は塗替え不要"></div>
-                </div>
-                <div class="grid2" style="margin-top:12px;">
-                  <div class="field"><label>光熱費の削減（プランB・1年あたり）</label><div class="input-unit"><input type="number" id="lpn-util" value="0" min="0" max="50" step="0.5"><span class="u">万円</span></div><span class="hint">プランAより少なくなる光熱費。自家消費の節約は下の太陽光の欄で計算します。0なら計算に入れません</span></div>
-                  <div class="field"><label>メンテナンス費の差（プランB・30年の合計）</label><div class="input-unit"><input type="number" id="lpn-maint" value="0" min="0" max="2000" step="10"><span class="u">万円</span></div><span class="hint">外壁・屋根の塗替えなど、プランAより少なくなる30年のメンテナンス費。0なら計算に入れません</span></div>
-                </div>
-                <div class="lpn-checks">
-                  <label class="lpn-check"><input type="checkbox" id="lpn-quake"><span>地震保険の割引（耐震等級3など）を使う<small>確認資料があるとき。「毎月の生活費」の地震保険に割引前の金額を入れると、割引後で計算します</small></span></label>
-                  <label class="lpn-check"><input type="checkbox" id="lpn-zeh"><span>ZEH水準以上の住宅として計算する<small>住宅ローン控除の限度額に反映します。認定の有無は仕様書で確かめてください</small></span></label>
-                </div>
-                <span class="ipn-note">※ 入れた数字だけで比較を作ります。ハウスメーカー・地域・仕様・使用状況で変わるため、実際のお見積りや仕様書の数字を入れてください。</span>
-              </div>
-              <div class="ichijo-perf-note hidden" id="ichijo-solar-config">
-                <div class="ipn-title"><i class="fa-solid fa-solar-panel"></i> 太陽光・蓄電池の設定（売電・自家消費を自動計算）</div>
-                <div class="grid3">
-                  <div class="field"><label>太陽光の搭載容量</label><div class="input-unit"><input type="number" id="ichijo-solar-kw" value="0" min="0" max="30" step="0.5"><span class="u">kW</span></div><span class="hint">お見積りの容量を入れます。0なら太陽光は計算に入れません</span></div>
-                  <div class="field"><label>蓄電池の容量</label><div class="input-unit"><input type="number" id="ichijo-battery-kwh" value="0" min="0" max="30" step="0.5"><span class="u">kWh</span></div><span class="hint">0で「なし」</span></div>
-                  <div class="field"><label>地域の日射区分</label>
-                    <div class="seg" id="ichijo-region-seg">
-                      <button type="button" data-icregion="temperate" class="active">温暖地</button>
-                      <button type="button" data-icregion="cold">寒冷地</button>
-                    </div>
-                    <span class="hint">寒冷地＝発電少なめ</span>
+              <div class="lpn-eq" id="lpn-eq">
+                <div class="lpn-eq-title"><i class="fa-solid fa-solar-panel"></i> 住まいの設備（ZEH・太陽光・蓄電池）</div>
+                <p class="lpn-eq-lead">あてはまるものを選ぶと、売電・光熱費・住宅ローン控除を試算に入れ、結果の「住まいの比較」に設備なしの場合との費用の違いが出ます。</p>
+                <input type="hidden" id="lpn-v" value="">
+                <input type="checkbox" id="lpn-zeh" hidden>
+                <div class="lpn-eq-row" id="lpn-row-zeh">
+                  <div class="lpn-eq-q"><b>ZEH水準の住宅</b><small>住宅ローン控除の借入限度額に反映</small></div>
+                  <div class="seg lpn-seg" id="lpn-zeh-seg" role="group" aria-label="ZEH水準の住宅">
+                    <button type="button" data-v="0" class="active">ZEHではない</button>
+                    <button type="button" data-v="1">ZEH水準以上</button>
+                  </div>
+                  <div class="lpn-eq-more" id="lpn-zeh-more" hidden>
+                    <div class="field"><label for="lpn-util">断熱で少なくなる光熱費（1年・分かれば）</label><div class="input-unit lpn-unit"><input type="number" id="lpn-util" value="0" min="0" max="50" step="0.5"><span class="u">万円</span></div><span class="hint">お見積りや仕様書に数字があれば入れます。0なら計算に入れません（太陽光の自家消費の節約は別に計算します）</span></div>
+                    <span class="lpn-eq-note">ZEH水準かどうかは、仕様書や BELS などの評価書で確かめてください。</span>
                   </div>
                 </div>
-                <span class="ipn-note">※ 蓄電池があるほど自家消費（買う電気の節約）の割合が増えます。お見積りの容量に合わせて入れてください。東西面や日陰の屋根では発電が1〜3割下がることがあります。</span>
+                <div class="lpn-eq-row" id="lpn-row-solar">
+                  <div class="lpn-eq-q"><b>太陽光パネル</b><small>売電と自家消費を自動で計算</small></div>
+                  <div class="seg lpn-seg" id="lpn-solar-seg" role="group" aria-label="太陽光パネル">
+                    <button type="button" data-v="0" class="active">のせない</button>
+                    <button type="button" data-v="1">のせる</button>
+                  </div>
+                  <div class="lpn-eq-more" id="lpn-solar-more" hidden>
+                    <div class="field"><label for="ichijo-solar-kw">のせる容量</label>
+                      <div class="lpn-cap"><div class="input-unit lpn-unit"><input type="number" id="ichijo-solar-kw" value="0" min="0" max="30" step="0.01"><span class="u">kW</span></div>
+                        <div class="lpn-chips" data-for="ichijo-solar-kw" role="group" aria-label="容量を選ぶ"><button type="button" data-c="3">3kW</button><button type="button" data-c="4">4kW</button><button type="button" data-c="5">5kW</button><button type="button" data-c="6">6kW</button><button type="button" data-c="8">8kW</button><button type="button" data-c="10">10kW</button></div></div>
+                      <span class="hint">お見積りの容量を入れます。ボタンでも選べます</span></div>
+                    <div class="field"><label>地域の日射区分</label>
+                      <div class="seg" id="ichijo-region-seg">
+                        <button type="button" data-icregion="temperate" class="active">温暖地</button>
+                        <button type="button" data-icregion="cold">寒冷地</button>
+                      </div>
+                      <span class="hint">寒冷地＝発電少なめ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="lpn-eq-row" id="lpn-row-batt">
+                  <div class="lpn-eq-q"><b>蓄電池</b><small>自家消費の割合が増えます</small></div>
+                  <div class="seg lpn-seg" id="lpn-batt-seg" role="group" aria-label="蓄電池">
+                    <button type="button" data-v="0" class="active">付けない</button>
+                    <button type="button" data-v="1">付ける</button>
+                  </div>
+                  <div class="lpn-eq-more" id="lpn-batt-more" hidden>
+                    <div class="field"><label for="ichijo-battery-kwh">付ける容量</label>
+                      <div class="lpn-cap"><div class="input-unit lpn-unit"><input type="number" id="ichijo-battery-kwh" value="0" min="0" max="30" step="0.01"><span class="u">kWh</span></div>
+                        <div class="lpn-chips" data-for="ichijo-battery-kwh" role="group" aria-label="容量を選ぶ"><button type="button" data-c="5">5kWh</button><button type="button" data-c="7">7kWh</button><button type="button" data-c="10">10kWh</button><button type="button" data-c="13">13kWh</button></div></div>
+                      <span class="hint">お見積りの容量を入れます。ボタンでも選べます</span></div>
+                    <span class="lpn-eq-note" id="lpn-batt-note" hidden>蓄電池は、太陽光パネルをのせたときに計算に入ります。</span>
+                  </div>
+                </div>
+                <details class="lpn-eq-opt" id="lpn-eq-opt">
+                  <summary>そのほか（分かれば）：メンテナンス費の差・地震保険の割引</summary>
+                  <div class="field"><label for="lpn-maint">メンテナンス費の差（30年の合計）</label><div class="input-unit lpn-unit"><input type="number" id="lpn-maint" value="0" min="0" max="2000" step="10"><span class="u">万円</span></div><span class="hint">外壁・屋根の塗替えなど、設備なしの場合より少なくなる30年のメンテナンス費。0なら計算に入れません</span></div>
+                  <label class="lpn-check"><input type="checkbox" id="lpn-quake"><span>地震保険の割引（耐震等級3など）を使う<small>確認資料があるとき。「毎月の生活費」の地震保険に割引前の金額を入れると、割引後で計算します</small></span></label>
+                </details>
+                <p class="lpn-legacy" id="lpn-legacy" hidden></p>
+                <span class="ipn-note">※ ハウスメーカー・地域・屋根の向き・使い方で変わります。お見積りや仕様書の数字に合わせてください。東西面や日陰の屋根では発電が1〜3割下がることがあります。</span>
               </div>
               <!-- LPHK-IN-END -->
               <!-- ▲▲▲ 【一条工務店 専用HTML ここまで】 ▲▲▲ -->
@@ -3034,7 +3091,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
                 </label>
                 <div class="conditional" id="zeh-fields">
                   <div class="grid2">
-                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">初年度の売電収入。プランBを選ぶと太陽光の設定から自動計算</span></div>
+                    <div class="field"><label>売電収入（年）</label><div class="input-unit"><input type="number" id="zeh-sell" value="7" min="0" step="1"><span class="u">万円</span></div><span class="hint">初年度の売電収入。「住まいの設備」で太陽光パネルをのせると、その容量から自動計算</span></div>
                     <div class="field"><label>光熱費の削減（年）</label><div class="input-unit"><input type="number" id="zeh-save" value="6" min="0" step="1"><span class="u">万円</span></div><span class="hint">自家消費＋高断熱による節約額。生活費の電気・ガスを<b>実額のまま</b>置いた場合の削減額です（生活費側を0にしたときは、この欄も0に）</span></div>
                   </div>
                   <div class="note" style="background:var(--good-pale);color:#2a6b52;">
@@ -3642,12 +3699,12 @@ body.pdf-brief .results{ margin-top:0 !important; }
         <!-- ▼▼▼ 【一条工務店 専用HTML ここから】一般住宅 vs 一条工務店の家（30年ランニングコスト比較）▼▼▼ -->
         <!-- 賃貸選択時のプレースホルダー：看板機能（一条比較）の存在を予告し、1クリックで発火できるようにする -->
         <div class="card no-print" id="ichijo-cta-placeholder" style="display:none; text-align:center; padding:18px 16px; border:2px dashed #cfe6d8;">
-          <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「プランBで試す」を押すと、<b>プランAとプランBの費用の違い</b>がここに表示されます。</p>
-          <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> プランBで試す（1クリックで比較）</button>
+          <p style="font-size:.9rem; color:var(--ink-soft); margin-bottom:10px;"><i class="fa-solid fa-house-circle-check" style="color:var(--blue);"></i> 「設備を入れて試す」を押すと、入力の「住まいの設備」が開きます。ZEH・太陽光・蓄電池を選ぶと、<b>設備なしの場合との費用の違い</b>がここに表示されます。</p>
+          <button class="btn btn-yellow btn-sm" id="btn-try-ichijo2" type="button"><i class="fa-solid fa-house-circle-check"></i> 設備を入れて試す</button>
         </div>
         <div class="card" id="ichijo-compare-card">
-          <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> <span id="lpn-card-title">プランA と プランB</span></div>
-          <p class="ic-lead">建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数字はすべて、入力欄に入れたお見積りの数字です。</p><div class="lpn-specs" id="lpn-specs"></div>
+          <div class="card-title"><i class="fa-solid fa-house-chimney-window"></i> <span id="lpn-card-title">ZEH・太陽光・蓄電池で変わる費用</span></div>
+          <p class="ic-lead">建物価格そのものではなく、<b>住んでから差が出る3つの費用</b>（光熱費・太陽光・メンテナンス）を、35年またはシミュレーション終了年齢までの期間で比べます。数字は、入力の「住まいの設備」で選んだ内容とお見積りの数字から計算します。</p><div class="lpn-specs" id="lpn-specs"></div>
           <div class="ic-level">
             <span class="ic-level-label">比較期間：</span>
             <div class="seg" id="ichijo-horizon-seg">
@@ -3665,12 +3722,12 @@ body.pdf-brief .results{ margin-top:0 !important; }
           </div>
           <div class="ic-total" id="ic-total"></div>
           <div class="ic-adjust no-print" style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:center; margin-bottom:10px; font-size:.82rem; color:var(--ink);">
-            <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="0" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（プランAとの差・編集可）</span></span>
+            <span style="display:inline-flex; align-items:center; gap:6px;">建物価格差 <input type="number" id="ic-price-gap" value="0" min="0" step="50" style="width:76px; text-align:center; padding:6px 4px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit;">万円 <span style="font-size:.74rem; color:var(--ink-soft);">（設備なしの場合との差・編集可）</span></span>
           </div>
           <div class="ic-cta no-print" style="text-align:center; margin-bottom:12px;">
             <button class="chat-cta" type="button" id="ic-reserve"><i class="fa-solid fa-calendar-check"></i> この差額を、わが家の数字で確かめる（無料相談）</button>
           </div>
-          <div style="font-size:.85rem; color:var(--ink); margin:2px 0 4px; text-align:center;">※ 下のグラフは3項目（光熱費・太陽光・外壁メンテ）の比較です。<b>プランB側の設備更新費・太陽光の初期費用・建物価格差は含みません</b></div>
+          <div style="font-size:.85rem; color:var(--ink); margin:2px 0 4px; text-align:center;">※ 下のグラフは3項目（光熱費・太陽光・外壁メンテ）の比較です。<b>設備の更新費・太陽光と蓄電池の初期費用・建物価格差は含みません</b></div>
           <div class="chart-box"><canvas id="ichijoChart"></canvas></div>
           <div class="ic-bars" id="ic-bars" style="margin-top:12px;"></div>
           <details class="ic-fold" id="ic-fold">
@@ -4687,9 +4744,9 @@ body.pdf-brief .results{ margin-top:0 !important; }
           <li><b>物価上昇（インフレ）</b>：ご入力の率を、<b>生活費・家賃・教育費・ライフイベントの支出・住宅の維持費（固定資産税＋修繕）・火災地震保険・ZEHの光熱費削減</b>に適用します（いずれも<b>今日を起点</b>。これらの欄は「今の相場」でご入力ください）。資産の「実質価値」の表示にも使用します。<br>一方、<b>退職金・臨時収入・住宅ローンの返済額は物価では伸ばしません</b>。退職金と臨時収入は<b>受け取る時点の金額</b>としてそのまま計上します（大卒定年退職者の退職金は1997年の約2,871万円から実際に減少してきており、物価どおりに増える前提を置かないほうが安全側のためです）。ローン返済は契約で金額が決まっているため名目のままが正しい計算です。</li>
           <li><b>運用</b>：ご入力の利回りによる複利の簡易計算です。<b>運用益への課税・手数料は考慮していません</b>。将来の利回りは保証されません。</li>
           <li><b>住宅ローン</b>：ご入力の金利をもとに毎月の償還計算を行います（変動金利の「5年ルール・125%ルール」は未考慮）。<b>団信の上乗せ金利</b>（がん団信等）を入力した場合は全期間の金利に加算します。「もしもの検証（ストレステスト）」は<b>表示のみの一時的な前提</b>で、保存されません（<b>実際の金利・収入の変動がその範囲に収まることを示すものではありません</b>）。</li>
-          <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、耐震等級3（プランBで地震保険の割引を選択時）＝50%割引、一般住宅＝新築の建築年割引10%で計算します（等級割引の適用には確認資料が必要）。</li>
-          <li><b>住宅ローン控除</b>：年末残高×0.7%・最大13年を、<b>住宅性能×子育て世帯等（入居時に18歳以下のお子さま、または夫婦いずれか40歳未満）</b>の上限（ZEH水準＝31.5万円/24.5万円〈プランBは「ZEH水準以上」を選んだときだけZEH水準で判定〉、省エネ基準28万円/21万円）と、<b>名義人ごとの納税額（所得税＋住民税の控除対象分・上限9.75万円）の概算</b>の両方でキャップして計上します。ペアローンはご夫婦それぞれの割合・枠・納税額で計算します（控除枠が実質2人分）。子育て世帯の上限特例は2025年入居の制度水準で、以降の延長は制度改正をご確認ください。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
-          <li><b>住まいの比較（プランAとプランB）</b>：プランAの光熱費・メンテ費の目安は、公的統計（総務省家計調査、外壁の再塗装相場等）をもとにした<b class="lp-iss-ours">当事務所の独自試算</b>、プランBの太陽光・光熱費・メンテ費はご入力の見積りの数字から計算した試算です（売電単価は資源エネルギー庁のFIT単価）。実際の金額はハウスメーカー・仕様・地域・使用状況で変わります。正確な数値は各社のお見積り・仕様書でご確認ください。</li>
+          <li><b>火災・地震保険</b>：ご入力の1年／5年サイクルごとに、購入年から総額を一括計上します（物価上昇に連動。現行制度では火災・地震保険とも契約は最長5年）。地震保険は「割引前／割引適用済み」の選択に応じて、耐震等級3（住まいの設備で地震保険の割引を選択時）＝50%割引、一般住宅＝新築の建築年割引10%で計算します（等級割引の適用には確認資料が必要）。</li>
+          <li><b>住宅ローン控除</b>：年末残高×0.7%・最大13年を、<b>住宅性能×子育て世帯等（入居時に18歳以下のお子さま、または夫婦いずれか40歳未満）</b>の上限（ZEH水準＝31.5万円/24.5万円〈住まいの設備で「ZEH水準以上」を選んだときだけZEH水準で判定〉、省エネ基準28万円/21万円）と、<b>名義人ごとの納税額（所得税＋住民税の控除対象分・上限9.75万円）の概算</b>の両方でキャップして計上します。ペアローンはご夫婦それぞれの割合・枠・納税額で計算します（控除枠が実質2人分）。子育て世帯の上限特例は2025年入居の制度水準で、以降の延長は制度改正をご確認ください。手取りは令和7年度改正（基礎控除58万円・給与所得控除の最低保障65万円）を反映した簡易計算です。</li>
+          <li><b>住まいの比較（ZEH・太陽光・蓄電池）</b>：設備なしの場合の光熱費・メンテ費の目安は、公的統計（総務省家計調査、外壁の再塗装相場等）をもとにした<b class="lp-iss-ours">当事務所の独自試算</b>、太陽光・蓄電池・光熱費・メンテ費は「住まいの設備」で選んだ内容とご入力の数字から計算した試算です（売電単価は資源エネルギー庁のFIT単価）。実際の金額はハウスメーカー・仕様・地域・使用状況で変わります。正確な数値は各社のお見積り・仕様書でご確認ください。</li>
           <li><b>火災保険・地震保険の記載</b>は制度の一般的な説明であり、特定の損害保険商品の募集・推奨を目的とするものではありません。損害保険の詳細は取扱代理店・保険会社にご確認ください。税制・社会保険の記載も概要であり、<b>詳細は最新の制度をご確認ください</b>。</li>
           <li><b>変額保険の概算</b>：保険関係費・保障のための費用（危険保険料）・解約控除は、<b>一般的な水準にもとづく仮置き</b>で、特定の保険会社・商品の数値ではありません（実在する設計書をもとに較正した概算です）。運用実績は年-3％・0％・3％・6％で推移したと仮定した4通りの例示で、<b>この4つのいずれかになると決まっているものではなく、下回ることも上回ることもあります</b>。死亡保険金には最低保証がありますが、<b>解約返戻金・満期保険金には最低保証がないのが一般的</b>で、特に<b>払込10年未満の解約は払込額を下回ります</b>。本ツールは保険会社の設計書ではないため、正式な金額は<b>契約概要・注意喚起情報・ご契約のしおり／約款</b>でご確認ください。</li>
           <li><b>制度・知識の最終更新：2026年9月</b>（2025〜2026年の税制・年金・民法改正、2026年度FITの二段階単価、みらいエコ住宅2026補助金、住宅性能表示制度の等級と公的統計を反映。<b>2026年8月施行の高額療養費の上限額引き上げ・年間上限の新設</b>、2026年10月の106万円の壁撤廃、生前贈与加算の経過措置も反映済み）。制度の変更は順次反映しています。</li>
@@ -5389,7 +5446,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
     function renderKasaiMerit(){
       const el = $('kasai-merit'); if(!el) return;
       const q = num('kasai-quake',0), cyc = kasaiCycle(), mode = kasaiQuakeMode();
-      const isIchijo = (typeof htype!=='undefined' && htype==='ichijo' && lpnQuake());   // 耐震等級3＝地震保険50%割引（プランBで割引を選んだとき）
+      const isIchijo = (typeof htype!=='undefined' && htype==='ichijo' && lpnQuake());   // 耐震等級3＝地震保険50%割引（住まいの設備で割引を選んだとき）
       el.hidden = false;
       if(q<=0){
         el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--ink-soft);"></i><span>例：地震保険が<b>5年分15万円（割引前）</b>なら、耐震等級3の<b>50%割引で7.5万円</b>＝<b>1年あたり約1.5万円</b>軽くなる計算です。新築の一般住宅は建築年割引10%が目安。右上の「戸建の目安を入れる」で試せます。</span>`;
@@ -5403,7 +5460,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
       if(isIchijo){
         el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--good);"></i><span>耐震等級3の<b>50%割引</b>を適用：地震保険 <b>${fmt(q)}万円 → ${fmt(Math.round(q*0.5*10)/10)}万円</b>（${cyc}年ごと）。<b>1年あたり 約${perYear}万円の割引メリット</b>です（適用には性能評価書等の確認資料が必要）。</span>`;
       } else {
-        el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--ink-soft);"></i><span>一般住宅は<b>新築の建築年割引10%</b>で計上しています。耐震等級3の住宅なら<b>50%割引</b>（プランBの欄の「地震保険の割引を使う」で反映できます）＝この金額なら<b>1年あたり 約${perYear}万円</b>軽くなる計算です。</span>`;
+        el.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--ink-soft);"></i><span>一般住宅は<b>新築の建築年割引10%</b>で計上しています。耐震等級3の住宅なら<b>50%割引</b>（「住まいの設備」の「地震保険の割引を使う」で反映できます）＝この金額なら<b>1年あたり 約${perYear}万円</b>軽くなる計算です。</span>`;
       }
     }
     // 毎月の生活費（月額）：まとめて入力 or 項目ごと
@@ -6094,9 +6151,13 @@ body.pdf-brief .results{ margin-top:0 !important; }
     let htype = 'normal';
     let ichijoChart = null;
     /* LPHK-JS-BEGIN */
-    /* 住まいの比較を中立にする部品（汎用版だけ）。ご入力の数字を読む窓口と、プラン名、表示の切り替え。
-       既定値はどれも 0＝入れるまで比較を出さない。一条版（ichijo.html）にはこの塊は無い。 */
+    /* 住まいの比較を中立にする部品（汎用版だけ）。2026-10-13 からは「住まいの設備」（ZEH・太陽光・蓄電池）を直接選ぶ。
+       htype（内部の値 'ichijo'＝保存の互換のため）は画面で選ばせず、この3つから決める。
+       下のほうの「ZEH（ゼッチ）にする」の欄（zeh-on・zeh-sell・zeh-save）は隠し、ここから計算して入れる。
+       前に保存した資料（lpn-v が '2' でない）は、売電収入・光熱費の削減の金額を保存のまま使う（lpnLegacy）。
+       一条版（ichijo.html）にはこの塊は無い。 */
     var LPN_OFF_KEY = 'lifeplan_hikaku_off_v1';
+    var lpnLegacy = false;
     function lpnHidden(){
       try{
         var q = (location.search || '').match(/[?&]hikaku=(on|off)/);
@@ -6104,33 +6165,132 @@ body.pdf-brief .results{ margin-top:0 !important; }
         return localStorage.getItem(LPN_OFF_KEY) === '1';
       }catch(e){ return /[?&]hikaku=off/.test(location.search || ''); }
     }
-    function lpnUtil(){ return Math.max(num('lpn-util', 0), 0); }
+    function lpnZeh(){ var e = $('lpn-zeh'); return !!(e && e.checked); }
+    function lpnKw(){ return Math.max(num('ichijo-solar-kw', 0), 0); }
+    function lpnKwh(){ return Math.max(num('ichijo-battery-kwh', 0), 0); }
+    function lpnUtil(){ return lpnZeh() ? Math.max(num('lpn-util', 0), 0) : 0; }
     function lpnMaint30(){ return Math.max(num('lpn-maint', 0), 0); }
     function lpnMaintDefault(){ return Math.max(Math.round((GEN_MAINT_DEFAULT - lpnMaint30()/30) * 10) / 10, 0); }
     function lpnQuake(){ var e = $('lpn-quake'); return !!(e && e.checked); }
-    function lpnZeh(){ var e = $('lpn-zeh'); return !!(e && e.checked); }
-    function lpnTxt(id, d){ var e = $(id); var v = e ? String(e.value || '').replace(/\s+/g, ' ').trim() : ''; return v || d; }
-    function lpnNameA(){ return lpnTxt('lpn-name-a', 'プランA'); }
-    function lpnNameB(){ return lpnTxt('lpn-name-b', 'プランB'); }
-    function lpnHas(){ return Math.max(num('ichijo-solar-kw', 0), 0) > 0 || lpnUtil() > 0 || lpnMaint30() > 0; }
+    function lpnFmtN(v){ return String(Math.round(v * 100) / 100); }
+    function lpnNameA(){ return '設備なしの場合'; }
+    function lpnNameB(){
+      var a = [];
+      if(lpnZeh()) a.push('ZEH水準');
+      if(lpnKw() > 0) a.push('太陽光' + lpnFmtN(lpnKw()) + 'kW');
+      if(lpnKw() > 0 && lpnKwh() > 0) a.push('蓄電池' + lpnFmtN(lpnKwh()) + 'kWh');
+      return a.length ? a.join('・') : 'ご入力の設備';
+    }
+    function lpnHas(){ return lpnKw() > 0 || lpnUtil() > 0 || lpnMaint30() > 0; }
+    function lpnDerive(){ return (lpnZeh() || lpnKw() > 0 || lpnKwh() > 0 || lpnUtil() > 0 || lpnMaint30() > 0 || lpnQuake()) ? 'ichijo' : 'normal'; }
     function lpnApplyNames(){
-      var a = lpnNameA(), b = lpnNameB();
-      var seg = $('htype-seg');
-      if(seg){ var ba = seg.querySelector('[data-htype="normal"]'), bb = seg.querySelector('[data-htype="ichijo"]');
-        if(ba && ba.textContent !== a) ba.textContent = a; if(bb && bb.textContent !== b) bb.textContent = b; }
-      var t = $('lpn-card-title'); if(t){ var s = a + ' と ' + b; if(t.textContent !== s) t.textContent = s; }
+      var t = $('lpn-card-title'); if(t && t.textContent !== 'ZEH・太陽光・蓄電池で変わる費用') t.textContent = 'ZEH・太陽光・蓄電池で変わる費用';
       var sp = $('lpn-specs');
       if(sp){
-        var sa = lpnTxt('lpn-spec-a', ''), sb = lpnTxt('lpn-spec-b', '');
-        var h = (sa ? '<div><b>' + esc(a) + '</b>：' + esc(sa) + '</div>' : '') + (sb ? '<div><b>' + esc(b) + '</b>：' + esc(sb) + '</div>' : '');
+        var parts = [];
+        parts.push(lpnZeh() ? 'ZEH水準以上' : 'ZEH水準ではない');
+        parts.push(lpnKw() > 0 ? '太陽光 ' + lpnFmtN(lpnKw()) + 'kW（' + (ichijoRegion==='cold' ? '寒冷地' : '温暖地') + '）' : '太陽光なし');
+        parts.push(lpnKw() > 0 && lpnKwh() > 0 ? '蓄電池 ' + lpnFmtN(lpnKwh()) + 'kWh' : '蓄電池なし');
+        var h = '<div><b>ご入力の設備</b>：' + esc(parts.join('・')) + '</div>';
         if(sp.innerHTML !== h) sp.innerHTML = h;
       }
     }
-    ['lpn-name-a','lpn-name-b','lpn-spec-a','lpn-spec-b'].forEach(function(id){ var el = $(id); if(el) el.addEventListener('input', function(){ lpnApplyNames(); recompute(); }); });
-    ['lpn-util','lpn-maint','lpn-quake','lpn-zeh'].forEach(function(id){
+    function lpnSegSet(id, on){
+      var seg = $(id); if(!seg) return;
+      [].forEach.call(seg.children, function(b){ var a = (b.dataset.v === (on ? '1' : '0')); b.classList.toggle('active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false'); });
+    }
+    function lpnChipsSet(){
+      [].forEach.call(document.querySelectorAll('#lpn-eq .lpn-chips'), function(g){
+        var v = Math.max(num(g.dataset.for, 0), 0);
+        [].forEach.call(g.children, function(b){ var a = (+b.dataset.c === v); b.classList.toggle('active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false'); });
+      });
+    }
+    /* 画面の見た目を値に合わせる（値は変えない） */
+    function lpnEqUI(){
+      var zeh = lpnZeh(), kw = lpnKw(), kwh = lpnKwh();
+      lpnSegSet('lpn-zeh-seg', zeh); lpnSegSet('lpn-solar-seg', kw > 0); lpnSegSet('lpn-batt-seg', kwh > 0);
+      var m;
+      m = $('lpn-zeh-more'); if(m) m.hidden = !zeh;
+      m = $('lpn-solar-more'); if(m) m.hidden = !(kw > 0);
+      m = $('lpn-batt-more'); if(m) m.hidden = !(kwh > 0);
+      m = $('lpn-batt-note'); if(m) m.hidden = !(kwh > 0 && !(kw > 0));
+      var op = $('lpn-eq-opt'); if(op && (lpnMaint30() > 0 || lpnQuake())) op.open = true;
+      lpnChipsSet();
+      var lg = $('lpn-legacy');
+      if(lg){
+        var on = lpnLegacy && $('zeh-on') && $('zeh-on').checked && (num('zeh-sell', 0) + num('zeh-save', 0) > 0);
+        lg.hidden = !on;
+        if(on) lg.innerHTML = '前に保存した資料の金額（売電収入 年' + esc(fmt(num('zeh-sell', 0))) + '万円・光熱費の削減 年' + esc(fmt(num('zeh-save', 0))) + '万円）を、そのまま試算に使っています。設備を選び直すと、その内容で計算し直します。';
+      }
+      var sg = $('htype-seg'); if(sg) [].forEach.call(sg.children, function(x){ x.classList.toggle('active', x.dataset.htype === htype); });
+    }
+    /* 設備の内容から htype と ZEH の欄（売電収入・光熱費の削減）を作る */
+    function lpnCompute(){
+      htype = lpnDerive();
+      if(typeof applyHtype === 'function') applyHtype();
+      var on = false, sell = 0, save = 0;
+      if(htype === 'ichijo'){
+        var md = ichijoSolarModel();
+        if(md){ sell = Math.round(md.sellY1); save = Math.round(md.selfMan + md.utilSave); on = (md.kw > 0 || md.utilSave > 0); }
+      }
+      if($('zeh-on')) $('zeh-on').checked = on;
+      if($('zeh-sell')) $('zeh-sell').value = sell;
+      if($('zeh-save')) $('zeh-save').value = save;
+      if($('zeh-fields')) $('zeh-fields').classList.toggle('hidden', !on);
+    }
+    /* ご本人が設備を選び直した＝今の形（lpn-v='2'）で計算する */
+    function lpnTouched(){
+      lpnLegacy = false;
+      if($('lpn-v')) $('lpn-v').value = '2';
+      lpnCompute(); lpnEqUI(); recompute();
+    }
+    function lpnInit(){
+      if($('lpn-v')) $('lpn-v').value = '2';
+      lpnLegacy = false;
+      lpnCompute(); lpnEqUI();
+    }
+    /* 保存した資料を開いたとき（applyState の中・fields を戻したあと） */
+    function lpnRestore(s){
+      var f = (s && s.fields) || {};
+      var v2 = (f['lpn-v'] === '2');
+      if(!v2){
+        var set = function(id, v){ var e = $(id); if(!e) return; if(e.type === 'checkbox') e.checked = !!v; else e.value = v; };
+        if(s && s.htype === 'ichijo'){
+          if(!('lpn-zeh' in f)) set('lpn-zeh', true);   // 2026-10-12 より前の高性能住宅は ZEH 水準として扱っていた
+        }else{
+          // 住宅の性能タイプが一般だった資料：太陽光・蓄電池の欄（前の既定 12kW・7kWh）は試算に入っていなかった
+          set('ichijo-solar-kw', 0); set('ichijo-battery-kwh', 0); set('lpn-util', 0); set('lpn-maint', 0); set('lpn-quake', false);
+          set('lpn-zeh', !!($('zeh-on') && $('zeh-on').checked));   // 「ZEH（ゼッチ）にする」に印があった資料は ZEH 水準
+        }
+      }
+      if($('lpn-v')) $('lpn-v').value = v2 ? '2' : '1';
+      lpnLegacy = !v2;
+      htype = lpnDerive();
+      userEditedMaint = true;   // 保存の値（修繕・管理）を、計算の途中で既定値に置き換えない
+      if(v2) lpnCompute();
+      lpnEqUI();
+    }
+    function lpnSegWire(segId, onSet){
+      var seg = $(segId); if(!seg) return;
+      seg.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; onSet(b.dataset.v === '1'); lpnTouched(); });
+    }
+    var lpnLast = { kw:5, kwh:7 };   // 「のせる」「付ける」を押したときの最初の値（お見積りの容量に直していただく）
+    lpnSegWire('lpn-zeh-seg', function(on){ var e = $('lpn-zeh'); if(e) e.checked = on; });
+    lpnSegWire('lpn-solar-seg', function(on){
+      var e = $('ichijo-solar-kw'); if(!e) return;
+      if(on){ if(!(lpnKw() > 0)) e.value = lpnLast.kw; } else { if(lpnKw() > 0) lpnLast.kw = lpnKw(); e.value = 0; }
+    });
+    lpnSegWire('lpn-batt-seg', function(on){
+      var e = $('ichijo-battery-kwh'); if(!e) return;
+      if(on){ if(!(lpnKwh() > 0)) e.value = lpnLast.kwh; } else { if(lpnKwh() > 0) lpnLast.kwh = lpnKwh(); e.value = 0; }
+    });
+    [].forEach.call(document.querySelectorAll('#lpn-eq .lpn-chips'), function(g){
+      g.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; var el = $(g.dataset.for); if(el){ el.value = b.dataset.c; lpnTouched(); } });
+    });
+    ['ichijo-solar-kw','ichijo-battery-kwh','lpn-util','lpn-maint','lpn-quake'].forEach(function(id){
       var el = $(id); if(!el) return;
-      var f = function(){ if(htype==='ichijo') applyHtype(); recompute(); };
-      el.addEventListener('input', f); el.addEventListener('change', f);
+      var f = function(){ lpnTouched(); };
+      el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', f);
     });
     if(lpnHidden()) document.documentElement.classList.add('lpn-off');
     /* LPHK-JS-END */
@@ -6273,7 +6433,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
       const lpnOn = lpnHas();
       card.classList.toggle('lpn-empty', !lpnOn);
       if(!lpnOn){
-        $('ic-total').innerHTML = `<div class="ict-sub"><b>${esc(lpnNameB())}</b>の見積りの数字を入れると、${esc(lpnNameA())}との費用の違いがここに表示されます。入力の「住まい」で<b>${esc(lpnNameB())}</b>を選び、太陽光・光熱費・メンテナンスの数字を入れてください。</div>`;
+        $('ic-total').innerHTML = `<div class="ict-sub">入力の「住まい」の<b>住まいの設備</b>で、太陽光パネルの容量（または断熱で少なくなる光熱費・メンテナンス費の差）を入れると、設備なしの場合との費用の違いがここに表示されます。</div>`;
         $('ic-bars').innerHTML = ''; $('ic-note').innerHTML = '';
         if(ichijoChart){ ichijoChart.destroy(); ichijoChart = null; }
         return;
@@ -6306,7 +6466,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
       const dailyYen = Math.round(monthly * 10000 / 30 / 10) * 10;
       const dailyLine = (monthly > 0 && dailyYen > 0 && dailyYen <= 1500) ? `（1日あたり約${dailyYen.toLocaleString('ja-JP')}円）` : '';
       $('ic-total').innerHTML = `<div class="ict-num">${horizonLbl}の費用の違い（試算）：約 ${fmt(total)}万円</div>`
-        + `<div class="ict-sub">ご入力の数字では、${esc(lpnNameB())}の費用が${esc(lpnNameA())}より、月々に直すと<b>約${monthly}万円</b>${dailyLine}少なくなる計算です（前提を変えると増減します・建物価格とは別）。${gapLine}${fairLine}</div>`;
+        + `<div class="ict-sub">ご入力の設備（${esc(lpnNameB())}）では、設備なしの場合より、光熱費などの費用が月々に直すと<b>約${monthly}万円</b>${dailyLine}少なくなる計算です（前提を変えると増減します・建物価格とは別）。${gapLine}${fairLine}</div>`;
       // 内訳バー（光熱費・太陽光・メンテの3項目）
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const rows = [
@@ -6331,8 +6491,8 @@ body.pdf-brief .results{ margin-top:0 !important; }
         + `・<b>比較期間</b>：「${num('end-age',100)}歳まで」は購入年齢からシミュレーション終了年齢までの${ichijoHorizon==='end' ? years : Math.min(Math.max(num('end-age',100)-((houseType==='owned')?num('owned-age',35):num('buy-age',36)),10),70)}年間です。太陽光はパネル寿命を考慮し31年目以降の売電・自家消費を見込まず、外壁メンテ差・設備更新費は再塗装・交換の周期に応じて期間に比例した概算です。<br>`
         + `・<b>太陽光</b>：2026年度FITの区分（10kW以上＝19円が5年間→8.3円の事業用扱い／10kW未満＝24円が4年間）で計算し、<b>パネルの経年劣化（年0.5%）を織り込み済み</b>。卒FIT後（8円）は売るより32円の買電を減らす自家消費が有利です。10kW以上は発電量の30%以上の自家消費が制度の要件で、地域により出力制御で売電が数%目減りする場合があり、売電収入は雑所得の申告対象になることがあります。<br>`
         + `・<b>自家消費の節約</b>は実際の電気代の8割程度を上限に計上しています（基本料金や夜間の買電は残るため）。<br>`
-        + `・<b>出典</b>：プランAの光熱費の目安は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
-        + `・<b>比較に含めないもの</b>：プランB側の設備更新費（太陽光パワコン・空調・換気設備等）も、プランA側の給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。<br>`
+        + `・<b>出典</b>：設備なしの場合の光熱費の目安は総務省家計調査（2025年・二人以上世帯）の電気・ガス等 月約1.6万円＋オール電化への置き換え分＝月約1.7万円相当。メンテは窯業サイディングの30年相場（約240〜380万円）。2025年以降の新築（省エネ基準適合住宅）では、光熱費の差はこれより小さくなります。<br>`
+        + `・<b>比較に含めないもの</b>：設備の更新費（太陽光パワコン・蓄電池・空調・換気設備等）も、どちらの場合にもかかる給湯器・エアコン等の更新費（30年で100万円前後）も、国の補助金（2026年度はGX志向型で最大110万円等）も含めていません。<br>`
         + `・<b>「住まい」の「修繕費」欄との関係</b>：本体試算の修繕費（既定：一般15万円/年＝30年で約450万円）は<b>設備の交換・室内の補修まで含めた家全体の維持費</b>です。この比較カードのメンテ費は<b>外壁・屋根の塗替え分だけ</b>を取り出したもの（一般約300万円/30年）のため、金額の範囲が異なります（矛盾ではありません）。<br>`
         + `<span style="color:var(--ink-soft);">${lpIssDevLabel()}</span>`;
     }
@@ -6341,7 +6501,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
       if(ichijoChart) ichijoChart.destroy();
       ichijoChart = new Chart(cv.getContext('2d'), {
         type:'bar',
-        data:{ labels:[lpnNameA(), lpnNameB()], datasets:[{
+        data:{ labels:['設備なし', 'ご入力の設備'], datasets:[{
           label:'ランニングコスト（光熱費＋外壁メンテ−太陽光・選択中の期間）',
           data:[Math.round(genTotal), Math.round(ichTotal)],
           backgroundColor:['#b9c4cf','#4a9fd4'], borderRadius:8, barPercentage:0.6
@@ -6371,10 +6531,8 @@ body.pdf-brief .results{ margin-top:0 !important; }
       const hs = document.getElementById('house-seg');
       const buyBtn = hs && hs.querySelector('[data-house="buy"]');
       if(buyBtn && !buyBtn.classList.contains('active')) buyBtn.click();
-      const ib = htypeSeg && htypeSeg.querySelector('[data-htype="ichijo"]');
-      if(ib && !ib.classList.contains('active')) ib.click();
-      // タブ化後：結果の「一条の家との比較」画面を開く（アコーディオンを開く操作は廃止）
-      setTimeout(()=>{ if(typeof switchView==='function') switchView('result','ichijo'); }, 150);
+      // 汎用版：入力の「住まいの設備」（ZEH・太陽光・蓄電池）を開く
+      setTimeout(()=>{ if(typeof switchView==='function') switchView('input','home'); const eq = $('lpn-eq'); if(eq) eq.scrollIntoView({ behavior:'smooth', block:'start' }); }, 150);
     }
     const tryIchijoBtn = $('btn-try-ichijo');
     if(tryIchijoBtn) tryIchijoBtn.addEventListener('click', tryIchijo);
@@ -6389,6 +6547,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
     // 建物価格差の変更 → 再計算
     if($('ic-price-gap')) $('ic-price-gap').addEventListener('input', recompute);
     if($('ic-conserv')) $('ic-conserv').addEventListener('change', recompute);   // 控えめ表示（表示専用・保存対象外）
+    lpnInit();   // 住まいの設備：起動のときは「設備なし」から始める（ZEH の欄もこの箱から計算）
     /* ══════ 【一条工務店 専用ロジック ここまで】 ══════ */
 
     /* ---------- 住宅ローンの金利タイプ（固定／5年ごと変動／10年ごと変動）---------- */
@@ -9236,7 +9395,7 @@ function lpPdfProg(text, ratio){
         cats.push({ key:'housing', label:'住まい・ローン', label2:'住まい<br>ローン', icon:'fa-house-chimney', color:'#48a7a7', tone:'warn',
           sum:`いまは賃貸（家賃 月${fmt(rent)}万円）。${p.endAge}歳までの家賃総額は 約<b>${fmt(rent*12*yrsAll)}万円</b>の見込みです。`,
           good:[`住み替えや転勤に柔軟に対応でき、固定資産税・修繕費の負担がないのが賃貸の強みです。`,
-                `「住まい」で「これから購入」に切り替えると、購入した場合との比較ができます。「プランB」に見積りの数字を入れると、30年のランニングコストの違いも表示されます。` /* 【一条フック】誘導文に一条明記 */],
+                `「住まい」で「これから購入」に切り替えると、購入した場合との比較ができます。「住まいの設備」でZEH・太陽光・蓄電池を選ぶと、30年のランニングコストの違いも表示されます。` /* 【一条フック】誘導文に一条明記 */],
           concern:[`生涯の家賃 約${fmt(rent*12*yrsAll)}万円 は、資産として手元に残りません。`,
                    `高齢期は賃貸契約が難しくなる場合も。住まいの終の棲家を早めに考えておくと安心です。`] });
       } else {
@@ -9273,9 +9432,9 @@ function lpPdfProg(text, ratio){
           good.push(`耐震等級3の確認資料（性能評価書など）がある住宅なら、地震保険料は50%割引の対象です。「毎月の生活費」の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
         if(typeof htype!=='undefined' && htype==='ichijo'){   // 【一条フック】一条選択時の診断
           const ict = (typeof ichijoCompareTotal==='function') ? ichijoCompareTotal() : 0;
-          if(ict>0) good.push(`プランBの入力では、光熱費・太陽光・メンテの3項目で、プランAより30年で 約${fmt(ict)}万円 費用が少なくなる試算です（結果の「住まいの比較」参照・目安）。`);
+          if(ict>0) good.push(`ご入力の設備（${esc(lpnNameB())}）では、光熱費・太陽光・メンテの3項目で、設備なしの場合より30年で 約${fmt(ict)}万円 費用が少なくなる試算です（結果の「住まいの比較」参照・目安）。`);
           good.push(`耐震等級3の確認資料（性能評価書など）があれば、地震保険料は50%割引の対象です。「毎月の生活費」の「火災・地震保険」に割引前の金額を入力すると、割引後で自動計算します。`);
-          con.push(`太陽光・タイル等の初期費用は建物側にかかります。30年の差額と初期費用はセットでご検討ください（無料相談でくわしく試算できます）。`);
+          con.push(`太陽光・蓄電池などの初期費用は建物側にかかります。30年の差額と初期費用はセットでご検討ください（無料相談でくわしく試算できます）。`);
         }
         if(!single) good.push(`団信付きで、名義人に万一のとき残債がゼロに。生命保険の役割も兼ねています。`);
         if(rateType==='fixed') good.push(`固定金利のため、返済額が将来にわたって変わらず、家計計画が立てやすいです。`);
@@ -13310,7 +13469,7 @@ function lpPdfProg(text, ratio){
           how.push({ k:'first', t:'懸念は<b>お客様が言い出す前に、こちらから数字つきで出す</b>。家に帰って気づかれると商談ごと止まるが、その場なら対策とセットで示せる' });
           how.push({ k:'month', t:'金額は総額でなく<b>月平均約' + payM + '万円</b>に落とし、' + (rentB > 0 ? 'いまの家賃' + rentB + '万円との差に' : '毎月の収支に') + '固定資産税・維持費まで含めた「住居費の実額」で比べて見せる' });
           if(typeof htype!=='undefined' && htype==='ichijo')
-            how.push({ k:'ichijo', t:'プランBの光熱費・売電・メンテ差は「上乗せの価値」ではなく<b>毎月の実質負担に織り込んだ差額</b>で見せる（「住まいの比較」タブ）' });
+            how.push({ k:'ichijo', t:'ZEH・太陽光・蓄電池の光熱費・売電・メンテ差は「上乗せの価値」ではなく<b>毎月の実質負担に織り込んだ差額</b>で見せる（「住まいの比較」タブ）' });
           how.push({ k:'knob', t:'迷いが残るときは買う・買わないの二択にせず、<b>頭金・時期・金額の3つのつまみをその場で動かして</b>資産推移グラフで答えを見せる' });
           how.push({ k:'next', t:'締めは「次の一手」の宿題（ねんきん定期便・保険証券など）とセットで<b>次回面談の日程をその場で決める</b>' });
           h += sec('住宅購入の見立て（借入' + fmt(hp) + '万円・頭金' + fmt(dn) + '万円・' + buyAgeB + '歳ご購入）')
@@ -14846,24 +15005,24 @@ function lpPdfProg(text, ratio){
        他のライフプラン用に流用する場合はこのブロックごと削除。
        ══════════════════════════════════════════════════════════════════ */
     DIAG.ichijo = function(){
-      if(!lpnHas()) return diagBox(['プランBの見積りの数字（太陽光・光熱費・メンテナンス）が、まだ入っていません'], 'ok', '試算：数字が入ると、プランAとの費用の違いを計算します。', '入力の「住まい」で<b>プランB</b>を選び、見積りの数字を入れてください。');
+      if(!lpnHas()) return diagBox(['太陽光パネル・断熱で少なくなる光熱費・メンテナンス費の差が、まだ入っていません'], 'ok', '試算：入れると、設備なしの場合との費用の違いを計算します。', '入力の「住まい」の<b>住まいの設備</b>で、ZEH・太陽光・蓄電池を選んでください。');
       const m = ichijoSolarModel();
       const maint30 = lpnMaint30();
       const total = ichijoCompareTotal();
       const regionLbl = (ichijoRegion==='cold') ? '寒冷地' : '温暖地';
       const facts = [
-        `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（「住まい」の「太陽光・蓄電池の設定」から計算）`,
+        `太陽光の前提：<b>${m.kw}kW・蓄電池${m.batt>0 ? m.batt+'kWh' : 'なし'}・${regionLbl}</b>（「住まい」の「住まいの設備」から計算）`,
         `年間発電量の目安：約<b>${fmt(m.gen)}kWh</b>。うち自家消費${Math.round(m.selfRate*100)}%＝電気代の節約 約${m.selfMan.toFixed(1)}万円/年、売電は初年度 約${m.sellY1.toFixed(1)}万円/年`,
         `太陽光の30年収支：約<b>${fmt(m.solar30)}万円</b>（売電 約${fmt(m.sell30)}万円＋自家消費 約${fmt(m.self30)}万円。2026年度FITの単価カーブ・パネル劣化 年0.5%込み）`,
         `光熱費の削減（ご入力）：年 約${fmt(m.utilSave)}万円 × 30年 ＝ 約<b>${fmt(m.utilSave*30)}万円</b>（自家消費とは別枠）`,
-        `メンテナンス費の差：30年で 約<b>${fmt(maint30)}万円</b>（ご入力。プランB側の設備更新費は含まず）`,
+        `メンテナンス費の差：30年で 約<b>${fmt(maint30)}万円</b>（ご入力。設備の更新費は含まず）`,
       ];
-      const verdict = `試算：ご入力の数字では、${esc(lpnNameA())}より30年で 約<b>${fmt(total)}万円</b>（月々に直すと約${(total/360).toFixed(1)}万円）費用が少なくなる計算です。`;
+      const verdict = `試算：ご入力の設備では、設備なしの場合より30年で 約<b>${fmt(total)}万円</b>（月々に直すと約${(total/360).toFixed(1)}万円）費用が少なくなる計算です。`;
       const body = (htype==='ichijo')
         ? ((total - m.initCost > 0)
             ? `太陽光・蓄電池の<b>初期費用（目安 約${fmt(m.initCost)}万円）は別途</b>のため、差し引きでは30年で約${fmt(total-m.initCost)}万円プラスの計算になります（建物価格差はさらに別途＝比較カード参照）。卒FIT後は8円で売るより32円の買電を減らす<b>自家消費が有利</b>です。地域・間取り・電気の使い方で大きく変わるため、正確な金額は無料相談で試算できます。`
             : `太陽光・蓄電池の<b>初期費用（目安 約${fmt(m.initCost)}万円）は別途</b>のため、差し引きでは30年でおおむね相殺〜マイナスの計算になります（建物価格差も別途＝比較カード参照）。快適性・停電時の安心は金額外の価値としてご検討ください。正確な金額は無料相談で試算できます。`)
-        : `いまは「${esc(lpnNameA())}」を選択中です。「住まい」の「住宅の性能タイプ」で<b>${esc(lpnNameB())}</b>を選ぶと、太陽光kW・蓄電池・光熱費・メンテナンスの数字から本体の試算にも反映されます。`;
+        : `いまはZEH・太陽光・蓄電池が選ばれていません。「住まい」の<b>住まいの設備</b>で選ぶと、その内容から本体の試算にも反映されます。`;
       return diagBox(facts, 'ok', verdict, body);
     };
     /* ══════ 【一条工務店 専用ロジック② ここまで】 ══════ */
@@ -17102,7 +17261,7 @@ function lpPdfProg(text, ratio){
       setViewHorizon(s.viewHorizon || 'end');   // 「金融資産の推移」の表示期間を復元（この項目が無い旧保存は全期間に戻す）
       setPenMode(s.penMode || 'direct');        // 公的年金の入力方法を復元（旧保存は月額入力。teikibinなら月額を引き直す）
       if(s.ichijoRegion) setIchijoRegion(s.ichijoRegion);   // 【一条フック】日射区分の復元
-      if(s.htype){ htype = lpnHidden() ? 'normal' : s.htype; if(htypeSeg) [...htypeSeg.children].forEach(x=> x.classList.toggle('active', x.dataset.htype===htype)); const note=$('ichijo-perf-note'); if(note) note.classList.toggle('hidden', htype!=='ichijo'); const cfg=$('ichijo-solar-config'); if(cfg) cfg.classList.toggle('hidden', htype!=='ichijo'); }
+      lpnRestore(s);   // 住まいの設備（ZEH・太陽光・蓄電池）から htype を決める。前に保存した資料は金額をそのまま使う
       userEditedMaint = true; userEditedZeh = true;   // 保存値は「手入力済み」とみなし、以後のhtype/太陽光変更で自動上書きしない
       // 金利はカスタム値（既定の0.95でも3.1でもない値）のときだけ保護。既定値なら金利タイプ切替との連動を生かす
       userEditedRate = (()=>{ const v = parseFloat($('loan-rate')?.value); return isFinite(v) && v!==0.95 && v!==3.1; })();

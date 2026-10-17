@@ -2142,6 +2142,128 @@ body:not(.pdf-mode) #input-panel :is(.grid2,.grid3):not(:has(> :not(.field))):no
 #vc-dock .vcu-ex span{ padding:4px 10px; font-size:.82rem; }
 }
 /* == VCUI-CSS-END == */
+/* == LPSUP2-CSS-BEGIN == 営業サポートの4つ目のタブ「記録と見比べ」（2026-10-16・apply_lifeplan_support2.py）。
+   ★全て #vc-dock から書く・字下げを付けない（apply_mentor_kb.py のため）。色は土台の変数を借りる */
+#vc-dock .vc-tabs.lps2-4{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+#vc-dock .vc-tabs.lps2-4 #vc-tab-lps2[aria-selected="true"]{ color:#24679a; border-bottom-color:#24679a; }
+#vc-dock .vc-tabs.lps2-4 #vc-tab-lps2[aria-selected="true"] .vct-no{ background:#24679a; }
+#vc-dock #vc-pane-lps2 .vcu-h p{ max-width:40em; }
+@media (min-width:900px){
+#vc-dock #vc-pane-lps2 .vcu-card{ display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:28px; align-items:center; }
+#vc-dock #vc-pane-lps2 .vcu-card > .vcu-h{ grid-column:1; grid-row:1; margin-bottom:0; }
+#vc-dock #vc-pane-lps2 .vcu-card > .lps2-st{ grid-column:1; grid-row:2; margin:12px 0 0; }
+#vc-dock #vc-pane-lps2 .vcu-card > .lps2-btns{ grid-column:2; grid-row:1 / span 2; justify-content:flex-end; }
+#vc-dock #vc-pane-lps2 .lps2-btns .btn{ white-space:nowrap; }
+}
+#vc-dock #vc-pane-lps2 .vcu-card[hidden]{ display:none !important; }
+#vc-dock #vc-pane-lps2 .btn-primary, #vc-dock .lps2-dlg .btn-primary{ background:#24679a; border-color:#24679a; }
+#vc-dock .lps2-dlg .btn-ghost{ color:#24679a; }
+#vc-dock #lps2-iko .lps2-dlg{ width:min(640px, 100%); }
+#vc-dock .lps2-st{ margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--bg-soft); border:1px solid var(--line); font-size:.88rem; line-height:1.7; color:var(--ink); }
+#vc-dock .lps2-btns{ display:flex; flex-wrap:wrap; gap:8px; }
+#vc-dock .lps2-btns .btn{ min-height:48px; padding:0 20px; font-size:.95rem; }
+#vc-dock .lps2-ov{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(31,48,71,.45); }
+#vc-dock .lps2-ov[hidden]{ display:none; }
+#vc-dock .lps2-dlg{ display:flex; flex-direction:column; width:min(860px, 100%); max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,.25); overflow:hidden; }
+#vc-dock .lps2-dlg-h{ display:flex; align-items:center; gap:10px; padding:12px 14px 12px 20px; border-bottom:1px solid var(--line); background:var(--bg-soft); }
+#vc-dock .lps2-dlg-h h3{ flex:1; margin:0; font-size:1.08rem; font-weight:800; color:var(--ink); line-height:1.4; }
+#vc-dock .lps2-dlg-h h3 i{ color:var(--blue-deep); margin-right:6px; }
+#vc-dock .lps2-dlg-h h3:focus{ outline:none; }
+#vc-dock .lps2-x{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:44px; min-height:44px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-family:inherit; font-size:.9rem; font-weight:700; cursor:pointer; }
+#vc-dock .lps2-x:hover{ background:var(--blue-pale); }
+#vc-dock .lps2-dlg-b{ flex:1 1 auto; min-height:0; overflow:auto; padding:16px 20px 20px; }
+#vc-dock .lps2-dlg-f{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 20px; border-top:1px solid var(--line); background:#fff; }
+#vc-dock .lps2-dlg-f .btn{ min-height:48px; padding:0 20px; font-size:.95rem; }
+#vc-dock .lps2-dlg-f .lps2-grow{ flex:1 1 auto; }
+#vc-dock .lps2-warn{ margin:0 0 14px; padding:12px 16px; border-radius:12px; background:var(--blue-pale); border:1px solid var(--blue-pale2, #cfe3f3); border-left:4px solid var(--blue-deep); font-size:.95rem; line-height:1.8; color:var(--ink); font-weight:700; }
+#vc-dock .lps2-meta{ display:grid; grid-template-columns:auto minmax(0, 1fr); gap:4px 14px; margin:0 0 14px; font-size:.9rem; line-height:1.7; color:var(--ink); }
+#vc-dock .lps2-meta dt{ font-weight:800; color:var(--ink-soft); }
+#vc-dock .lps2-meta dd{ margin:0; }
+#vc-dock .lps2-items{ display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; }
+#vc-dock .lps2-item{ border:1px solid var(--line); border-radius:12px; background:#fff; }
+#vc-dock .lps2-item label{ display:flex; align-items:center; gap:10px; min-height:48px; padding:6px 14px; border-bottom:1px solid var(--line); background:var(--bg-soft); border-radius:12px 12px 0 0; font-size:.95rem; font-weight:800; color:var(--ink); cursor:pointer; }
+#vc-dock .lps2-item input[type="checkbox"]{ width:22px; height:22px; flex:0 0 auto; }
+#vc-dock .lps2-item pre{ margin:0; padding:10px 14px 12px; white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:.92rem; line-height:1.8; color:var(--ink); }
+#vc-dock .lps2-item.off pre{ color:var(--ink-soft); text-decoration:line-through; }
+#vc-dock .lps2-pairnote{ margin:10px 0 0; font-size:.86rem; line-height:1.7; color:var(--ink-soft); }
+#vc-dock .lps2-msg{ margin:0; font-size:.88rem; line-height:1.7; color:var(--ink); }
+#vc-dock .lps2-msg a{ color:var(--blue-deep); font-weight:700; }
+#vc-dock .lps2-sel{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin:0 0 12px; font-size:.9rem; font-weight:700; color:var(--ink); }
+#vc-dock .lps2-sel select{ min-height:44px; max-width:100%; padding:0 10px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; font-size:.92rem; color:var(--ink); }
+#vc-dock .lps2-sheet h4{ margin:16px 0 8px; font-size:1rem; font-weight:800; color:var(--ink); }
+#vc-dock .lps2-sheet h4:first-child{ margin-top:0; }
+#vc-dock .lps2-sheet .lps2-sub{ margin:0 0 10px; font-size:.86rem; line-height:1.7; color:var(--ink-soft); }
+#vc-dock .lps2-sheet table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:.9rem; line-height:1.6; }
+#vc-dock .lps2-sheet th, #vc-dock .lps2-sheet td{ padding:8px 10px; border:1px solid var(--line); text-align:left; vertical-align:top; word-break:break-word; }
+#vc-dock .lps2-sheet thead th{ background:var(--bg-soft); font-weight:800; color:var(--ink); }
+#vc-dock .lps2-sheet tbody th{ font-weight:700; color:var(--ink); }
+#vc-dock .lps2-sheet tbody th small{ display:block; font-size:.8rem; font-weight:600; color:var(--ink-soft); }
+#vc-dock .lps2-sheet .lps2-c1{ width:34%; }
+#vc-dock .lps2-sheet .lps2-none{ margin:0; padding:12px 14px; border-radius:10px; background:var(--bg-soft); font-size:.9rem; line-height:1.7; color:var(--ink); }
+#vc-dock .lps2-sheet .lps2-note{ margin:14px 0 0; font-size:.82rem; line-height:1.75; color:var(--ink-soft); }
+#vc-dock .lps2-sheet .lps2-sub, #vc-dock .lps2-sheet .lps2-note{ max-width:40em; }
+#vc-dock .lps2-big{ position:fixed; inset:0; z-index:130; display:flex; flex-direction:column; background:var(--bg); color:var(--ink); font-size:22px; line-height:1.7; }
+#vc-dock .lps2-big[hidden]{ display:none; }
+#vc-dock .lps2-big-top{ display:flex; align-items:center; gap:12px; padding:10px max(16px, calc((100% - 880px) / 2)); background:#fff; border-bottom:1px solid var(--line); }
+#vc-dock .lps2-big-step{ flex:1; font-size:20px; font-weight:800; color:var(--ink-soft); }
+#vc-dock .lps2-big-x{ min-height:56px; padding:0 20px; border:1.5px solid var(--line); border-radius:12px; background:#fff; color:var(--ink); font-family:inherit; font-size:20px; font-weight:700; cursor:pointer; }
+#vc-dock .lps2-big-body{ flex:1 1 auto; min-height:0; overflow:auto; padding:24px max(16px, calc((100% - 880px) / 2)) 16px; }
+#vc-dock .lps2-big-body h2{ margin:0 0 6px; font-size:34px; line-height:1.4; font-weight:800; color:var(--ink); }
+#vc-dock .lps2-big-body h2:focus{ outline:none; }
+#vc-dock .lps2-big-lead{ margin:0 0 18px; font-size:22px; color:var(--ink-soft); }
+#vc-dock .lps2-big-list{ display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; }
+@media (min-width:760px){
+#vc-dock .lps2-big-list.lps2-big-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+#vc-dock .lps2-big-list li{ padding:16px 20px; border-radius:16px; background:#fff; border:1px solid var(--line); box-shadow:var(--shadow-soft); }
+#vc-dock .lps2-big-k{ display:block; font-size:20px; font-weight:700; color:var(--ink-soft); }
+#vc-dock .lps2-big-v{ display:block; font-size:28px; font-weight:800; line-height:1.5; color:var(--ink); }
+#vc-dock .lps2-big-s{ display:block; margin-top:4px; font-size:20px; color:var(--ink-soft); }
+#vc-dock .lps2-big-p{ font-size:24px; font-weight:500; line-height:1.8; }
+#vc-dock .lps2-big-calm{ margin:0; padding:10px max(16px, calc((100% - 880px) / 2)); background:#fff; border-top:1px solid var(--line); font-size:20px; font-weight:700; color:var(--blue-deep); text-align:center; }
+#vc-dock .lps2-nw{ display:inline-block; }
+#vc-dock .lps2-big.is-last .lps2-big-calm{ display:none; }
+#vc-dock .lps2-big-nav{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr); gap:12px; padding:12px max(16px, calc((100% - 880px) / 2)) max(12px, env(safe-area-inset-bottom, 0px)); background:#fff; }
+#vc-dock .lps2-big-nav button{ min-height:64px; border-radius:14px; font-family:inherit; font-size:24px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:10px; }
+#vc-dock .lps2-big-prev{ border:2px solid var(--line); background:#fff; color:var(--ink); }
+#vc-dock .lps2-big-next{ border:2px solid var(--blue-deep); background:var(--blue-deep); color:#fff; }
+#vc-dock .lps2-big-nav button:disabled{ visibility:hidden; }
+#vc-dock .lps2-big-nav button:focus-visible, #vc-dock .lps2-big-x:focus-visible{ outline:3px solid var(--ink); outline-offset:2px; }
+#vc-dock .lps2-big-calmbox{ margin:0 0 20px; padding:18px 20px; border-radius:16px; background:#fff; border:2px solid var(--blue-deep); font-size:26px; font-weight:800; line-height:1.6; color:var(--ink); }
+#vc-dock .lps2-big-form{ margin-top:8px; padding:18px 20px; border-radius:16px; background:#fff; border:1px dashed var(--ink-soft); }
+#vc-dock .lps2-big-form h3{ margin:0 0 4px; font-size:22px; font-weight:800; color:var(--ink); }
+#vc-dock .lps2-big-form .lps2-big-fn{ margin:0 0 12px; font-size:20px; color:var(--ink-soft); }
+#vc-dock .lps2-big-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:12px 0 0; }
+#vc-dock .lps2-big-row > label{ font-size:20px; font-weight:700; }
+#vc-dock .lps2-big-chk{ display:inline-flex; align-items:center; gap:12px; min-height:56px; cursor:pointer; }
+#vc-dock .lps2-big-chk input{ width:28px; height:28px; flex:0 0 auto; }
+#vc-dock .lps2-big-f{ display:flex; flex-direction:column; gap:4px; flex:1 1 220px; min-width:0; }
+#vc-dock .lps2-big-f span{ font-size:20px; font-weight:700; color:var(--ink); }
+#vc-dock .lps2-big-f input, #vc-dock .lps2-big-f select{ width:100%; min-height:56px; padding:0 14px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-family:inherit; font-size:20px; color:var(--ink); box-sizing:border-box; }
+#vc-dock .lps2-big-save{ min-height:60px; padding:0 28px; margin-top:16px; border:2px solid var(--blue-deep); border-radius:14px; background:var(--blue-deep); color:#fff; font-family:inherit; font-size:22px; font-weight:800; cursor:pointer; }
+#vc-dock .lps2-big-msg{ margin:12px 0 0; font-size:20px; line-height:1.7; color:var(--ink); }
+#vc-dock .lps2-big-msg.ng{ color:#9b2c24; font-weight:700; }
+@media (max-width:560px){
+#vc-dock .vc-tabs.lps2-4 .vc-tab{ justify-content:flex-start; padding-top:8px; }
+#vc-dock .vc-tabs.lps2-4 .vct-b b{ font-size:.82rem; }
+#vc-dock .lps2-dlg-h{ padding-left:14px; }
+#vc-dock .lps2-dlg-b{ padding:14px 14px 16px; }
+#vc-dock .lps2-dlg-f{ padding:10px 14px; }
+#vc-dock .lps2-dlg-f .btn{ flex:1 1 0; justify-content:center; }
+#vc-dock .lps2-dlg-f .btn-primary{ flex:1 1 100%; order:-1; }
+#vc-dock .lps2-dlg-f .lps2-msg{ order:-2; flex:1 1 100%; }
+#vc-dock .lps2-dlg-f .lps2-msg:empty{ display:none; }
+#vc-dock .lps2-meta{ grid-template-columns:minmax(0, 1fr); gap:0; }
+#vc-dock .lps2-meta dd{ margin-bottom:6px; }
+#vc-dock .lps2-sheet .lps2-c1{ width:36%; }
+#vc-dock .lps2-sheet th, #vc-dock .lps2-sheet td{ padding:6px 7px; font-size:.84rem; }
+#vc-dock .lps2-big-body{ padding-top:18px; }
+#vc-dock .lps2-big-body h2{ font-size:30px; }
+#vc-dock .lps2-big-v{ font-size:26px; }
+#vc-dock .lps2-big-calmbox{ font-size:24px; }
+#vc-dock .lps2-big-nav button{ font-size:22px; }
+}
+/* == LPSUP2-CSS-END == */
 /* == LPVAULT-CSS-BEGIN == パスワードを変える・入れ直しの知らせ（2026-10-04） */
 #save-modal .lpv-pass{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 #save-modal .lpv-pass > summary{cursor:pointer;font-weight:700;color:var(--ink);min-height:44px;display:flex;align-items:center;gap:8px;list-style:none}
@@ -15763,6 +15885,803 @@ function lpPdfProg(text, ratio){
         });
       }
       /* == VCUI-JS-END == */
+      /* ==== LPSUP2-JS-BEGIN ===============================================================
+         営業サポートの4つ目のタブ「記録と見比べ」（2026-10-16 ユーザー指示「ライフプラン　入力をそのまま意向把握の記録へ写す／
+         ご高齢のお客様向けの画面／前回との違いの1枚。ライフプランツールに関しては、営業サポートなどの一番表に出てこないところに配置」）。
+         部品は apply_lifeplan_support2.py が持っている（ここを手で直さない）
+         ① 意向把握の記録へ写す（管理画面か営業ダッシュボードを使っている端末だけ。写す前に全てを見せる）
+         ② 大きな字で一緒に見る（1画面に1つ・最後にご家族などの同席と次回の予定を残す）
+         ③ 前回との違い（上書き保存のたびに前の形を資料の中に3つまで残す。暗号化した保存の中）
+         ★担当者用の「提案の検討メモ」はどこにも入れない。お客様の画面・共有リンクでは作らない
+         ============================================================ */
+      var LPS2_TOOL = "湘建版";
+      var LPS2_ISS = "作成：Office-M（保険代理店業務を行うFP事務所・生命保険募集人）。保険契約が成立した場合、当事務所は保険会社から所定の手数料を受け取ります。";
+      var LPS2_IKO_KEY = 'officem.hokenHub.ikoPrefill.v1', LPS2_HERE_KEY = 'officem.hokenHub.here.v1';
+      var LPS2_HUB = 'https://office-m-nakatani.github.io/office-m/hoken-hub/';
+      var LPS2_PREV_MAX = 3, LPS2_BUDGET = 3000000, LPS2_PREV_BUDGET = 800000;   /* 資料全体（文字数）と、前の形の合計の目安。超えるときは古い形から減らす */
+      var LPS2_CALM = 'その場で決めていただく必要はありません。';
+      var LPS2_CALM_HTML = '<span class="lps2-nw">その場で決めていただく</span><span class="lps2-nw">必要はありません。</span>';   /* 携帯で語の途中で折らない */
+      var LPS2_IKO_NOTE = '管理画面の意向把握の書く欄に写すだけです。ご意向の中身は、お客様に確かめてから書いてください。';
+      var LPS2_CALC_NOTE = '金額は、それぞれの時点のご入力にもとづく試算です。前提が変われば結果も変わり、将来の成果を保証するものではありません。';
+      var lps2Tab = null, lps2Pane = null, lps2Root = null, lps2Big = { i:0, pages:[] }, lps2Diff = null, lps2LastFocus = null;
+
+      function lps2E(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+      function lps2Pad(n){ return ('0' + n).slice(-2); }
+      function lps2Ymd(d){ d = d || new Date(); return d.getFullYear() + '-' + lps2Pad(d.getMonth() + 1) + '-' + lps2Pad(d.getDate()); }
+      function lps2Ja(ymd){
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ''));
+        if(!m) return '';
+        var d = new Date(+m[1], +m[2] - 1, +m[3]);
+        return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + '日月火水木金土'.charAt(d.getDay()) + '）';
+      }
+      function lps2When(t){
+        t = +t || 0;
+        if(!t) return '日時の記録なし';
+        var d = new Date(t);
+        return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + lps2Pad(d.getHours()) + ':' + lps2Pad(d.getMinutes());
+      }
+      function lps2Staff(){
+        try{ return !SHARED_VIEW && !customerMode && !document.body.classList.contains('customer-mode'); }catch(e){ return false; }
+      }
+      /* 管理画面か営業ダッシュボードを使っている端末か（apply_lifeplan_salesfeed.py の lpsfOn と同じ判定） */
+      function lps2HubOn(){
+        try{
+          if(localStorage.getItem('officem.hokenSales.v1') !== null) return true;
+          var a = JSON.parse(localStorage.getItem('officem.hokenHub.auth') || 'null');
+          return !!(a && /^[0-9a-f]{64}$/.test(String(a.h || '')));
+        }catch(e){ return false; }
+      }
+      function lps2Plain(h){ try{ return mnPlain(h); }catch(e){ return String(h || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); } }
+      function lps2Fmt(v){ return Math.round(+v || 0).toLocaleString('ja-JP'); }
+      function lps2Dec(v){ v = Math.round((+v || 0) * 10) / 10; return v.toLocaleString('ja-JP'); }
+      /* 試算の数字そのもの（意向把握・前回との違い）。マイナスは「不足 約◯万円」 */
+      function lps2Yen(v){ if(v == null || !isFinite(v)) return '—'; v = Math.round(v); return v < 0 ? '不足 約' + lps2Fmt(-v) + '万円' : '約 ' + lps2Fmt(v) + '万円'; }
+      /* 大きな字の画面だけの丸めた言い方（試算の値は書き換えない。見せ方だけ） */
+      function lps2Round(v){
+        v = +v;
+        if(!isFinite(v)) return null;
+        var a = Math.abs(v), r = a >= 1000 ? Math.round(a / 100) * 100 : a >= 100 ? Math.round(a / 10) * 10 : a >= 10 ? Math.round(a) : Math.round(a * 10) / 10;
+        return v < 0 ? -r : r;
+      }
+      function lps2About(v){ var r = lps2Round(v); return r == null ? '—' : 'およそ ' + Math.abs(r).toLocaleString('ja-JP') + '万円'; }
+      function lps2Name(a, b){
+        var x = String((($(a) || {}).value) || '').trim(), y = String((($(b) || {}).value) || '').trim();
+        return x + (x && y ? ' ' : '') + y;
+      }
+      function lps2Opt(map, v){ v = String(v == null ? '' : v); return Object.prototype.hasOwnProperty.call(map, v) ? map[v] : ''; }
+      var LPS2_K12 = { 'public':'公立中心', 'private':'私立中心' };
+      var LPS2_LODGE = { home:'自宅から通学', boarding:'下宿（一人暮らし）' };
+      var LPS2_IVT = { nisa:'NISA', ideco:'iDeCo', fund:'投資信託・株式', insurance:'貯蓄型保険・年金保険', wholelife:'一時払い終身保険', hengaku:'変額保険（有期型）', other:'その他' };
+      var LPS2_INST = { shunyu:'収入保障保険', teiki:'定期保険', shushin:'終身保険', other:'養老・共済・その他' };
+      function lps2High(v){ try{ return (HIGHED && HIGHED[v] && HIGHED[v].label) || ''; }catch(e){ return ''; } }
+      function lps2Who(v){
+        if(v === 'h') return 'ご主人'; if(v === 'w') return '奥様';
+        try{ if(typeof insWhoFallbackLabel === 'function'){ var t = insWhoFallbackLabel(v); if(t && !/^[\x00-\x7f]*$/.test(t)) return t; } }catch(e){}
+        return /^c\d+$/.test(String(v)) ? 'お子さま' : '';
+      }
+      function lps2ResOf(sum){
+        if(!Array.isArray(sum) || !sum.length) return null;
+        var r65 = null, dep = null, end = sum[sum.length - 1];
+        sum.forEach(function(x){ if(!x) return; if(x.hAge === 65) r65 = x; if(!dep && x.net < 0) dep = x; });
+        if(!end) return null;
+        return { a65:(r65 ? Math.round(r65.net) : null), endAge:end.hAge, endNet:Math.round(end.net), dep:(dep ? dep.hAge : null) };
+      }
+
+      /* ---- ご入力と試算の要点（いま画面に出しているプラン）。意向把握と大きな字の画面が同じ元を読む ---- */
+      function lps2Facts(){
+        var key = (PLANS.active === 'mirai') ? 'mirai' : 'genjo';
+        var F = { key:key, plan:(key === 'mirai' ? '将来プラン' : '現状プラン'), fam:[], kids:[], good:[], concern:[], sumTitle:'', next:[] };
+        var single = false; try{ single = isSingle(); }catch(e){}
+        F.single = single;
+        var hn = lps2Name('h-sei', 'h-name'), wn = lps2Name('w-sei', 'w-name');
+        F.name = hn || wn || '';
+        if(!F.name){ try{ F.name = lpMeetCurName() || ''; }catch(e){} }
+        F.fam.push({ who:(single ? 'ご本人' : 'ご主人'), name:(hn ? hn + '様' : ''), age:num('h-age', 35) });
+        if(!single) F.fam.push({ who:'奥様', name:(wn ? wn + '様' : ''), age:num('w-age', 33) });
+        try{
+          var rows = childrenList ? [].slice.call(childrenList.querySelectorAll('.row-item')) : [];
+          rows.forEach(function(r, i){
+            var g = function(sel){ var el = r.querySelector(sel); return el ? el.value : ''; };
+            var nm = String(g('.ch-name') || '').trim(), boy = !(r.querySelector('.cr-gender-seg button.active') && r.querySelector('.cr-gender-seg button.active').dataset.gender === 'girl');
+            var sei = String(g('.ch-sei') || '').trim();
+            var shown = nm ? (/(君|くん|ちゃん|さん|様)$/.test(nm) ? nm : nm + (boy ? '君' : 'ちゃん')) : 'お子さま（' + (i + 1) + '人目）';
+            F.kids.push({ name:(sei && nm ? sei + ' ' : '') + shown, age:(parseInt(g('.ch-age'), 10) || 0),
+                          edu:[lps2Opt(LPS2_K12, g('.ch-k12')), lps2High(g('.ch-highed')), lps2Opt(LPS2_LODGE, g('.ch-lodging'))].filter(Boolean).join('・') });
+          });
+        }catch(e){}
+        F.inc = { h:num('h-income', 0), w:(single ? 0 : num('w-income', 0)) };
+        try{ var c = buildNextContext(); F.living = (c && c.p && isFinite(c.p.living)) ? c.p.living : null; }catch(e){ F.living = null; }
+        var ht = 'rent'; try{ ht = houseType; }catch(e){}
+        F.house = { type:ht, rent:num('rent', 0) };
+        try{ if(typeof rentMonthlyTotal === 'function') F.house.rent = rentMonthlyTotal(); }catch(e){}
+        if(ht !== 'rent'){
+          F.house.loan = num('house-price', 0); F.house.term = num('loan-term', 35);
+          try{ F.house.monthly = loanPaymentForYear(buildLoanSchedule(), 0) / 12; }catch(e){ F.house.monthly = null; }
+        }
+        var co = $('cash-on');
+        F.cash = (co && !co.checked) ? null : num('cash', 0);
+        var pm = 'direct'; try{ if(typeof penMode === 'function') pm = penMode(); }catch(e){}
+        F.ret = { h:num('h-retire', 65), w:(single ? null : num('w-retire', 65)), living:num('e-retire-living', 25),
+                  pen:(pm === 'direct' ? num('pension-monthly', 0) : null), penAge:num('pension-age', 65) };
+        F.res = lps2ResOf(PLANS[key] && PLANS[key].sum);
+        if(F.res && F.res.dep != null){ try{ F.res.depYear = new Date().getFullYear() + (F.res.dep - num('h-age', 35)); }catch(e){} }
+        try{
+          var cats = lastAdviceCats;
+          if(cats && cats.length){
+            F.diag = true;
+            F.sumTitle = cats[0].sumTitle ? lps2Plain(cats[0].sumTitle) : '';
+            /* 総合診断から先に。3つに満たないときは、分野ごとの診断から順に足す（安心と注意を必ず両方出すため） */
+            var pick = function(k){
+              var out = [];
+              cats.forEach(function(c){ (c[k] || []).forEach(function(t){ var x = lps2Plain(t); if(x && out.length < 3 && out.indexOf(x) < 0) out.push(x); }); });
+              return out;
+            };
+            F.good = pick('good');
+            F.concern = pick('concern');
+          }
+        }catch(e){}
+        try{ F.next = mnNextItems().slice(0, 8); }catch(e){ F.next = []; }   /* お客様と進めること（担当者用の宿題・提案の検討メモは入らない） */
+        return F;
+      }
+      function lps2HouseText(F){
+        var h = F.house || {};
+        if(h.type === 'rent') return '賃貸のまま（家賃 月 ' + lps2Dec(h.rent) + '万円）';
+        var t = (h.type === 'owned' ? '購入済み' : 'これから購入') + '（住宅ローン 借入 ' + lps2Fmt(h.loan) + '万円・' + h.term + '年';
+        if(h.monthly) t += '・毎月 約' + lps2Dec(h.monthly) + '万円';
+        return t + '）';
+      }
+      function lps2ResLines(F){
+        var r = F.res, out = [];
+        if(!r) return out;
+        if(r.a65 != null) out.push('65歳の時点の金融資産：' + lps2Yen(r.a65));
+        out.push(r.endAge + '歳の時点の金融資産：' + lps2Yen(r.endNet));
+        out.push(r.dep != null
+          ? '金融資産が底をつく見込みの時期：' + r.dep + '歳ごろ' + (r.depYear ? '（' + r.depYear + '年）' : '') + '（いまの前提のまま、打ち手を入れなかった場合の目安です）'
+          : r.endAge + '歳まで、金融資産が続く見込みです（いまの前提のままの目安です）');
+        return out;
+      }
+      /* 意向把握へ写す項目（金額はご入力と試算の数字そのものだけ） */
+      function lps2IkoItems(F){
+        var it = [], fam = F.fam.map(function(m){ return m.who + '　' + (m.name || '（お名前の入力なし）') + '（' + m.age + '歳）'; });
+        F.kids.forEach(function(k){ fam.push('お子さま　' + k.name + '（' + k.age + '歳）'); });
+        if(!F.kids.length) fam.push('お子さま　いらっしゃいません（ご入力のとおり）');
+        it.push({ k:'family', label:'ご家族', text:fam.join('\n') });
+        var inp = [];
+        inp.push('収入：' + (F.single || !F.inc.w ? (F.single ? 'ご本人' : 'ご主人') + ' 年収 ' + lps2Fmt(F.inc.h) + '万円' : 'ご主人 年収 ' + lps2Fmt(F.inc.h) + '万円／奥様 年収 ' + lps2Fmt(F.inc.w) + '万円'));
+        inp.push('お住まい：' + lps2HouseText(F));
+        F.kids.forEach(function(k){ if(k.edu) inp.push('お子さまの進学：' + k.name + '　' + k.edu); });
+        if(F.living != null) inp.push('毎月の生活費：約 ' + lps2Fmt(F.living) + '万円');
+        if(F.cash != null) inp.push('いまの預貯金：' + lps2Fmt(F.cash) + '万円');
+        var rt = '老後の考え方：' + (F.single ? 'ご本人' : 'ご主人') + 'は' + F.ret.h + '歳で退職の予定' + (F.ret.w != null ? '・奥様は' + F.ret.w + '歳で退職の予定' : '')
+               + '・退職後の生活費 月 ' + lps2Dec(F.ret.living) + '万円';
+        if(F.ret.pen != null) rt += '・公的年金 月 ' + lps2Dec(F.ret.pen) + '万円（' + F.ret.penAge + '歳から）';
+        inp.push(rt);
+        it.push({ k:'input', label:'ご入力の要点（' + F.plan + '）', text:inp.join('\n') });
+        var rl = lps2ResLines(F);
+        if(rl.length) it.push({ k:'memo', label:'試算の結果（' + F.plan + '）', text:rl.join('\n') });
+        if(F.concern.length) it.push({ k:'worry', label:'AI診断の気をつけたい点', text:F.concern.map(function(t){ return '・' + t; }).join('\n') });
+        if(F.good.length) it.push({ k:'safe', label:'AI診断の安心できる点', text:F.good.map(function(t){ return '・' + t; }).join('\n') });
+        if(F.next.length) it.push({ k:'next', label:'次の一手（お客様と進めること）', text:F.next.map(function(t){ return '・' + t; }).join('\n') });
+        it.forEach(function(x){ x.text = String(x.text).slice(0, 2000); });
+        return it;
+      }
+      function lps2MeetDate(){
+        var best = '';
+        try{ lpMeetGet().forEach(function(m){ if(m && /^\d{4}-\d{2}-\d{2}$/.test(String(m.date || '')) && m.date > best) best = m.date; }); }catch(e){}
+        return best || lps2Ymd();
+      }
+      function lps2HubUrl(){
+        var u = '';
+        try{
+          var h = JSON.parse(localStorage.getItem(LPS2_HERE_KEY) || 'null');
+          if(h && typeof h.url === 'string' && h.url.length < 600){
+            var x = new URL(h.url, location.href);
+            if((x.protocol === 'https:' || x.protocol === 'http:') && (x.origin === location.origin || x.hostname === 'office-m-nakatani.github.io')) u = x.origin + x.pathname + x.search;
+          }
+        }catch(e){ u = ''; }
+        return (u || LPS2_HUB) + '#compliance/iko/lp';
+      }
+
+      /* ---- 窓（確認の窓・前回との違い）を作る。営業サポートの窓の中に置く（印刷では営業サポートごと出ない） ---- */
+      function lps2Dlg(id, icon, title){
+        var ov = document.createElement('div');
+        ov.className = 'lps2-ov'; ov.id = id; ov.hidden = true;
+        ov.innerHTML = '<div class="lps2-dlg" role="dialog" aria-modal="true" aria-labelledby="' + id + '-t">'
+          + '<div class="lps2-dlg-h"><h3 id="' + id + '-t"><i class="fa-solid ' + icon + '" aria-hidden="true"></i>' + lps2E(title) + '</h3>'
+          + '<button type="button" class="lps2-x" data-lps2-close><i class="fa-solid fa-xmark" aria-hidden="true"></i> 閉じる</button></div>'
+          + '<div class="lps2-dlg-b"></div><div class="lps2-dlg-f"></div></div>';
+        ov.addEventListener('click', function(e){
+          if(e.target === ov || (e.target.closest && e.target.closest('[data-lps2-close]'))) lps2Close(ov);
+        });
+        lps2Root.appendChild(ov);
+        return ov;
+      }
+      function lps2Show(el, focusSel){
+        lps2LastFocus = document.activeElement;
+        el.hidden = false;
+        var f = focusSel ? el.querySelector(focusSel) : null;
+        try{ (f || el.querySelector('h3, h2')).setAttribute('tabindex', '-1'); (f || el.querySelector('h3, h2')).focus(); }catch(e){}
+      }
+      function lps2Close(el){
+        el.hidden = true;
+        try{ if(lps2LastFocus && lps2LastFocus.focus) lps2LastFocus.focus(); }catch(e){}
+      }
+
+      /* ---- ① 意向把握の記録へ写す ---- */
+      var lps2IkoData = null;
+      function lps2IkoOpen(){
+        if(!lps2Staff() || !lps2HubOn()) return;
+        var F = lps2Facts(), items = lps2IkoItems(F), date = lps2MeetDate();
+        lps2IkoData = { F:F, items:items, date:date };
+        var ov = $('lps2-iko');
+        var b = ov.querySelector('.lps2-dlg-b');
+        b.innerHTML = '<p class="lps2-warn">' + lps2E(LPS2_IKO_NOTE) + '</p>'
+          + '<dl class="lps2-meta"><dt>お名前</dt><dd>' + lps2E(F.name || '（お名前の入力なし）') + '</dd>'
+          + '<dt>商談日</dt><dd>' + lps2E(lps2Ja(date)) + '</dd>'
+          + '<dt>もとにした画面</dt><dd>' + lps2E(LPS2_TOOL + '・' + F.plan) + '</dd></dl>'
+          + '<ul class="lps2-items">' + items.map(function(x, i){
+              return '<li class="lps2-item"><label><input type="checkbox" checked data-lps2-i="' + i + '" data-lps2-k="' + x.k + '"> ' + lps2E(x.label) + '</label><pre>' + lps2E(x.text) + '</pre></li>';
+            }).join('') + '</ul>'
+          + ((items.some(function(x){ return x.k === 'worry'; }) && items.some(function(x){ return x.k === 'safe'; }))
+              ? '<p class="lps2-pairnote">AI診断の「気をつけたい点」と「安心できる点」は、片方だけにならないよう、いっしょに写す・外すようにしています。</p>' : '')
+          + '<p class="lps2-pairnote">担当者用の「提案の検討メモ」は入っていません。ここに見えているものが、写すものの全てです。</p>';
+        ov.querySelector('.lps2-dlg-f').innerHTML = '<p class="lps2-msg lps2-grow" id="lps2-iko-msg" role="status"></p>'
+          + '<button type="button" class="btn btn-ghost" data-lps2-close>やめる</button>'
+          + '<button type="button" class="btn btn-primary" id="lps2-iko-go"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> 写して、管理画面を開く</button>';
+        b.addEventListener('change', lps2IkoSync);
+        $('lps2-iko-go').addEventListener('click', lps2IkoGo);
+        lps2IkoSync({});
+        lps2Show(ov);
+      }
+      function lps2IkoSync(ev){
+        var ov = $('lps2-iko'); if(!ov) return;
+        var t = ev && ev.target, k = t && t.getAttribute && t.getAttribute('data-lps2-k');
+        /* 安心と注意は必ず両方（片方だけにしない） */
+        if(k === 'worry' || k === 'safe'){
+          var other = ov.querySelector('[data-lps2-k="' + (k === 'worry' ? 'safe' : 'worry') + '"]');
+          if(other) other.checked = t.checked;
+        }
+        var n = 0;
+        ov.querySelectorAll('[data-lps2-i]').forEach(function(c){ c.closest('.lps2-item').classList.toggle('off', !c.checked); if(c.checked) n++; });
+        var go = $('lps2-iko-go'); if(go) go.disabled = !n;
+        var m = $('lps2-iko-msg'); if(m && !(ev && ev.keep)) m.textContent = n ? '写す項目：' + n + 'つ' : '写す項目を1つ以上選んでください。';
+      }
+      function lps2IkoPayload(){
+        var ov = $('lps2-iko'), d = lps2IkoData;
+        if(!ov || !d) return null;
+        var items = [];
+        ov.querySelectorAll('[data-lps2-i]').forEach(function(c){
+          if(!c.checked) return;
+          var x = d.items[+c.getAttribute('data-lps2-i')];
+          if(x) items.push({ k:x.k, label:x.label, text:x.text });
+        });
+        if(!items.length) return null;
+        return { v:1, at:new Date().toISOString(), src:'lifeplan', tool:LPS2_TOOL, name:String(d.F.name || '').slice(0, 60), date:d.date, items:items };
+      }
+      function lps2IkoGo(){
+        if(!lps2Staff() || !lps2HubOn()) return;
+        var p = lps2IkoPayload(), m = $('lps2-iko-msg');
+        if(!p){ if(m) m.textContent = '写す項目を1つ以上選んでください。'; return; }
+        try{ localStorage.setItem(LPS2_IKO_KEY, JSON.stringify(p)); }
+        catch(e){ if(m) m.textContent = 'この端末に書けませんでした（ブラウザの容量が足りない可能性があります）。'; return; }
+        var url = lps2HubUrl(), w = null;
+        try{ w = window.open(url, 'katatsugi-hub'); }catch(e){ w = null; }
+        if(m){
+          m.innerHTML = w ? '写しました。管理画面の意向把握の書く欄を開きました（ご意向の中身は、お客様に確かめてから書いてください）。'
+                          : '写しました。管理画面が開かなかったときは <a href="' + lps2E(url) + '" target="katatsugi-hub" rel="opener">こちらから開いてください</a>。';
+        }
+      }
+
+      /* ---- ② 大きな字で一緒に見る ---- */
+      function lps2BigPages(F){
+        var P = [], li = function(k, v, s){ return '<li>' + (k && k !== v ? '<span class="lps2-big-k">' + lps2E(k) + '</span>' : '') + '<span class="lps2-big-v">' + lps2E(v) + '</span>' + (s ? '<span class="lps2-big-s">' + lps2E(s) + '</span>' : '') + '</li>'; };
+        var fam = F.fam.map(function(m){ return li(m.who, (m.name || m.who), m.age + '歳'); }).join('')
+                + F.kids.map(function(k){ return li('お子さま', k.name, k.age + '歳' + (k.edu ? '・' + k.edu : '')); }).join('');
+        P.push({ h:'ご家族', lead:'今日、一緒に考えるご家族です。', body:'<ul class="lps2-big-list lps2-big-grid">' + fam + '</ul>' });
+        var live = '';
+        var inc = F.inc.h + (F.inc.w || 0);
+        live += li('年収（額面）', (F.single || !F.inc.w ? '' : 'お二人で ') + lps2About(inc), F.single || !F.inc.w ? '' : (F.single ? '' : 'ご主人 ' + lps2About(F.inc.h) + '・奥様 ' + lps2About(F.inc.w)));
+        if(F.living != null) live += li('毎月の生活費', '月 ' + lps2About(F.living));
+        var h = F.house || {};
+        live += h.type === 'rent' ? li('お住まい', '賃貸', '家賃 月 ' + lps2About(h.rent))
+              : li('お住まい', h.type === 'owned' ? '持ち家（ローン返済中）' : 'これから購入', (h.monthly ? '住宅ローン 毎月 ' + lps2About(h.monthly) : '住宅ローン 借入 ' + lps2About(h.loan)));
+        if(F.cash != null) live += li('いまの預貯金', lps2About(F.cash));
+        P.push({ h:'いまの暮らし', lead:'ご入力いただいた、いまの暮らしです。', body:'<ul class="lps2-big-list lps2-big-grid">' + live + '</ul>' });
+        var fut = '', r = F.res;
+        if(r){
+          if(r.a65 != null) fut += li('65歳のとき', (r.a65 < 0 ? '不足 ' : '') + lps2About(r.a65), 'ご家族のお金（預貯金と運用）の合計の見込み');
+          fut += li(r.endAge + '歳のとき', (r.endNet < 0 ? '不足 ' : '') + lps2About(r.endNet), 'いまの前提のままの見込み');
+          fut += r.dep != null ? li('お金の続き方', r.dep + '歳ごろに少なくなる見込み', 'いまの前提のまま、打ち手を入れなかった場合の目安です。これから一緒に考えます')
+                               : li('お金の続き方', r.endAge + '歳まで続く見込み', 'いまの前提のままの目安です');
+        }
+        fut += li('退職後の生活費', '月 ' + lps2About(F.ret.living));
+        if(F.ret.pen != null) fut += li('公的年金', '月 ' + lps2About(F.ret.pen), F.ret.penAge + '歳から');
+        P.push({ h:'これからの暮らし', lead:'ご入力にもとづく試算です（いまお見せしている「' + F.plan + '」）。', body:'<ul class="lps2-big-list lps2-big-grid">' + fut + '</ul>' });
+        var lst = function(a, none){ return a.length ? '<ul class="lps2-big-list">' + a.map(function(t){ return '<li><span class="lps2-big-p">' + lps2E(t) + '</span></li>'; }).join('') + '</ul>' : '<p class="lps2-big-p">' + lps2E(none) + '</p>'; };
+        var noDiag = '試算の結果がまだ出ていません。入力を確かめてから、もう一度開いてください。';
+        P.push({ h:'気をつけたいこと', lead:'これから一緒に考えていきたいことです。', body:lst(F.concern, F.diag ? '特に気をつけたいことは、見当たりませんでした。' : noDiag) });
+        P.push({ h:'安心できること', lead:'いまの暮らしで、できていることです。', body:lst(F.good, F.diag ? '試算の結果を、一緒に確かめていきましょう。' : noDiag) });
+        var curAtt = String((($('mn-attendees') || {}).value) || ''), place = String((($('mr-place') || {}).value) || '').trim();
+        var nx = { date:'', start:'' }; try{ if(typeof lpnxGet === 'function') nx = lpnxGet(); }catch(e){}
+        P.push({ h:'今日のお話は、ここまでです', lead:'', last:true,
+          body:'<p class="lps2-big-calmbox">' + LPS2_CALM_HTML + '<br>ご家族ともご相談のうえで、次回お聞かせください。</p>'
+            + '<section class="lps2-big-form" aria-labelledby="lps2-bf-h"><h3 id="lps2-bf-h">担当者が残すこと</h3>'
+            + '<p class="lps2-big-fn">残すと、営業サポートの「ご出席」「次回の予定」「商談記録」に入ります。</p>'
+            + '<div class="lps2-big-row"><label class="lps2-big-chk"><input type="checkbox" id="lps2-fam-on"' + (/家族/.test(curAtt) ? ' checked' : '') + '> ご家族などが同席されました</label></div>'
+            + '<div class="lps2-big-row"><label class="lps2-big-f"><span>同席された方（任意）</span><input type="text" id="lps2-fam-who" maxlength="40" autocomplete="off" placeholder="例：長女様"></label></div>'
+            + '<div class="lps2-big-row"><label class="lps2-big-chk"><input type="checkbox" id="lps2-rec-on" checked> 今日の商談を商談記録に残す</label></div>'
+            + '<div class="lps2-big-row"><label class="lps2-big-f"><span>今日の商談の場所</span><input type="text" id="lps2-place" maxlength="120" autocomplete="off" placeholder="例：お客様のご自宅" value="' + lps2E(place) + '"></label>'
+            + '<label class="lps2-big-f"><span>方法</span><select id="lps2-way"><option value="対面">対面</option><option value="オンライン">オンライン</option><option value="電話">電話</option></select></label></div>'
+            + '<div class="lps2-big-row"><label class="lps2-big-f"><span>次回の日付</span><input type="date" id="lps2-nx-date" value="' + lps2E(nx.date || '') + '"></label>'
+            + '<label class="lps2-big-f"><span>次回の開始時刻</span><input type="time" id="lps2-nx-time" step="300" value="' + lps2E(nx.start || '') + '"></label></div>'
+            + '<button type="button" class="lps2-big-save" id="lps2-big-save">残す</button>'
+            + '<p class="lps2-big-msg" id="lps2-big-msg" role="status"></p></section>' });
+        return P;
+      }
+      function lps2BigOpen(){
+        if(!lps2Staff()) return;
+        lps2Big.pages = lps2BigPages(lps2Facts());
+        lps2Big.i = 0;
+        lps2LastFocus = document.activeElement;
+        $('lps2-big').hidden = false;
+        lps2BigDraw();
+      }
+      function lps2BigDraw(){
+        var P = lps2Big.pages, i = Math.max(0, Math.min(lps2Big.i, P.length - 1)), p = P[i];
+        lps2Big.i = i;
+        $('lps2-big-step').textContent = (i + 1) + ' / ' + P.length;
+        $('lps2-big-body').innerHTML = '<h2 id="lps2-big-h" tabindex="-1">' + lps2E(p.h) + '</h2>' + (p.lead ? '<p class="lps2-big-lead">' + lps2E(p.lead) + '</p>' : '') + p.body;
+        $('lps2-big-body').scrollTop = 0;
+        $('lps2-big-prev').disabled = (i === 0);
+        $('lps2-big').classList.toggle('is-last', !!p.last);   /* 最後の画面は本文に同じ一言があるので、下の帯には重ねない */
+        var nx = $('lps2-big-next');
+        nx.innerHTML = p.last ? '閉じる' : '次へ <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
+        if(p.last){
+          var way = $('mr-way'); if(way && $('lps2-way')) $('lps2-way').value = way.value || '対面';
+          $('lps2-big-save').addEventListener('click', lps2BigSave);
+        }
+        try{ $('lps2-big-h').focus(); }catch(e){}
+      }
+      function lps2BigClose(){
+        $('lps2-big').hidden = true;
+        try{ if(lps2LastFocus && lps2LastFocus.focus) lps2LastFocus.focus(); }catch(e){}
+        lps2Render();
+      }
+      /* 最後の画面：ご家族などの同席（ご出席の欄）・次回の予定（次回の欄）・今日の商談記録（「記録する」をそのまま押す） */
+      function lps2BigSave(){
+        var msg = $('lps2-big-msg'), out = [];
+        var say = function(t, ng){ if(msg){ msg.textContent = t; msg.classList.toggle('ng', !!ng); } };
+        var recOn = $('lps2-rec-on') && $('lps2-rec-on').checked, place = String($('lps2-place').value || '').trim();
+        if(recOn && !place){ say('今日の商談の場所を入れてください（商談記録に残すときに要ります）。', true); try{ $('lps2-place').focus(); }catch(e){} return; }
+        var att = $('mn-attendees');
+        if($('lps2-fam-on').checked && att){
+          var cur = String(att.value || ''), who = String($('lps2-fam-who').value || '').trim().slice(0, 40);
+          if(!/家族/.test(cur)){
+            var add = 'ご家族同席' + (who ? '（' + who + '）' : ''), j = cur.indexOf('／担当'), head = j >= 0 ? cur.slice(0, j).trim() : cur.trim(), tail = j >= 0 ? cur.slice(j) : '';
+            att.value = (head ? head + '・' : '') + add + tail;
+            try{ att.dispatchEvent(new Event('input', { bubbles:true })); }catch(e){}
+          }
+          out.push('ご出席の欄に「ご家族同席」を入れました');
+        }
+        var nd = String($('lps2-nx-date').value || ''), nt = String($('lps2-nx-time').value || '').slice(0, 5);
+        if(/^\d{4}-\d{2}-\d{2}$/.test(nd)){
+          try{
+            if(typeof lpnxFill === 'function' && typeof lpnxCommit === 'function'){
+              var g = lpnxGet();
+              lpnxFill({ date:nd, start:(nt || g.start), end:(nt ? lpnxAdd2(nt) : g.end), place:g.place });
+              lpnxCommit();
+            }else if($('mn-next-date')){
+              $('mn-next-date').value = lps2Ja(nd) + (nt ? nt : '');
+              $('mn-next-date').dispatchEvent(new Event('input', { bubbles:true }));
+            }
+            out.push('次回の予定を ' + lps2Ja(nd) + (nt ? ' ' + nt : '') + ' にしました');
+          }catch(e){}
+        }
+        if(recOn && $('mr-add')){
+          if($('mr-date')) $('mr-date').value = lps2Ymd();
+          if($('mr-place')) $('mr-place').value = place;
+          if($('mr-way') && $('lps2-way')) $('mr-way').value = $('lps2-way').value;
+          var before = String((($('mr-status') || {}).textContent) || '');
+          $('mr-add').click();
+          setTimeout(function(){
+            var st = String((($('mr-status') || {}).textContent) || '').trim();
+            if(st && st !== before.trim()) out.push(st);
+            say(out.length ? out.join('。').replace(/。。/g, '。') + (/。$/.test(out[out.length - 1]) ? '' : '。') : '残すものがありませんでした。');
+          }, 60);
+          return;
+        }
+        say(out.length ? out.join('。') + '。' : '残すものがありませんでした（同席・次回の日付・商談記録のどれかを入れてください）。', !out.length);
+      }
+
+      /* ---- ③ 前回との違い：上書き保存のたびに前の形を残す ---- */
+      function lps2Compact(e){
+        if(!e || typeof e !== 'object') return null;
+        var pl = e.plans || (e.state ? { active:'genjo', genjo:{ state:e.state, sum:null } } : null);
+        if(!pl || !pl.genjo || !pl.genjo.state) return null;
+        var g = pl.genjo, m = pl.mirai || {};
+        var o = { t:(+e.t || 0), plans:{ active:(pl.active === 'mirai' ? 'mirai' : 'genjo'), genjo:{ state:g.state } }, res:{ genjo:lps2ResOf(g.sum) } };
+        if(m.state){
+          o.plans.mirai = (JSON.stringify(m.state) === JSON.stringify(g.state)) ? { same:1 } : { state:m.state };
+          o.res.mirai = lps2ResOf(m.sum);
+        }
+        return o;
+      }
+      function lps2Keep(snap){
+        try{
+          if(!snap || !lpvReady()) return;
+          var o = getSaves(), e = o[snap.name];
+          if(!e || (+e.t || 0) === (+snap.e.t || 0)) return;   /* 上書きしていない（やめた・書けなかった） */
+          var c = lps2Compact(snap.e);
+          if(!c) return;
+          var list = [c].concat(Array.isArray(snap.e.prev) ? snap.e.prev : []).filter(function(x){ return x && x.plans; }).slice(0, LPS2_PREV_MAX);
+          e.prev = list;
+          /* 容量：前の形の合計か資料全体が目安を超えるときは、この資料の古い形から減らす
+             （資料1件はおよそ4万字・前の形1つはおよそ4千字。前の形は試算の行を持たないので小さい） */
+          var over = function(){
+            var pt = 0;
+            Object.keys(o).forEach(function(k){ if(o[k] && o[k].prev) pt += JSON.stringify(o[k].prev).length; });
+            return pt > LPS2_PREV_BUDGET || JSON.stringify(o).length > LPS2_BUDGET;
+          };
+          while(e.prev.length && over()) e.prev.pop();
+          if(!e.prev.length) delete e.prev;
+          putSaves(o);
+          lps2Render();
+        }catch(x){}
+      }
+      ['save-overwrite', 'save-do'].forEach(function(id){
+        var b = $(id);
+        if(!b) return;
+        /* 保存の動き（もとの作り）より先に、前の形を控える。保存が終わったあとで資料の中に足す */
+        b.addEventListener('click', function(){
+          try{
+            if(!lpvReady()) return;
+            var name = (id === 'save-overwrite') ? lpMeetCurName() : String((($('save-name') || {}).value) || '').trim();
+            if(!name) return;
+            var e = getSaves()[name];
+            if(e) setTimeout(function(){ lps2Keep({ name:name, e:e }); }, 0);
+          }catch(x){}
+        }, true);
+      });
+      function lps2Expand(pl){
+        pl = pl || {};
+        var g = (pl.genjo && pl.genjo.state) || null, m = pl.mirai ? (pl.mirai.same ? g : (pl.mirai.state || null)) : null;
+        return { g:g, m:m };
+      }
+      function lps2Versions(name){
+        var e = null;
+        try{ e = getSaves()[name]; }catch(x){ e = null; }
+        if(!e) return null;
+        var pl = e.plans || (e.state ? { genjo:{ state:e.state } } : {}), s = lps2Expand(pl);
+        var v = [{ label:'保存した形（' + lps2When(e.t) + '）', t:e.t, g:s.g, m:s.m,
+                   res:{ genjo:lps2ResOf(pl.genjo && pl.genjo.sum), mirai:lps2ResOf(pl.mirai && pl.mirai.sum) } }];
+        (Array.isArray(e.prev) ? e.prev : []).forEach(function(p, i){
+          var x = lps2Expand(p.plans);
+          v.push({ label:'前の形' + (i + 1) + '（' + lps2When(p.t) + '）', t:p.t, g:x.g, m:x.m, res:p.res || {} });
+        });
+        return v;
+      }
+      function lps2Now(){
+        var g = PLANS.genjo.state, m = PLANS.mirai.state;
+        try{ var cur = collectState(); if(PLANS.active === 'mirai') m = cur; else g = cur; }catch(x){}
+        return { g:g, m:m, res:{ genjo:lps2ResOf(PLANS.genjo.sum), mirai:lps2ResOf(PLANS.mirai.sum) } };
+      }
+      var LPS2_SEG = [['house', '住まいのプラン', 'data-house'], ['household', '世帯', 'data-household'], ['expMode', '生活費の入れ方', 'data-exp'],
+                      ['payoff', '住宅ローンの返し方', 'data-payoff'], ['loanType', '住宅ローンの借り方', 'data-loantype'],
+                      ['loanRateType', '金利のタイプ', 'data-ratetype'], ['loanRepayType', '返済の方法', 'data-repaytype']];
+      function lps2SegText(attr, v){
+        try{ var b = document.querySelector('[' + attr + '="' + String(v).replace(/["\\]/g, '') + '"]'); if(b){ var t = b.textContent.replace(/\s+/g, ' ').trim(); if(t) return t; } }catch(x){}
+        return /^[\x00-\x7f]*$/.test(String(v)) ? '（設定の値）' : String(v);
+      }
+      function lps2FieldOrder(){
+        var ids = [];
+        document.querySelectorAll('#input-panel [id]').forEach(function(el){ if(el.tagName === 'INPUT' || el.tagName === 'SELECT') ids.push(el.id); });
+        return ids;
+      }
+      function lps2FieldLabel(id){
+        var el = $(id);
+        if(!el || el.type === 'hidden') return null;
+        var info = null;
+        try{ if(typeof lpFieldInfo === 'function') info = lpFieldInfo(el); }catch(x){ info = null; }
+        var name = info ? info.name : '';
+        if(el.type === 'checkbox'){ var lb = el.closest('label'); if(lb && lb.textContent.trim()) name = lb.textContent.replace(/\s+/g, ' ').trim(); }
+        if(!name || name === '数字の欄') name = el.getAttribute('aria-label') || '';
+        if(!name) return null;
+        if(name.length > 24) name = name.slice(0, 23) + '…';
+        return { sec:(info && info.secName) || '', name:name, unit:(info && info.unit) || '', el:el };
+      }
+      function lps2FieldVal(L, v){
+        if(v === true) return 'あり';
+        if(v === false) return 'なし';
+        v = String(v == null ? '' : v).trim();
+        if(v === '') return '（空欄）';
+        if(L.el.tagName === 'SELECT'){
+          var o = [].filter.call(L.el.options, function(x){ return x.value === v; })[0];
+          if(o) return o.textContent.replace(/\s+/g, ' ').trim();
+        }
+        if(/^-?\d+(\.\d+)?$/.test(v)) return (+v).toLocaleString('ja-JP') + (L.unit || '');
+        return v;
+      }
+      function lps2Same(a, b){
+        if(a === b) return true;
+        var x = String(a == null ? '' : a).trim(), y = String(b == null ? '' : b).trim();
+        if(x === y) return true;
+        if(/^-?\d+(\.\d+)?$/.test(x) && /^-?\d+(\.\d+)?$/.test(y)) return +x === +y;
+        return false;
+      }
+      function lps2Rows(sa, sb){
+        var rows = [];
+        if(!sa || !sb) return rows;
+        var fa = sa.fields || {}, fb = sb.fields || {};
+        lps2FieldOrder().forEach(function(id){
+          if(!(id in fa) || !(id in fb) || lps2Same(fa[id], fb[id])) return;
+          var L = lps2FieldLabel(id);
+          if(!L) return;
+          rows.push({ sec:L.sec, name:L.name, a:lps2FieldVal(L, fa[id]), b:lps2FieldVal(L, fb[id]) });
+        });
+        LPS2_SEG.forEach(function(s){
+          if(!(s[0] in sa) || !(s[0] in sb) || lps2Same(sa[s[0]], sb[s[0]])) return;
+          rows.push({ sec:'', name:s[1], a:lps2SegText(s[2], sa[s[0]]), b:lps2SegText(s[2], sb[s[0]]) });
+        });
+        var num0 = function(v){ v = String(v == null ? '' : v).trim(); return v === '' ? '' : (+v).toLocaleString('ja-JP'); };
+        var LISTS = [
+          ['お子さま', 'children', function(c){ return [String(c.name || '').trim() || 'お名前なし', (c.age !== '' && c.age != null ? c.age + '歳' : ''), lps2Opt(LPS2_K12, c.k12), lps2High(c.highEd), lps2Opt(LPS2_LODGE, c.lodging)].filter(Boolean).join('・'); }],
+          ['ライフイベント', 'events', function(e){ return [(e.age ? e.age + '歳' : ''), String(e.label || '').trim(), (e.amount !== '' && e.amount != null ? num0(e.amount) + '万円' : ''), (+e.every > 0 ? e.every + '年ごと' : ''), String(e.note || '').trim()].filter(Boolean).join('・'); }],
+          ['臨時収入', 'incomeEvents', function(e){ return [(e.age ? e.age + '歳' : ''), String(e.label || '').trim(), (e.amount !== '' && e.amount != null ? num0(e.amount) + '万円' : '')].filter(Boolean).join('・'); }],
+          ['そのほかの支出', 'expenses', function(e){ return [String(e.name || '').trim(), (e.amount !== '' && e.amount != null ? '月 ' + num0(e.amount) + '万円' : ''), (+e.years > 0 ? e.years + '年間' : '')].filter(Boolean).join('・'); }],
+          ['積立・運用', 'investments', function(v){ return [lps2Opt(LPS2_IVT, v.type), String(v.name || '').trim(), (+v.monthly ? '毎月 ' + num0(v.monthly) + '万円' : ''), (+v.lump ? '一括 ' + num0(v.lump) + '万円' : ''), (v.ret !== '' && v.ret != null ? '利回り ' + v.ret + '％' : ''), (v.on === false ? '試算に入れない' : '')].filter(Boolean).join('・'); }],
+          ['保険', 'insurances', function(v){ return [lps2Who(v.who), lps2Opt(LPS2_INST, v.type), String(v.name || '').trim(), (+v.amount ? '保険金額 ' + num0(v.amount) + '万円' : ''), (v.on === false ? '試算に入れない' : '')].filter(Boolean).join('・'); }]
+        ];
+        LISTS.forEach(function(L){
+          var A = Array.isArray(sa[L[1]]) ? sa[L[1]] : null, B = Array.isArray(sb[L[1]]) ? sb[L[1]] : null;
+          if(!A || !B) return;
+          for(var i = 0; i < Math.max(A.length, B.length); i++){
+            var x = A[i] ? L[2](A[i]) : '（なし）', y = B[i] ? L[2](B[i]) : '（なし）';
+            if(x !== y) rows.push({ sec:'', name:L[0] + '（' + (i + 1) + '件目）', a:x || '（入力なし）', b:y || '（入力なし）' });
+          }
+        });
+        return rows;
+      }
+      function lps2ResRows(ra, rb){
+        var out = [];
+        if(!ra && !rb) return out;
+        ra = ra || {}; rb = rb || {};
+        var keep = function(r){ return r.dep != null ? r.dep + '歳ごろまで' : (r.endAge ? r.endAge + '歳まで続く見込み' : '—'); };
+        out.push({ name:'65歳のときの金融資産', a:(ra.a65 != null ? lps2Yen(ra.a65) : '—'), b:(rb.a65 != null ? lps2Yen(rb.a65) : '—') });
+        var ea = ra.endAge || rb.endAge || 100;
+        out.push({ name:ea + '歳のときの金融資産', a:(ra.endNet != null ? lps2Yen(ra.endNet) : '—'), b:(rb.endNet != null ? lps2Yen(rb.endNet) : '—') });
+        out.push({ name:'金融資産が続く見込み', a:(ra.endAge ? keep(ra) : '—'), b:(rb.endAge ? keep(rb) : '—') });
+        return out;
+      }
+      function lps2DiffModel(v, now){
+        var M = { secs:[], any:false };
+        var showM = !!((now.m && JSON.stringify(now.m) !== JSON.stringify(now.g)) || (v.m && JSON.stringify(v.m) !== JSON.stringify(v.g)));
+        [['genjo', '現状プラン', v.g, now.g], ['mirai', '将来プラン', v.m, now.m]].forEach(function(p){
+          if(p[0] === 'mirai' && !showM) return;
+          var rows = lps2Rows(p[2], p[3]), res = lps2ResRows((v.res || {})[p[0]], (now.res || {})[p[0]]);
+          if(rows.length) M.any = true;
+          if(res.some(function(r){ return r.a !== r.b; })) M.any = true;
+          M.secs.push({ plan:p[1], rows:rows, res:res, missing:(!p[2] || !p[3]) });
+        });
+        return M;
+      }
+      function lps2SheetHTML(D, forPrint){
+        var h = '', tbl = function(rows, sec){
+          return '<table><thead><tr><th class="lps2-c1">' + (sec ? '変わったところ' : '試算の結果') + '</th><th>前回</th><th>今回</th></tr></thead><tbody>'
+            + rows.map(function(r){ return '<tr><th>' + lps2E(r.name) + (r.sec ? '<small>' + lps2E(r.sec) + '</small>' : '') + '</th><td>' + lps2E(r.a) + '</td><td>' + lps2E(r.b) + '</td></tr>'; }).join('')
+            + '</tbody></table>';
+        };
+        if(forPrint) h += '<h1>前回との違い</h1>';
+        h += '<p class="lps2-sub">お客様の資料：' + lps2E(D.name) + '<br>前回：' + lps2E(D.vLabel) + '<br>今回：' + lps2E(D.nowLabel) + '</p>';
+        D.M.secs.forEach(function(s){
+          h += '<h4>' + lps2E(s.plan) + '</h4>';
+          if(s.missing) h += '<p class="lps2-none">' + lps2E(s.plan) + 'は、どちらかの記録にありません。</p>';
+          else h += s.rows.length ? tbl(s.rows, true) : '<p class="lps2-none">ご入力で変わったところはありません。</p>';
+          if(s.res.length) h += '<div style="height:10px"></div>' + tbl(s.res, false);
+        });
+        h += '<p class="lps2-note">' + lps2E(LPS2_CALC_NOTE) + (D.iss ? '<br>' + lps2E(D.iss) : '') + '</p>';
+        return h;
+      }
+      function lps2Iss(){ try{ if(typeof lpIssLine === 'function') return lpIssLine(); }catch(x){} return LPS2_ISS; }
+      function lps2DiffState(){
+        var name = '';
+        try{ name = lpMeetCurName() || ''; }catch(x){}
+        var ready = false; try{ ready = lpvReady(); }catch(x){}
+        if(!ready || !name) return { name:name, vs:null };
+        return { name:name, vs:lps2Versions(name) };
+      }
+      function lps2DiffOpen(){
+        if(!lps2Staff()) return;
+        var ov = $('lps2-diff'), b = ov.querySelector('.lps2-dlg-b'), f = ov.querySelector('.lps2-dlg-f');
+        var S = lps2DiffState(), now = lps2Now();
+        lps2Diff = null;
+        f.innerHTML = '<p class="lps2-msg lps2-grow" id="lps2-diff-msg" role="status"></p><button type="button" class="btn btn-ghost" data-lps2-close>閉じる</button>';
+        if(!S.vs){
+          b.innerHTML = '<div class="lps2-sheet"><p class="lps2-none">保存したお客様の資料を読み込むと、前回との違いを出せます（上の「保存・読み込み」から、ログインして資料を開いてください）。</p></div>';
+          lps2Show(ov); return;
+        }
+        var pick = -1;
+        for(var i = 0; i < S.vs.length; i++){ if(lps2DiffModel(S.vs[i], now).any){ pick = i; break; } }
+        if(pick < 0 && S.vs.length > 1) pick = 1;
+        if(pick < 0){
+          b.innerHTML = '<div class="lps2-sheet"><p class="lps2-none"><b>前回の記録がありません。</b><br>「' + lps2E(S.name) + '」の資料には、まだ前の形が残っていません。'
+            + 'これから上書き保存すると、そのたびに前の形を3つまで資料の中に残します（暗号化したまま）。</p></div>';
+          lps2Show(ov); return;
+        }
+        lps2Diff = { S:S, now:now, i:pick };
+        b.innerHTML = '<div class="lps2-sel"><label for="lps2-diff-v">前回にする形</label><select id="lps2-diff-v">'
+          + S.vs.map(function(v, k){ return '<option value="' + k + '"' + (k === pick ? ' selected' : '') + '>' + lps2E(v.label) + '</option>'; }).join('') + '</select></div>'
+          + '<div class="lps2-sheet" id="lps2-diff-sheet"></div>';
+        f.innerHTML = '<p class="lps2-msg lps2-grow" id="lps2-diff-msg" role="status"></p>'
+          + '<button type="button" class="btn btn-ghost" id="lps2-diff-print"><i class="fa-solid fa-file-lines" aria-hidden="true"></i> 印刷</button>'
+          + '<button type="button" class="btn btn-primary" id="lps2-diff-pdf"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> PDFで保存</button>'
+          + '<button type="button" class="btn btn-ghost" data-lps2-close>閉じる</button>';
+        $('lps2-diff-v').addEventListener('change', function(){ lps2Diff.i = +this.value; lps2DiffDraw(); });
+        $('lps2-diff-print').addEventListener('click', function(){ lps2PrintSheet(false); });
+        $('lps2-diff-pdf').addEventListener('click', function(){ lps2PrintSheet(true); });
+        lps2DiffDraw();
+        lps2Show(ov);
+      }
+      function lps2DiffDoc(){
+        if(!lps2Diff) return null;
+        var v = lps2Diff.S.vs[lps2Diff.i];
+        return { name:lps2Diff.S.name, vLabel:v.label, nowLabel:'いま画面に出している内容（' + lps2When(Date.now()) + '）', M:lps2DiffModel(v, lps2Diff.now), iss:lps2Iss() };
+      }
+      function lps2DiffDraw(){
+        var D = lps2DiffDoc(), el = $('lps2-diff-sheet');
+        if(!D || !el) return;
+        el.innerHTML = lps2SheetHTML(D, false);
+        var m = $('lps2-diff-msg'); if(m) m.textContent = D.M.any ? '' : '前回と今回で、変わったところはありません。';
+      }
+      var LPS2_PRINT_CSS = '@page{ size:A4 portrait; margin:12mm; }'
+        + 'body{ margin:0; padding:24px 28px; font-family:"Noto Sans JP", sans-serif; color:#1f3047; background:#fff; font-size:14px; line-height:1.7; -webkit-print-color-adjust:exact; print-color-adjust:exact; }'
+        + 'h1{ margin:0 0 6px; font-size:22px; } h4{ margin:18px 0 6px; font-size:16px; } .lps2-sub{ margin:0 0 8px; color:#3d4f63; font-size:13px; }'
+        + 'table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:13px; } th, td{ padding:6px 8px; border:1px solid #c9d7e3; text-align:left; vertical-align:top; word-break:break-word; }'
+        + 'thead th{ background:#eef5fb; } tbody th small{ display:block; font-size:11.5px; font-weight:400; color:#4a5a6b; } .lps2-c1{ width:32%; } tr{ page-break-inside:avoid; break-inside:avoid; }'
+        + '.lps2-none{ margin:0; padding:8px 10px; background:#f3f7fb; } .lps2-note{ margin:16px 0 0; font-size:12px; color:#3d4f63; }';
+      function lps2PrintSheet(pdf){
+        var D = lps2DiffDoc(), m = $('lps2-diff-msg');
+        if(!D) return;
+        var old = document.getElementById('lps2-frame'); if(old) old.remove();
+        var fr = document.createElement('iframe');
+        fr.id = 'lps2-frame'; fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1;
+        fr.style.cssText = 'position:fixed; left:-10000px; top:0; width:794px; height:1123px; border:0; background:#fff;';
+        document.body.appendChild(fr);
+        var base = location.href.replace(/[#?].*$/, '').replace(/[^\/]*$/, '');
+        var d = fr.contentDocument;
+        d.open();
+        /* ★タグの字は分けて書く（ページの頭・本体・書式のタグの数を数える道具を惑わせないため） */
+        var T = function(t){ return '<' + t + '>'; };
+        d.write(T('!doctype html') + T('html lang="ja"') + T('he' + 'ad') + T('me' + 'ta charset="utf-8"') + T('ba' + 'se href="' + lps2E(base) + '"') + T('ti' + 'tle') + '前回との違い' + T('/ti' + 'tle')
+          + T('li' + 'nk rel="stylesheet" href="vendor/fonts/fonts.css"') + T('st' + 'yle') + LPS2_PRINT_CSS + T('/st' + 'yle') + T('/he' + 'ad') + T('bo' + 'dy') + lps2SheetHTML(D, true) + T('/bo' + 'dy') + T('/ht' + 'ml'));
+        d.close();
+        var ready = function(){ return (d.fonts && d.fonts.ready) ? d.fonts.ready.catch(function(){}) : Promise.resolve(); };
+        if(!pdf){
+          ready().then(function(){ setTimeout(function(){ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(x){ if(m) m.textContent = '印刷を始められませんでした。'; } }, 120); });
+          return;
+        }
+        if(m) m.textContent = 'PDFを作っています…';
+        Promise.resolve(window.lpPdfLibs ? window.lpPdfLibs() : true).then(ready).then(function(){
+          if(typeof html2canvas === 'undefined' || !window.jspdf){ if(m) m.textContent = 'PDFの準備中です。数秒おいて、もう一度押してください。'; return; }
+          fr.style.height = Math.max(1123, d.body.scrollHeight + 40) + 'px';
+          return html2canvas(d.body, { scale:2, backgroundColor:'#ffffff', windowWidth:794 }).then(function(cv){
+            var jsPDF = window.jspdf.jsPDF, doc = new jsPDF('p', 'mm', 'a4');
+            var pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mg = 8, iw = pw - mg * 2, ih = ph - mg * 2;
+            var pagePx = Math.floor(cv.width * ih / iw), y = 0, n = 0;
+            while(y < cv.height){
+              var hpx = Math.min(pagePx, cv.height - y), c2 = document.createElement('canvas');
+              c2.width = cv.width; c2.height = hpx;
+              var cx = c2.getContext('2d'); cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, c2.width, c2.height); cx.drawImage(cv, 0, y, cv.width, hpx, 0, 0, cv.width, hpx);
+              if(n) doc.addPage();
+              doc.addImage(c2.toDataURL('image/jpeg', 0.92), 'JPEG', mg, mg, iw, hpx * iw / cv.width);
+              y += hpx; n++;
+            }
+            window.__lps2PdfPages = n;
+            doc.save('前回との違い_' + String(D.name || '').replace(/[\\\/:*?"<>|]/g, '').slice(0, 40) + '.pdf');
+            if(m) m.textContent = 'PDFを保存しました（' + n + 'ページ）。';
+          });
+        }).catch(function(e){ if(window.console) console.error('[前回との違い]', e); if(m) m.textContent = 'PDFを作れませんでした。もう一度お試しください。'; });
+      }
+
+      /* ---- タブの中身の状態（開くたびに描き直す） ---- */
+      function lps2Render(){
+        if(!lps2Pane) return;
+        var ik = $('lps2-card-iko'); if(ik) ik.hidden = !lps2HubOn();
+        var st = $('lps2-diff-st');
+        if(st){
+          var S = lps2DiffState();
+          if(!S.vs) st.textContent = '保存したお客様の資料を読み込むと、ここで前回との違いを出せます。';
+          else{
+            var n = S.vs.length - 1;
+            st.textContent = '読み込んでいる資料：「' + S.name + '」（' + (n ? '前の形が ' + n + 'つ残っています' : 'まだ前の形が残っていません。次に上書き保存したときから残ります') + '）';
+          }
+        }
+      }
+      (function(){
+        if(SHARED_VIEW) return;   /* 共有リンクで開いたお客様の画面には作らない */
+        var tabs = document.querySelector('#vc-dock .vc-tabs'), more = $('vc-more');
+        if(!tabs || !more || $('vc-tab-lps2')) return;
+        lps2Root = panel;
+        lps2Tab = document.createElement('button');
+        lps2Tab.type = 'button'; lps2Tab.id = 'vc-tab-lps2'; lps2Tab.className = 'vc-tab'; lps2Tab.setAttribute('role', 'tab');
+        lps2Tab.setAttribute('data-vc-tab', 'lps2'); lps2Tab.setAttribute('aria-selected', 'false'); lps2Tab.setAttribute('aria-controls', 'vc-pane-lps2'); lps2Tab.tabIndex = -1;
+        lps2Tab.innerHTML = '<span class="vct-no" aria-hidden="true">4</span><span class="vct-b"><b><span class="vct-nw">記録と</span><span class="vct-nw">見比べ</span></b><small>必要なときに</small></span>';
+        tabs.appendChild(lps2Tab);
+        tabs.classList.add('lps2-4');
+        lps2Pane = document.createElement('div');
+        lps2Pane.className = 'vc-pane'; lps2Pane.id = 'vc-pane-lps2'; lps2Pane.setAttribute('role', 'tabpanel'); lps2Pane.setAttribute('aria-labelledby', 'vc-tab-lps2'); lps2Pane.hidden = true;
+        var card = function(id, icon, h, p, btn){
+          return '<section class="vcu-card"' + (id ? ' id="' + id + '"' : '') + ' aria-labelledby="' + btn[0] + '-h"><div class="vcu-h"><span class="vcu-ic" aria-hidden="true"><i class="fa-solid ' + icon + '"></i></span><div>'
+            + '<h3 id="' + btn[0] + '-h">' + h + '</h3><p>' + p + '</p></div></div>' + (btn[2] || '')
+            + '<div class="lps2-btns"><button type="button" class="btn btn-primary" id="' + btn[0] + '">' + btn[1] + '</button></div></section>';
+        };
+        lps2Pane.innerHTML =
+          card('lps2-card-iko', 'fa-file-signature', '意向把握の記録へ写す',
+            'ご入力のお名前・ご家族・ご入力の要点・試算の結果・AI診断（気をつけたい点と安心できる点）・次の一手（お客様と進めること）を、管理画面の意向把握の書く欄に写します。<b>写す前に、写す中身を全てお見せします。</b>担当者用の「提案の検討メモ」は入りません。',
+            ['lps2-iko-open', '<i class="fa-solid fa-file-signature" aria-hidden="true"></i> 写す中身を確かめる'])
+          + card('', 'fa-eye', '大きな字で、一緒に見る',
+            'ご家族・いまの暮らし・これからの暮らし・気をつけたいこと・安心できることを、<b>1画面に1つずつ、大きな字で</b>お見せします。ゆっくりご覧いただきたいときに。どなたに使うかは、担当者が決めてください。最後の画面で、ご家族などの同席と次回の予定を残せます。',
+            ['lps2-big-open', '<i class="fa-solid fa-eye" aria-hidden="true"></i> 大きな字で見る'])
+          + card('', 'fa-right-left', '前回との違い',
+            '保存したお客様の資料は、<b>上書き保存のたびに前の形を3つまで</b>資料の中に残します（暗号化したまま。容量が足りないときは古い形から減らします）。前回と今回で変わったところだけを並べて、印刷・PDFにできます。',
+            ['lps2-diff-open', '<i class="fa-solid fa-right-left" aria-hidden="true"></i> 前回との違いを見る', '<p class="lps2-st" id="lps2-diff-st" role="status"></p>']);
+        more.appendChild(lps2Pane);
+        lps2Dlg('lps2-iko', 'fa-file-signature', '意向把握の記録へ写す');
+        lps2Dlg('lps2-diff', 'fa-right-left', '前回との違い');
+        var big = document.createElement('div');
+        big.className = 'lps2-big'; big.id = 'lps2-big'; big.hidden = true;
+        big.setAttribute('role', 'dialog'); big.setAttribute('aria-modal', 'true'); big.setAttribute('aria-labelledby', 'lps2-big-h');
+        big.innerHTML = '<div class="lps2-big-top"><span class="lps2-big-step" id="lps2-big-step"></span><button type="button" class="lps2-big-x" id="lps2-big-x"><i class="fa-solid fa-xmark" aria-hidden="true"></i> 閉じる</button></div>'
+          + '<div class="lps2-big-body" id="lps2-big-body"></div>'
+          + '<p class="lps2-big-calm">' + LPS2_CALM_HTML + '</p>'
+          + '<div class="lps2-big-nav"><button type="button" class="lps2-big-prev" id="lps2-big-prev"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> 前へ</button>'
+          + '<button type="button" class="lps2-big-next" id="lps2-big-next"></button></div>';
+        lps2Root.appendChild(big);
+        $('lps2-big-x').addEventListener('click', lps2BigClose);
+        $('lps2-big-prev').addEventListener('click', function(){ lps2Big.i--; lps2BigDraw(); });
+        $('lps2-big-next').addEventListener('click', function(){ if(lps2Big.pages[lps2Big.i] && lps2Big.pages[lps2Big.i].last){ lps2BigClose(); return; } lps2Big.i++; lps2BigDraw(); });
+        $('lps2-iko-open').addEventListener('click', lps2IkoOpen);
+        $('lps2-big-open').addEventListener('click', lps2BigOpen);
+        $('lps2-diff-open').addEventListener('click', lps2DiffOpen);
+        /* タブの切り替え：もとの vcSetTab（cap・next・minutes）を包む。4つ目のときだけここで出す */
+        vcSetTab = (function(f){
+          return function(t){
+            if(t === 'lps2' && lps2Pane && lps2Staff()){
+              f('cap');
+              document.querySelectorAll('#vc-dock .vc-tab').forEach(function(b){ var on = (b === lps2Tab); b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+              ['vc-pane-cap', 'vc-pane-min', 'vc-pane-next', 'vc-pane-memo'].forEach(function(id){ var el = $(id); if(el) el.hidden = true; });
+              lps2Pane.hidden = false;
+              lps2Render();
+              try{ vcSaveUI(); vcSyncDockH(); }catch(e){}
+              return;
+            }
+            if(lps2Pane) lps2Pane.hidden = true;
+            return f(t);
+          };
+        })(vcSetTab);
+        lps2Tab.addEventListener('click', function(){ vcSetTab('lps2'); });
+        /* ←→ で4つを回る（もとのタブの並びは3つで閉じているので、端だけここで受ける） */
+        tabs.addEventListener('keydown', function(e){
+          var d = (e.key === 'ArrowRight') ? 1 : (e.key === 'ArrowLeft') ? -1 : 0;
+          if(!d) return;
+          var all = [].slice.call(tabs.querySelectorAll('.vc-tab')), i = all.indexOf(e.target);
+          if(i < 0) return;
+          var to = all[(i + d + all.length) % all.length];
+          if(e.target !== lps2Tab && to !== lps2Tab) return;   /* 1〜3のあいだは、もとの動きのまま */
+          e.preventDefault(); e.stopPropagation();
+          to.focus(); vcSetTab(to.getAttribute('data-vc-tab'));
+        }, true);
+        /* Esc：いちばん手前の窓だけを閉じる（営業サポートの窓ごと閉じない） */
+        window.addEventListener('keydown', function(e){
+          if(e.key !== 'Escape') return;
+          var b = $('lps2-big'), i = $('lps2-iko'), d = $('lps2-diff');
+          if(i && !i.hidden){ e.stopPropagation(); lps2Close(i); return; }
+          if(d && !d.hidden){ e.stopPropagation(); lps2Close(d); return; }
+          if(b && !b.hidden){ e.stopPropagation(); lps2BigClose(); }
+        }, true);
+        document.addEventListener('lp-state-loaded', function(){ setTimeout(lps2Render, 60); });
+        lps2Render();
+      })();
+      /* ==== LPSUP2-JS-END ==== */
       $('vc-close').addEventListener('click', ()=>{
         vcStopRec();
         panel.hidden = true;

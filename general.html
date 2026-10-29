@@ -4423,7 +4423,7 @@ body.pdf-brief .results{ margin-top:0 !important; }
         <!-- 次回面談は「その場で決める」が原則（宿題の期限だけ切って別れると連絡待ちに落ちる）。
              ★この div の閉じタグの直後が apply_lifeplan_meetlog.py の差し込み口（隠した次回の欄と、その後ろの閉じタグの直後）。見た目は CSS で並べる
              ★次回の予定（2026-10-06 ユーザー指示「次回のところはカレンダーと時間を表示して入力。ダッシュボードの形式に合わせてください」）。
-               営業ダッシュボードの活動の窓と同じ「日付（押すとカレンダー）・開始時刻・終了時刻（開始の2時間後が自動）・場所」。
+               営業カレンダーの活動の窓と同じ「日付（押すとカレンダー）・開始時刻・終了時刻（開始の2時間後が自動）・場所」。
                mn-next-date（隠した欄）は残す（概要・スライド・PDF・音声メモの保存が文字で読む。中身は「2026年10月13日（火）19:00〜21:00　場所」）。
                動きは apply_lifeplan_salesfeed.py（LPSF）が持っている -->
         <div class="mn-att"><label for="mn-attendees">ご出席</label><input type="text" id="mn-attendees" placeholder="例：○○様ご夫妻／担当 中谷" autocomplete="off">
@@ -13933,7 +13933,7 @@ function lpPdfProg(text, ratio){
          営業サポートの4つ目のタブ「記録と見比べ」（2026-10-16 ユーザー指示「ライフプラン　入力をそのまま意向把握の記録へ写す／
          ご高齢のお客様向けの画面／前回との違いの1枚。ライフプランツールに関しては、営業サポートなどの一番表に出てこないところに配置」）。
          部品は apply_lifeplan_support2.py が持っている（ここを手で直さない）
-         ① 意向把握の記録へ写す（管理画面か営業ダッシュボードを使っている端末だけ。写す前に全てを見せる）
+         ① 意向把握の記録へ写す（管理画面か営業カレンダーを使っている端末だけ。写す前に全てを見せる）
          ② 大きな字で一緒に見る（1画面に1つ・最後にご家族などの同席と次回の予定を残す）
          ③ 前回との違い（上書き保存のたびに前の形を資料の中に3つまで残す。暗号化した保存の中）
          ★担当者用の「提案の検討メモ」はどこにも入れない。お客様の画面・共有リンクでは作らない
@@ -13967,7 +13967,7 @@ function lpPdfProg(text, ratio){
       function lps2Staff(){
         try{ return !SHARED_VIEW && !customerMode && !document.body.classList.contains('customer-mode'); }catch(e){ return false; }
       }
-      /* 管理画面か営業ダッシュボードを使っている端末か（apply_lifeplan_salesfeed.py の lpsfOn と同じ判定） */
+      /* 管理画面か営業カレンダーを使っている端末か（apply_lifeplan_salesfeed.py の lpsfOn と同じ判定） */
       function lps2HubOn(){
         try{
           if(localStorage.getItem('officem.hokenSales.v1') !== null) return true;
@@ -18984,11 +18984,11 @@ function lpPdfProg(text, ratio){
     })();
 /* ==== MEETLOG-END ==== */
 /* ==== LPSF-BEGIN ===============================================================
-   ★営業ダッシュボードへ渡す控え（2026-10-06 ユーザー指示「ライフプランツールから入力しても、ダッシュボードのカレンダーに
+   ★営業カレンダーへ渡す控え（2026-10-06 ユーザー指示「ライフプランツールから入力しても、ダッシュボードのカレンダーに
      反映できるように。ここで入力し保存された内容、情報については顧客管理に自動反映。ご主人だけでなく、奥様や、子どもについても」）。
      部品は apply_lifeplan_salesfeed.py が持っている（ここを手で直さない）
-   ・同じ端末の営業ダッシュボード（office-m の hoken-sales）が読む。置き場所 localStorage 'officem.lpFeed.v1'
-   ・書くのは、営業ダッシュボードか管理画面を使っている端末だけ（どちらの記録も無い端末には何も書かない）
+   ・同じ端末の営業カレンダー（office-m の hoken-sales）が読む。置き場所 localStorage 'officem.lpFeed.v1'
+   ・書くのは、営業カレンダーか管理画面を使っている端末だけ（どちらの記録も無い端末には何も書かない）
    ・入れるのは、保存したお客様ごとの「ご家族のお名前・生年月日・年齢」「商談記録（日付・時刻・方法・場所・ご出席）」
      「次回の予定（日付・時刻・場所）」だけ。収入・資産・試算・メモは入れない。保存の中身を写す形なので、資料を消せば控えからも消える
    ・★保存前の資料（2026-10-06 ユーザー指摘「ライフプランツールで入力したが、ダッシュボードには反映されていない」）＝
@@ -19125,7 +19125,7 @@ function lpPdfProg(text, ratio){
       }catch(x){ return ''; }
     }
 
-    /* ---- 次回の予定（日付・開始時刻・終了時刻・場所）。営業ダッシュボードの活動の窓と同じ形 ---- */
+    /* ---- 次回の予定（日付・開始時刻・終了時刻・場所）。営業カレンダーの活動の窓と同じ形 ---- */
     var LPNX_DOW = '日月火水木金土';
     var lpnxEndTouched = false, lpnxOpen = null, lpnxView = null, lpnxTimer = null;
     var lpnxRaw = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
@@ -19200,7 +19200,7 @@ function lpPdfProg(text, ratio){
       if(lpnxEl('place')) lpnxEl('place').value = o.place || '';
       lpnxEndTouched = !!(o.end && o.end !== lpnxAdd2(o.start));
     }
-    /* 欄を直したとき：隠した欄に文字の形を入れて、音声メモの保存・資料・営業ダッシュボードへ */
+    /* 欄を直したとき：隠した欄に文字の形を入れて、音声メモの保存・資料・営業カレンダーへ */
     function lpnxCommit(){
       var h = $('mn-next-date');
       if(!h) return;
@@ -19437,7 +19437,7 @@ function lpPdfProg(text, ratio){
       /* 商談記録の欄に、ダッシュボードへ入ることを一行で添える（使っている端末だけ） */
       function note(){
         var p = $('lpsf-note'), on = lpsfOn(), hint = $('mn-nx-hint');
-        if(hint) hint.textContent = '終了時刻は、開始の2時間後が自動で入ります。' + (on ? '次回の予定は、この端末の営業ダッシュボードのカレンダーにも「プレゼン」の予定として入ります。' : '');
+        if(hint) hint.textContent = '終了時刻は、開始の2時間後が自動で入ります。' + (on ? '次回の予定は、この端末の営業カレンダーにも「プレゼン」の予定として入ります。' : '');
         if(!on){ if(p) p.remove(); return; }
         if(!p){
           var at = $('mr-for');
@@ -19449,8 +19449,8 @@ function lpPdfProg(text, ratio){
         var ready = false;
         try{ ready = lpvReady(); }catch(x){}
         p.textContent = ready
-          ? '商談記録と次回の予定は、この端末の営業ダッシュボードのカレンダーに入ります。保存したお客様（ご主人・奥様・お子さま）は、お客様の一覧にも入ります。'
-          : 'ログインすると、商談記録と次回の予定が、この端末の営業ダッシュボードのカレンダーに入ります（上の「保存・読み込み」から）。';
+          ? '商談記録と次回の予定は、この端末の営業カレンダーに入ります。保存したお客様（ご主人・奥様・お子さま）は、お客様の一覧にも入ります。'
+          : 'ログインすると、商談記録と次回の予定が、この端末の営業カレンダーに入ります（上の「保存・読み込み」から）。';
       }
       function after(kind){
         setTimeout(function(){
@@ -19462,16 +19462,16 @@ function lpPdfProg(text, ratio){
           if(!st || !lpsfOn()) return;
           var t = st.textContent || '', cur = '', ready = false;
           try{ cur = lpMeetCurName() || ''; ready = lpvReady(); }catch(x){}
-          if(t.indexOf('営業ダッシュボード') >= 0) return;
+          if(t.indexOf('営業カレンダー') >= 0) return;
           if(kind === 'add' && /記録しました/.test(t)){
-            if(nm) t += '「' + nm + '」の資料に残しました。営業ダッシュボードのカレンダーにも入ります。';
-            else if(!cur && ready) t += '営業ダッシュボードのカレンダーにも入ります。お客様の一覧には、資料を保存したときに入ります。';
-            else if(!ready) t += 'ログインすると、営業ダッシュボードのカレンダーにも入ります。';
+            if(nm) t += '「' + nm + '」の資料に残しました。営業カレンダーにも入ります。';
+            else if(!cur && ready) t += '営業カレンダーにも入ります。お客様の一覧には、資料を保存したときに入ります。';
+            else if(!ready) t += 'ログインすると、営業カレンダーにも入ります。';
             st.textContent = t;
           }
           if(kind === 'del' && /消しました/.test(t)){
-            if(cur) st.textContent = t + '営業ダッシュボードのカレンダーからも、上書き保存したときに消えます。';
-            else if(ready) st.textContent = t + '営業ダッシュボードのカレンダーからも消えます。';
+            if(cur) st.textContent = t + '営業カレンダーからも、上書き保存したときに消えます。';
+            else if(ready) st.textContent = t + '営業カレンダーからも消えます。';
           }
         }, 0);
       }

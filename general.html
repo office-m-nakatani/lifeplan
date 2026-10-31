@@ -16794,7 +16794,7 @@ function lpPdfProg(text, ratio){
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
-      var LPJ_SRC = 'vendor/lpjisho-data.js?v=ba9809d9';
+      var LPJ_SRC = 'vendor/lpjisho-data.js?v=be0e7904';
       var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null;
       var st = { q:'', cur:null, hist:[], back:null, loading:false, cbs:[], listTop:0 };
       var RKEY = 'lifeplan_jisho_recent_v1';
@@ -17094,26 +17094,36 @@ function lpPdfProg(text, ratio){
           return !!(a && /^[0-9a-f]{64}$/.test(String(a.h || '')) && +a.e > Date.now());
         }catch(e){ return false; }
       }
-      function mtBase(){
+      /* 保険ツールの場所（管理画面の場所から決める）。dir＝公開先のフォルダ名、local＝手元の正本の名前 */
+      function toolBase(dir, local){
         try{
           var h = JSON.parse(localStorage.getItem('officem.hokenHub.here.v1') || 'null');
           if(h && typeof h.url === 'string' && h.url.length < 600){
             var x = new URL(h.url, location.href);
             if((x.protocol === 'https:' || x.protocol === 'http:') && (x.origin === location.origin || x.hostname === 'office-m-nakatani.github.io')){
               var p = x.pathname, d = p.slice(0, p.lastIndexOf('/') + 1), f = p.slice(d.length);
-              if(/\/hoken-hub\/$/.test(d)) return x.origin + d.replace(/hoken-hub\/$/, 'hoken-mentor/');
-              if(/\.html?$/i.test(f) && !/^index\.html?$/i.test(f)) return x.origin + d + encodeURIComponent('保険AI師匠.html');
-              return x.origin + d + 'hoken-mentor/';
+              if(/\/hoken-hub\/$/.test(d)) return x.origin + d.replace(/hoken-hub\/$/, dir + '/');
+              if(/\.html?$/i.test(f) && !/^index\.html?$/i.test(f)) return x.origin + d + encodeURIComponent(local);
+              return x.origin + d + dir + '/';
             }
           }
         }catch(e){}
-        return MT_PUB;
+        return 'https://office-m-nakatani.github.io/office-m/' + dir + '/';
       }
+      function mtBase(){ return toolBase('hoken-mentor', '保険AI師匠.html'); }
+      /* 2026-10-31 師匠の関連の問い（kanren.json の words[言葉].q → 問いの文。データの mq）を2つまで足し、
+         保険ツールの辞書のページ（hoken-jisho の #w=<言葉>）へも開ける。どちらも担当者の端末だけ */
       function mtHTML(i){
         if(!mtStaff()) return '';
-        var q = W[i].w + 'とは？';
-        return secS('fa-comments', 'AI師匠に聞く') + '<div class="lpj-cards"><a class="lpj-card lpj-mt" href="' + esc(mtBase() + '#q=' + encodeURIComponent(q)) + '" target="_blank" rel="noopener">'
-          + '<b>「' + esc(q) + '」と聞く</b><span>AI師匠が別の画面で開き、この問いに答えます。</span></a></div>'
+        var w = W[i].w, qs = [w + 'とは？'];
+        (W[i].mq || []).forEach(function(q){ if(qs.length < 3 && qs.indexOf(q) < 0) qs.push(q); });
+        var base = mtBase();
+        return secS('fa-comments', 'AI師匠に聞く') + '<div class="lpj-cards">' + qs.map(function(q, n){
+            return '<a class="lpj-card lpj-mt" href="' + esc(base + '#q=' + encodeURIComponent(q)) + '" target="_blank" rel="noopener">'
+              + '<b>「' + esc(q) + '」と聞く</b><span>' + (n ? 'この言葉に関わる、AI師匠の答えがある問いです。' : 'AI師匠が別の画面で開き、この問いに答えます。') + '</span></a>';
+          }).join('')
+          + '<a class="lpj-card lpj-mt lpj-jp" href="' + esc(toolBase('hoken-jisho', '保険お金の言葉の辞書.html') + '#w=' + encodeURIComponent(w)) + '" target="_blank" rel="noopener">'
+          + '<b>保険ツールの辞書で開く</b><span>同じ言葉を、学習ツール・AI師匠の問いと一緒に見られます。</span></a></div>'
           + '<p class="lpj-note">保険ツール管理画面に入った端末だけに出ています。お客様に見せる画面には出ません。</p></div>';
       }
       function wDet(i){

@@ -1201,7 +1201,7 @@ body.tab-mode .acc-chev{ display:none; }
       /* ペア表示中は1枚目の「次へ」を隠す（2枚目の下の1つだけ残す。スマホの縦積みでも同じ） */
       body.tab-mode:not(.pdf-mode) #input-panel.pair-2 .acc.view-active:has(~ .acc.view-active) .sec-next{ display:none; }
     }
-/* LPJISHO-CSS-BEGIN 2026-10-12 右下の「辞書」（電子辞書の形）・相談チャットの断りを下へ・AI診断の見出しの横の「AIに相談する」。
+/* LPJISHO-CSS-BEGIN 2026-10-12 右下の「辞書」（電子辞書の形）・相談チャットの断りを下へ・AI診断の見出しの横の「AIに相談する」。2026-10-29 言葉の中身に「AI師匠に聞く」（担当者の端末だけ）。
    ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_jisho.py。ここを手で直さない */
 #nav-result button[data-nav-result="chat"]{ display:none !important; }
 .card-title.lpj-aititle{ flex-wrap:wrap; row-gap:8px; }
@@ -1278,6 +1278,7 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 .lpj-sec-h.c-m{ --sc:#d99a2b; --sb:#fdf1dc; --st:#6b4300; }
 .lpj-sec-h.c-k{ --sc:#d4607f; --sb:#fbe9f0; --st:#7e1f3f; }
 .lpj-sec-h.c-fx{ --sc:#8a68c8; --sb:#efe9fa; --st:#3f2a7a; }
+.lpj-sec-h.c-mt{ --sc:#2a8f8a; --sb:#e4f4f2; --st:#14514d; }
 .lpj-s-rel .lpj-chip{ border-color:#b9d6ee; background:#f7fbff; }
 .lpj-s-gk .lpj-card{ border-color:#bfe0c9; background:#fbfefc; }
 .lpj-s-gk .lpj-card:hover{ border-color:#1d5a33; background:#f1faf4; }
@@ -1285,6 +1286,8 @@ a.lpj-it, a.lpj-card{ text-decoration:none; box-sizing:border-box; }
 .lpj-s-m .lpj-card:hover{ border-color:#6b4300; background:#fff8ea; }
 .lpj-s-k .lpj-card{ border-color:#f0c4d1; background:#fffafc; }
 .lpj-s-k .lpj-card:hover{ border-color:#7e1f3f; background:#fff1f6; }
+.lpj-s-mt .lpj-card{ border-color:#b3dbd6; background:#f8fdfc; }
+.lpj-s-mt .lpj-card:hover{ border-color:#14514d; background:#eef8f6; }
 .lpj-fx{ background:#f5f1fc; border:1px solid #ddd0f2; border-radius:12px; padding:12px 14px; }
 .lpj-fx-b + .lpj-fx-b{ margin-top:14px; padding-top:12px; border-top:1px dashed #cdbfe9; }
 .lpj-fx-t{ font-size:.86rem; font-weight:800; color:#3f2a7a; margin:0 0 5px; line-height:1.5; }
@@ -16787,7 +16790,7 @@ function lpPdfProg(text, ratio){
       return { html:'何度もお手数をおかけしております。文字でのやり取りより、<b>直接おうかがいするほうが早く正確</b>です。よろしければ無料相談で承ります。', known:true, personal:false, reask:true, escalate:true };
     }
 
-    /* LPJISHO-JS-BEGIN 2026-10-12 お金の言葉の辞書（右下の「辞書」・電子辞書の形）と、AI診断の見出しの横の「AIに相談する」。
+    /* LPJISHO-JS-BEGIN 2026-10-12 お金の言葉の辞書（右下の「辞書」・電子辞書の形）と、AI診断の見出しの横の「AIに相談する」。2026-10-29 言葉の中身に「AI師匠に聞く」（担当者の端末だけ）。
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
@@ -17052,8 +17055,8 @@ function lpPdfProg(text, ratio){
         if(st.hist.length) h += '<button type="button" class="lpj-hb" data-lpj-hb><i class="fa-solid fa-arrow-left"></i> <span>「' + esc(curTitle(st.hist[st.hist.length - 1])) + '」へ戻る</span></button>';
         return h + '</div>';
       }
-      /* 節の見出しは色付きの札。色は節の種類で決める（関係する言葉＝青／学習ツール＝緑／学びの話題＝琥珀／発見＝桃／計算のしかた＝紫） */
-      var SECC = { 'fa-link':'rel', 'fa-scale-balanced':'rel', 'fa-graduation-cap':'gk', 'fa-list-ol':'gk', 'fa-lightbulb':'m', 'fa-chart-line':'k', 'fa-calculator':'fx' };
+      /* 節の見出しは色付きの札。色は節の種類で決める（関係する言葉＝青／学習ツール＝緑／学びの話題＝琥珀／発見＝桃／計算のしかた＝紫／AI師匠に聞く＝青緑） */
+      var SECC = { 'fa-link':'rel', 'fa-scale-balanced':'rel', 'fa-graduation-cap':'gk', 'fa-list-ol':'gk', 'fa-lightbulb':'m', 'fa-chart-line':'k', 'fa-calculator':'fx', 'fa-comments':'mt' };
       function secH(ic, t){ var c = SECC[ic]; return '<p class="lpj-sec-h' + (c ? ' c-' + c : '') + '"><i class="fa-solid ' + ic + '"></i> ' + esc(t) + '</p>'; }
       function secS(ic, t){ var c = SECC[ic]; return '<div class="lpj-sec' + (c ? ' lpj-s-' + c : '') + '">' + secH(ic, t); }
       function fxText(it){ return (it.fx || []).map(function(b){ return [b.t, b.f, b.n].join(' '); }).join(' '); }
@@ -17076,6 +17079,43 @@ function lpPdfProg(text, ratio){
       }
       function mCard(j){ var x = LPMANABI[j]; return '<button type="button" class="lpj-card" data-lpj-m="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(x.ippan)) + '</span></button>'; }
       function kCard(j){ var x = LPKIZUKI[j]; return '<button type="button" class="lpj-card" data-lpj-k="' + esc(x.k) + '"><b>' + esc(x.t) + '</b><span>' + esc(first(kLead(x))) + '</span></button>'; }
+      /* AI師匠に聞く（2026-10-29 kanren/SPEC.md 5章）：保険ツール管理画面に入った端末（担当者）だけに出す。
+         入った印＝officem.hokenHub.auth の h が64桁の16進で、e（期限）が今より先。
+         お客様に見せる画面（共有リンクで開いたとき・お客様モード）では出さない（営業サポートの lps2Staff と同じ見分け方）。
+         行き先＝同じ端末の管理画面の場所（officem.hokenHub.here.v1。管理画面が開いたときに書く）から決める：
+           …/hoken-hub/ → …/hoken-mentor/（公開版）／会社フォルダ（管理画面がフォルダの頭）→ その場所＋hoken-mentor/
+           手元の正本（保険ツール管理画面.html）→ 同じ場所の 保険AI師匠.html／無い・読めない → 公開の師匠
+         師匠は #q=<問い> で開くとその問いを送る（開き直しで二度送らないよう、師匠がアドレスから消す）。別の画面で開く */
+      var MT_PUB = 'https://office-m-nakatani.github.io/office-m/hoken-mentor/';
+      function mtStaff(){
+        try{
+          if(SHARED_VIEW || customerMode || document.body.classList.contains('customer-mode')) return false;
+          var a = JSON.parse(localStorage.getItem('officem.hokenHub.auth') || 'null');
+          return !!(a && /^[0-9a-f]{64}$/.test(String(a.h || '')) && +a.e > Date.now());
+        }catch(e){ return false; }
+      }
+      function mtBase(){
+        try{
+          var h = JSON.parse(localStorage.getItem('officem.hokenHub.here.v1') || 'null');
+          if(h && typeof h.url === 'string' && h.url.length < 600){
+            var x = new URL(h.url, location.href);
+            if((x.protocol === 'https:' || x.protocol === 'http:') && (x.origin === location.origin || x.hostname === 'office-m-nakatani.github.io')){
+              var p = x.pathname, d = p.slice(0, p.lastIndexOf('/') + 1), f = p.slice(d.length);
+              if(/\/hoken-hub\/$/.test(d)) return x.origin + d.replace(/hoken-hub\/$/, 'hoken-mentor/');
+              if(/\.html?$/i.test(f) && !/^index\.html?$/i.test(f)) return x.origin + d + encodeURIComponent('保険AI師匠.html');
+              return x.origin + d + 'hoken-mentor/';
+            }
+          }
+        }catch(e){}
+        return MT_PUB;
+      }
+      function mtHTML(i){
+        if(!mtStaff()) return '';
+        var q = W[i].w + 'とは？';
+        return secS('fa-comments', 'AI師匠に聞く') + '<div class="lpj-cards"><a class="lpj-card lpj-mt" href="' + esc(mtBase() + '#q=' + encodeURIComponent(q)) + '" target="_blank" rel="noopener">'
+          + '<b>「' + esc(q) + '」と聞く</b><span>AI師匠が別の画面で開き、この問いに答えます。</span></a></div>'
+          + '<p class="lpj-note">保険ツール管理画面に入った端末だけに出ています。お客様に見せる画面には出ません。</p></div>';
+      }
       function wDet(i){
         var it = W[i];
         /* 別の呼び名のうち、ひらがなだけのもの（読み）は引くためのもの。画面には出さない */
@@ -17088,6 +17128,7 @@ function lpPdfProg(text, ratio){
         if(rel.length) h += secS('fa-link', '関係する言葉') + '<div class="lpj-chips">' + rel.map(chip).join('') + '</div></div>';
         var gl = gOfWord(i, 3);
         if(gl.length) h += secS('fa-graduation-cap', '学習ツールで詳しく') + '<div class="lpj-cards">' + gl.map(gCard).join('') + '</div><p class="lpj-note">保険ツールの学習資料が、別の画面で開きます。合言葉を聞かれたときは、保険ツール管理画面と同じものを入れてください。</p></div>';
+        h += mtHTML(i);
         var terms = [it.w].concat(it.al || []).map(nz).filter(function(z){ return z.length >= 2; });
         /* 中身のカードは、題・キーワード・質問で当たるものだけ（本文で触れているだけのものは、引いた一覧にだけ出す） */
         var strong = function(a){ return a[0] >= 24; };

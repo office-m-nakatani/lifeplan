@@ -4313,11 +4313,11 @@ body.pdf-brief .results{ margin-top:0 !important; }
 
   <!-- チャットへのショートカット（画面右下に常駐。チャット画面表示中は隠す） -->
   <button type="button" id="chat-fab" class="chat-fab no-print" hidden aria-haspopup="dialog" aria-controls="lpj-dlg"><i class="fa-solid fa-book"></i> 辞書</button>
-  <!-- LPJISHO-DLG-BEGIN 2026-10-12 お金の言葉の辞書（右下の「辞書」から開く）。★正本は katatsugi の hoken-newtools-src/apply_lifeplan_jisho.py -->
+  <!-- LPJISHO-DLG-BEGIN 2026-10-12 金融の言葉辞書（右下の「辞書」から開く）。★正本は katatsugi の hoken-newtools-src/apply_lifeplan_jisho.py -->
   <div class="lpj-ov no-print" id="lpj-dlg" hidden>
     <div class="lpj-box" role="dialog" aria-modal="true" aria-labelledby="lpj-ttl">
       <div class="lpj-head">
-        <h2 class="lpj-ttl" id="lpj-ttl"><i class="fa-solid fa-book"></i> お金の言葉の辞書</h2>
+        <h2 class="lpj-ttl" id="lpj-ttl"><i class="fa-solid fa-book"></i> 金融の言葉辞書</h2>
         <button type="button" class="lpj-x" id="lpj-x" aria-label="辞書を閉じる">&times;</button>
       </div>
       <div class="lpj-find"><input type="search" id="lpj-q" placeholder="言葉を入れて引く（例：一時所得・UA値）" autocomplete="off" aria-label="辞書で引く言葉" aria-controls="lpj-body"></div>
@@ -16790,11 +16790,11 @@ function lpPdfProg(text, ratio){
       return { html:'何度もお手数をおかけしております。文字でのやり取りより、<b>直接おうかがいするほうが早く正確</b>です。よろしければ無料相談で承ります。', known:true, personal:false, reask:true, escalate:true };
     }
 
-    /* LPJISHO-JS-BEGIN 2026-10-12 お金の言葉の辞書（右下の「辞書」・電子辞書の形）と、AI診断の見出しの横の「AIに相談する」。2026-10-29 言葉の中身に「AI師匠に聞く」（担当者の端末だけ）。
+    /* LPJISHO-JS-BEGIN 2026-10-12 金融の言葉辞書（右下の「辞書」・電子辞書の形）と、AI診断の見出しの横の「AIに相談する」。2026-10-29 言葉の中身に「AI師匠に聞く」（担当者の端末だけ）。
        言葉のデータは vendor/lpjisho-data.js（開いたときに読む。ページが読み終わって少しあとに先読み）。
        ★正本は katatsugi の hoken-newtools-src/lpjisho/*.json と apply_lifeplan_jisho.py。ここを手で直さない */
     (function(){
-      var LPJ_SRC = 'vendor/lpjisho-data.js?v=89aca3e8';
+      var LPJ_SRC = 'vendor/lpjisho-data.js?v=176f2257';
       var D = null, W = [], GK = [], GIDX = [], CATN = {}, IDX = null, BYW = {}, TRIE = null, MIDX = null, KIDX = null;
       var st = { q:'', cur:null, hist:[], back:null, loading:false, cbs:[], listTop:0 };
       var RKEY = 'lifeplan_jisho_recent_v1';

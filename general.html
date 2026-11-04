@@ -2819,6 +2819,490 @@ body.pdf-brief .results{ margin-top:0 !important; }
 </style>
 </head>
 <body>
+<!-- OMGATE-BEGIN ★IDとパスワードの扉。正本は hoken-gate-src/gate.html。ページ側を直接編集しないこと（apply_gate.py で入れ直すと消える） -->
+<style>
+/* ★中身は「開いていない限り隠す」＝ fail-closed。JavaScript が切られていても
+   中身は出ない（class を足して隠す形にすると、JS 無しで素通りしてしまう） */
+html:not(.omgate-open) body > *:not(#omgate){display:none !important}
+html:not(.omgate-open),html:not(.omgate-open) body{overflow:hidden !important}
+#omgate{position:fixed; inset:0; z-index:2147483000; display:grid; place-items:center; padding:22px;
+  background:linear-gradient(168deg,#f2f7fd 0%,#fdfbf7 54%,#f1f6fc 100%);
+  font-family:'Zen Kaku Gothic New',system-ui,-apple-system,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  color:#2b3646; line-height:1.95; letter-spacing:.015em; -webkit-font-smoothing:antialiased}
+/* ★display を書くので [hidden] とセットで書く（この案件で4回目の詳細度事故） */
+#omgate[hidden]{display:none !important}
+#omgate .og-card{width:min(100%,432px); background:#fff; border:1px solid #e7edf5; border-radius:20px;
+  padding:34px 30px 28px; text-align:center; box-shadow:0 14px 44px rgba(43,54,70,.10)}
+#omgate .og-ico{width:56px; height:56px; margin:0 auto 16px; border-radius:50%; background:#eef4ff;
+  display:grid; place-items:center; color:#2f63c8}
+#omgate .og-ico svg{width:26px; height:26px}
+#omgate h1{margin:0; font-size:18px; font-weight:800; letter-spacing:.04em; line-height:1.6}
+#omgate .og-lead{margin:8px 0 20px; font-size:13px; color:#5d6b7c; line-height:1.9}
+#omgate .og-lab{display:block; text-align:left; font-size:13px; font-weight:700; color:#33465c; margin:0 0 4px}
+#omgate input#omgate-i,#omgate input[type=password]{width:100%; font-family:inherit; font-size:17px; font-weight:500; letter-spacing:.06em;
+  color:#2b3646; background:#fbfdff; border:1px solid #dae3ee; border-radius:13px; padding:14px 16px; outline:none;
+  text-align:center; transition:border-color .18s, box-shadow .18s; min-height:50px; box-sizing:border-box}
+#omgate input#omgate-i{margin-bottom:12px; font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}
+#omgate input#omgate-i:focus,#omgate input[type=password]:focus{border-color:#bed3f7; background:#fff; box-shadow:0 0 0 4px #eef4ff}
+#omgate .og-err{min-height:24px; font-size:13px; color:#b9645a; margin-top:8px}
+#omgate .og-keep{display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px;
+  color:#5d6b7c; margin:2px 0 16px; cursor:pointer}
+#omgate .og-keep input{width:18px; height:18px; accent-color:#0b5cff; cursor:pointer}
+#omgate button[type=submit]{width:100%; font-family:inherit; font-weight:700; font-size:16px; letter-spacing:.08em;
+  padding:15px; border:0; border-radius:14px; color:#fff; cursor:pointer;
+  background:linear-gradient(135deg,#2f74ff 0%,#0b5cff 58%,#0847c9 100%);
+  box-shadow:0 8px 22px rgba(11,92,255,.20); transition:transform .18s, box-shadow .18s, filter .18s}
+#omgate button[type=submit]:hover{filter:brightness(1.04); transform:translateY(-1px)}
+#omgate button[type=submit][disabled]{opacity:.7; cursor:default}
+#omgate .og-cancel{all:unset; box-sizing:border-box; display:block; width:100%; margin:10px 0 0; min-height:44px; line-height:44px;
+  text-align:center; border-radius:14px; border:1px solid #dae3ee; background:#fff; color:#33465c; font-weight:700; font-size:14.5px; cursor:pointer}
+#omgate .og-cancel[hidden]{display:none !important}
+#omgate .og-cancel:focus-visible{outline:2px solid #2f63c8; outline-offset:2px}
+#omgate .og-note{margin:20px 0 0; padding-top:16px; border-top:1px solid #eef1f6;
+  font-size:12px; color:#7d8b9b; line-height:1.9; text-align:left}
+#omgate .og-note a{color:#2f63c8; font-weight:700}
+#omgate .og-note b{color:#5d6b7c}
+@media(max-width:420px){ #omgate .og-card{padding:28px 20px 24px} }
+@media(prefers-reduced-motion:reduce){ #omgate *{transition:none !important} }
+/* お客様が共有リンクで開いたとき（② の鍵で開いたとき）は、営業向けの部分を隠す（2026-10-04）。
+   面談の最初のひと言・ページ内の目次・30秒の核心・現場あるある・逆転劇場・明日の3つの問い。
+   解説の部分（もとの知識の節）とまとめだけが残る */
+html.omgate-cust .tot-first,html.omgate-cust .tot-nav,html.omgate-cust #tot-core,html.omgate-cust .tot-core,
+html.omgate-cust .tot-sec,html.omgate-cust #toi,html.omgate-cust .tot-toi,html.omgate-cust .tot-modal{display:none !important}
+html.omgate-cust .tot-pair{grid-template-columns:minmax(0,1fr) !important}
+</style>
+<div id="omgate" role="dialog" aria-modal="true" aria-labelledby="omgate-h">
+  <div class="og-card">
+    <div class="og-ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="10.5" width="16" height="10.5" rx="2.6"/><path d="M8 10.5V7.4a4 4 0 0 1 8 0v3.1"/><circle cx="12" cy="15.7" r="1.15"/>
+      </svg>
+    </div>
+    <h1 id="omgate-h">ライフプランツール</h1>
+    <p class="og-lead">ご契約の代理店さま専用のツールです。<br>お渡ししているIDとパスワードを入れてください。</p>
+    <form id="omgate-f" autocomplete="off">
+      <label class="og-lab" for="omgate-i">ID</label>
+      <input type="text" id="omgate-i" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="254">
+      <label class="og-lab" for="omgate-p">パスワード</label>
+      <input type="password" id="omgate-p" autocomplete="current-password" maxlength="64">
+      <div class="og-err" id="omgate-e" role="alert"></div>
+      <label class="og-keep"><input type="checkbox" id="omgate-k" checked>この端末では30日間、次回から省略する</label>
+      <button type="submit">開く</button>
+      <button type="button" class="og-cancel" hidden>やめて、前の画面に戻る</button>
+    </form>
+    <div class="og-fg-host"></div>
+    <p class="og-note">
+      <b>保険ツール管理画面で入った端末では、この画面は出ません。</b><br>
+      <a href="https://office-m-nakatani.github.io/office-m/hoken-hub/">保険ツール管理画面をひらく</a><br><br>
+      お客様にお送りする資料（共有リンク）は、IDとパスワードなしで開けます。<br>
+      IDとパスワードが分からないときは、社内の管理者（社長・上長）にお尋ねください。
+    </p>
+  </div>
+</div>
+<script>
+/* OMLG-BEGIN ログインの回数制限と、パスワードの再設定のメール（2026-11-04）。
+   正本は hoken-gate-src/loginguard.js。写す先（管理画面・営業カレンダー・扉 gate.html）の中を直接直さない
+   （python3 hoken-gate-src/apply_loginguard.py で写し直す）。
+
+   ユーザー指示（2026-11-04）「ログイン失敗時の回数制限を作ってください。３回まで。できなかった際や、
+   IDパスワードを忘れた場合は、登録済みのメールアドレスに再設定のメールを送って再ログインできるようにしてください」
+
+   ・入れ間違いは3回まで。3回続けて違うと、この端末では30分入れない（置き場所は管理画面・営業カレンダー・扉・
+     ライフプランで同じ＝どの入口で間違えても数える）。入れたら数え直す
+   ・メールアドレスのIDは、Firebase Authentication（無料の枠）で確かめる。忘れたときは、その仕組みが
+     登録済みのアドレスへ再設定のメールを送る（文面と送り元は Google）。新しいパスワードで入れる
+     ★行き先の鍵（ウェブAPIキー）は下の FB_KEY の1行。空のあいだは今までどおり（端末の中の印で確かめる）
+   ・再設定のメールの「続ける」から戻ると、この端末の待ち時間を外す（送ったときの印 RESET と照らす）
+
+   ★これはブラウザの中で数える仕組み。閲覧データを消せば数え直しになる（Firebase 側にも別に回数の制限がある）。
+     「絶対に破られません」と説明しない */
+var OMLG = window.OMLG || (function () {   /* 同じページに2回入っても（扉と営業カレンダー）、1つだけ動かす */
+  var FAIL = 'officem.hokenHub.lockFail.v1';     /* 前からの置き場所（名簿のログインと同じ） */
+  var RESET = 'officem.hokenHub.pwreset.v1';
+  var MAX = 3, LOCK_MIN = 30;
+  var FB_KEY = '';   /* OMFBAUTHKEY */
+  var FB_BASE = 'https://identitytoolkit.googleapis.com/v1/';
+  function rd(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function wr(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function fails() {
+    var o = rd(FAIL);
+    o = (o && typeof o.n === 'number') ? o : { n: 0, until: 0 };
+    if (o.until && o.until <= Date.now()) { o = { n: 0, until: 0 }; try { localStorage.removeItem(FAIL); } catch (e) {} }   /* 待ち時間が過ぎたら数え直す */
+    return o;
+  }
+  function wait() { return Math.max(0, Math.ceil(((fails().until || 0) - Date.now()) / 1000)); }
+  function add() {
+    var o = fails(); o.n += 1;
+    if (o.n >= MAX) o.until = Date.now() + LOCK_MIN * 60000;
+    wr(FAIL, o);
+    return o;
+  }
+  function reset() { try { localStorage.removeItem(FAIL); } catch (e) {} }
+  function left() { return Math.max(0, MAX - fails().n); }
+  function waitText(s) { return s >= 60 ? Math.ceil(s / 60) + '分' : s + '秒'; }
+  function lockMsg() {
+    return 'IDかパスワードを' + MAX + '回続けて間違えたので、この端末では、あと' + waitText(wait()) + '入れません。'
+      + (fbOn() ? 'パスワードを忘れたときは、下の「IDかパスワードを忘れたとき」から再設定のメールを送れます。'
+                : 'パスワードを忘れたときは、下の「IDかパスワードを忘れたとき」をご覧ください。');
+  }
+  function failMsg(who) {
+    if (wait() > 0) return lockMsg();
+    var n = left();
+    return 'IDかパスワードが違います。' + (n > 0 ? 'あと' + n + '回違うと、この端末では' + LOCK_MIN + '分入れなくなります。' : '')
+      + (who || '');
+  }
+  function isMail(id) { return /^[0-9a-z._%+\-]{1,64}@[0-9a-z.\-]{1,190}\.[a-z]{2,}$/.test(String(id || '')); }
+  function fbOn() { return !!FB_KEY; }
+  function post(path, body) {
+    return fetch(FB_BASE + path + '?key=' + encodeURIComponent(FB_KEY), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().then(function (j) { return { ok: r.ok, j: j || {} }; }, function () { return { ok: r.ok, j: {} }; });
+    });
+  }
+  function codeOf(j) { var m = j && j.error && j.error.message; return String(m || '').split(/[\s:]/)[0]; }
+  /* メールアドレスとパスワードを Firebase で確かめる。{ok, uid} か {ok:false, code}（net＝繋がらない） */
+  function signIn(email, pw) {
+    if (!fbOn()) return Promise.resolve({ ok: false, code: 'off' });
+    return post('accounts:signInWithPassword', { email: email, password: pw, returnSecureToken: true }).then(function (r) {
+      if (r.ok && r.j.localId) return { ok: true, uid: String(r.j.localId) };
+      return { ok: false, code: codeOf(r.j) || 'bad' };
+    }, function () { return { ok: false, code: 'net' }; });
+  }
+  /* 再設定のメールを送る。戻り先（続ける）に印を付け、戻ってきたら待ち時間を外す */
+  function sendReset(email) {
+    if (!fbOn()) return Promise.resolve({ ok: false, code: 'off' });
+    var n = '', b = new Uint8Array(12), i;
+    try { crypto.getRandomValues(b); } catch (e) { for (i = 0; i < 12; i++) b[i] = Math.floor(Math.random() * 256); }
+    for (i = 0; i < 12; i++) n += ('0' + b[i].toString(16)).slice(-2);
+    wr(RESET, { n: n, e: Date.now() + 3 * 86400000 });
+    var back = location.origin + location.pathname + '?pwreset=' + n;
+    var body = { requestType: 'PASSWORD_RESET', email: email, continueUrl: back };
+    return post('accounts:sendOobCode', body).then(function (r) {
+      if (r.ok) return { ok: true };
+      var c = codeOf(r.j);
+      if (/UNAUTHORIZED|DOMAIN|CONTINUE_URI/.test(c)) {   /* 戻り先の場所が Firebase に登録されていないときは、戻り先なしで送る */
+        return post('accounts:sendOobCode', { requestType: 'PASSWORD_RESET', email: email }).then(function (r2) {
+          return r2.ok ? { ok: true, noBack: true } : { ok: false, code: codeOf(r2.j) || 'bad' };
+        });
+      }
+      /* 登録の無いアドレスでも、知らせ方は同じ（どのアドレスが登録済みかを外から見分けられないように） */
+      if (c === 'EMAIL_NOT_FOUND') return { ok: true };
+      return { ok: false, code: c || 'bad' };
+    }, function () { return { ok: false, code: 'net' }; });
+  }
+  /* 再設定のメールの「続ける」から戻ってきたとき。印が合えば待ち時間を外して true */
+  function takeReset() {
+    var m = /[?&]pwreset=([0-9a-f]{24})/.exec(location.search || '');
+    if (!m) return false;
+    try { history.replaceState(null, '', location.pathname + location.search.replace(/([?&])pwreset=[0-9a-f]{24}&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) {}
+    var o = rd(RESET);
+    if (!(o && o.n === m[1] && o.e > Date.now())) return false;
+    try { localStorage.removeItem(RESET); } catch (e) {}
+    reset();
+    return true;
+  }
+  var resetBack = takeReset();
+  /* 入れたIDとパスワードを確かめる。localOk(id, pw) は端末の中の印で確かめる関数（真偽か Promise）。
+     メールアドレスのIDで、Firebase の鍵があるときは Firebase で確かめる（再設定したあとの新しいパスワードで入れるように）。
+     結果＝{ok, fb, code}。数えるのはこの関数ではなく、呼ぶ側（記録の残し方が画面ごとに違うため） */
+  function check(id, pw, localOk) {
+    if (fbOn() && isMail(id)) {
+      return signIn(id, pw).then(function (r) {
+        if (r.code !== 'net') return { ok: r.ok, fb: r.ok, code: r.code };
+        /* 繋がらないときだけ、端末の中の印で確かめる（ページが開けていれば、ふつうは繋がっている） */
+        return Promise.resolve(localOk(id, pw)).then(function (ok) { return { ok: !!ok, fb: false, code: ok ? '' : 'net' }; });
+      });
+    }
+    return Promise.resolve(localOk(id, pw)).then(function (ok) { return { ok: !!ok, fb: false, code: ok ? '' : 'bad' }; });
+  }
+  function netMsg(code) {
+    if (code === 'net') return 'インターネットに繋がっていないので、確かめられませんでした。繋がってから、もう一度お試しください。';
+    if (code === 'USER_DISABLED') return 'このIDは止められています。管理者にお尋ねください。';
+    if (code === 'TOO_MANY_ATTEMPTS_TRY_LATER') return '入れ間違いが続いたので、しばらく入れません。パスワードを忘れたときは、再設定のメールを送ってください。';
+    return '';
+  }
+  /* ---- 「IDかパスワードを忘れたとき」の欄 ---- */
+  var CSS = '.omlg-fg{margin:14px 0 0;text-align:left}'
+    + '.omlg-fg>button.omlg-open{all:unset;cursor:pointer;display:inline-flex;align-items:center;min-height:44px;font-size:13.5px;font-weight:700;color:#2f63c8;text-decoration:underline;text-underline-offset:3px}'
+    + '.omlg-fg>button.omlg-open:focus-visible{outline:2px solid #2f63c8;outline-offset:2px;border-radius:4px}'
+    + '.omlg-box{margin:6px 0 0;padding:14px 14px 12px;background:#f6f9fd;border:1px solid #dde7f3;border-radius:12px;font-size:13.5px;line-height:1.85;color:#33465c}'
+    + '.omlg-box[hidden]{display:none !important}'
+    + '.omlg-box p{margin:0 0 8px}'
+    + '.omlg-box label{display:block;font-weight:700;font-size:13px;margin:4px 0 4px}'
+    + '.omlg-box input{width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:16px;padding:8px 12px;border:1px solid #cdd9e7;border-radius:10px;background:#fff;color:#2b3646}'
+    + '.omlg-box button.omlg-send{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;min-height:44px;line-height:44px;margin:10px 0 0;border-radius:10px;background:#2f63c8;color:#fff;font-weight:700;font-size:14.5px}'
+    + '.omlg-box button.omlg-send[disabled]{opacity:.6;cursor:default}'
+    + '.omlg-box .omlg-st{margin:8px 0 0;min-height:1.6em;font-weight:700}'
+    + '.omlg-box .omlg-st.ok{color:#256b43}.omlg-box .omlg-st.ng{color:#b3261e}'
+    + '.omlg-box .omlg-small{font-size:12.5px;color:#5d6b7c;margin:8px 0 0}'
+    + '.omlg-back{margin:0 0 12px;padding:10px 12px;background:#eef7f0;border:1px solid #cfe6d6;border-radius:10px;color:#256b43;font-size:13.5px;font-weight:700;text-align:left;line-height:1.8}';
+  function css() {
+    if (document.getElementById('omlg-css')) return;
+    var s = document.createElement('style'); s.id = 'omlg-css'; s.textContent = CSS;
+    (document.head || document.documentElement).appendChild(s);
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* host（ログインの欄の中）に「忘れたとき」を付ける。opt.idInput＝IDの欄（メールアドレスなら初めから入れる）・
+     opt.who＝メールの仕組みが無いときの尋ね先（既定は「管理者（社長・上長）」）・opt.roster＝名簿で一人ずつのIDの会社 */
+  var seq = 0;
+  function forgot(host, opt) {
+    if (!host || host.querySelector('.omlg-fg')) return;
+    opt = opt || {}; css();
+    var sq = ++seq, bid = 'omlg-box' + sq, mid = 'omlg-mail' + sq;
+    var who = opt.who || '管理者（社長・上長）';
+    var w = document.createElement('div'); w.className = 'omlg-fg';
+    var body;
+    if (!fbOn()) {
+      body = '<p>再設定のメールは、いま準備中です。IDかパスワードが分からないときは、' + esc(who) + 'にお尋ねください。</p>'
+        + (opt.roster ? '<p class="omlg-small">名簿のIDは、社長が新しいパスワードを発行できます（コンプライアンスの「名簿と権限」）。</p>' : '');
+    } else {
+      body = '<p>登録済みのメールアドレスを入れてください。パスワードの再設定のメールを送ります。メールのリンクから新しいパスワードを決めて、この画面に戻って入ってください。</p>'
+        + '<label for="' + mid + '">メールアドレス</label>'
+        + '<input type="email" id="' + mid + '" class="omlg-mail" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="254">'
+        + '<button type="button" class="omlg-send">再設定のメールを送る</button>'
+        + '<div class="omlg-st" role="status" aria-live="polite"></div>'
+        + '<p class="omlg-small">メールが届かないときは、迷惑メールの箱もご覧ください。数字のID（メールアドレスでないID）のパスワードは、' + esc(who) + 'にお尋ねください。</p>';
+    }
+    w.innerHTML = '<button type="button" class="omlg-open" aria-expanded="false" aria-controls="' + bid + '">IDかパスワードを忘れたとき</button>'
+      + '<div class="omlg-box" id="' + bid + '" hidden>' + body + '</div>';
+    host.appendChild(w);
+    var ob = w.querySelector('.omlg-open'), box = w.querySelector('.omlg-box');
+    ob.addEventListener('click', function () {
+      var open = box.hidden; box.hidden = !open; ob.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        var mi = box.querySelector('.omlg-mail'), idv = opt.idInput ? String(opt.idInput.value || '').trim().toLowerCase() : '';
+        if (mi) { if (!mi.value && isMail(idv)) mi.value = idv; try { mi.focus(); } catch (e) {} }
+      }
+    });
+    var send = box.querySelector('.omlg-send');
+    if (send) send.addEventListener('click', function () {
+      var mi = box.querySelector('.omlg-mail'), st = box.querySelector('.omlg-st');
+      var m = String(mi.value || '').replace(/[\s　]/g, '').toLowerCase();
+      st.className = 'omlg-st';
+      if (!isMail(m)) { st.className = 'omlg-st ng'; st.textContent = 'メールアドレスの形で入れてください。'; mi.focus(); return; }
+      send.disabled = true; st.textContent = '送っています…';
+      sendReset(m).then(function (r) {
+        send.disabled = false;
+        if (r.ok) {
+          st.className = 'omlg-st ok';
+          st.textContent = '登録済みのメールアドレスなら、再設定のメールが届きます。届いたメールのリンクから新しいパスワードを決めてください。';
+          if (opt.onSent) try { opt.onSent(m); } catch (e) {}
+        } else {
+          st.className = 'omlg-st ng';
+          st.textContent = r.code === 'net' ? 'インターネットに繋がっていないので、送れませんでした。' : '送れませんでした。時間をおいてもう一度お試しいただくか、' + who + 'にお尋ねください。';
+        }
+      });
+    });
+  }
+  /* 再設定から戻ってきたときの一言（ログインの欄の頭に） */
+  function backNote(host) {
+    if (!resetBack || !host || host.querySelector('.omlg-back')) return;
+    css();
+    var p = document.createElement('p'); p.className = 'omlg-back'; p.setAttribute('role', 'status');
+    p.textContent = 'パスワードを再設定しました。新しいパスワードで入ってください。';
+    host.insertBefore(p, host.firstChild);
+  }
+  return { MAX: MAX, LOCK_MIN: LOCK_MIN, fails: fails, wait: wait, add: add, reset: reset, left: left, waitText: waitText,
+    lockMsg: lockMsg, failMsg: failMsg, isMail: isMail, fbOn: fbOn, signIn: signIn, sendReset: sendReset, check: check,
+    netMsg: netMsg, forgot: forgot, backNote: backNote, resetBack: function () { return resetBack; } };
+})();
+/* OMLG-END */
+</script>
+<script>
+/* ============================================================
+   IDとパスワードの扉（2026-09-11 ユーザー指示。2026-10-26 から合言葉1つではなくIDとパスワードの2つ）
+   「URLをコピーして送付されたら情報が外に出てしまう。お客様専用の
+     パスワードを入力してこのページに行った人でないと見れないように」
+
+   ★これはブラウザの中だけで確かめるしくみで、堅牢な認証ではない。
+     URLを受け取っただけの人をそっと止めるための扉（利用規約 第6条5項に
+     明記してあるとおり）。この扉を「暗号化」「本当のロック」と説明しないこと。
+
+   開いてよいのは次の3つ。どれも同じオリジン（office-m-nakatani.github.io）
+   の中だけで完結する。
+     ① 管理画面（hoken-hub）でログインした端末
+        localStorage 'officem.hokenHub.auth'
+        ★ハッシュの中身は照合しない。代理店ごとの専用管理画面
+          （make_agency.py が作る）はIDとパスワードが違うので、
+          「どこかの管理画面が通した」ことだけを見る
+        ★この扉で「次回から省略」を外して入った担当者は sessionStorage 'officem.hokenGate.staff'
+          （タブを閉じると消える）。2026-10-29 まではお客様の共有リンクと同じ鍵を書いていたので、
+          そのタブで次のページを開くとお客様向けの形になっていた。鍵を分けた
+     ② 共有リンクの枠の中（管理画面が iframe で開いたとき）
+        sessionStorage 'officem.hokenGate.share'
+        ★sessionStorage はタブ単位。枠の中のURLをコピーして
+          別の人に送っても、その人のタブには無いので開かない
+     ③ 体験版（3日間）が配った鍵。ページを名指しで許す
+        localStorage 'officem.hokenGate.taiken' = {e:期限, ids:[…]}
+   ============================================================ */
+(function () {
+  var R = document.documentElement;
+  var AUTH = 'officem.hokenHub.auth';
+  var SHARE = 'officem.hokenGate.share';
+  var STAFF = 'officem.hokenGate.staff';
+  var TRIAL = 'officem.hokenGate.taiken';
+  var SALT = 'officem-hoken-hub-2026|';
+  /* 受け付ける印＝sha256(SALT + 'id:' + ID + '|pw:' + パスワード)（平文はどのファイルにも書かない）。
+     ★管理画面の PASS_HASHES と同じもの */
+  var OKH = ['edca5a0720eb230f3f1d4d319dd86c9dc79bdc9aea9f681c5557a4eedebd388b', 'f0a4f27c4bda1b2ad31a1a2bdd7718b4f96ad0c8bb98b379c5352caedb746f6d'];
+  var DAYS = 30;
+
+  function read(store, k) { try { return JSON.parse(store.getItem(k) || 'null'); } catch (e) { return null; } }
+  function live(o) { return !!(o && typeof o.e === 'number' && o.e > Date.now()); }
+  function pageId() {
+    var p = String(location.pathname).replace(/\/+$/, '');
+    return p.slice(p.lastIndexOf('/') + 1).replace(/\.html$/i, '');
+  }
+  /* どの鍵で開いたかを返す（'auth'＝管理画面・'staff'＝この扉で入った担当者（次回から省略なし）・'share'＝共有リンク・'trial'＝体験版・''＝開けない） */
+  function allowed() {
+    /* OMGATE-EXTRA-BEGIN ライフプラン（2026-11-04）：お客様の共有リンクと体験版のリンクは扉の外 */
+    try { var lph = String(location.hash || ''); if (lph.indexOf('#share=') === 0 || lph.indexOf('#open') === 0) return 'lp'; } catch (e) {}
+    try { var lpu = JSON.parse(sessionStorage.getItem('lifeplan_ichijo_unlock') || 'null'); if (lpu && lpu.code && lpu.at && Date.now() - lpu.at <= 1800000) return 'lp'; } catch (e) {}
+    try { if (/[?&]trial=[^&]/.test(String(location.search || ''))) return 'lp'; } catch (e) {}
+    /* OMGATE-EXTRA-END */
+    try {
+      var a = read(localStorage, AUTH);
+      if (live(a) && /^[0-9a-f]{64}$/.test(String(a.h || ''))) return 'auth';
+    } catch (e) {}
+    try { if (live(read(sessionStorage, STAFF))) return 'staff'; } catch (e) {}
+    try { if (live(read(sessionStorage, SHARE))) return 'share'; } catch (e) {}
+    try {
+      var t = read(localStorage, TRIAL);
+      if (live(t) && t.ids && t.ids.join && t.ids.indexOf(pageId()) >= 0) return 'trial';
+    } catch (e) {}
+    return '';
+  }
+  function open_() {
+    R.className += ' omgate-open';
+    var g = document.getElementById('omgate');
+    if (g) g.hidden = true;
+  }
+
+  var how = allowed();
+  if (how) {
+    /* 共有リンク（お客様）で開いたときは、営業向けの部分を隠す印を付ける */
+    if (how === 'share') R.className += ' omgate-cust';
+    open_();
+    if (how !== 'lp') return;
+    /* 'lp'＝ライフプランをお客様の共有リンクで開いたとき。担当者の画面へ切り替えるときに、あとから聞けるよう
+       欄の仕掛けだけは用意しておく（下の window.OMGATE.ask） */
+  }
+
+  var f = document.getElementById('omgate-f');
+  var inp = document.getElementById('omgate-p');
+  var idIn = document.getElementById('omgate-i');
+  var err = document.getElementById('omgate-e');
+  var keep = document.getElementById('omgate-k');
+
+  /* crypto.subtle は https と localhost でしか使えない。無い環境では
+     IDとパスワードを確かめられないので、入力欄を出さずに管理画面へ案内する */
+  var canHash = !!(window.crypto && window.crypto.subtle && window.TextEncoder);
+  if (!canHash) {
+    if (f) f.innerHTML = '<div class="og-err">この画面ではIDとパスワードを確認できません。'
+      + 'お手数ですが、管理画面から開いてください。</div>';
+    return;
+  }
+
+  function sha256(str) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (buf) {
+      var b = new Uint8Array(buf), out = '', i;
+      for (i = 0; i < b.length; i++) out += ('0' + b[i].toString(16)).slice(-2);
+      return out;
+    });
+  }
+
+  var LG = window.OMLG || null;   /* 入れ間違いの数え方と、再設定のメール（hoken-gate-src/loginguard.js） */
+  var btn = f.querySelector('button[type="submit"]');
+  function lockNow() {
+    if (!LG || LG.wait() <= 0) return false;
+    err.textContent = LG.lockMsg();
+    return true;
+  }
+  if (LG) {
+    LG.forgot(f.parentNode.querySelector('.og-fg-host') || f.parentNode, { idInput: idIn });
+    LG.backNote(f);
+    lockNow();
+  }
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = String(idIn.value || '').replace(/[\uFF01-\uFF5E]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[\s\u3000]/g, '').toLowerCase();
+    var pw = inp.value || '';
+    if (lockNow()) { inp.value = ''; return; }
+    if (!id) { err.textContent = 'IDを入れてください。'; idIn.focus(); return; }
+    if (!pw) { err.textContent = 'パスワードを入れてください。'; inp.focus(); return; }
+    err.textContent = '確かめています…';
+    if (btn) btn.disabled = true;
+    sha256(SALT + 'id:' + id + '|pw:' + pw).then(function (h) {
+      var localOk = function () { return OKH.indexOf(h) >= 0; };
+      var go = LG ? LG.check(id, pw, localOk) : Promise.resolve({ ok: localOk(), fb: false, code: '' });
+      return go.then(function (r) {
+        if (btn) btn.disabled = false;
+        if (!r.ok) {
+          var nm = LG ? LG.netMsg(r.code) : '';
+          if (r.code === 'net') { err.textContent = nm; return; }   /* 繋がらないだけのときは数えない */
+          if (LG) LG.add();
+          err.textContent = LG ? LG.failMsg(nm ? nm : '') : 'IDかパスワードが違います。';
+          inp.value = ''; inp.focus();
+          return;
+        }
+        if (LG) LG.reset();
+        err.textContent = '';
+        try {
+          if (keep && keep.checked) {
+            var rec = { h: h, e: Date.now() + DAYS * 86400000, i: id };
+            if (r.fb) rec.fb = 1;   /* メールアドレスのIDを Firebase で確かめた印（再設定したあとの新しいパスワード） */
+            localStorage.setItem(AUTH, JSON.stringify(rec));
+          } else {
+            sessionStorage.setItem(STAFF, JSON.stringify({ e: Date.now() + 12 * 3600000 }));
+          }
+        } catch (e2) { /* 保存できなくても、その場では開く */ }
+        open_();
+        if (cancelB) cancelB.hidden = true;
+        if (pend) { var cb = pend; pend = null; try { cb(); } catch (e4) {} }
+        /* 扉の奥の画面（営業カレンダーなど）が、もう一度IDを聞かずに開けるよう知らせる（2026-11-04。保存はしない） */
+        try { window.dispatchEvent(new CustomEvent('omgate-login', { detail: { id: id, pw: pw, fb: !!r.fb } })); } catch (e3) {}
+      });
+    })['catch'](function () { if (btn) btn.disabled = false; err.textContent = 'この画面ではIDとパスワードを確認できませんでした。'; });
+  });
+
+  /* あとから聞く口（ライフプランのお客様の画面で「担当者の方はこちら」を押したとき。2026-11-04）。
+     staff()＝管理画面かこの扉で入った端末か／ask(cb)＝扉を出し、入れたら cb を呼ぶ（やめると前の画面に戻る） */
+  var pend = null, cancelB = f.querySelector('.og-cancel'), gEl = document.getElementById('omgate');
+  function staffOk() {
+    try { var a = read(localStorage, AUTH); if (live(a) && /^[0-9a-f]{64}$/.test(String(a.h || ''))) return true; } catch (e) {}
+    try { if (live(read(sessionStorage, STAFF))) return true; } catch (e) {}
+    return false;
+  }
+  if (cancelB) cancelB.addEventListener('click', function () {
+    pend = null; cancelB.hidden = true; err.textContent = ''; inp.value = ''; open_();
+  });
+  window.OMGATE = {
+    staff: staffOk,
+    ask: function (cb) {
+      if (staffOk()) { if (cb) cb(); return; }
+      pend = cb || null;
+      R.className = R.className.replace(/(^|\s)omgate-open(?=\s|$)/g, ' ');
+      if (gEl) gEl.hidden = false;
+      if (cancelB) cancelB.hidden = false;
+      lockNow();
+      setTimeout(function () { try { idIn.focus(); } catch (e) {} }, 60);
+    }
+  };
+
+  if (!how) setTimeout(function () { try { idIn.focus(); } catch (e) {} }, 60);
+})();
+</script>
+<script>
+/* LPGATE-ADV お客様の画面の「担当者の方はこちら」は、担当者のIDとパスワードを聞いてから切り替える（2026-11-04） */
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('#cust-advisor') : null;
+  if (!b || !window.OMGATE || window.OMGATE.staff()) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  window.OMGATE.ask(function () { setTimeout(function () { b.click(); }, 30); });
+}, true);
+</script>
+<!-- OMGATE-END -->
 
   <!-- ============================= HERO（ヘッダー・チップは削除。タイトル＋操作ボタンのみ）============================= -->
   <section class="hero">

@@ -2816,6 +2816,23 @@ body.pdf-brief .results{ margin-top:0 !important; }
 .lpn-off [data-nav-result="ichijo"], .lpn-off [data-view="ichijo"], .lpn-off #ichijo-cta-placeholder,
 .lpn-off .chat-chip[data-q*="断熱等級"]{ display:none !important; }
 /* LPHK-CSS-END */
+/* LPIVKIND-CSS-BEGIN */
+.at-iv-kind{ display:block; margin-top:2px; font-size:max(12.5px,.76rem); font-weight:600; color:#5a6470; line-height:1.3; white-space:nowrap; }
+@media print{ .at-iv-kind{ font-size:9pt; } }
+/* LPIVKIND-CSS-END */
+/* LPNXDUE-CSS-BEGIN 次の一手の「いつまでに」（2026-11-05） */
+.nx-due-l{ display:block; margin-bottom:3px; font-size:max(12.5px,.74rem); font-weight:700; color:#5a6470; }
+.nx-due-date{ cursor:pointer; }
+.nx-due-date[value=""]{ color:#5a6470; border-style:dashed; border-color:#9fb3c6; }
+#vc-dock .nx-due{ text-align:left; }
+#vc-dock .nx-due-l{ font-size:max(13px,.8rem); }
+#vc-dock .nx-due-date{ font-size:max(14px,.86rem); min-height:44px; padding:6px 10px; border-radius:9px; }
+@media (max-width:560px){
+#vc-dock .nx-due{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; }
+#vc-dock .nx-due-l{ margin:0; }
+}
+@media print{ .nx-due-l{ display:none; } }
+/* LPNXDUE-CSS-END */
 </style>
 </head>
 <body>
@@ -4878,8 +4895,8 @@ document.addEventListener('click', function (e) {
           <div class="vcu-h"><span class="vcu-ic" aria-hidden="true"><i class="fa-solid fa-closed-captioning"></i></span><div>
             <h3 id="vcu-h-cap">文字起こし</h3>
             <p>録音した発言です。「ミーティング概要」を作るときの材料になります。行を押すと、上の「打ち込んで入れる・直す」の欄で直せます。</p></div></div>
-          <label class="vc-auto vcu-toggle"><input type="checkbox" id="vc-show-cap"> 文字起こしを画面に表示する</label>
-          <p class="vcu-hint">※ <b>文字起こしは画面に出しません</b>（既定）。お客様と画面を見ながらの面談で読まれてしまわないようにするためです。録音した内容は端末内に残り、「ミーティング概要」の材料として振り返りに使えます。面談後などに読みたいときは上のチェックを入れてください。</p>
+          <label class="vc-auto vcu-toggle"><input type="checkbox" id="vc-show-cap" checked> 文字起こしを画面に表示する</label>
+          <p class="vcu-hint">※ 文字起こしは、録音すると<b>この下にすぐ出ます</b>。お客様と画面を見ながらの面談で読まれたくないときは、上のチェックを外してください（外しても、録音した内容は端末内に残り、「ミーティング概要」の材料になります）。</p>
           <!-- 字幕（録音中は下から積み上がる。確定＝濃い文字／未確定＝薄い文字＋キャレット） -->
           <div class="vc-cap-wrap">
             <div class="vc-cap" id="vc-cap" hidden aria-label="文字起こし"></div>
@@ -5050,7 +5067,7 @@ document.addEventListener('click', function (e) {
              コピーは専用ボタン（社内用の見出しが必ず付く）のみ -->
         <div class="nx-plan-wrap" id="nx-plan-wrap" hidden>
           <div class="nx-plan-head"><i class="fa-solid fa-lock"></i> 提案の検討メモ（担当者用）</div>
-          <p class="hint" style="display:block; margin:4px 0 8px;">上の「次の一手を作る」で<b>一緒に作られ</b>、「提案の検討メモ」ボタンで開閉します。試算の結果から、<b>住宅購入の見立て（安心点・懸念点・進め方）</b>と、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
+          <p class="hint" style="display:block; margin:4px 0 8px;">上の「次の一手を作る」で<b>一緒に作られ</b>、「提案の検討メモ」ボタンで開閉します。試算の結果から、<b>どの仕組み（保険・NISA・iDeCo）で備えるのが合いそうか</b>を担当者向けに整理します。商品名と営業上の観点を含むため、<b>お客様には見せない・渡さない</b>でください（お客様の画面・PDF・共有リンクには表示されません）。</p>
           <div class="vc-tools">
             <button type="button" class="btn btn-ghost btn-sm" id="nx-plan-copy"><i class="fa-solid fa-copy"></i> 社内用にコピー</button>
           </div>
@@ -10546,6 +10563,7 @@ function lpPdfProg(text, ratio){
       const items = readInvestments();
       const hAge0 = rows[0].hAge;
       const col = (it)=> INVEST_COLOR[it.type] || '#333';
+/* LPIVKIND-BEGIN */ const ivNm = (it)=>{ const k = (it.type !== 'other' && INV_LABEL[it.type]) || ''; return esc(it.name) + ((k && k !== it.name) ? '<span class="at-iv-kind">' + esc(k) + '</span>' : ''); }; /* LPIVKIND-END */
 
       /* ① 項目別サマリー（満期＝積立終了時点の元本・残高・運用益）*/
       const summary = $('asset-summary');
@@ -10560,7 +10578,7 @@ function lpPdfProg(text, ratio){
           const gain = final - prin;
           tLump+=it.lump; tMon+=it.monthly; tPrin+=prin; tFinal+=final;
           body += `<tr>
-            <td class="evt" style="color:${col(it)};font-weight:700">${it.name}</td>
+            <td class="evt" style="color:${col(it)};font-weight:700">${ivNm(it)}</td>
             <td>${fmt(it.lump)}</td><td>${fmt(it.monthly)}</td><td>${it.ret}%</td>
             <td>${fmt(prin)}</td><td class="networth">${fmt(final)}</td>
             <td style="color:var(--good);font-weight:700">+${fmt(Math.max(gain,0))}</td></tr>`;
@@ -10591,7 +10609,7 @@ function lpPdfProg(text, ratio){
       let kidHead = '';
       for(let k=0; k<nKids; k++){ const c=childColor(k); kidHead += `<th class="col-age" style="color:${c.text}">${esc(kidsMeta[k].name)}</th>`; }
       let head = `<th class="col-year">西暦</th><th class="col-age">${esc(hNameH())}</th>${single?'':`<th class="col-age">${esc(wNameH())}</th>`}${kidHead}<th class="col-num">預貯金</th>`;
-      items.forEach((it)=>{ head += `<th class="col-num" style="color:${col(it)}">${it.name}</th>`; });
+      items.forEach((it)=>{ head += `<th class="col-num" style="color:${col(it)}">${ivNm(it)}</th>`; });
       head += `<th class="col-num">運用合計</th>`;
       $('at-head-row').innerHTML = head;
 
@@ -12379,7 +12397,7 @@ function lpPdfProg(text, ratio){
         // nxCopy と同じやり方。中で失敗しても nxLast は null のままなので、下で空になるだけ）
         if(!nxLast){ try{ nxRun(); }catch(e){} }
         if(!nxLast) return [];
-        const out = [], line = function(it, t){ return it.title + '（' + t.due + '）：' + t.text; };
+        const out = [], line = function(it, t){ return it.title + (t.due ? '（' + t.due + '）' : '') + '：' + t.text; };   /* LPNXDUE */
         (nxLast.main || []).forEach(function(it){
           (it.tasks || []).forEach(function(t){ if(t.who === 'cust') out.push(line(it, t)); });
         });
@@ -12604,7 +12622,7 @@ function lpPdfProg(text, ratio){
       /* == LPSLIDE-E-END == */
       function mnRun(){
         const box = $('mn-out'); if(!box) return;
-        if($('mn-doc')){
+        if($('mn-doc') && $('mn-doc').getAttribute('data-mnauto') !== '1'){   /* LPCAPMIN 自動で作ったままなら確かめない */
           if(!confirm('手直しした内容は消えます。作り直しますか？（文字起こしは残るので、何度でも作り直せます）')) return;
           mnSave();   // 保存は800msのデバウンス。直前の手直しを取りこぼさないよう、退避の前に確定させる
           // 1世代だけ退避（お客様ごとの記録の中に持つ＝他のお客様の下書きに戻らない）
@@ -12612,6 +12630,7 @@ function lpPdfProg(text, ratio){
         }
         mnBig(false);   // モーダルに本文が出ている状態で作り直すと、置き場所がずれるので必ず戻す
         box.innerHTML = mnRenderHTML(mnBuild(mnUtter));
+        if($('mn-doc')) $('mn-doc').setAttribute('data-mnauto', '1');   /* LPCAPMIN 手で直すまでは、開くたびに作り直す */
         mnSave(); vcSyncDockH();
       }
       function mnRestorePrev(){
@@ -12643,6 +12662,20 @@ function lpPdfProg(text, ratio){
         const d = new Date(); d.setDate(d.getDate() + days);
         return (d.getMonth()+1) + '/' + d.getDate() + '（' + '日月火水木金土'[d.getDay()] + '）まで';
       }
+      /* LPNXDUE-BEGIN 期限はこの端末に、お客様ごと・宿題ごとに残す（'::due.' の鍵）。決めていなければ空 */
+      function nxDueGet(k){
+        try{ const v = nxDueMap()[nxScope() + '::due.' + k];
+          return (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? v : ''; }
+        catch(e){ return ''; }
+      }
+      function nxDueOf(iso){
+        if(!iso) return { iso:'', due:'', days:99999 };
+        const a = iso.split('-').map(Number), d = new Date(a[0], a[1] - 1, a[2]), t = new Date();
+        t.setHours(0, 0, 0, 0);
+        return { iso:iso, due:(d.getMonth()+1) + '/' + d.getDate() + '（' + '日月火水木金土'[d.getDay()] + '）まで',
+                 days:Math.round((d - t) / 86400000) };
+      }
+      /* LPNXDUE-END */
       function nextDueDays(who, urgency){
         if(urgency >= 5) return who==='cust' ? 3 : 5;
         if(urgency <= 2) return who==='cust' ? 14 : 21;
@@ -13113,6 +13146,95 @@ function lpPdfProg(text, ratio){
               tasks:[ { who:'cust', text:'加入中の保険の証券をご用意ください（保険種類・保険金額・保険期間・月払保険料が分かるもの）。' } ] };
           } }
       ];
+      /* ==== LPHOKENNEXT-BEGIN 2026-11-05 汎用版の次の一手は保険営業の担当者向け（住まい・不動産を外し、保険の抜けを足す） ==== */
+      window.__lphnOn = true;
+      var LPHN_CAP = { hoken:3 };   // 一覧の上に出す数（分野ごと。書いていない分野は2つ）
+      (function(){
+        for(let i = NEXT_RULES.length - 1; i >= 0; i--){ if(NEXT_RULES[i].cat === 'housing') NEXT_RULES.splice(i, 1); }
+        const TYPE = { shunyu:'収入保障保険', teiki:'定期保険', shushin:'終身保険', other:'養老・共済など' };
+        const simple = function(){ return (typeof hokenMode === 'function') && hokenMode() === 'simple'; };
+        const hasIns = function(c, who){
+          if(simple()) return num(who === 'h' ? 'ins-total-h' : 'ins-total-w', 0) > 0;
+          return c.ins.some(function(x){ return x.who === who; });
+        };
+        const ageOf = function(c, who){ return who === 'h' ? c.p.hAge : c.p.wAge; };
+        const nameOf = function(who){ return who === 'h' ? hNameH() : wNameH(); };
+        const anyIns = function(c){ return c.ins.length > 0 || c.insFlat > 0 || num('e-life', 0) > 0; };
+        NEXT_RULES.push(
+          { id:'gap.iryo', cat:'hoken', src:'calc', impact:4, urgency:3,
+            when: function(c){ return anyIns(c); },
+            make: function(){
+              return { title:'医療・がん・三大疾病の保障の抜けの確認',
+                basis:'この試算で見ている保障は死亡保障だけです。入院・手術・がん・三大疾病などへの備えが、加入中の保険に含まれているかはまだ確かめていません。',
+                tasks:[ { who:'cust', text:'加入中の保険の証券で、医療・がん・三大疾病の保障があるか、何歳まで続くか、入院の日額や一時金の額をご確認ください。勤務先の健康保険の付加給付も分かればお知らせください。' },
+                        { who:'staff', text:'公的な制度（高額療養費・傷病手当金）でまかなえる範囲と、加入中の保障を並べ、抜けている所があるかを一覧にしてお持ちします。' } ],
+                caution:'公的給付の額はご加入の健康保険により異なります。保険で備える場合、支払いの対象となる状態や期間は商品ごとに条件が異なり、加入には健康状態の告知が必要です。' };
+            } },
+          { id:'gap.wife', cat:'hoken', src:'blank', impact:4, urgency:3,
+            when: function(c){ return !c.p.single && hasIns(c, 'h') && !hasIns(c, 'w'); },
+            make: function(c){
+              const nd = (c.n && c.n.w && c.n.w.need > 0) ? c.n.w.need : 0;
+              return { title: wNameH() + 'の保障の抜けの確認（入力に無し）',
+                basis: hNameH() + 'の保障は入力されていますが、' + wNameH() + 'の保障は入力されていません。入っていないのか、入力していないだけかで、必要保障額の答えが変わります。'
+                      + (nd > 0 ? 'いまの入力のままでは、' + wNameH() + 'に万一のとき 約' + fmt(nd) + '万円 不足する計算です。' : ''),
+                tasks:[ { who:'cust', text: wNameH() + 'が加入中の保険・共済と、勤務先の団体保険・弔慰金の制度があれば、分かるものをご用意ください。' },
+                        { who:'staff', text:'内容を入力し直し、' + wNameH() + 'に万一のときの家計（家事・育児を外にお願いした場合の費用も含めて）を引き直してお持ちします。' } ],
+                caution:'必要額は前提が変わると増減します。保険はいくつかある備え方のうちの一つで、ほかの方法で足りる場合もあります。' };
+            } },
+          { id:'gap.kikan', cat:'hoken', src:'calc', impact:5, urgency:4,
+            when: function(c){ return lphnKikan(c).length > 0; },
+            make: function(c){
+              const g = lphnKikan(c);
+              return { title:'保障が終わる時期とお子さまの独立の時期の抜けの確認',
+                basis: g.map(function(x){
+                          return nameOf(x.who) + 'の定期・収入保障の保障は' + x.end + '歳までで、いちばん下のお子さまが22歳になる' + x.indep + '歳より' + (x.indep - x.end) + '年早く終わります';
+                        }).join('。') + '。その間に万一があると、教育費の残りと生活費を、遺族年金と預貯金でまかなう計算です。',
+                tasks:[ { who:'cust', text:'保障の期間を決めたときのご事情（保険料を抑えた・当時はお子さまがいなかった、など）をお聞かせください。' },
+                        { who:'staff', text:'保障が終わる年からお子さまの独立までの間に、万一のときに不足する額を年ごとに出してお持ちします。期間を延ばす場合・延ばさない場合の毎月の負担も同じ表に並べます。' } ],
+                caution:'期間を延ばすには、年齢と健康状態によって条件が変わり、保険料も上がることがあります。今の契約を変える場合は、保障に空白が生じないようにする必要があります。' };
+            } },
+          { id:'gap.manryo', cat:'hoken', src:'calc', impact:4, urgency:4,
+            when: function(c){ return lphnManryo(c).length > 0; },
+            make: function(c){
+              const g = lphnManryo(c);
+              return { title:'近く満了・更新を迎える保障の抜けの確認',
+                basis: g.map(function(x){ return nameOf(x.who) + 'の' + x.label + '（' + x.end + '歳まで・あと' + x.left + '年）'; }).join('、')
+                      + 'が、近く満了または更新を迎えます。更新すると保険料が上がることがあり、更新しない場合はその年から保障がなくなります。',
+                tasks:[ { who:'cust', text:'満了の時期と、更新の予定を、保険会社からのお知らせでご確認ください。' },
+                        { who:'staff', text:'満了のあとに残る保障と必要保障額を並べ、更新した場合・しない場合の毎月の負担の違いをお出しします。' } ],
+                caution:'更新の条件や保険料は契約ごとに異なります。更新せずに別の保障を考える場合、健康状態によって加入の条件が変わることがあります。' };
+            } }
+        );
+        window.lphnKikan = function(c){
+          if(simple() || !c.yg || c.p.children.length === 0) return [];
+          const out = [];
+          ['h', 'w'].forEach(function(who){
+            if(who === 'w' && c.p.single) return;
+            const mine = c.ins.filter(function(x){ return x.who === who; });
+            if(!mine.length || mine.some(function(x){ return x.type === 'shushin'; })) return;
+            const term = mine.filter(function(x){ return x.type !== 'shushin'; });
+            if(term.some(function(x){ return !(x.end > 0); })) return;   // 空欄は無期限の扱い
+            const end = Math.max.apply(null, term.map(function(x){ return x.end; }));
+            const indep = ageOf(c, who) + Math.max(22 - c.yg.age, 0);
+            if(end > ageOf(c, who) && end < indep) out.push({ who:who, end:end, indep:indep });
+          });
+          return out;
+        };
+        window.lphnManryo = function(c){
+          if(simple()) return [];
+          const out = [];
+          c.ins.forEach(function(x){
+            if(x.who !== 'h' && x.who !== 'w') return;
+            if(x.who === 'w' && c.p.single) return;
+            if(x.type === 'shushin' || !(x.end > 0)) return;
+            const left = x.end - ageOf(c, x.who);
+            if(left >= 0 && left <= 3) out.push({ who:x.who, end:x.end, left:left, label: TYPE[x.type] || '保険' });
+          });
+          return out;
+        };
+        var lphnKikan = window.lphnKikan, lphnManryo = window.lphnManryo;
+      })();
+      /* ==== LPHOKENNEXT-END ==== */
       // ツールが自動生成する文にNG表現が混じっていないか、出力前に必ず通す
       const NEXT_NG_RE = /必ず|絶対|確実に|お得|損をし|儲か|保証(し|され)|おすすめ(です|の)|加入(して|し)くださ|入りましょう|解約しま(しょう|す)|見直しましょう|不要です|有利です/;
       function nextAssertSafe(list){
@@ -13135,9 +13257,10 @@ function lpPdfProg(text, ratio){
           out.push({ id:rule.id, cat:rule.cat, src:rule.src, order:i, impact:impact, urgency:urgency,
             score: impact*2 + urgency + (rule.blocker ? 2 : 0),
             title:body.title, basis:body.basis, caution:body.caution || '',
-            tasks:(body.tasks||[]).map(function(t){
-              const days = nextDueDays(t.who, urgency);
-              return { who:t.who, text:t.text, due:nextDueLabel(days) };
+            tasks:(body.tasks||[]).map(function(t, j){
+              /* LPNXDUE 2026-11-05 期限は空欄から。担当者がカレンダーで選んだ日だけを使う（前は急ぎ度から自動で入れていた） */
+              const k = rule.id + '|' + t.who + '|' + j, o = nxDueOf(nxDueGet(k));
+              return { who:t.who, text:t.text, k:k, iso:o.iso, due:o.due, days:o.days };
             }) });
         });
         return out;
@@ -13149,14 +13272,15 @@ function lpPdfProg(text, ratio){
         const famList = list.filter(function(it){ return it.id.indexOf('fam.')===0; }).slice(0,3);
         list = list.filter(function(it){ return it.id.indexOf('fam.')!==0; });
         list.sort(function(a,b){
-          return (b.score - a.score)
+          return ((window.__lphnOn ? (b.cat === 'hoken') - (a.cat === 'hoken') : 0))   /* LPHOKENNEXT 汎用版は保障の項目を先頭に */
+              || (b.score - a.score)
               || (NEXT_SRC_ORDER[a.src] - NEXT_SRC_ORDER[b.src])
               || (a.order - b.order);
         });
         const main = [], rest = [], perCat = {}; let blankN = 0;
         list.forEach(function(it){
           const cn = perCat[it.cat] || 0;
-          const full = (main.length >= max) || (cn >= 2) || (it.src==='blank' && blankN >= 2);
+          const full = (main.length >= max) || (cn >= ((typeof LPHN_CAP !== 'undefined' && LPHN_CAP[it.cat]) || 2)) || (it.src==='blank' && blankN >= 2);   /* LPHOKENNEXT */
           if(full){ if(rest.length < 10) rest.push(it); return; }
           main.push(it); perCat[it.cat] = cn + 1; if(it.src==='blank') blankN++;
         });
@@ -13186,7 +13310,9 @@ function lpPdfProg(text, ratio){
           +     (it.caution ? '<span class="nx-caution">※ ' + esc(it.caution) + '</span>' : '')
           +   '</span>'
           + '</span>'
-          + '<span class="nx-due">' + esc(t.due) + '</span>'
+          + '<span class="nx-due"><span class="nx-due-l">いつまでに</span>'   /* LPNXDUE 空欄から。押すとカレンダー */
+          +   '<input type="date" class="nx-due-date nx-due-pick" value="' + esc(t.iso || '') + '" data-nxk="' + esc(t.k || '') + '"'
+          +   ' title="いつまでに（押すとカレンダーが開きます）" aria-label="いつまでに（カレンダーで選ぶ）"></span>'
           + '</div>';
       }
       function nxWhySet(btn, open){
@@ -13272,7 +13398,7 @@ function lpPdfProg(text, ratio){
         items.forEach(function(it){
           (it.tasks || []).forEach(function(t){
             const k = String(t.days);
-            if(!byDue[k]) byDue[k] = { days:t.days, due:t.due, cust:0, staff:0 };
+            if(!byDue[k]) byDue[k] = { days:t.days, due:(t.due || '期限を決めていません'), cust:0, staff:0 };   /* LPNXDUE */
             byDue[k][t.who === 'cust' ? 'cust' : 'staff']++;
           });
         });
@@ -13297,7 +13423,7 @@ function lpPdfProg(text, ratio){
           +   '<span><i class="nxv-sw nxv-c-cust"></i> お客様にお願いすること</span>'
           +   '<span><i class="nxv-sw nxv-c-staff"></i> 当方でお調べすること</span>'
           + '</div>'
-          + '<p class="nxv-note">期限は目安です。次回面談の日程に合わせて、下の一覧の日付欄で1件ずつ変えられます。</p>'
+          + '<p class="nxv-note">期限は、一覧の「いつまでに」の欄（押すとカレンダー）で1件ずつ決めます。決めていない分は「期限を決めていません」にまとめています。</p>'
           + '</div>' : '';
 
         /* --- 図3：どこから出てきた話か（出どころの内訳） ---
@@ -13369,7 +13495,7 @@ function lpPdfProg(text, ratio){
       function nextToText(res, head, only){
         const wantC = (only !== 'staff'), wantS = (only !== 'cust');
         const line = function(it, t){
-          return '□ ' + it.title + '（' + t.due + '）：' + t.text + '\n   根拠：' + it.basis
+          return '□ ' + it.title + (t.due ? '（' + t.due + '）' : '') + '：' + t.text + '\n   根拠：' + it.basis   /* LPNXDUE */
                + (it.caution ? '\n   ※ ' + it.caution : '');
         };
         const block = function(label, who){
@@ -13486,7 +13612,37 @@ function lpPdfProg(text, ratio){
         }
         vcSyncDockH();
       }
+      /* LPNXDUE-PICK-BEGIN 次の一手の「いつまでに」を選んだ／消したとき。この端末に残し、図の「いつまでに」を描き直す */
+      function nxDuePicked(inp){
+        const k = inp.getAttribute('data-nxk'); if(!k) return;
+        const v = /^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : '';
+        inp.setAttribute('value', v);
+        try{
+          const m = nxDueMap(), dk = nxScope() + '::due.' + k;
+          if(v) m[dk] = v; else delete m[dk];
+          localStorage.setItem(NX_DUE_KEY, JSON.stringify(m));
+        }catch(_){}
+        const o = nxDueOf(v);
+        if(nxLast) ['main', 'rest', 'fam'].forEach(function(g){
+          (nxLast[g] || []).forEach(function(it){ (it.tasks || []).forEach(function(t){
+            if(t.k === k){ t.iso = o.iso; t.due = o.due; t.days = o.days; }
+          }); });
+        });
+        const fold = $('next-actions') && $('next-actions').querySelector('.nx-viz-fold');
+        if(fold && nxLast){
+          const sum = fold.querySelector('summary');
+          try{ fold.innerHTML = (sum ? sum.outerHTML : '') + nxVizHTML(nxLast); }catch(_){}
+        }
+      }
+      /* 日付の欄はどこを押してもカレンダーを開く（年・月・日の文字の上を押しても開かない端末があるため） */
+      document.addEventListener('click', function(e){
+        const t = e.target;
+        if(!t || !t.matches || !t.matches('#vc-dock input.nx-due-date')) return;
+        try{ if(t.showPicker) t.showPicker(); }catch(_){}
+      });
+      /* LPNXDUE-PICK-END */
       if($('next-actions')) $('next-actions').addEventListener('change', (e)=>{
+        if(e.target.classList && e.target.classList.contains('nx-due-pick')){ nxDuePicked(e.target); return; }   /* LPNXDUE */
         const el = e.target.closest('.nx-item'); if(!el) return;
         const on = el.querySelector('input') && el.querySelector('input').checked;
         el.classList.toggle('is-done', !!on);
@@ -13662,7 +13818,7 @@ function lpPdfProg(text, ratio){
             tab: (document.querySelector('.vc-tab[aria-selected="true"]') || {}).dataset
                  ? document.querySelector('.vc-tab[aria-selected="true"]').dataset.vcTab : 'cap',
             auto: ($('vc-auto') && $('vc-auto').checked) ? 1 : 0,
-            cap: ($('vc-show-cap') && $('vc-show-cap').checked) ? 1 : 0
+            cap: ($('vc-show-cap') && $('vc-show-cap').checked) ? 1 : 0, cv: 2   /* LPCAPMIN 既定を表示にした版の印 */
           }));
         }catch(e){}
       }
@@ -13876,7 +14032,7 @@ function lpPdfProg(text, ratio){
           +   (o.basis   ? '<span class="nx-basis">根拠：' + o.basis + '</span>' : '')
           +   (o.caution ? '<span class="nx-caution">※ ' + o.caution + '</span>' : '')
           + '</label>'
-          + '<span class="nx-due"><input type="date" class="nx-due-date" value="' + nxDueISO(o.days || 7) + '" title="期限（調整できます）" aria-label="期限"></span>'
+          + '<span class="nx-due"><span class="nx-due-l">いつまでに</span><input type="date" class="nx-due-date" value="" title="いつまでに（押すとカレンダーが開きます）" aria-label="いつまでに（カレンダーで選ぶ）"></span>'   /* LPNXDUE 空欄から */
           + '</div>';
       }
       function planTodoGroup(icon, title, key, items, days){
@@ -14045,7 +14201,7 @@ function lpPdfProg(text, ratio){
            ★キーは項目ごとに固定する。並び順の番号にすると、入力が変わって項目が増減したとき
              別の項目に済チェックが付いて見える（顧客ごとに分けている意味がなくなる）。
            営業観点を含むため担当者メモ限定＝お客様向けの出力（次の一手・PDF・共有）には出さない */
-        if(c.buying && num('house-price',0) > 0){
+        if(c.buying && num('house-price',0) > 0 && !window.__lphnOn){   /* LPHOKENNEXT 汎用版は住宅購入の見立てを出さない */
           const hp = num('house-price',0), dn = num('down',0);
           const income = num('h-income',0) + (p.single ? 0 : num('w-income',0));
           const schedB = buildLoanSchedule();
@@ -15221,6 +15377,32 @@ function lpPdfProg(text, ratio){
         lps2Render();
       })();
       /* ==== LPSUP2-JS-END ==== */
+      /* ==== LPCAPMIN-BEGIN 2026-11-05 ミーティング概要は、タブを開いたら作っておく ====
+         概要が無いか、前に自動で作ったまま手で直していなければ、確認なしでその場で作る。手で直したら印を外す */
+      function lpcmEnsureMin(){
+        if(panel.hidden) return;
+        const t = document.querySelector('.vc-tab[aria-selected="true"]');
+        if(!t || t.dataset.vcTab !== 'minutes') return;
+        const box = $('mn-out'); if(!box) return;
+        const doc = $('mn-doc');
+        if(doc && doc.getAttribute('data-mnauto') !== '1') return;
+        if(doc && doc.parentElement !== box) return;   // 「大きく開く」の窓に出ているあいだは触らない
+        box.innerHTML = mnRenderHTML(mnBuild(mnUtter));
+        if($('mn-doc')) $('mn-doc').setAttribute('data-mnauto', '1');
+        mnSave(); vcSyncDockH();
+      }
+      fab.addEventListener('click', lpcmEnsureMin);
+      if($('vc-tab-minutes')){
+        $('vc-tab-minutes').addEventListener('click', lpcmEnsureMin);
+        $('vc-tab-minutes').addEventListener('focus', ()=> setTimeout(lpcmEnsureMin, 0));
+      }
+      ['mn-out', 'mn-out-big'].forEach(function(id){
+        const el = $(id); if(!el) return;
+        el.addEventListener('input', function(){
+          el.querySelectorAll('[data-mnauto]').forEach(function(d){ d.removeAttribute('data-mnauto'); });
+        });
+      });
+      /* ==== LPCAPMIN-END ==== */
       $('vc-close').addEventListener('click', ()=>{
         vcStopRec();
         panel.hidden = true;
@@ -15250,7 +15432,7 @@ function lpPdfProg(text, ratio){
         let ui = null;
         try{ ui = JSON.parse(localStorage.getItem(VC_UI_KEY)||'null'); }catch(e){}
         if(ui && $('vc-auto')) $('vc-auto').checked = (ui.auto !== 0);
-        if($('vc-show-cap')) $('vc-show-cap').checked = !!(ui && ui.cap === 1);   // 既定は非表示
+        if($('vc-show-cap')) $('vc-show-cap').checked = !(ui && ui.cv === 2 && ui.cap === 0);   // LPCAPMIN 既定は表示（2026-11-05）。前の版の「出さない」は既定の値なので読まない
         /* 旧形式（v1＝お客様で分けていない1つの記録）は、誰の分か分からないので
            「名無しの箱（このタブ限り）」へ移す。お名前を打てばその方へ引き継げる。
            localStorageに置き直すと翌日の別のお客様の画面に出るため、ここには残さない */
@@ -15433,7 +15615,7 @@ function lpPdfProg(text, ratio){
           let hh = '<div class="card-title"><i class="fa-solid fa-list-check"></i> 次回までにご用意・ご確認いただきたいこと</div>';
           if(data.next) hh += '<p style="font-weight:800; margin-bottom:8px;">次回面談：' + esc(data.next) + '</p>';
           hh += data.tasks.map(function(t){
-            return '<p style="margin:0 0 9px; padding-left:1.2em; text-indent:-1.2em;">□ ' + esc(t.text) + '<span style="color:#5b6b7d; font-size:.82em;">（' + esc(t.title) + '・' + esc(t.due) + '）</span></p>';
+            return '<p style="margin:0 0 9px; padding-left:1.2em; text-indent:-1.2em;">□ ' + esc(t.text) + '<span style="color:#5b6b7d; font-size:.82em;">（' + esc(t.title) + (t.due ? '・' + esc(t.due) : '') + '）</span></p>';   /* LPNXDUE */
           }).join('');
           hh += '<p style="font-size:.72rem; color:#5b6b7d;">※ 本日ご入力いただいた条件による試算にもとづく確認事項です。特定の保険商品・金融商品をおすすめするものではありません。</p>';
           d.innerHTML = hh;

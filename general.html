@@ -1442,6 +1442,50 @@ body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl{ display:b
 body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl > li{ break-inside:avoid; margin:0 0 8px; }
 }
 /* LPADV-CSS-END */
+/* LPADVRICH-CSS-BEGIN */
+.lpa-facts{ list-style:none; margin:2px 0 12px; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+@media screen and (min-width:760px){ .lpa-facts{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
+.lpa-facts li{ background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:9px 11px 8px; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.lpa-facts li.ok{ border-left:5px solid var(--good); }
+.lpa-facts li.warn{ border-left:5px solid var(--warn); }
+.lpa-eye{ display:inline-block; align-self:flex-start; font-size:max(13px, .78rem); font-weight:800; letter-spacing:0; color:#1a5487; background:#eaf3fb; border-radius:999px; padding:1px 8px; line-height:1.6; }
+.lpa-num{ font-size:1.12rem; font-weight:800; color:#123f6b; line-height:1.35; overflow-wrap:anywhere; }
+.lpa-num small{ font-size:max(13px, .8rem); font-weight:700; color:#4a5560; }
+.lpa-txt{ font-size:max(13px, .84rem); line-height:1.6; color:#2b3a4a; }
+.lpa-facts li.warn .lpa-num{ color:#8a5a0b; }
+.adv-sec-title.lpa-dt{ color:#1a5487; }
+.adv-sec-title.lpa-dt small{ font-weight:600; font-size:max(13px, .8rem); color:var(--ink-soft); margin-left:4px; }
+.lpa-more{ font-size:max(13px, .8rem); color:var(--ink-soft); line-height:1.7; margin:4px 0 10px; }
+.lpa-more small{ font-size:1em; color:var(--ink-soft); }
+.lpa-more a{ color:#1a5487; text-decoration:underline; text-underline-offset:2px; margin-right:.6em; overflow-wrap:anywhere; }
+.lpa-more .lpa-ml{ font-weight:700; margin-right:.3em; }
+.chat-msg .lpa-ans{ margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); }
+.chat-msg .lpa-h{ display:block; font-weight:800; color:#1a5487; font-size:max(13px, .88rem); margin:4px 0 3px; }
+.chat-msg .lpa-ul{ margin:0 0 4px; padding-left:1.2em; }
+.chat-msg .lpa-ul li{ margin:2px 0; line-height:1.65; }
+.chat-msg.bot .chat-bubble .lpa-ul li b{ color:#1a5487; }
+.chat-msg.bot .chat-bubble .lpa-ul li.warn b{ color:#8a5a0b; }
+.chat-msg.bot .chat-bubble .lpa-ul li.ok b{ color:#2f7d61; }
+.chat-msg .lpa-k{ font-size:max(13px, .88rem); color:#4a5560; line-height:1.65; }
+.chat-msg.bot .chat-bubble .lpa-k b{ color:#1a5487; }
+.chat-msg .lpa-more{ margin:6px 0 0; }
+@media screen and (min-width:760px){
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-sec-title.lpa-dt{ grid-row:3; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpa-facts{ grid-row:4; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-sec-title.good{ grid-row:5; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-points.good{ grid-row:6; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-sec-title.concern{ grid-row:5; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-points.concern{ grid-row:6; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-sec-title.lpk-dt{ grid-row:7; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpk-fold{ grid-row:7; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpk-list{ grid-row:8; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-sec-title.lpm-dt{ grid-row:9; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl{ grid-row:10; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpa-more{ grid-row:11; }
+body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .adv-detail-cta{ grid-row:12; }
+}
+@media print{ .lpa-more{ display:none; } .lpa-facts{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
+/* LPADVRICH-CSS-END */
 /* LPEV2-CSS-BEGIN 2026-10-09 ライフイベントの候補・目安・備考と、入力欄の間を詰める。
    ★正本は katatsugi の hoken-newtools-src/apply_lifeplan_events2.py。ここを手で直さない */
 @media screen{
@@ -9839,6 +9883,45 @@ function lpPdfProg(text, ratio){
        ============================================================ */
     const CAT_FLAG = { ok:'安心', warn:'要確認', bad:'要対策' };
 
+    /* LPADVRICH-HELPERS-BEGIN */
+    function lpaHousingCtx(){
+      try{
+        var ht = houseType;
+        if(ht === 'rent'){
+          var rent = num('rent',0), p = buildProfile(); var yrsAll = Math.max(p.endAge - p.hAge, 1);
+          var netY = p.hNet + p.wNet; var ratio = netY > 0 ? Math.round(rent * 12 / netY * 100) : null;
+          return { rent:rent, yrsAll:yrsAll, ratio:ratio };
+        }
+        var p2 = buildProfile(); var schedule = buildLoanSchedule();
+        var mPay = schedule.rows.length ? schedule.rows[0].payment : 0;
+        var annualPay = schedule.rows.slice(0,12).reduce(function(a,r){ return a + r.payment; }, 0);
+        var netY2 = p2.hNet + p2.wNet; var ratio2 = netY2 > 0 ? Math.round(annualPay / netY2 * 100) : 0;
+        var buyA = (ht === 'owned') ? num('owned-age', p2.hAge) : num('buy-age', p2.hAge);
+        var term = num('loan-term',35), payAge = num('loan-payoff-age',65);
+        var manualBal = num('loan-balance-manual',0);
+        var balAt = manualBal > 0 ? manualBal : loanBalanceAt(schedule, Math.max(payAge - buyA, 0));
+        return { mPay:Math.round(mPay), annualPay:Math.round(annualPay), ratio:ratio2, balAt:Math.round(balAt), payAge:payAge, finishAge:buyA + term, propTax:num('prop-tax',0), maint:num('maint',0) };
+      }catch(e){ return {}; }
+    }
+    function lpaFuru(){
+      try{
+        var gross = num('h-income',0);
+        var FURU = [[300,2.8],[400,4.2],[500,6.1],[600,7.7],[700,10.8],[800,12.9],[900,15.1],[1000,17.6],[1500,38],[2000,55]];
+        var furu = FURU[0][1];
+        for(var i=0;i<FURU.length;i++){ if(gross>=FURU[i][0]) furu=FURU[i][1];
+          if(i<FURU.length-1 && gross>FURU[i][0] && gross<FURU[i+1][0]){ var g1=FURU[i][0],f1=FURU[i][1],g2=FURU[i+1][0],f2=FURU[i+1][1]; furu=Math.round((f1+(f2-f1)*(gross-g1)/(g2-g1))*10)/10; } }
+        if(num('w-income',0) < 106) furu = Math.round(furu*0.8*10)/10;
+        return furu;
+      }catch(e){ return 0; }
+    }
+    function lpaKaigoN(kind){
+      try{
+        var ps = kaigoParents().filter(function(x){ return x.alive === 'ご健在'; });
+        if(kind === 'all') return ps.length;
+        return ps.filter(function(x){ return x.level === kind; }).length;
+      }catch(e){ return 0; }
+    }
+    /* LPADVRICH-HELPERS-END */
     function analysisData(rows, s){
       const p = buildProfile();
       const fam = esc(famLabel());   // ご家族の話は名字でお呼びする（例：山田さんご一家）
@@ -10168,6 +10251,7 @@ function lpPdfProg(text, ratio){
         cats.push({ key:'kaigo', label:'介護', icon:'fa-hand-holding-medical', color:'#d98a5f', tone, sum, good, concern:con });
       }
 
+      try{ lpaFacts(cats, { p:p, surplus0:surplus0, defense:defense, reserve6m:reserve6m, pensionM:pensionM, retLivingM:retLivingM, pensionAge:pensionAge, gap:gap, totalMonthly:totalMonthly, totalLump:totalLump, benRaw:benRaw, n:(single ? null : insuranceNeed()), h:lpaHousingCtx(), gross:num('h-income',0), furu:lpaFuru(), waku:(500 * Math.max((single ? 0 : 1) + (p.children||[]).length, 1)), heirs:((single ? 0 : 1) + (p.children||[]).length), ps:lpaKaigoN('all'), hi:lpaKaigoN('high'), mid:lpaKaigoN('mid') }); }catch(e){}   /* LPADVRICH */
       return cats;
     }
 
@@ -10185,12 +10269,194 @@ function lpPdfProg(text, ratio){
       wrap.innerHTML=cats.map(c=>`<button class="adv-cat${c.key===currentAdviceKey?' active':''}" type="button" data-catkey="${c.key}"><span class="adv-cat-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.label2||c.label} <span class="adv-cat-flag flag-${c.tone}">${CAT_FLAG[c.tone]}</span></button>`).join('');
     }
     // 診断詳細のHTML（PDF時は末尾のCTAボタンを省く）
+    /* LPADVRICH-JS-BEGIN */
+    /* AI診断の「数字で見る根拠」と、AI相談の「数字で見ると」・学習ツールへの入口（道具＝apply_lifeplan_advrich.py）。
+       数字は analysisData が計算したものをそのまま使う。言い回しだけを回す（lpDiagRot と開いた日）。 */
+    var LPA_GK = {"overall": [{"i": "kakei-check", "t": "家計の「見えている・見えていない」チェック"}, {"i": "kakei-boueki-check", "t": "物価高で家計が「もつ・もたない」チェック"}, {"i": "torikuzushi-check", "t": "老後資金の「もつ・もたない」チェック"}], "retire": [{"i": "nenkin-check", "t": "公的年金「だけ」で足りるかチェック"}, {"i": "torikuzushi-check", "t": "老後資金の「もつ・もたない」チェック"}, {"i": "koureisha-koyou-check", "t": "働きながらの年金「減る・減らない」チェック"}], "edu": [{"i": "kyouiku-shikin-check", "t": "教育資金の「足りる・足りない」チェック"}, {"i": "juken-check", "t": "教育費が「読める・読めない」チェック"}, {"i": "jidouteate-check", "t": "子育てでもらえるお金の「出る・出ない」チェック"}], "hoken": [{"i": "hitsuyouhoshougaku-check", "t": "その保険金額、引き算しましたか——必要保障額の数え方"}, {"i": "izokunenkin-check", "t": "遺族年金の「もらえる・もらえない」チェック"}, {"i": "shuunyuuhoshou-check", "t": "毎年減るのは、わざとです〜収入保障保険の三角形チェック〜"}], "invest": [{"i": "nisa-check", "t": "新NISAの「効く・効かない」チェック"}, {"i": "toushin-check", "t": "投資信託のコストの「効く・効かない」チェック"}, {"i": "nisa-hoken-check", "t": "「どちらが得か」に答えはない——保険とNISAの「そもそも別物」チェック"}], "housing": [{"i": "juutaku-loan-check", "t": "住宅ローンの「借りられる・返せる」チェック"}, {"i": "danshin-check", "t": "団体信用生命保険の「消える・残る」チェック"}, {"i": "chintai-vs-kounyuu-check", "t": "賃貸と持ち家の「同じ・違う」チェック"}], "balance": [{"i": "kakei-check", "t": "家計の「見えている・見えていない」チェック"}, {"i": "kakei-boueki-check", "t": "物価高で家計が「もつ・もたない」チェック"}, {"i": "furusato-kihon-check", "t": "ふるさと納税の基本と、年収ごとの上限の目安"}], "tax": [{"i": "furusato-kihon-check", "t": "ふるさと納税の基本と、年収ごとの上限の目安"}, {"i": "nenmatsuchousei-check", "t": "年末調整で「戻る・戻らない」チェック"}, {"i": "iryouhi-kojo-check", "t": "医療費控除の「使える・使えない」チェック"}], "souzoku": [{"i": "souzokuzei-check", "t": "相続税の「かかる・かからない」チェック"}, {"i": "souzoku-check", "t": "相続財産の「分けるもの・分けないもの」チェック"}, {"i": "seizen-zoyo-check", "t": "生前贈与の「効く・効かない」チェック"}], "kaigo": [{"i": "kaigo-hiyou-check", "t": "介護の費用「足りる・足りない」チェック"}, {"i": "kaigo-check", "t": "「認定」が出ても、まだ出ない――介護保険 使える・使えないチェック"}, {"i": "kaigokyuugyou-check", "t": "介護休業・介護休暇の「使える・使えない」チェック"}]};
+    var LPA_GBASE = 'https://office-m-nakatani.github.io/office-m/';
+    var LPA_EYE_FALLBACK = '目線';
+    function lpaStaff(){
+      try{
+        var a = JSON.parse(localStorage.getItem('officem.hokenHub.auth') || 'null');
+        if(a && typeof a.h === 'string' && /^[0-9a-f]{64}$/.test(a.h) && (!a.e || a.e > Date.now())) return true;
+      }catch(e){}
+      try{ if(sessionStorage.getItem('officem.hokenGate.staff')) return true; }catch(e){}
+      return false;
+    }
+    /* 言い回しを回す数（サンプルの回し＋開いた日）。数字は変えない */
+    function lpaTurn(){
+      var r = 0; try{ r = (typeof lpDiagRot === 'number') ? lpDiagRot : 0; }catch(e){}
+      var d = Math.floor(Date.now() / 86400000);
+      return (r + d) % 2;
+    }
+    function lpaPick(a, b){ return lpaTurn() ? b : a; }
+    function lpaMan(v){ return manText(Math.round(v)); }
+    function lpaFactsOne(key, x){
+      var F = [];
+      var p = x.p, add = function(eye, num, t1, t2, tone){ F.push({ eye:eye, num:num, text:lpaPick(t1, t2), tone:tone || 'ok' }); };
+      var endAge = p.endAge, yrs = Math.max(endAge - p.hAge, 1);
+      var surplus0 = x.surplus0, defense = x.defense, pensionM = x.pensionM, retLivingM = x.retLivingM, gap = x.gap;
+      var totalMonthly = x.totalMonthly, totalLump = x.totalLump, benRaw = x.benRaw;
+      var minNet = Math.round(p.minRow.net), minAge = p.minRow.hAge;
+      var cashNow = Math.round(p.cashNow || 0);
+      var defRate = defense > 0 ? Math.round(cashNow / defense * 100) : 0;
+      var invTot = Math.round(totalMonthly * 12);
+      var yrsToRet = Math.max(p.hRetire - p.hAge, 0);
+      if(key === 'overall'){
+        if(!p.depletion && !p.cashShort) add('時間', endAge + '歳まで<small>資金が続く</small>', '想定より長く生きた年も含めて、底をつかない試算です。', '試算の最後の年まで金融資産がマイナスになりません。');
+        else if(p.depletion) add('時間', p.depletion.hAge + '歳ごろ<small>に不足</small>', '底をつく年が見えています。手を打つ順番は下の「気をつけたいポイント」に。', '不足が出る年の前に、収入・支出・運用のどれを動かすかを決めます。', 'warn');
+        else add('時間', p.cashShort.hAge + '歳ごろ<small>預貯金が不足</small>', '総額では足りても、その年に使える現金が足りない試算です。', '運用を取り崩す形にすれば防げる不足です。', 'warn');
+        add('底値', '約' + lpaMan(minNet) + (minNet >= 0 ? '<small>（' + minAge + '歳）</small>' : ''), minNet >= 0 ? '資産がいちばん少なくなる年でも、この額が手元に残ります。' : '資産がいちばん少なくなる年の額です。ここを0以上にするのが目標です。', minNet >= 0 ? 'いちばん苦しい年の残高です。ここがプラスなら家計は折れていません。' : 'いちばん苦しい年の残高がマイナスです。ここを先に直します。', minNet >= 0 ? 'ok' : 'warn');
+        add('家計', (surplus0 >= 0 ? '年 約' + lpaMan(surplus0) + '<small>の黒字</small>' : '年 約' + lpaMan(-surplus0) + '<small>の赤字</small>'), surplus0 >= 0 ? '毎年この額が手元に残ります。貯蓄と運用の元手です。' : '毎年この額が足りません。固定費から順に見直します。', surplus0 >= 0 ? '1年の収入から支出を引いた残りです。先取り貯蓄の原資になります。' : '収入より支出が多い状態です。住居・通信・保険の固定費から見直します。', surplus0 >= 0 ? 'ok' : 'warn');
+        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '生活費6か月分（約' + lpaMan(defense) + '）を預貯金で持てています。' : '目安の生活費6か月分（約' + lpaMan(defense) + '）に対して、預貯金が' + defRate + '%です。', defRate >= 100 ? '収入が一時止まっても半年は暮らせる預貯金があります。' : '病気や転職で収入が止まったときの備えが、目安に届いていません。', defRate >= 100 ? 'ok' : 'warn');
+        if(totalMonthly > 0) add('運用', '月 ' + fmt(totalMonthly) + '万円<small>（年 約' + fmt(invTot) + '万円）</small>', benRaw >= 0 ? '積み立てを続けると、退職時に運用しない場合より約' + fmt(Math.abs(benRaw)) + '万円多い試算です。' : 'この前提では運用した場合のほうが退職時に約' + fmt(Math.abs(benRaw)) + '万円少ない試算です。費用と前提を確かめます。', benRaw >= 0 ? '退職時の差は約' + fmt(Math.abs(benRaw)) + '万円。運用の成果は前提の利回りで変わります。' : '運用のほうが少なくなる前提です。商品の費用と利回りの前提を見直します。', benRaw >= 0 ? 'ok' : 'warn');
+        else add('運用', '積立 0円', '運用の設定がありません。物価が上がる分だけ預金の実質的な価値は目減りします。', '積立の設定が無い状態です。少額でも始めると物価上昇への備えになります。', 'warn');
+        add('老後', '約' + lpaMan(p.retireRow.net) + '<small>（' + p.hRetire + '歳時）</small>', '退職時の金融資産の見込みです。ここから' + Math.max(endAge - p.hRetire, 1) + '年の取り崩しが始まります。', '退職の年に手元にある見込みの額です。年金との差を埋める元手になります。', p.retireRow.net > 0 ? 'ok' : 'warn');
+      } else if(key === 'retire'){
+        add('年金', '月 ' + fmt(pensionM) + '万円<small>（' + x.pensionAge + '歳から）</small>', '生涯にわたって受け取れる収入の柱です。物価に合わせて改定されます。', '亡くなるまで続く収入です。老後の土台はここに乗ります。', pensionM > 0 ? 'ok' : 'warn');
+        add('生活費', '月 ' + fmt(retLivingM) + '万円', '老後の生活費としてご入力の額です。年金との差が取り崩しの額になります。', 'ご入力の老後の生活費です。ここを月1万円変えると30年で360万円変わります。', 'ok');
+        add('不足', gap > 0 ? '月 約' + fmt(gap) + '万円' : '不足なし', gap > 0 ? '年金だけでは足りない分です。年に約' + fmt(gap * 12) + '万円を資産から補います。' : '年金の範囲で生活費がまかなえる前提です。', gap > 0 ? '取り崩しの額です。' + Math.max(endAge - x.pensionAge, 0) + '年で約' + lpaMan(gap * 12 * Math.max(endAge - x.pensionAge, 0)) + 'になります。' : '年金だけで生活費が足りる前提なので、資産は予備になります。', gap > 0 ? 'warn' : 'ok');
+        add('資産', '約' + lpaMan(p.retireRow.net) + '<small>（退職時）</small>', '退職時の金融資産の見込みです。', p.hRetire + '歳の時点で手元にある見込みの額です。', p.retireRow.net > 0 ? 'ok' : 'warn');
+        if(gap > 0 && p.retireRow.net > 0) add('持ち', '約' + Math.max(Math.floor(p.retireRow.net / (gap * 12)), 0) + '年分', '取り崩しだけで数えた持ち年数です（運用・臨時の収入は別）。', '年金の不足分を資産だけで埋めると、この年数で使い切る計算です。', Math.floor(p.retireRow.net / (gap * 12)) >= (endAge - p.hRetire) ? 'ok' : 'warn');
+        add('時間', yrsToRet + '年<small>（退職まで）</small>', '退職までの年数です。積み立てと繰下げの判断に使える時間です。', 'この年数のあいだに、年金の受け取り方と働き方を決めます。', yrsToRet >= 10 ? 'ok' : 'warn');
+        if(p.hRetire < x.pensionAge) add('谷', (x.pensionAge - p.hRetire) + '年間<small>（退職〜年金）</small>', '退職から年金開始までの、収入が細る期間です。', '収入の谷になる期間です。就労の延長か繰上げかを比べます。', 'warn');
+      } else if(key === 'edu'){
+        var eb = p.eduByChild || [];
+        add('合計', '約' + lpaMan(p.eduRemain) + '<small>（これからの教育費）</small>', 'お子さま' + eb.length + '人の、独立までにかかる教育費の見込みの合計です。', '進学プランどおりに進んだときの、残りの教育費の合計です。', 'ok');
+        eb.forEach(function(c){ add('お子さま', '約' + lpaMan(c.total) + '<small>（' + esc(c.name || '') + '・' + c.age + '歳）</small>', (c.indep - c.age) + '年で使う見込みです。', '独立（' + c.indep + '歳）までに要る額です。', 'ok'); });
+        var yUniv = eb.length ? Math.max(Math.min.apply(null, eb.map(function(c){ return 18 - c.age; })), 0) : 0;
+        if(eb.length) add('時間', yUniv + '年<small>（最初の大学入学まで）</small>', '費用がいちばん大きい山まで、準備に使える年数です。', 'この年数で、大学入学時にまとまった額を用意します。', yUniv >= 5 ? 'ok' : 'warn');
+        add('家計', surplus0 >= 0 ? '年 約' + lpaMan(surplus0) + '<small>の黒字</small>' : '年 約' + lpaMan(-surplus0) + '<small>の赤字</small>', surplus0 >= 0 ? 'この余力の一部を教育費の積み立てに回せます。' : '赤字のままだと教育費は貯蓄を減らす形になります。', surplus0 >= 0 ? '毎年の残りから、教育費の積み立てを先取りできます。' : '教育費のピークの前に、毎年の収支を黒字にします。', surplus0 >= 0 ? 'ok' : 'warn');
+        add('備え', '約' + lpaMan(cashNow) + '<small>（預貯金）</small>', '今の預貯金です。入学金など一度に要る額の元手になります。', '一度に要る入学の費用に、今の預貯金で応えられるかを見ます。', cashNow > 0 ? 'ok' : 'warn');
+      } else if(key === 'hoken'){
+        var n = x.n;
+        if(n){
+          ['h','w'].forEach(function(k){
+            var s = n[k], nm = k === 'h' ? hNameH() : wNameH();
+            add('保障', s.need > 0 ? '約' + lpaMan(s.need) + '<small>（' + esc(nm) + 'に万一・不足）</small>' : '不足なし<small>（' + esc(nm) + 'に万一）</small>', s.need > 0 ? '公的保障・資産・加入中の保険を引いた、追加で備える目安です。' : '遺族年金・資産・加入中の保険で、必要額をまかなえる試算です。', s.need > 0 ? '必要額から今ある備えを引いた残りです。掛け捨てなら備えやすい規模です。' : '今ある備えで足りる試算です。重なりがないかを確かめます。', s.need > 0 ? 'warn' : 'ok');
+            add('遺族年金', '年 約' + fmt(Math.round(s.pensionYear || 0)) + '万円<small>（' + esc(nm) + 'に万一）</small>', '公的な遺族年金の見込みです。必要額の計算に入れてあります。', '国からの遺族年金です。これがあるぶん、民間の保険は少なくて済みます。', 'ok');
+            if(s.ins > 0) add('加入中', '約' + lpaMan(s.ins) + '<small>（' + esc(nm) + '）</small>', s.over > 0 ? '必要額を約' + lpaMan(s.over) + '上回っています。見直しの余地です。' : '加入中の死亡保障です。必要額の中に収まっています。', s.over > 0 ? '保障が必要額より大きい分は、保険料の見直し余地になります。' : '今の保障は必要額の範囲です。', s.over > 0 ? 'warn' : 'ok');
+          });
+        } else {
+          add('保障', '大きな死亡保障は原則不要', '扶養するご家族がいない前提です。医療・就業不能と貯蓄で備えます。', '養う人がいないため、死亡保障より働けなくなったときの備えが先です。', 'ok');
+          add('備え', '約' + lpaMan(cashNow) + '<small>（預貯金）</small>', '病気やけがで収入が止まったときの元手です。', '入院や休職のときに使える預貯金です。', cashNow >= defense ? 'ok' : 'warn');
+        }
+      } else if(key === 'invest'){
+        add('積立', totalMonthly > 0 ? '月 ' + fmt(totalMonthly) + '万円' : '積立 0円', totalMonthly > 0 ? '年にすると約' + fmt(invTot) + '万円。' + yrsToRet + '年続けると元本だけで約' + lpaMan(invTot * yrsToRet) + 'です。' : '積立の設定がありません。', totalMonthly > 0 ? '退職までの' + yrsToRet + '年で、元本の合計は約' + lpaMan(invTot * yrsToRet) + 'になります。' : '運用の設定が無い状態です。', totalMonthly > 0 ? 'ok' : 'warn');
+        if(totalLump > 0) add('一括', '約' + lpaMan(totalLump), '一度に運用に回す額です。', 'まとまった額を運用に置く前提です。', 'ok');
+        add('差', (benRaw >= 0 ? '＋' : '−') + '約' + fmt(Math.abs(benRaw)) + '万円<small>（退職時）</small>', benRaw >= 0 ? '運用した場合としない場合の退職時の差です。前提の利回りで変わります。' : '運用した場合のほうが少ない前提です。費用と利回りを確かめます。', benRaw >= 0 ? '運用の成果の見込みです。確実な数字ではありません。' : '費用が重い商品だと、運用しないほうが残ることがあります。', benRaw >= 0 ? 'ok' : 'warn');
+        add('時間', yrsToRet + '年<small>（運用に使える年数）</small>', '長いほど値動きが平らにならされます。', '退職までの年数です。長期・分散・積立の効きやすさに関わります。', yrsToRet >= 10 ? 'ok' : 'warn');
+        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '運用に回す前の守りができています。' : '運用より先に、生活防衛資金を目安まで積みます。', defRate >= 100 ? '急な出費は預貯金で受け、運用は崩さずに済みます。' : '急な出費で運用を崩さないよう、先に預貯金を目安まで。', defRate >= 100 ? 'ok' : 'warn');
+      } else if(key === 'housing'){
+        var h = x.h || {};
+        if(h.rent != null){
+          add('家賃', '月 ' + fmt(h.rent) + '万円', '年に約' + fmt(h.rent * 12) + '万円。' + endAge + '歳までの総額は約' + lpaMan(h.rent * 12 * h.yrsAll) + 'です。', '生涯の家賃の総額は約' + lpaMan(h.rent * 12 * h.yrsAll) + '。資産としては残りません。', 'ok');
+          add('負担率', (h.ratio != null ? h.ratio + '%' : '—') + '<small>（手取りに対する家賃）</small>', '手取り収入に対する住居費の割合です。目安は25%前後までです。', '住居費が手取りに占める割合です。', (h.ratio != null && h.ratio <= 25) ? 'ok' : 'warn');
+          add('年額', '年 約' + fmt(h.rent * 12) + '万円', '更新料や引っ越しの費用は別にかかります。', '1年の住居費です。家賃のほかに更新料が要る年があります。', 'ok');
+          add('家計', surplus0 >= 0 ? '年 約' + lpaMan(surplus0) + '<small>（家賃を払って残る額）</small>' : '年 約' + lpaMan(-surplus0) + '<small>の赤字</small>', surplus0 >= 0 ? '家賃を払ったうえで、毎年この額が手元に残ります。' : '家賃を払うと、収入より支出が多い家計です。', surplus0 >= 0 ? '住居費を含めた収支です。' : '住居費を含めると赤字です。家賃の見直しも一案です。', surplus0 >= 0 ? 'ok' : 'warn');
+          add('備え', '約' + lpaMan(cashNow) + '<small>（預貯金）</small>', cashNow >= h.rent * 6 ? '家賃の6か月分（約' + fmt(h.rent * 6) + '万円）を上回る預貯金があります。' : '家賃の6か月分（約' + fmt(h.rent * 6) + '万円）に届いていません。', cashNow >= h.rent * 6 ? '収入が止まっても半年は家賃を払える備えです。' : '収入が止まったときの家賃の備えが薄めです。', cashNow >= h.rent * 6 ? 'ok' : 'warn');
+        } else {
+          add('返済', '月 約' + fmt(h.mPay || 0) + '万円', '年の返済額は約' + fmt(h.annualPay || 0) + '万円です。', 'ボーナス返済を含めた年の返済額は約' + fmt(h.annualPay || 0) + '万円です。', 'ok');
+          add('負担率', (h.ratio || 0) + '%<small>（手取りに対する返済）</small>', (h.ratio || 0) <= 25 ? '手取りに対する返済の割合は目安（25%）の内です。' : '手取りに対する返済の割合が目安（25%）を超えています。', (h.ratio || 0) <= 25 ? '返済が家計を圧迫しにくい範囲です。' : '返済の割合が高めです。繰上げ返済か借り換えの検討材料です。', (h.ratio || 0) <= 25 ? 'ok' : 'warn');
+          add('残高', '約' + lpaMan(h.balAt || 0) + '<small>（' + (h.payAge || 65) + '歳時）</small>', (h.balAt || 0) > 0 ? '退職時に残るローンです。退職金や資産で返す計画が要ります。' : '退職の時点でローンは残りません。', (h.balAt || 0) > 0 ? 'この額を退職後に返すか、前に繰り上げるかを決めます。' : '退職までに完済する計画です。', (h.balAt || 0) > 0 ? 'warn' : 'ok');
+          add('完済', (h.finishAge || 0) + '歳', (h.finishAge || 0) <= p.hRetire ? '退職前に返し終える予定です。' : '退職（' + p.hRetire + '歳）より' + ((h.finishAge || 0) - p.hRetire) + '年あとに返し終える予定です。', (h.finishAge || 0) <= p.hRetire ? '完済が退職より先に来る計画です。' : '退職後も返済が続く計画です。', (h.finishAge || 0) <= p.hRetire ? 'ok' : 'warn');
+          if(h.propTax != null) add('維持費', '年 約' + fmt((h.propTax || 0) + (h.maint || 0)) + '万円', '固定資産税と修繕・管理の年額です。ローンとは別にかかります。', '持ち家でローン以外に毎年かかる額です。', 'ok');
+        }
+      } else if(key === 'balance'){
+        var inc0 = Math.round(p.rows[0].income), exp0 = Math.round(p.rows[0].expense);
+        add('収入', '年 約' + lpaMan(inc0) + '<small>（手取り）</small>', '1年の手取り収入の見込みです。', '世帯の手取り収入の合計です。', 'ok');
+        add('支出', '年 約' + lpaMan(exp0), '1年の支出の見込みです。', '生活費・住居費・教育費などの合計です。', 'ok');
+        add('収支', surplus0 >= 0 ? '＋約' + lpaMan(surplus0) : '−約' + lpaMan(-surplus0), surplus0 >= 0 ? '収入の' + (inc0 > 0 ? Math.round(surplus0 / inc0 * 100) : 0) + '%が残る家計です。' : '収入より支出が多い家計です。', surplus0 >= 0 ? '貯蓄率は約' + (inc0 > 0 ? Math.round(surplus0 / inc0 * 100) : 0) + '%。目安は手取りの10〜20%です。' : '赤字分は貯蓄を減らして埋めている形です。', surplus0 >= 0 ? 'ok' : 'warn');
+        add('月', (surplus0 >= 0 ? '月 約' : '月 −約') + fmt(Math.round(Math.abs(surplus0) / 12)) + '万円', surplus0 >= 0 ? '毎月の余力です。先取り貯蓄に回せる額の目安です。' : '毎月の不足です。固定費から見直します。', surplus0 >= 0 ? '月に残る額です。' : '月に足りない額です。', surplus0 >= 0 ? 'ok' : 'warn');
+        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '生活費6か月分の預貯金があります。' : '生活費6か月分（約' + lpaMan(defense) + '）に対して' + defRate + '%です。', defRate >= 100 ? '収入が止まっても半年は暮らせます。' : '不測の出費への備えが目安に届いていません。', defRate >= 100 ? 'ok' : 'warn');
+      } else if(key === 'tax'){
+        add('年収', '約' + lpaMan(x.gross || 0) + '<small>（額面）</small>', 'ふるさと納税の上限は、この額と家族構成で決まります。', '額面の年収です。控除の効き方の土台になります。', 'ok');
+        add('上限', '年 約' + (x.furu || 0) + '万円<small>（ふるさと納税の目安）</small>', '実質2,000円で返礼品を受け取れる目安です。正確な額は自治体の試算で。', 'この額までの寄附なら自己負担が2,000円で済む目安です。', 'ok');
+        if(totalMonthly > 0) add('運用', '月 ' + fmt(totalMonthly) + '万円', 'NISA・iDeCo の枠を使えば、運用益や掛金に税の軽減があります。', '積立を非課税の枠に置けているかを確かめます。', 'ok');
+        add('確認', '税理士', '税額の計算・申告は税理士の業務です。', '控除の適用の判断は税理士に確かめます。', 'ok');
+      } else if(key === 'souzoku'){
+        add('非課税', '約' + lpaMan(x.waku || 0) + '<small>（生命保険）</small>', '500万円×法定相続人' + (x.heirs || 0) + '人の目安です。受取人の指定で渡す相手を決められます。', '生命保険の非課税枠の目安です。相続人の数で変わります。', 'ok');
+        add('基礎控除', '約' + lpaMan(3000 + 600 * (x.heirs || 0)), '3,000万円＋600万円×' + (x.heirs || 0) + '人。遺産がこれを超えるかどうかが入口です。', '相続税がかかるかどうかの境目の目安です。', 'ok');
+        add('相続人', (x.heirs || 0) + '人<small>（法定相続人の想定）</small>', '非課税枠と基礎控除の計算に使っています。', 'ご家族構成からの想定です。実際は戸籍で確かめます。', 'ok');
+        add('確認', '税理士・弁護士', '税額の計算・申告は税理士、法律上の判断は弁護士です。', '分け方の話し合いと税の手続きは、専門家と進めます。', 'ok');
+      } else if(key === 'kaigo'){
+        add('費用', '約540万円<small>（一人あたりの平均）</small>', '一時費用約47万円＋月約9万円×約4年7か月の目安です。', '生命保険文化センター 2024年度調査の平均です。', 'ok');
+        add('親御さま', (x.ps || 0) + '人<small>（ご健在）</small>', (x.hi || 0) + (x.mid || 0) > 0 ? '備えを検討したい要因が見えている方がいます。' : '今のところ大きな要因は見えていません。', (x.hi || 0) + (x.mid || 0) > 0 ? '介護が視野に入る方がいます。費用の分担を早めに話し合います。' : '年齢とお住まいの入力があれば、時期の目安が出ます。', (x.hi || 0) + (x.mid || 0) > 0 ? 'warn' : 'ok');
+        add('備え', '約' + lpaMan(cashNow) + '<small>（預貯金）</small>', '原則は親御さまの資産・年金から出しますが、立て替えの元手になります。', '一時費用を立て替えるときの元手です。', cashNow > 0 ? 'ok' : 'warn');
+        add('制度', '1〜3割<small>（自己負担）</small>', '公的介護保険で自己負担はこの割合に抑えられます。', '負担が重い月は高額介護サービス費の制度もあります。', 'ok');
+      }
+      return F.slice(0, 6);
+    }
+    function lpaFacts(cats, x){
+      cats.forEach(function(c){
+        try{ c.facts = lpaFactsOne(c.key, x); }catch(e){ c.facts = []; }
+        c.gaku = LPA_GK[c.key] || [];
+      });
+    }
+    function lpaFactsHTML(c, forPdf){
+      if(!c || !c.facts || !c.facts.length) return '';
+      var li = c.facts.map(function(f){
+        return '<li class="' + (f.tone === 'warn' ? 'warn' : 'ok') + '"><span class="lpa-eye">' + esc(f.eye || LPA_EYE_FALLBACK) + '</span><span class="lpa-num">' + f.num + '</span><span class="lpa-txt">' + f.text + '</span></li>';
+      }).join('');
+      return '<div class="adv-sec-title lpa-dt"><i class="fa-solid fa-chart-simple"></i> 数字で見る根拠 <small>ファイナンシャルプランナーの目で、ご入力の数字をいくつもの目線から</small></div><ul class="lpa-facts">' + li + '</ul>';
+    }
+    function lpaMoreHTML(c, forPdf){
+      if(forPdf || !c || !c.gaku || !c.gaku.length || !lpaStaff()) return '';
+      var a = c.gaku.map(function(g){ return '<a href="' + esc(LPA_GBASE + g.i + '/') + '" target="_blank" rel="noopener">' + esc(g.t) + '</a>'; }).join('');
+      return '<div class="lpa-more"><span class="lpa-ml">詳しくは学習ツールで：</span>' + a + '<small>（別の画面で開きます）</small></div>';
+    }
+    /* AI相談の返事を包む＝その話題の分野の「数字で見ると」・確かめる先・学習ツールの入口を続けて出す */
+    var LPA_TOPIC2CAT = {"nenkin": "retire", "ideco": "retire", "kokusai": "retire", "shaho": "retire", "kyoiku": "edu", "hoken": "hoken", "izoku": "hoken", "sandai": "hoken", "shigyo": "hoken", "nisa": "invest", "toushi": "invest", "jutaku": "housing", "fudosan": "housing", "kasai": "housing", "ichijo": "housing", "zeikin": "tax", "souzoku": "souzoku"};
+    var LPA_KAKUNIN = {
+      retire:'年金の見込み額は「ねんきんネット」「ねんきん定期便」で、受け取り方は年金事務所で確かめます。',
+      edu:'進学先ごとの費用は学校の募集要項で、奨学金は日本学生支援機構の案内で確かめます。',
+      hoken:'必要保障額は前提が変わると増減します。保障の中身は保険証券と約款で確かめます。',
+      invest:'利回りは前提の値で、成果を約束するものではありません。商品の費用は目論見書で確かめます。',
+      housing:'借入の可否と金利は金融機関、税の扱いは税理士、物件の重要事項は宅地建物取引士が説明します。',
+      balance:'家計の数字はご入力の前提です。固定費の明細（通信・保険・サブスク）は請求書で確かめます。',
+      tax:'税額の計算・申告・控除の判断は税理士の業務です。',
+      souzoku:'税額の計算・申告は税理士、法律上の判断は弁護士に確かめます。',
+      kaigo:'介護の認定と使える制度はお住まいの市区町村の窓口で、体のことは主治医に確かめます。',
+      overall:'試算は一般的な目安です。前提が変わると結果も変わります。'
+    };
+    var LPA_LAST = {};
+    function lpaCatOf(topic){ return LPA_TOPIC2CAT[topic] || null; }
+    function lpaWrap(q, res){
+      try{
+        if(!res || !res.html) return res;
+        var key = lpaCatOf(res.topic); if(!key) return res;
+        var cats = null; try{ cats = (typeof getCats === 'function') ? getCats() : null; }catch(e){ cats = null; }
+        var c = cats ? cats.filter(function(z){ return z.key === key; })[0] : null;
+        if(!c) return res;
+        var facts = (c.facts || []).slice();
+        /* 同じ話題を続けて聞かれたら、前と違う根拠から出す */
+        var n = LPA_LAST[key] || 0; LPA_LAST[key] = n + 1;
+        var start = facts.length ? (n * 2) % facts.length : 0;
+        var pick = facts.slice(start).concat(facts.slice(0, start)).slice(0, 3);
+        var h = '<div class="lpa-ans">';
+        if(pick.length){
+          h += '<span class="lpa-h">数字で見ると（' + esc(c.label) + '）</span><ul class="lpa-ul">'
+            + pick.map(function(f){ return '<li class="' + (f.tone === 'warn' ? 'warn' : 'ok') + '"><b>' + esc(f.eye) + '：' + f.num.replace(/<small>（([^<]*)）<\/small>/g, '（$1）').replace(/<small>([^<]*)<\/small>/g, ' $1').replace(/<[^>]+>/g, '') + '</b>　' + f.text + '</li>'; }).join('')
+            + '</ul>';
+        }
+        var good = (c.good || [])[n % Math.max((c.good || []).length, 1)], con = (c.concern || [])[n % Math.max((c.concern || []).length, 1)];
+        if(good) h += '<span class="lpa-h">安心できる点</span><div class="lpa-k">' + good + '</div>';
+        if(con) h += '<span class="lpa-h">気をつけたい点</span><div class="lpa-k">' + con + '</div>';
+        h += '<span class="lpa-h">ここは確認が必要です</span><div class="lpa-k">' + esc(LPA_KAKUNIN[key] || LPA_KAKUNIN.overall) + '</div>';
+        h += lpaMoreHTML(c, false);
+        h += '</div>';
+        var out = {}; for(var k in res) out[k] = res[k];
+        out.html = res.html + h;
+        return out;
+      }catch(e){ return res; }
+    }
+    /* LPADVRICH-JS-END */
     function adviceDetailInnerHTML(c, forPdf){
       const goodHTML = c.good && c.good.length ? `<div class="adv-sec-title good"><i class="fa-solid fa-circle-check"></i> 安心できるポイント</div><ul class="adv-points good">${c.good.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
       const conHTML  = c.concern && c.concern.length ? `<div class="adv-sec-title concern"><i class="fa-solid fa-triangle-exclamation"></i> 気をつけたいポイント</div><ul class="adv-points concern">${c.concern.map(x=>`<li>${x}</li>`).join('')}</ul>` : '';
       const cta = forPdf ? '' : `<div class="adv-detail-cta">より詳しい試算や、ご家庭に最適なプランづくりは無料相談で承ります。<br><button class="chat-cta" type="button" data-reserve><i class="fa-solid fa-calendar-check"></i> 専門家に無料で相談する</button></div>`;
       return `<div class="adv-detail-head"><span class="adv-dh-ico" style="background:${c.color}"><i class="fa-solid ${c.icon}"></i></span>${c.key==='overall' ? c.label : c.label+'の診断'}</div>`
-        +`<div class="adv-summary-text">${c.sum}</div>`+lpkDiagHTML(c, forPdf)+goodHTML+conHTML+lpmDiagHTML(c, forPdf)+cta;
+        +`<div class="adv-summary-text">${c.sum}</div>`+lpaFactsHTML(c, forPdf)+lpkDiagHTML(c, forPdf)+goodHTML+conHTML+lpmDiagHTML(c, forPdf)+lpaMoreHTML(c, forPdf)+cta;
     }
     function renderAdviceDetail(c){
       const box=$('advice-detail'); if(!box||!c) return;
@@ -18581,7 +18847,7 @@ function lpPdfProg(text, ratio){
       const typing=document.createElement('div'); typing.className='chat-msg bot';
       typing.innerHTML = `<span class="chat-ava"><i class="fa-solid fa-robot"></i></span><div class="chat-bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
       chatLog.appendChild(typing); chatLog.scrollTop = chatLog.scrollHeight;
-      const res = botAnswer(q);
+      const res = lpaWrap(q, botAnswer(q));   /* LPADVRICH */
       setTimeout(()=>{
         typing.remove();
         const nm = (document.getElementById('h-name')?.value||'').trim();

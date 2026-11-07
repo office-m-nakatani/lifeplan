@@ -1443,16 +1443,28 @@ body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl > li{ brea
 }
 /* LPADV-CSS-END */
 /* LPADVRICH-CSS-BEGIN */
-.lpa-facts{ list-style:none; margin:2px 0 12px; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+/* 狭い携帯（560px 未満）は1列＝2列だと1行が7〜8字で「不／足」と語の途中で折れた（2026-11-07 実測）。560px〜は2列・760px〜は3列 */
+.lpa-facts{ list-style:none; margin:2px 0 12px; padding:0; display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+@media screen and (min-width:560px){ .lpa-facts{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
 @media screen and (min-width:760px){ .lpa-facts{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
-.lpa-facts li{ background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:9px 11px 8px; min-width:0; display:flex; flex-direction:column; gap:2px; }
-.lpa-facts li.ok{ border-left:5px solid var(--good); }
-.lpa-facts li.warn{ border-left:5px solid var(--warn); }
-.lpa-eye{ display:inline-block; align-self:flex-start; font-size:max(13px, .78rem); font-weight:800; letter-spacing:0; color:#1a5487; background:#eaf3fb; border-radius:999px; padding:1px 8px; line-height:1.6; }
-.lpa-num{ font-size:1.12rem; font-weight:800; color:#123f6b; line-height:1.35; overflow-wrap:anywhere; }
+/* 安心（ok）＝淡い緑の地＋緑の「安心」の札／要確認（warn）＝淡い琥珀の地＋濃い琥珀の「要確認」の札。
+   色だけで分けない（札の言葉と印でも分かる）。2026-11-07 ユーザー指示「色が似たり寄ったりのもので見にくい。安心なのか、安心できないのかが分かりにくい」 */
+.lpa-facts li{ border:1.5px solid var(--line); border-radius:12px; padding:9px 11px 9px; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.lpa-facts li.ok{ background:var(--good-pale, #e3f5ec); border-color:#b9dfcc; border-left:5px solid #2f8a6e; }
+.lpa-facts li.warn{ background:var(--warn-pale, #fdf3df); border-color:#ecd39f; border-left:5px solid #c07a1f; }
+.lpa-top{ display:flex; flex-wrap:wrap; align-items:center; gap:5px 6px; }
+.lpa-st{ display:inline-flex; align-items:center; gap:4px; font-size:max(13px, .78rem); font-weight:800; letter-spacing:0; color:#fff; border-radius:999px; padding:1px 9px 1px 7px; line-height:1.6; white-space:nowrap; }
+.lpa-st i{ font-size:.85em; }
+.lpa-facts li.ok .lpa-st{ background:#1b5e48; }
+.lpa-facts li.warn .lpa-st{ background:#7d4a10; }
+.lpa-eye{ display:inline-block; font-size:max(13px, .78rem); font-weight:800; letter-spacing:0; background:#fff; border:1px solid currentColor; border-radius:999px; padding:0 8px; line-height:1.6; white-space:nowrap; }
+.lpa-facts li.ok .lpa-eye{ color:#1b5e48; }
+.lpa-facts li.warn .lpa-eye{ color:#7d4a10; }
+.lpa-num{ font-size:1.12rem; font-weight:800; line-height:1.35; overflow-wrap:anywhere; }
+.lpa-facts li.ok .lpa-num{ color:#1b5e48; }
+.lpa-facts li.warn .lpa-num{ color:#7d4a10; }
 .lpa-num small{ font-size:max(13px, .8rem); font-weight:700; color:#4a5560; }
 .lpa-txt{ font-size:max(13px, .84rem); line-height:1.6; color:#2b3a4a; }
-.lpa-facts li.warn .lpa-num{ color:#8a5a0b; }
 .adv-sec-title.lpa-dt{ color:#1a5487; flex-wrap:wrap; row-gap:2px; }
 .adv-sec-title.lpa-dt .lpa-dtt{ white-space:nowrap; }
 .adv-sec-title.lpa-dt small{ font-weight:600; font-size:max(13px, .8rem); color:var(--ink-soft); margin-left:4px; min-width:0; }
@@ -10401,7 +10413,12 @@ function lpPdfProg(text, ratio){
     function lpaFactsHTML(c, forPdf){
       if(!c || !c.facts || !c.facts.length) return '';
       var li = c.facts.map(function(f){
-        return '<li class="' + (f.tone === 'warn' ? 'warn' : 'ok') + '"><span class="lpa-eye">' + esc(f.eye || LPA_EYE_FALLBACK) + '</span><span class="lpa-num">' + f.num + '</span><span class="lpa-txt">' + f.text + '</span></li>';
+        var warn = (f.tone === 'warn');
+        /* 札＝状態（安心／要確認＝印と言葉）→ 目線。色だけで分けない */
+        var st = warn
+          ? '<span class="lpa-st"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>要確認</span>'
+          : '<span class="lpa-st"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>安心</span>';
+        return '<li class="' + (warn ? 'warn' : 'ok') + '"><span class="lpa-top">' + st + '<span class="lpa-eye">' + esc(f.eye || LPA_EYE_FALLBACK) + '</span></span><span class="lpa-num">' + f.num + '</span><span class="lpa-txt">' + f.text + '</span></li>';
       }).join('');
       return '<div class="adv-sec-title lpa-dt"><i class="fa-solid fa-chart-simple"></i><span class="lpa-dtt">数字で見る根拠</span><small>ファイナンシャルプランナーの目で、ご入力の数字をいくつもの目線から</small></div><ul class="lpa-facts">' + li + '</ul>';
     }

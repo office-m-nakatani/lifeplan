@@ -1453,8 +1453,9 @@ body:not(.pdf-mode) #advice-detail.adv-detail:not(.lpadv-x) > .lpm-dl > li{ brea
 .lpa-num small{ font-size:max(13px, .8rem); font-weight:700; color:#4a5560; }
 .lpa-txt{ font-size:max(13px, .84rem); line-height:1.6; color:#2b3a4a; }
 .lpa-facts li.warn .lpa-num{ color:#8a5a0b; }
-.adv-sec-title.lpa-dt{ color:#1a5487; }
-.adv-sec-title.lpa-dt small{ font-weight:600; font-size:max(13px, .8rem); color:var(--ink-soft); margin-left:4px; }
+.adv-sec-title.lpa-dt{ color:#1a5487; flex-wrap:wrap; row-gap:2px; }
+.adv-sec-title.lpa-dt .lpa-dtt{ white-space:nowrap; }
+.adv-sec-title.lpa-dt small{ font-weight:600; font-size:max(13px, .8rem); color:var(--ink-soft); margin-left:4px; min-width:0; }
 .lpa-more{ font-size:max(13px, .8rem); color:var(--ink-soft); line-height:1.7; margin:4px 0 10px; }
 .lpa-more small{ font-size:1em; color:var(--ink-soft); }
 .lpa-more a{ color:#1a5487; text-decoration:underline; text-underline-offset:2px; margin-right:.6em; overflow-wrap:anywhere; }
@@ -10300,6 +10301,10 @@ function lpPdfProg(text, ratio){
       var minNet = Math.round(p.minRow.net), minAge = p.minRow.hAge;
       var cashNow = Math.round(p.cashNow || 0);
       var defRate = defense > 0 ? Math.round(cashNow / defense * 100) : 0;
+      /* 生活防衛資金は「生活費の何か月分」で見せる（1087% のような割合は読みにくい） */
+      var defM = defense > 0 ? cashNow / defense * 6 : 0;
+      var defMTxt = defM >= 10 ? String(Math.round(defM)) : String(Math.round(defM * 10) / 10);
+      var defNum = '約' + defMTxt + 'か月分<small>（生活費に対する預貯金）</small>';
       var invTot = Math.round(totalMonthly * 12);
       var yrsToRet = Math.max(p.hRetire - p.hAge, 0);
       if(key === 'overall'){
@@ -10308,7 +10313,7 @@ function lpPdfProg(text, ratio){
         else add('時間', p.cashShort.hAge + '歳ごろ<small>預貯金が不足</small>', '総額では足りても、その年に使える現金が足りない試算です。', '運用を取り崩す形にすれば防げる不足です。', 'warn');
         add('底値', '約' + lpaMan(minNet) + (minNet >= 0 ? '<small>（' + minAge + '歳）</small>' : ''), minNet >= 0 ? '資産がいちばん少なくなる年でも、この額が手元に残ります。' : '資産がいちばん少なくなる年の額です。ここを0以上にするのが目標です。', minNet >= 0 ? 'いちばん苦しい年の残高です。ここがプラスなら家計は折れていません。' : 'いちばん苦しい年の残高がマイナスです。ここを先に直します。', minNet >= 0 ? 'ok' : 'warn');
         add('家計', (surplus0 >= 0 ? '年 約' + lpaMan(surplus0) + '<small>の黒字</small>' : '年 約' + lpaMan(-surplus0) + '<small>の赤字</small>'), surplus0 >= 0 ? '毎年この額が手元に残ります。貯蓄と運用の元手です。' : '毎年この額が足りません。固定費から順に見直します。', surplus0 >= 0 ? '1年の収入から支出を引いた残りです。先取り貯蓄の原資になります。' : '収入より支出が多い状態です。住居・通信・保険の固定費から見直します。', surplus0 >= 0 ? 'ok' : 'warn');
-        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '生活費6か月分（約' + lpaMan(defense) + '）を預貯金で持てています。' : '目安の生活費6か月分（約' + lpaMan(defense) + '）に対して、預貯金が' + defRate + '%です。', defRate >= 100 ? '収入が一時止まっても半年は暮らせる預貯金があります。' : '病気や転職で収入が止まったときの備えが、目安に届いていません。', defRate >= 100 ? 'ok' : 'warn');
+        add('備え', defNum, defRate >= 100 ? '生活防衛資金の目安（生活費6か月分＝約' + lpaMan(defense) + '）を預貯金で持てています。' : '生活防衛資金の目安（生活費6か月分＝約' + lpaMan(defense) + '）に対して、預貯金は約' + defMTxt + 'か月分です。', defRate >= 100 ? '収入が一時止まっても、この月数は暮らせる預貯金があります。目安は6か月分です。' : '病気や転職で収入が止まったときの備えが、目安の6か月分に届いていません。', defRate >= 100 ? 'ok' : 'warn');
         if(totalMonthly > 0) add('運用', '月 ' + fmt(totalMonthly) + '万円<small>（年 約' + fmt(invTot) + '万円）</small>', benRaw >= 0 ? '積み立てを続けると、退職時に運用しない場合より約' + fmt(Math.abs(benRaw)) + '万円多い試算です。' : 'この前提では運用した場合のほうが退職時に約' + fmt(Math.abs(benRaw)) + '万円少ない試算です。費用と前提を確かめます。', benRaw >= 0 ? '退職時の差は約' + fmt(Math.abs(benRaw)) + '万円。運用の成果は前提の利回りで変わります。' : '運用のほうが少なくなる前提です。商品の費用と利回りの前提を見直します。', benRaw >= 0 ? 'ok' : 'warn');
         else add('運用', '積立 0円', '運用の設定がありません。物価が上がる分だけ預金の実質的な価値は目減りします。', '積立の設定が無い状態です。少額でも始めると物価上昇への備えになります。', 'warn');
         add('老後', '約' + lpaMan(p.retireRow.net) + '<small>（' + p.hRetire + '歳時）</small>', '退職時の金融資産の見込みです。ここから' + Math.max(endAge - p.hRetire, 1) + '年の取り崩しが始まります。', '退職の年に手元にある見込みの額です。年金との差を埋める元手になります。', p.retireRow.net > 0 ? 'ok' : 'warn');
@@ -10346,7 +10351,7 @@ function lpPdfProg(text, ratio){
         if(totalLump > 0) add('一括', '約' + lpaMan(totalLump), '一度に運用に回す額です。', 'まとまった額を運用に置く前提です。', 'ok');
         add('差', (benRaw >= 0 ? '＋' : '−') + '約' + fmt(Math.abs(benRaw)) + '万円<small>（退職時）</small>', benRaw >= 0 ? '運用した場合としない場合の退職時の差です。前提の利回りで変わります。' : '運用した場合のほうが少ない前提です。費用と利回りを確かめます。', benRaw >= 0 ? '運用の成果の見込みです。確実な数字ではありません。' : '費用が重い商品だと、運用しないほうが残ることがあります。', benRaw >= 0 ? 'ok' : 'warn');
         add('時間', yrsToRet + '年<small>（運用に使える年数）</small>', '長いほど値動きが平らにならされます。', '退職までの年数です。長期・分散・積立の効きやすさに関わります。', yrsToRet >= 10 ? 'ok' : 'warn');
-        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '運用に回す前の守りができています。' : '運用より先に、生活防衛資金を目安まで積みます。', defRate >= 100 ? '急な出費は預貯金で受け、運用は崩さずに済みます。' : '急な出費で運用を崩さないよう、先に預貯金を目安まで。', defRate >= 100 ? 'ok' : 'warn');
+        add('備え', defNum, defRate >= 100 ? '運用に回す前の守り（生活費6か月分）ができています。' : '運用より先に、生活防衛資金を目安（生活費6か月分）まで積みます。', defRate >= 100 ? '急な出費は預貯金で受け、運用は崩さずに済みます。' : '急な出費で運用を崩さないよう、先に預貯金を6か月分まで。', defRate >= 100 ? 'ok' : 'warn');
       } else if(key === 'housing'){
         var h = x.h || {};
         if(h.rent != null){
@@ -10368,7 +10373,7 @@ function lpPdfProg(text, ratio){
         add('支出', '年 約' + lpaMan(exp0), '1年の支出の見込みです。', '生活費・住居費・教育費などの合計です。', 'ok');
         add('収支', surplus0 >= 0 ? '＋約' + lpaMan(surplus0) : '−約' + lpaMan(-surplus0), surplus0 >= 0 ? '収入の' + (inc0 > 0 ? Math.round(surplus0 / inc0 * 100) : 0) + '%が残る家計です。' : '収入より支出が多い家計です。', surplus0 >= 0 ? '貯蓄率は約' + (inc0 > 0 ? Math.round(surplus0 / inc0 * 100) : 0) + '%。目安は手取りの10〜20%です。' : '赤字分は貯蓄を減らして埋めている形です。', surplus0 >= 0 ? 'ok' : 'warn');
         add('月', (surplus0 >= 0 ? '月 約' : '月 −約') + fmt(Math.round(Math.abs(surplus0) / 12)) + '万円', surplus0 >= 0 ? '毎月の余力です。先取り貯蓄に回せる額の目安です。' : '毎月の不足です。固定費から見直します。', surplus0 >= 0 ? '月に残る額です。' : '月に足りない額です。', surplus0 >= 0 ? 'ok' : 'warn');
-        add('備え', defRate + '%<small>（生活防衛資金）</small>', defRate >= 100 ? '生活費6か月分の預貯金があります。' : '生活費6か月分（約' + lpaMan(defense) + '）に対して' + defRate + '%です。', defRate >= 100 ? '収入が止まっても半年は暮らせます。' : '不測の出費への備えが目安に届いていません。', defRate >= 100 ? 'ok' : 'warn');
+        add('備え', defNum, defRate >= 100 ? '生活防衛資金の目安（生活費6か月分）を超える預貯金があります。' : '生活防衛資金の目安（生活費6か月分＝約' + lpaMan(defense) + '）に対して、預貯金は約' + defMTxt + 'か月分です。', defRate >= 100 ? '収入が止まっても、この月数は暮らせます。目安は6か月分です。' : '不測の出費への備えが、目安の6か月分に届いていません。', defRate >= 100 ? 'ok' : 'warn');
       } else if(key === 'tax'){
         add('年収', '約' + lpaMan(x.gross || 0) + '<small>（額面）</small>', 'ふるさと納税の上限は、この額と家族構成で決まります。', '額面の年収です。控除の効き方の土台になります。', 'ok');
         add('上限', '年 約' + (x.furu || 0) + '万円<small>（ふるさと納税の目安）</small>', '実質2,000円で返礼品を受け取れる目安です。正確な額は自治体の試算で。', 'この額までの寄附なら自己負担が2,000円で済む目安です。', 'ok');
@@ -10398,7 +10403,7 @@ function lpPdfProg(text, ratio){
       var li = c.facts.map(function(f){
         return '<li class="' + (f.tone === 'warn' ? 'warn' : 'ok') + '"><span class="lpa-eye">' + esc(f.eye || LPA_EYE_FALLBACK) + '</span><span class="lpa-num">' + f.num + '</span><span class="lpa-txt">' + f.text + '</span></li>';
       }).join('');
-      return '<div class="adv-sec-title lpa-dt"><i class="fa-solid fa-chart-simple"></i> 数字で見る根拠 <small>ファイナンシャルプランナーの目で、ご入力の数字をいくつもの目線から</small></div><ul class="lpa-facts">' + li + '</ul>';
+      return '<div class="adv-sec-title lpa-dt"><i class="fa-solid fa-chart-simple"></i><span class="lpa-dtt">数字で見る根拠</span><small>ファイナンシャルプランナーの目で、ご入力の数字をいくつもの目線から</small></div><ul class="lpa-facts">' + li + '</ul>';
     }
     function lpaMoreHTML(c, forPdf){
       if(forPdf || !c || !c.gaku || !c.gaku.length || !lpaStaff()) return '';
